@@ -145,16 +145,6 @@
             : ($statusClassMap[$card['status']] ?? 'is-neutral');
         $pairCards[] = $card + ['class' => $cardClass];
     }
-    if ($endingWarning) {
-        $endingLabel = $endingRuleLabel;
-        $pairCards = array_merge([[
-            'pair' => $endingLabel,
-            'status' => 'bad',
-            'label' => 'เลข ' . $endingRuleLabel . ' ไม่ควรอยู่ท้ายสุดของเบอร์',
-            'desc' => $endingReason,
-            'class' => 'is-danger',
-        ]], $pairCards);
-    }
   @endphp
   <section class="evaluate-hero{{ $hasBadPair ? ' evaluate-hero--danger' : '' }}" aria-labelledby="evaluate-title">
     <div class="evaluate-overlay"></div>
@@ -182,11 +172,6 @@
           <p>
             {{ $topMeaning['title'] }} — {{ $topMeaning['desc'] }}
           </p>
-          @if ($endingWarning)
-            <p class="summary-warning">
-              หมายเหตุสำคัญ: เลข {{ $endingRuleLabel }} ไม่ควรอยู่ท้ายสุดของเบอร์ — {{ $endingReason }}
-            </p>
-          @endif
           <div class="summary-tags">
             <span class="badge badge-good">เลขส่งเสริม</span>
             <span class="badge badge-alert">เลขควรระวัง</span>
@@ -243,74 +228,98 @@
           <article class="number-card">
             <div class="card-top">0646495945</div>
             <div class="card-body">
-              <div class="card-tier card-tier--platinum">Platinum</div>
-              <p>โปรโมชั่น 4G+ Super Smart</p>
-              <span>1499 ขึ้นไป</span>
+              <div class="card-meta-stack">
+                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
+                <span class="card-meta-plan">โปรโมชั่น 4G+ Super Smart</span>
+                <span>1499 ขึ้นไป</span>
+              </div>
             </div>
-            <button class="card-btn">ดูความหมาย</button>
+            <a class="card-btn" href="{{ route('good-number', ['number' => '0646495945']) }}">ดูความหมาย</a>
+            <a class="card-btn card-btn--buy" href="{{ route('book', ['number' => '0646495945', 'package' => 1499]) }}">สั่งซื้อ</a>
           </article>
           <article class="number-card">
             <div class="card-top">0645164549</div>
             <div class="card-body">
-              <div class="card-tier card-tier--silver">Silver</div>
-              <p>โปรโมชั่น 4G+ Super Smart</p>
-              <span>699 ขึ้นไป</span>
+              <div class="card-meta-stack">
+                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
+                <span class="card-meta-plan">โปรโมชั่น 4G+ Super Smart</span>
+                <span>699 ขึ้นไป</span>
+              </div>
             </div>
-            <button class="card-btn">ดูความหมาย</button>
+            <a class="card-btn" href="{{ route('good-number', ['number' => '0645164549']) }}">ดูความหมาย</a>
+            <a class="card-btn card-btn--buy" href="{{ route('book', ['number' => '0645164549', 'package' => 699]) }}">สั่งซื้อ</a>
           </article>
           <article class="number-card">
             <div class="card-top">0645953639</div>
             <div class="card-body">
-              <div class="card-tier card-tier--platinum">Platinum</div>
-              <p>โปรโมชั่น 4G+ Super Smart</p>
-              <span>1499 ขึ้นไป</span>
+              <div class="card-meta-stack">
+                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
+                <span class="card-meta-plan">โปรโมชั่น 4G+ Super Smart</span>
+                <span>1499 ขึ้นไป</span>
+              </div>
             </div>
-            <button class="card-btn">ดูความหมาย</button>
+            <a class="card-btn" href="{{ route('good-number', ['number' => '0645953639']) }}">ดูความหมาย</a>
+            <a class="card-btn card-btn--buy" href="{{ route('book', ['number' => '0645953639', 'package' => 1499]) }}">สั่งซื้อ</a>
           </article>
           <article class="number-card">
             <div class="card-top">0645636463</div>
             <div class="card-body">
-              <div class="card-tier card-tier--gold">Gold</div>
-              <p>โปรโมชั่น 4G+ Super Smart</p>
-              <span>1099 ขึ้นไป</span>
+              <div class="card-meta-stack">
+                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
+                <span class="card-meta-plan">โปรโมชั่น 4G+ Super Smart</span>
+                <span>1099 ขึ้นไป</span>
+              </div>
             </div>
-            <button class="card-btn">ดูความหมาย</button>
+            <a class="card-btn" href="{{ route('good-number', ['number' => '0645636463']) }}">ดูความหมาย</a>
+            <a class="card-btn card-btn--buy" href="{{ route('book', ['number' => '0645636463', 'package' => 1099]) }}">สั่งซื้อ</a>
           </article>
           <article class="number-card">
             <div class="card-top">0644697923</div>
             <div class="card-body">
-              <div class="card-tier card-tier--silver">Silver</div>
-              <p>โปรโมชั่น 4G+ Super Smart</p>
-              <span>699 ขึ้นไป</span>
+              <div class="card-meta-stack">
+                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
+                <span class="card-meta-plan">โปรโมชั่น 4G+ Super Smart</span>
+                <span>699 ขึ้นไป</span>
+              </div>
             </div>
-            <button class="card-btn">ดูความหมาย</button>
+            <a class="card-btn" href="{{ route('good-number', ['number' => '0644697923']) }}">ดูความหมาย</a>
+            <a class="card-btn card-btn--buy" href="{{ route('book', ['number' => '0644697923', 'package' => 699]) }}">สั่งซื้อ</a>
           </article>
           <article class="number-card">
             <div class="card-top">0646396926</div>
             <div class="card-body">
-              <div class="card-tier card-tier--gold">Gold</div>
-              <p>โปรโมชั่น 4G+ Super Smart</p>
-              <span>1099 ขึ้นไป</span>
+              <div class="card-meta-stack">
+                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
+                <span class="card-meta-plan">โปรโมชั่น 4G+ Super Smart</span>
+                <span>1099 ขึ้นไป</span>
+              </div>
             </div>
-            <button class="card-btn">ดูความหมาย</button>
+            <a class="card-btn" href="{{ route('good-number', ['number' => '0646396926']) }}">ดูความหมาย</a>
+            <a class="card-btn card-btn--buy" href="{{ route('book', ['number' => '0646396926', 'package' => 1099]) }}">สั่งซื้อ</a>
           </article>
           <article class="number-card">
             <div class="card-top">0645635964</div>
             <div class="card-body">
-              <div class="card-tier card-tier--gold">Gold</div>
-              <p>โปรโมชั่น 4G+ Super Smart</p>
-              <span>1099 ขึ้นไป</span>
+              <div class="card-meta-stack">
+                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
+                <span class="card-meta-plan">โปรโมชั่น 4G+ Super Smart</span>
+                <span>1099 ขึ้นไป</span>
+              </div>
             </div>
-            <button class="card-btn">ดูความหมาย</button>
+            <a class="card-btn" href="{{ route('good-number', ['number' => '0645635964']) }}">ดูความหมาย</a>
+            <a class="card-btn card-btn--buy" href="{{ route('book', ['number' => '0645635964', 'package' => 1099]) }}">สั่งซื้อ</a>
           </article>
           <article class="number-card">
             <div class="card-top">0645632656</div>
             <div class="card-body">
-              <div class="card-tier card-tier--gold">Gold</div>
-              <p>โปรโมชั่น 4G+ Super Smart</p>
-              <span>1099 ขึ้นไป</span>
+              <div class="card-meta-stack">
+                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
+                <span class="card-meta-plan">โปรโมชั่น 4G+ Super Smart</span>
+                <span>1099 ขึ้นไป</span>
+              </div>
             </div>
-            <button class="card-btn">ดูความหมาย</button>
+            <a class="card-btn" href="{{ route('good-number', ['number' => '0645632656']) }}">ดูความหมาย</a>
+            <a class="card-btn card-btn--buy" href="{{ route('book', ['number' => '0645632656', 'package' => 1099]) }}">สั่งซื้อ</a>
           </article>
         </div>
       </section>

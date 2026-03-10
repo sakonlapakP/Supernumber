@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Supernumber S">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#1d1816" />
+      <stop offset="100%" stop-color="#46372b" />
+    </linearGradient>
+    <linearGradient id="gold" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f1c26d" />
+      <stop offset="100%" stop-color="#d8a34a" />
+    </linearGradient>
+  </defs>
+  <rect x="1.5" y="1.5" width="61" height="61" rx="16" fill="url(#bg)" />
+  <rect x="1.5" y="1.5" width="61" height="61" rx="16" fill="none" stroke="url(#gold)" stroke-width="2" />
+  <text
+    x="32"
+    y="41"
+    text-anchor="middle"
+    font-family="Cinzel, Times New Roman, serif"
+    font-size="38"
+    font-weight="700"
+    fill="url(#gold)"
+  >
+    S
+  </text>
+</svg>

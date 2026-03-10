@@ -35,4 +35,9 @@ return [
         ],
     ],
 
+    'line' => [
+        'channel_access_token' => env('LINE_CHANNEL_ACCESS_TOKEN'),
+        'group_id' => env('LINE_GROUP_ID'),
+    ],
+
 ];

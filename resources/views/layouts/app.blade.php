@@ -14,6 +14,9 @@
     <meta property="og:image" content="@yield('og_image', asset('images/home_banner.jpg'))" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="theme-color" content="@yield('theme_color', '#2a2321')" />
+    <link rel="icon" type="image/svg+xml" href="{{ asset('images/favicon-s.svg') }}" />
+    <link rel="shortcut icon" href="{{ asset('images/favicon-s.svg') }}" />
+    <link rel="alternate icon" href="{{ asset('images/favicon-s.svg') }}" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
@@ -25,7 +28,7 @@
     @endif
     <link rel="stylesheet" href="{{ asset('css/supernumber.css') }}" />
   </head>
-  <body>
+  <body class="@yield('body_class')">
     @include('partials.header')
 
     <main>
