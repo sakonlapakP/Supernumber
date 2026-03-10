@@ -4,9 +4,9 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@yield('title', 'Supernumber Admin')</title>
-    <link rel="icon" type="image/svg+xml" href="{{ asset('images/favicon-s.svg') }}" />
-    <link rel="shortcut icon" href="{{ asset('images/favicon-s.svg') }}" />
-    <link rel="alternate icon" href="{{ asset('images/favicon-s.svg') }}" />
+    <link rel="icon" type="image/svg+xml" href="{{ secure_asset('images/favicon-s.svg') }}" />
+    <link rel="shortcut icon" href="{{ secure_asset('images/favicon-s.svg') }}" />
+    <link rel="alternate icon" href="{{ secure_asset('images/favicon-s.svg') }}" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
