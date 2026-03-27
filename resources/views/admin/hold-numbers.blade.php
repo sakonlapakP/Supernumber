@@ -98,8 +98,9 @@
         <thead>
           <tr>
             <th>เบอร์</th>
+            <th>ประเภท</th>
             <th>เครือข่าย</th>
-            <th>แพ็กเกจ</th>
+            <th>ราคา / แพ็กเกจ</th>
             <th>สถานะ</th>
             <th>Action</th>
           </tr>
@@ -111,8 +112,9 @@
                 <td>
                   <div class="admin-number">{{ $number->display_number ?: $number->phone_number }}</div>
                 </td>
+                <td>{{ $number->service_type_label }}</td>
                 <td>{{ strtoupper(str_replace('_', '-', $number->network_code)) }}</td>
-                <td>{{ $number->package_label }}</td>
+                <td>{{ $number->payment_label }}</td>
                 <td><span class="admin-status-pill admin-status-pill--hold">{{ $number->status ?: '-' }}</span></td>
                 <td class="admin-action-cell">
                   <form action="{{ route('admin.hold-numbers.activate', $number) }}" method="post">
@@ -123,11 +125,11 @@
               </tr>
             @endforeach
             <tr id="hold-numbers-empty-row" hidden>
-              <td colspan="5" class="admin-muted">ไม่พบเบอร์ที่ตรงกับคำค้นหา</td>
+              <td colspan="6" class="admin-muted">ไม่พบเบอร์ที่ตรงกับคำค้นหา</td>
             </tr>
           @else
             <tr>
-              <td colspan="5" class="admin-muted">ยังไม่มีเบอร์ที่อยู่ในสถานะ hold</td>
+              <td colspan="6" class="admin-muted">ยังไม่มีเบอร์ที่อยู่ในสถานะ hold</td>
             </tr>
           @endif
         </tbody>

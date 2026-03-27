@@ -89,17 +89,22 @@
             </div>
 
             <div class="numbers-filter-actions">
-              <label class="numbers-filter-label" for="numbers-plan">โปรโมชั่น</label>
+              <label class="numbers-filter-label" for="numbers-service-type">ประเภทเบอร์</label>
               <div class="numbers-filter-actions__controls">
+                <select id="numbers-service-type" class="numbers-filter-select" name="service_type">
+                  <option value="">ทั้งหมด</option>
+                  <option value="{{ \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID }}" @selected($selectedServiceType === \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID)>รายเดือน</option>
+                  <option value="{{ \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID }}" @selected($selectedServiceType === \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID)>เติมเงิน</option>
+                </select>
                 <select id="numbers-plan" class="numbers-filter-select" name="plan">
-                  <option value="">เลือกโปรโมชั่น</option>
+                  <option value="">ราคา / โปรโมชั่น</option>
                   @foreach ($plans as $plan)
                     <option value="{{ $plan }}" @selected($selectedPlan === $plan)>{{ $plan }}</option>
                   @endforeach
                 </select>
                 <button class="numbers-filter-submit" type="submit">ค้นหา</button>
               </div>
-              <p class="numbers-filter-actions__note">ใช้โปรโมชั่นเดียวกันได้ทั้งการค้นหาตามตำแหน่งและค้นหาจากชุดตัวเลข</p>
+              <p class="numbers-filter-actions__note">ใช้ตัวกรองประเภทเบอร์ร่วมกับการค้นหาตามตำแหน่งหรือชุดตัวเลขได้</p>
             </div>
           </div>
         </form>
@@ -130,8 +135,8 @@
             <div class="card-top">{{ $number->display_number ?: $number->phone_number }}</div>
             <div class="card-body">
               <div class="card-meta-stack">
-                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
-                <span class="card-meta-plan">{{ $number->package_label }}</span>
+                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">{{ $number->service_type_label }}</span></span>
+                <span class="card-meta-plan">{{ $number->payment_label }}</span>
               </div>
             </div>
             <a class="card-btn card-btn--buy" href="{{ route('evaluate', ['phone' => $number->phone_number]) }}">สั่งซื้อ</a>

@@ -60,7 +60,8 @@
           return [
               'phone_number' => $number->phone_number,
               'display_number' => $number->display_number ?: $number->phone_number,
-              'package_label' => $number->package_label,
+              'service_type_label' => $number->service_type_label,
+              'payment_label' => $number->payment_label,
               'good_number_url' => route('evaluate', ['phone' => $number->phone_number]),
           ];
       })->values();
@@ -90,8 +91,8 @@
               <div class="card-top">{{ $number['display_number'] }}</div>
               <div class="card-body">
                 <div class="card-meta-stack">
-                  <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
-                  <span class="card-meta-plan">{{ $number['package_label'] }}</span>
+                  <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">{{ $number['service_type_label'] }}</span></span>
+                  <span class="card-meta-plan">{{ $number['payment_label'] }}</span>
                 </div>
               </div>
               <a class="card-btn card-btn--buy" href="{{ $number['good_number_url'] }}">สั่งซื้อ</a>
@@ -160,8 +161,8 @@
             <div class="card-top">${escapeHtml(number.display_number)}</div>
             <div class="card-body">
               <div class="card-meta-stack">
-                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
-                <span class="card-meta-plan">${escapeHtml(number.package_label)}</span>
+                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">${escapeHtml(number.service_type_label)}</span></span>
+                <span class="card-meta-plan">${escapeHtml(number.payment_label)}</span>
               </div>
             </div>
             <a class="card-btn card-btn--buy" href="${escapeHtml(number.good_number_url)}">สั่งซื้อ</a>

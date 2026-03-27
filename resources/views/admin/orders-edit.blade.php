@@ -29,7 +29,7 @@
       </div>
 
       <div class="admin-field">
-        <label for="selected_package">แพคเกจ (บาท/เดือน)</label>
+        <label for="selected_package">{{ $order->is_prepaid ? 'ยอดชำระ (บาท)' : 'แพคเกจ (บาท/เดือน)' }}</label>
         <input id="selected_package" class="admin-input" type="number" min="1" name="selected_package" value="{{ old('selected_package', (int) $order->selected_package) }}" required />
       </div>
 
@@ -98,11 +98,14 @@
         <input id="status" class="admin-input" type="text" name="status" value="{{ old('status', $order->status) }}" list="order-status-options" required />
         <datalist id="order-status-options">
           <option value="submitted"></option>
+          <option value="pending_review"></option>
           <option value="paid"></option>
+          <option value="sold"></option>
           <option value="completed"></option>
+          <option value="rejected"></option>
           <option value="cancelled"></option>
         </datalist>
-        <p class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem;">LINE จะแจ้งเมื่อเปลี่ยนเป็นสถานะที่อยู่ใน `LINE_ORDER_STATUS_EVENTS` เช่น `submitted`, `paid`, `completed`</p>
+        <p class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem;">เบอร์เติมเงินจะ hold อัตโนมัติระหว่างตรวจสอบ และจะเปลี่ยนเป็น sold เมื่อสถานะเป็น `sold` หรือ `completed`</p>
       </div>
 
       <div class="admin-field">

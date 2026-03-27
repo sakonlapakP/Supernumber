@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\CustomerOrder;
 use App\Models\LineNotificationLog;
+use App\Models\PhoneNumber;
 use App\Models\User;
 use App\Services\LineOrderNotifier;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -81,6 +82,15 @@ class LineNotificationTest extends TestCase
 
         Storage::fake('public');
 
+        PhoneNumber::query()->create([
+            'phone_number' => '0891234567',
+            'service_type' => PhoneNumber::SERVICE_TYPE_POSTPAID,
+            'network_code' => 'true_dtac',
+            'plan_name' => 'True Super Value',
+            'sale_price' => 399,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
         $response = $this->post('/book', [
             'ordered_number' => '089-123-4567',
             'selected_package' => 399,
@@ -125,7 +135,8 @@ class LineNotificationTest extends TestCase
                 && str_contains((string) ($imageMessage['originalContentUrl'] ?? ''), 'signature=')
                 && str_contains($message, 'มีคำสั่งซื้อเบอร์ใหม่')
                 && str_contains($message, 'เบอร์: 0891234567')
-                && str_contains($message, 'แพ็กเกจ: 399 บาท/เดือน')
+                && str_contains($message, 'ประเภท: รายเดือน')
+                && str_contains($message, 'ยอดชำระ: 399 บาท / เดือน')
                 && str_contains($message, 'ชื่อ: คุณ สุดา ดีพร้อม')
                 && ! str_contains($message, 'หลักฐานการโอน:');
         });

@@ -23,11 +23,20 @@
     $currentNumberModel = \App\Models\PhoneNumber::query()
         ->where('phone_number', $number)
         ->first();
-    $currentPackage = $currentNumberModel?->normalized_package_price ?? 699;
+    $currentServiceType = $currentNumberModel?->service_type ?? \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID;
+    $currentPackage = $currentNumberModel?->is_prepaid
+        ? ((int) ($currentNumberModel->sale_price ?? 0))
+        : ($currentNumberModel?->normalized_package_price ?? 699);
+    if ($currentPackage < 1) {
+        $currentPackage = 699;
+    }
 
     $recommendedNumbers = \App\Models\PhoneNumber::query()
         ->available()
         ->where('network_code', 'true_dtac')
+        ->when($currentNumberModel !== null, function ($query) use ($currentServiceType) {
+            $query->where('service_type', $currentServiceType);
+        })
         ->where('phone_number', '!=', $number)
         ->inRandomOrder()
         ->limit(12)
@@ -41,6 +50,9 @@
         $extraNumbers = \App\Models\PhoneNumber::query()
             ->available()
             ->where('network_code', 'true_dtac')
+            ->when($currentNumberModel !== null, function ($query) use ($currentServiceType) {
+                $query->where('service_type', $currentServiceType);
+            })
             ->whereNotIn('phone_number', $excludedNumbers)
             ->inRandomOrder()
             ->limit(12 - $recommendedNumbers->count())
@@ -392,8 +404,8 @@
               <div class="card-top">{{ $recommended->display_number ?: $recommended->phone_number }}</div>
               <div class="card-body">
                 <div class="card-meta-stack">
-                  <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
-                  <span class="card-meta-plan">{{ $recommended->package_label }}</span>
+                  <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">{{ $recommended->service_type_label }}</span></span>
+                  <span class="card-meta-plan">{{ $recommended->payment_label }}</span>
                 </div>
               </div>
               <a class="card-btn card-btn--buy" href="{{ route('evaluate', ['phone' => $recommended->phone_number]) }}">สั่งซื้อ</a>

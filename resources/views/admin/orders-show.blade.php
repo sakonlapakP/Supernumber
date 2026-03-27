@@ -35,8 +35,12 @@
             <td>{{ $order->ordered_number ?: '-' }}</td>
           </tr>
           <tr>
-            <th>แพคเกจ</th>
-            <td>{{ number_format((int) $order->selected_package) }} บาท / เดือน</td>
+            <th>ประเภท</th>
+            <td>{{ $order->service_type_label }}</td>
+          </tr>
+          <tr>
+            <th>ยอดชำระ</th>
+            <td>{{ $order->payment_label }}</td>
           </tr>
           <tr>
             <th>ชื่อผู้สั่งซื้อ</th>

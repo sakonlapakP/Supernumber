@@ -9,6 +9,7 @@ class CustomerOrder extends Model
 {
     protected $fillable = [
         'ordered_number',
+        'service_type',
         'selected_package',
         'title_prefix',
         'first_name',
@@ -29,9 +30,40 @@ class CustomerOrder extends Model
     protected function casts(): array
     {
         return [
+            'service_type' => 'string',
             'selected_package' => 'integer',
             'appointment_date' => 'date',
         ];
+    }
+
+    public function getIsPostpaidAttribute(): bool
+    {
+        return $this->service_type !== PhoneNumber::SERVICE_TYPE_PREPAID;
+    }
+
+    public function getIsPrepaidAttribute(): bool
+    {
+        return $this->service_type === PhoneNumber::SERVICE_TYPE_PREPAID;
+    }
+
+    public function getServiceTypeLabelAttribute(): string
+    {
+        return $this->is_prepaid ? 'เติมเงิน' : 'รายเดือน';
+    }
+
+    public function getPaymentLabelAttribute(): string
+    {
+        $amount = (int) $this->selected_package;
+
+        if ($amount <= 0) {
+            return '-';
+        }
+
+        if ($this->is_prepaid) {
+            return number_format($amount) . ' บาท';
+        }
+
+        return number_format($amount) . ' บาท / เดือน';
     }
 
     public function getFullNameAttribute(): string

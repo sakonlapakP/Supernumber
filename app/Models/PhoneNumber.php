@@ -10,6 +10,8 @@ class PhoneNumber extends Model
 {
     public const PHONE_NUMBER_LENGTH = 10;
     public const PREFIX_LENGTH = 3;
+    public const SERVICE_TYPE_POSTPAID = 'postpaid';
+    public const SERVICE_TYPE_PREPAID = 'prepaid';
     public const PACKAGE_NAME = 'True Super Value';
     public const PACKAGE_PRICE_BASIC = 699;
     public const PACKAGE_PRICE_STANDARD = 1099;
@@ -21,6 +23,7 @@ class PhoneNumber extends Model
     protected $fillable = [
         'phone_number',
         'display_number',
+        'service_type',
         'network_code',
         'plan_name',
         'price_text',
@@ -42,6 +45,17 @@ class PhoneNumber extends Model
         }
 
         return $query->where('phone_number', 'like', $pattern);
+    }
+
+    public function scopeOfServiceType(Builder $query, ?string $serviceType): Builder
+    {
+        $serviceType = self::normalizeServiceType($serviceType);
+
+        if ($serviceType === null) {
+            return $query;
+        }
+
+        return $query->where('service_type', $serviceType);
     }
 
     public static function buildSearchPattern(array $filters): ?string
@@ -80,9 +94,54 @@ class PhoneNumber extends Model
         return self::buildPackageLabel($this->plan_name, $this->sale_price);
     }
 
+    public function getOfferLabelAttribute(): string
+    {
+        if ($this->is_prepaid) {
+            $price = self::packagePrice($this->sale_price);
+
+            return $price !== null ? number_format($price) . ' บาท' : 'เบอร์เติมเงิน';
+        }
+
+        return $this->package_label;
+    }
+
+    public function getPaymentLabelAttribute(): string
+    {
+        $price = self::packagePrice($this->sale_price);
+
+        if ($price === null) {
+            return '-';
+        }
+
+        if ($this->is_prepaid) {
+            return number_format($price) . ' บาท';
+        }
+
+        return number_format($price) . ' บาท / เดือน';
+    }
+
     public function getNormalizedPackagePriceAttribute(): ?int
     {
+        if (! $this->is_postpaid) {
+            return null;
+        }
+
         return self::normalizePackagePrice($this->sale_price);
+    }
+
+    public function getIsPostpaidAttribute(): bool
+    {
+        return self::normalizeServiceType($this->service_type) !== self::SERVICE_TYPE_PREPAID;
+    }
+
+    public function getIsPrepaidAttribute(): bool
+    {
+        return self::normalizeServiceType($this->service_type) === self::SERVICE_TYPE_PREPAID;
+    }
+
+    public function getServiceTypeLabelAttribute(): string
+    {
+        return $this->is_prepaid ? 'เติมเงิน' : 'รายเดือน';
     }
 
     public function getTierLabelAttribute(): string
@@ -214,5 +273,16 @@ class PhoneNumber extends Model
         $price = (int) $salePrice;
 
         return $price > 0 ? $price : null;
+    }
+
+    protected static function normalizeServiceType(?string $serviceType): ?string
+    {
+        $serviceType = strtolower(trim((string) $serviceType));
+
+        return match ($serviceType) {
+            self::SERVICE_TYPE_POSTPAID,
+            self::SERVICE_TYPE_PREPAID => $serviceType,
+            default => null,
+        };
     }
 }

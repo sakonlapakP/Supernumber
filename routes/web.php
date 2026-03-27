@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Route;
 
 $currentAdmin = function (): ?User {
@@ -475,6 +476,69 @@ $resolveAnalysisPhone = function (Request $request) {
     return [null, $phone];
 };
 
+$normalizeServiceType = function (?string $serviceType): string {
+    return trim(strtolower((string) $serviceType)) === PhoneNumber::SERVICE_TYPE_PREPAID
+        ? PhoneNumber::SERVICE_TYPE_PREPAID
+        : PhoneNumber::SERVICE_TYPE_POSTPAID;
+};
+
+$defaultOrderStatus = function (string $serviceType): string {
+    return $serviceType === PhoneNumber::SERVICE_TYPE_PREPAID
+        ? 'pending_review'
+        : 'submitted';
+};
+
+$syncPhoneNumberStatusFromOrder = function (CustomerOrder $order, ?int $userId = null) use ($normalizeServiceType) {
+    if ($normalizeServiceType($order->service_type) !== PhoneNumber::SERVICE_TYPE_PREPAID) {
+        return;
+    }
+
+    $orderedNumber = preg_replace('/\D+/', '', (string) $order->ordered_number) ?? '';
+    if ($orderedNumber === '') {
+        return;
+    }
+
+    $phoneNumber = PhoneNumber::query()
+        ->where('phone_number', $orderedNumber)
+        ->first();
+
+    if (! $phoneNumber) {
+        return;
+    }
+
+    $normalizedStatus = Str::of((string) $order->status)->trim()->lower()->toString();
+
+    $targetStatus = match ($normalizedStatus) {
+        'sold', 'completed' => PhoneNumber::STATUS_SOLD,
+        'rejected', 'cancelled' => PhoneNumber::STATUS_ACTIVE,
+        default => PhoneNumber::STATUS_HOLD,
+    };
+
+    if ($phoneNumber->status === $targetStatus) {
+        return;
+    }
+
+    $action = match ($targetStatus) {
+        PhoneNumber::STATUS_SOLD => 'sell',
+        PhoneNumber::STATUS_ACTIVE => 'release',
+        default => 'hold',
+    };
+
+    $fromStatus = $phoneNumber->status;
+
+    $phoneNumber->update([
+        'status' => $targetStatus,
+    ]);
+
+    PhoneNumberStatusLog::query()->create([
+        'phone_number_id' => $phoneNumber->id,
+        'user_id' => $userId,
+        'action' => $action,
+        'from_status' => $fromStatus,
+        'to_status' => $targetStatus,
+    ]);
+};
+
 Route::redirect('/', '/under-construction')->name('home');
 Route::view('/under-construction', 'under-construction')->name('under-construction');
 Route::redirect('/underconsturter', '/under-construction');
@@ -483,11 +547,19 @@ Route::get('/numbers', function () {
     $search = trim((string) request('q', ''));
     $searchDigits = preg_replace('/[^0-9]/', '', $search);
     $selectedPlan = trim((string) request('plan', ''));
+    $selectedServiceType = trim((string) request('service_type', ''));
     $positionPattern = PhoneNumber::buildSearchPattern(request()->query());
+
+    if (! in_array($selectedServiceType, [PhoneNumber::SERVICE_TYPE_POSTPAID, PhoneNumber::SERVICE_TYPE_PREPAID], true)) {
+        $selectedServiceType = '';
+    }
 
     $baseQuery = PhoneNumber::query()
         ->available()
-        ->where('network_code', 'true_dtac');
+        ->where('network_code', 'true_dtac')
+        ->when($selectedServiceType !== '', function ($query) use ($selectedServiceType) {
+            $query->where('service_type', $selectedServiceType);
+        });
 
     $plans = collect(PhoneNumber::packageLabelsForQuery($baseQuery));
 
@@ -512,7 +584,7 @@ Route::get('/numbers', function () {
         ->paginate(24)
         ->withQueryString();
 
-    return view('numbers', compact('numbers', 'plans', 'search', 'selectedPlan', 'positionPattern'));
+    return view('numbers', compact('numbers', 'plans', 'search', 'selectedPlan', 'selectedServiceType', 'positionPattern'));
 })->name('numbers.index');
 
 Route::get('/articles', function () {
@@ -652,15 +724,25 @@ Route::redirect('/good-number', '/numbers');
 
 Route::get('/book', function () {
     $orderedNumber = preg_replace('/\D+/', '', (string) request('number', '')) ?? '';
-    $currentNumber = $orderedNumber !== ''
-        ? PhoneNumber::query()->where('phone_number', $orderedNumber)->first()
-        : null;
-    $packagePlanName = trim((string) $currentNumber?->plan_name) ?: PhoneNumber::PACKAGE_NAME;
+    if ($orderedNumber === '') {
+        abort(404);
+    }
 
-    return view('book', compact('packagePlanName'));
+    $currentNumber = PhoneNumber::query()
+        ->where('phone_number', $orderedNumber)
+        ->firstOrFail();
+
+    if (! in_array($currentNumber->status, [PhoneNumber::STATUS_ACTIVE, PhoneNumber::STATUS_HOLD], true)) {
+        abort(404);
+    }
+
+    $packagePlanName = trim((string) $currentNumber->plan_name) ?: PhoneNumber::PACKAGE_NAME;
+    $serviceType = $currentNumber->service_type;
+
+    return view('book', compact('currentNumber', 'packagePlanName', 'serviceType'));
 })->name('book');
 
-Route::post('/book/save-step2', function (Request $request) use ($storeOrderPaymentSlip, $safelyRunLineNotification) {
+Route::post('/book/save-step2', function (Request $request) use ($defaultOrderStatus, $normalizeServiceType, $storeOrderPaymentSlip, $safelyRunLineNotification, $syncPhoneNumberStatusFromOrder) {
     $data = $request->validate([
         'saved_order_id' => ['nullable', 'integer'],
         'ordered_number' => ['required', 'string', 'max:20'],
@@ -692,9 +774,43 @@ Route::post('/book/save-step2', function (Request $request) use ($storeOrderPaym
     }
     $isNewOrder = ! $order->exists;
 
+    $currentNumber = PhoneNumber::query()
+        ->where('phone_number', $orderedNumber)
+        ->first();
+
+    if (! $currentNumber) {
+        throw ValidationException::withMessages([
+            'ordered_number' => 'ไม่พบเบอร์ในระบบ',
+        ]);
+    }
+
+    $serviceType = $normalizeServiceType($currentNumber->service_type);
+    $isSameSavedOrder = $order->exists
+        && $orderedNumber !== ''
+        && $orderedNumber === (preg_replace('/\D+/', '', (string) $order->ordered_number) ?? '');
+
+    if (! $isSameSavedOrder && $currentNumber->status !== PhoneNumber::STATUS_ACTIVE) {
+        throw ValidationException::withMessages([
+            'ordered_number' => 'เบอร์นี้ไม่พร้อมสั่งซื้อแล้ว',
+        ]);
+    }
+
+    $selectedPackage = $serviceType === PhoneNumber::SERVICE_TYPE_PREPAID
+        ? (int) ($currentNumber->sale_price ?? 0)
+        : (int) $data['selected_package'];
+
+    if ($selectedPackage < 1) {
+        throw ValidationException::withMessages([
+            'selected_package' => $serviceType === PhoneNumber::SERVICE_TYPE_PREPAID
+                ? 'ไม่พบราคาขายของเบอร์เติมเงิน'
+                : 'กรุณาเลือกแพ็กเกจ',
+        ]);
+    }
+
     $order->fill([
         'ordered_number' => $orderedNumber !== '' ? $orderedNumber : trim((string) $data['ordered_number']),
-        'selected_package' => (int) $data['selected_package'],
+        'service_type' => $serviceType,
+        'selected_package' => $selectedPackage,
         'title_prefix' => trim((string) ($data['title_prefix'] ?? '')) ?: null,
         'first_name' => trim((string) ($data['first_name'] ?? '')) ?: null,
         'last_name' => trim((string) ($data['last_name'] ?? '')) ?: null,
@@ -705,13 +821,18 @@ Route::post('/book/save-step2', function (Request $request) use ($storeOrderPaym
         'amphoe' => trim((string) ($data['amphoe'] ?? '')) ?: null,
         'province' => trim((string) ($data['province'] ?? '')) ?: null,
         'zipcode' => $zipcode !== '' ? $zipcode : null,
-        'appointment_date' => $data['appointment_date'] ?? null,
-        'appointment_time_slot' => trim((string) ($data['appointment_time_slot'] ?? '')) ?: null,
-        'status' => 'submitted',
+        'appointment_date' => $serviceType === PhoneNumber::SERVICE_TYPE_PREPAID ? null : ($data['appointment_date'] ?? null),
+        'appointment_time_slot' => $serviceType === PhoneNumber::SERVICE_TYPE_PREPAID
+            ? null
+            : (trim((string) ($data['appointment_time_slot'] ?? '')) ?: null),
+        'payment_slip_path' => trim((string) $order->payment_slip_path) !== '' ? $order->payment_slip_path : '__pending__',
+        'status' => $defaultOrderStatus($serviceType),
     ]);
     $order->save();
     $order->payment_slip_path = $storeOrderPaymentSlip($order, $request->file('payment_slip'));
     $order->save();
+
+    $syncPhoneNumberStatusFromOrder($order);
 
     if ($isNewOrder) {
         $safelyRunLineNotification(
@@ -728,7 +849,7 @@ Route::post('/book/save-step2', function (Request $request) use ($storeOrderPaym
     ]);
 })->name('book.save-step2');
 
-Route::post('/book', function (Request $request) use ($storeOrderPaymentSlip, $safelyRunLineNotification) {
+Route::post('/book', function (Request $request) use ($defaultOrderStatus, $normalizeServiceType, $storeOrderPaymentSlip, $safelyRunLineNotification, $syncPhoneNumberStatusFromOrder) {
     $data = $request->validate([
         'saved_order_id' => ['nullable', 'integer'],
         'ordered_number' => ['required', 'string', 'max:20'],
@@ -760,8 +881,41 @@ Route::post('/book', function (Request $request) use ($storeOrderPaymentSlip, $s
     }
     $isNewOrder = ! $order->exists;
 
+    $currentNumber = PhoneNumber::query()
+        ->where('phone_number', $orderedNumber)
+        ->first();
+
+    if (! $currentNumber) {
+        throw ValidationException::withMessages([
+            'ordered_number' => 'ไม่พบเบอร์ในระบบ',
+        ]);
+    }
+
+    $serviceType = $normalizeServiceType($currentNumber->service_type);
+    $isSameSavedOrder = $order->exists
+        && $orderedNumber !== ''
+        && $orderedNumber === (preg_replace('/\D+/', '', (string) $order->ordered_number) ?? '');
+
+    if (! $isSameSavedOrder && $currentNumber->status !== PhoneNumber::STATUS_ACTIVE) {
+        throw ValidationException::withMessages([
+            'ordered_number' => 'เบอร์นี้ไม่พร้อมสั่งซื้อแล้ว',
+        ]);
+    }
+
+    $selectedPackage = $serviceType === PhoneNumber::SERVICE_TYPE_PREPAID
+        ? (int) ($currentNumber->sale_price ?? 0)
+        : (int) $data['selected_package'];
+
+    if ($selectedPackage < 1) {
+        throw ValidationException::withMessages([
+            'selected_package' => $serviceType === PhoneNumber::SERVICE_TYPE_PREPAID
+                ? 'ไม่พบราคาขายของเบอร์เติมเงิน'
+                : 'กรุณาเลือกแพ็กเกจ',
+        ]);
+    }
+
     $slipPath = $order->payment_slip_path;
-    if (! $slipPath) {
+    if (! $slipPath && ! $request->hasFile('payment_slip')) {
         return back()
             ->withErrors(['payment_slip' => 'โปรดแนบหลักฐานการโอนเงินเพื่อสั่งซื้อเบอร์'])
             ->withInput();
@@ -769,7 +923,8 @@ Route::post('/book', function (Request $request) use ($storeOrderPaymentSlip, $s
 
     $order->fill([
         'ordered_number' => $orderedNumber !== '' ? $orderedNumber : trim((string) $data['ordered_number']),
-        'selected_package' => (int) $data['selected_package'],
+        'service_type' => $serviceType,
+        'selected_package' => $selectedPackage,
         'title_prefix' => trim((string) ($data['title_prefix'] ?? '')) ?: null,
         'first_name' => trim((string) ($data['first_name'] ?? '')) ?: null,
         'last_name' => trim((string) ($data['last_name'] ?? '')) ?: null,
@@ -780,10 +935,12 @@ Route::post('/book', function (Request $request) use ($storeOrderPaymentSlip, $s
         'amphoe' => trim((string) ($data['amphoe'] ?? '')) ?: null,
         'province' => trim((string) ($data['province'] ?? '')) ?: null,
         'zipcode' => $zipcode !== '' ? $zipcode : null,
-        'appointment_date' => $data['appointment_date'] ?? null,
-        'appointment_time_slot' => trim((string) ($data['appointment_time_slot'] ?? '')) ?: null,
-        'payment_slip_path' => $slipPath,
-        'status' => 'submitted',
+        'appointment_date' => $serviceType === PhoneNumber::SERVICE_TYPE_PREPAID ? null : ($data['appointment_date'] ?? null),
+        'appointment_time_slot' => $serviceType === PhoneNumber::SERVICE_TYPE_PREPAID
+            ? null
+            : (trim((string) ($data['appointment_time_slot'] ?? '')) ?: null),
+        'payment_slip_path' => $slipPath ?: '__pending__',
+        'status' => $defaultOrderStatus($serviceType),
     ]);
     $order->save();
 
@@ -791,6 +948,8 @@ Route::post('/book', function (Request $request) use ($storeOrderPaymentSlip, $s
         $order->payment_slip_path = $storeOrderPaymentSlip($order, $request->file('payment_slip'));
         $order->save();
     }
+
+    $syncPhoneNumberStatusFromOrder($order);
 
     if ($isNewOrder) {
         $safelyRunLineNotification(
@@ -892,7 +1051,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     $resolveEnvironmentEditor,
     $resolveAdminLogViewer,
     $latestLineWebhookEvents,
-    $storeOrderPaymentSlip
+    $storeOrderPaymentSlip,
+    $syncPhoneNumberStatusFromOrder
 ) {
     Route::get('/login', function (Request $request) use ($currentAdmin) {
         if ($currentAdmin()) {
@@ -974,6 +1134,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                     }
 
                     $innerQuery->orWhereRaw('LOWER(network_code) like ?', ['%' . $searchTerm . '%'])
+                        ->orWhereRaw('LOWER(service_type) like ?', ['%' . $searchTerm . '%'])
                         ->orWhereRaw('LOWER(plan_name) like ?', ['%' . $searchTerm . '%'])
                         ->orWhereRaw('LOWER(status) like ?', ['%' . $searchTerm . '%'])
                         ->orWhereRaw('CAST(sale_price AS CHAR) like ?', ['%' . $search . '%']);
@@ -1065,7 +1226,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.orders-edit', compact('order'));
     })->name('orders.edit');
 
-    Route::put('/orders/{order}', function (Request $request, CustomerOrder $order) use ($ensureAdmin, $storeOrderPaymentSlip, $safelyRunLineNotification) {
+    Route::put('/orders/{order}', function (Request $request, CustomerOrder $order) use ($ensureAdmin, $storeOrderPaymentSlip, $safelyRunLineNotification, $syncPhoneNumberStatusFromOrder) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
@@ -1095,6 +1256,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $currentPhone = $digitsOnly($data['current_phone'] ?? null);
         $zipcode = $digitsOnly($data['zipcode'] ?? null);
         $previousStatus = (string) $order->status;
+        $adminUserId = session('admin_user_id');
 
         $order->fill([
             'ordered_number' => $orderedNumber !== '' ? $orderedNumber : trim((string) $data['ordered_number']),
@@ -1119,6 +1281,11 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             $order->payment_slip_path = $storeOrderPaymentSlip($order, $request->file('payment_slip'));
             $order->save();
         }
+
+        $syncPhoneNumberStatusFromOrder(
+            $order,
+            is_numeric($adminUserId) ? (int) $adminUserId : null
+        );
 
         if (trim($previousStatus) !== trim((string) $order->status)) {
             $safelyRunLineNotification(
@@ -1761,12 +1928,6 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             return back()
                 ->withInput()
                 ->with('error_message', 'ไม่พบเบอร์ในระบบ');
-        }
-
-        if ($phoneNumber->normalized_package_price === null) {
-            return back()
-                ->withInput()
-                ->with('error_message', 'ไม่สามารถ hold ได้: ต้องเป็นเบอร์รายเดือนเท่านั้น');
         }
 
         if ($phoneNumber->status !== PhoneNumber::STATUS_ACTIVE) {

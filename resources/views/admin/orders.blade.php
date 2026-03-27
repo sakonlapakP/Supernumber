@@ -25,7 +25,8 @@
         <thead>
           <tr>
             <th>เบอร์ที่สั่งซื้อ</th>
-            <th>แพคเกจ</th>
+            <th>ประเภท</th>
+            <th>ยอดชำระ</th>
             <th>ชื่อผู้สั่งซื้อ</th>
             <th>โทรศัพท์</th>
             <th>สถานะ</th>
@@ -36,7 +37,8 @@
           @forelse ($orders as $order)
             <tr>
               <td><div class="admin-number">{{ $order->ordered_number ?: '-' }}</div></td>
-              <td>{{ number_format((int) $order->selected_package) }} บาท / เดือน</td>
+              <td>{{ $order->service_type_label }}</td>
+              <td>{{ $order->payment_label }}</td>
               <td>{{ $order->full_name ?: '-' }}</td>
               <td>{{ $order->current_phone ?: '-' }}</td>
               <td>{{ $order->status ?: '-' }}</td>
@@ -49,7 +51,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="6" class="admin-muted">ยังไม่มีรายการคำสั่งซื้อ</td>
+              <td colspan="7" class="admin-muted">ยังไม่มีรายการคำสั่งซื้อ</td>
             </tr>
           @endforelse
         </tbody>

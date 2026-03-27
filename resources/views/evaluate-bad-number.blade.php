@@ -162,8 +162,8 @@
               <div class="card-top">{{ $recommended->display_number ?: $recommended->phone_number }}</div>
               <div class="card-body">
                 <div class="card-meta-stack">
-                  <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
-                  <span class="card-meta-plan">{{ $recommended->package_label }}</span>
+                  <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">{{ $recommended->service_type_label }}</span></span>
+                  <span class="card-meta-plan">{{ $recommended->payment_label }}</span>
                 </div>
               </div>
               <a class="card-btn card-btn--buy" href="{{ route('evaluate', ['phone' => $recommended->phone_number]) }}">สั่งซื้อ</a>

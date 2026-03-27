@@ -49,8 +49,9 @@
         <thead>
           <tr>
             <th>เบอร์</th>
+            <th>ประเภท</th>
             <th>เครือข่าย</th>
-            <th>แพ็กเกจ</th>
+            <th>ราคา / แพ็กเกจ</th>
             <th>สถานะ</th>
           </tr>
         </thead>
@@ -60,13 +61,14 @@
               <td>
                 <div class="admin-number">{{ $number->display_number ?: $number->phone_number }}</div>
               </td>
+              <td>{{ $number->service_type_label }}</td>
               <td>{{ strtoupper(str_replace('_', '-', $number->network_code)) }}</td>
-              <td>{{ $number->package_label }}</td>
+              <td>{{ $number->payment_label }}</td>
               <td>{{ $number->status ?: '-' }}</td>
             </tr>
           @empty
             <tr>
-              <td colspan="4" class="admin-muted">
+              <td colspan="5" class="admin-muted">
                 {{ ($search ?? '') !== '' ? 'ไม่พบเบอร์ที่ตรงกับคำค้นหา' : 'ยังไม่มีข้อมูลเบอร์ในระบบ' }}
               </td>
             </tr>
