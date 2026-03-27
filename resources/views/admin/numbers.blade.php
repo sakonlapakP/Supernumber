@@ -1,12 +1,12 @@
 @extends('layouts.admin')
 
-@section('title', 'Supernumber Admin | All Numbers')
+@section('title', 'Supernumber Admin | ' . ($pageTitle ?? 'All Numbers'))
 
 @section('content')
   <div class="admin-page-head">
     <div>
-      <h1>All Numbers</h1>
-      <p class="admin-subtitle">แสดงเบอร์ทั้งหมดในระบบ พร้อมสถานะของแต่ละเบอร์</p>
+      <h1>{{ $pageTitle ?? 'All Numbers' }}</h1>
+      <p class="admin-subtitle">{{ $pageSubtitle ?? 'แสดงเบอร์ทั้งหมดในระบบ พร้อมสถานะของแต่ละเบอร์' }}</p>
     </div>
     <div class="admin-summary">
       แสดง
@@ -23,11 +23,21 @@
     <div class="admin-feature-card__head">
       <div>
         <h2 class="admin-feature-card__title">Search Numbers</h2>
-        <p class="admin-feature-card__hint">ค้นหาจากเบอร์, เครือข่าย, แพ็กเกจ, ราคา หรือสถานะ</p>
+        <p class="admin-feature-card__hint">
+          ค้นหาจากเบอร์, เครือข่าย, แพ็กเกจ, ราคา หรือสถานะ
+          @if (($selectedServiceType ?? null) === \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID)
+            | กำลังกรอง: รายเดือน
+          @elseif (($selectedServiceType ?? null) === \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID)
+            | กำลังกรอง: เติมเงิน
+          @endif
+        </p>
       </div>
     </div>
 
     <form action="{{ route('admin.numbers') }}" method="get" class="admin-form admin-form--inline">
+      @if (($selectedServiceType ?? null) !== null)
+        <input type="hidden" name="service_type" value="{{ $selectedServiceType }}" />
+      @endif
       <div class="admin-field">
         <label for="admin-number-search">Search</label>
         <input
@@ -67,7 +77,15 @@
               <td>{{ $number->payment_label }}</td>
               <td>{{ $number->status ?: '-' }}</td>
               <td class="admin-action-cell">
-                <a href="{{ route('admin.numbers.edit', $number) }}" class="admin-button admin-button--secondary admin-button--compact">Edit</a>
+                <a
+                  href="{{ route('admin.numbers.edit', array_filter([
+                    'phoneNumber' => $number,
+                    'service_type_filter' => $selectedServiceType ?? null,
+                  ], static fn ($value) => $value !== null && $value !== '')) }}"
+                  class="admin-button admin-button--secondary admin-button--compact"
+                >
+                  Edit
+                </a>
               </td>
             </tr>
           @empty

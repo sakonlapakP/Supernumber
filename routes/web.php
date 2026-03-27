@@ -1135,10 +1135,18 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
 
         $search = trim((string) $request->query('q', ''));
+        $selectedServiceType = trim((string) $request->query('service_type', ''));
         $searchDigits = preg_replace('/\D+/', '', $search) ?? '';
         $searchTerm = mb_strtolower($search);
 
+        if (! in_array($selectedServiceType, PhoneNumber::serviceTypeOptions(), true)) {
+            $selectedServiceType = null;
+        }
+
         $numbers = PhoneNumber::query()
+            ->when($selectedServiceType !== null, function ($query) use ($selectedServiceType) {
+                $query->where('service_type', $selectedServiceType);
+            })
             ->when($search !== '', function ($query) use ($search, $searchDigits, $searchTerm) {
                 $query->where(function ($innerQuery) use ($search, $searchDigits, $searchTerm) {
                     if ($searchDigits !== '') {
@@ -1156,7 +1164,19 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->orderBy('phone_number')
             ->paginate(20);
 
-        return view('admin.numbers', compact('numbers', 'search'));
+        $pageTitle = match ($selectedServiceType) {
+            PhoneNumber::SERVICE_TYPE_POSTPAID => 'Postpaid Numbers',
+            PhoneNumber::SERVICE_TYPE_PREPAID => 'Prepaid Numbers',
+            default => 'All Numbers',
+        };
+
+        $pageSubtitle = match ($selectedServiceType) {
+            PhoneNumber::SERVICE_TYPE_POSTPAID => 'แสดงเฉพาะเบอร์รายเดือนในระบบ พร้อมสถานะของแต่ละเบอร์',
+            PhoneNumber::SERVICE_TYPE_PREPAID => 'แสดงเฉพาะเบอร์เติมเงินในระบบ พร้อมสถานะของแต่ละเบอร์',
+            default => 'แสดงเบอร์ทั้งหมดในระบบ พร้อมสถานะของแต่ละเบอร์',
+        };
+
+        return view('admin.numbers', compact('numbers', 'search', 'selectedServiceType', 'pageTitle', 'pageSubtitle'));
     })->name('numbers');
 
     Route::get('/numbers/{phoneNumber}/edit', function (PhoneNumber $phoneNumber) use ($ensureAdmin) {
@@ -1184,6 +1204,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         $adminUserId = session('admin_user_id');
         $previousStatus = (string) $phoneNumber->status;
+        $serviceTypeFilter = trim((string) $request->query('service_type_filter', ''));
         $serviceType = $normalizeServiceType($data['service_type']);
         $networkCode = strtolower(trim((string) $data['network_code']));
         $networkCode = preg_replace('/[^a-z0-9]+/', '_', $networkCode) ?? '';
@@ -1203,6 +1224,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         if ($priceText === '') {
             $priceText = (string) $salePrice;
+        }
+
+        if (! in_array($serviceTypeFilter, PhoneNumber::serviceTypeOptions(), true)) {
+            $serviceTypeFilter = null;
         }
 
         DB::transaction(function () use (
@@ -1237,7 +1262,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         });
 
         return redirect()
-            ->route('admin.numbers.edit', $phoneNumber)
+            ->route('admin.numbers.edit', array_filter([
+                'phoneNumber' => $phoneNumber,
+                'service_type_filter' => $serviceTypeFilter,
+            ], static fn ($value) => $value !== null && $value !== ''))
             ->with('status_message', 'อัปเดตข้อมูลเบอร์เรียบร้อยแล้ว');
     })->name('numbers.update');
 

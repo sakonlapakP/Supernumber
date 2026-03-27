@@ -3,13 +3,30 @@
 @section('title', 'Supernumber Admin | Edit Number')
 
 @section('content')
+  @php
+    $serviceTypeFilter = request()->query('service_type_filter');
+    $returnRouteParameters = [];
+
+    if (in_array($serviceTypeFilter, \App\Models\PhoneNumber::serviceTypeOptions(), true)) {
+      $returnRouteParameters['service_type'] = $serviceTypeFilter;
+    } else {
+      $serviceTypeFilter = null;
+    }
+
+    $returnLabel = match ($serviceTypeFilter) {
+      \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID => 'กลับหน้า Postpaid Numbers',
+      \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID => 'กลับหน้า Prepaid Numbers',
+      default => 'กลับหน้า All Numbers',
+    };
+  @endphp
+
   <div class="admin-page-head">
     <div>
       <h1>Edit Number</h1>
       <p class="admin-subtitle">ตั้งค่าประเภทเบอร์ ราคา และสถานะจากหลังบ้าน</p>
     </div>
     <div class="admin-page-actions">
-      <a href="{{ route('admin.numbers') }}" class="admin-button admin-button--secondary admin-button--compact">กลับหน้า All Numbers</a>
+      <a href="{{ route('admin.numbers', $returnRouteParameters) }}" class="admin-button admin-button--secondary admin-button--compact">{{ $returnLabel }}</a>
     </div>
   </div>
 
@@ -29,7 +46,14 @@
       </div>
     </div>
 
-    <form class="admin-form" action="{{ route('admin.numbers.update', $phoneNumber) }}" method="post">
+    <form
+      class="admin-form"
+      action="{{ route('admin.numbers.update', array_filter([
+        'phoneNumber' => $phoneNumber,
+        'service_type_filter' => $serviceTypeFilter,
+      ], static fn ($value) => $value !== null && $value !== '')) }}"
+      method="post"
+    >
       @csrf
       @method('put')
 

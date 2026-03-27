@@ -3,6 +3,13 @@
   <head>
     @php
       $staticPath = static fn (string $path): string => '/' . ltrim($path, '/');
+      $adminNavServiceType = request()->query('service_type');
+      $showAllNumbersActive = request()->routeIs('admin.numbers*')
+        && ! in_array($adminNavServiceType, \App\Models\PhoneNumber::serviceTypeOptions(), true);
+      $showPostpaidNumbersActive = request()->routeIs('admin.numbers')
+        && $adminNavServiceType === \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID;
+      $showPrepaidNumbersActive = request()->routeIs('admin.numbers')
+        && $adminNavServiceType === \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID;
     @endphp
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -1083,7 +1090,9 @@
                 @endif
               </div>
             </div>
-            <a href="{{ route('admin.numbers') }}" class="admin-nav__link @if (request()->routeIs('admin.numbers*')) is-active @endif">All Numbers</a>
+            <a href="{{ route('admin.numbers') }}" class="admin-nav__link @if ($showAllNumbersActive) is-active @endif">All Numbers</a>
+            <a href="{{ route('admin.numbers', ['service_type' => \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID]) }}" class="admin-nav__link @if ($showPostpaidNumbersActive) is-active @endif">Postpaid Numbers</a>
+            <a href="{{ route('admin.numbers', ['service_type' => \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID]) }}" class="admin-nav__link @if ($showPrepaidNumbersActive) is-active @endif">Prepaid Numbers</a>
             <a href="{{ route('admin.hold-numbers') }}" class="admin-nav__link @if (request()->routeIs('admin.hold-numbers')) is-active @endif">Hold Numbers</a>
             <a href="{{ route('admin.orders') }}" class="admin-nav__link @if (request()->routeIs('admin.orders')) is-active @endif">Orders</a>
             <a href="{{ route('admin.articles') }}" class="admin-nav__link @if (request()->routeIs('admin.articles*')) is-active @endif">Articles</a>
@@ -1117,7 +1126,9 @@
                 </div>
 
                 <nav class="admin-nav" aria-label="เมนูผู้ดูแลระบบ">
-                <a href="{{ route('admin.numbers') }}" class="admin-nav__link @if (request()->routeIs('admin.numbers*')) is-active @endif">All Numbers</a>
+                <a href="{{ route('admin.numbers') }}" class="admin-nav__link @if ($showAllNumbersActive) is-active @endif">All Numbers</a>
+                <a href="{{ route('admin.numbers', ['service_type' => \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID]) }}" class="admin-nav__link @if ($showPostpaidNumbersActive) is-active @endif">Postpaid Numbers</a>
+                <a href="{{ route('admin.numbers', ['service_type' => \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID]) }}" class="admin-nav__link @if ($showPrepaidNumbersActive) is-active @endif">Prepaid Numbers</a>
                 <a href="{{ route('admin.hold-numbers') }}" class="admin-nav__link @if (request()->routeIs('admin.hold-numbers')) is-active @endif">Hold Numbers</a>
                 <a href="{{ route('admin.orders') }}" class="admin-nav__link @if (request()->routeIs('admin.orders')) is-active @endif">Orders</a>
                 <a href="{{ route('admin.articles') }}" class="admin-nav__link @if (request()->routeIs('admin.articles*')) is-active @endif">Articles</a>

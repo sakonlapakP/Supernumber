@@ -88,6 +88,42 @@ class AdminPhoneNumberEditTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_filter_numbers_page_by_service_type_from_sidebar(): void
+    {
+        PhoneNumber::query()->create([
+            'phone_number' => '0891234567',
+            'display_number' => '089-123-4567',
+            'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
+            'network_code' => 'true_dtac',
+            'plan_name' => 'เติมเงิน',
+            'sale_price' => 5000,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
+        PhoneNumber::query()->create([
+            'phone_number' => '0811112222',
+            'display_number' => '081-111-2222',
+            'service_type' => PhoneNumber::SERVICE_TYPE_POSTPAID,
+            'network_code' => 'true_dtac',
+            'plan_name' => PhoneNumber::PACKAGE_NAME,
+            'sale_price' => 699,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
+        $manager = User::factory()->create([
+            'username' => 'manager-number-filter',
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        $this->withSession($this->adminSession($manager))
+            ->get(route('admin.numbers', ['service_type' => PhoneNumber::SERVICE_TYPE_PREPAID]))
+            ->assertOk()
+            ->assertSee('Prepaid Numbers')
+            ->assertSee('089-123-4567')
+            ->assertDontSee('081-111-2222');
+    }
+
     /**
      * @return array<string, mixed>
      */
