@@ -1155,6 +1155,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                     }
 
                     $innerQuery->orWhereRaw('LOWER(network_code) like ?', ['%' . $searchTerm . '%'])
+                        ->orWhereRaw('CAST(number_sum AS CHAR) like ?', ['%' . $search . '%'])
                         ->orWhereRaw('LOWER(service_type) like ?', ['%' . $searchTerm . '%'])
                         ->orWhereRaw('LOWER(plan_name) like ?', ['%' . $searchTerm . '%'])
                         ->orWhereRaw('LOWER(status) like ?', ['%' . $searchTerm . '%'])
@@ -1194,6 +1195,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         $data = $request->validate([
             'display_number' => ['nullable', 'string', 'max:20'],
+            'number_sum' => ['nullable', 'integer', 'min:1', 'max:999'],
             'service_type' => ['required', 'string', Rule::in(PhoneNumber::serviceTypeOptions())],
             'network_code' => ['required', 'string', 'max:20'],
             'plan_name' => ['nullable', 'string', 'max:255'],
@@ -1209,6 +1211,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $networkCode = strtolower(trim((string) $data['network_code']));
         $networkCode = preg_replace('/[^a-z0-9]+/', '_', $networkCode) ?? '';
         $networkCode = trim($networkCode, '_');
+        $numberSum = isset($data['number_sum']) ? (int) $data['number_sum'] : null;
         $salePrice = (int) $data['sale_price'];
         $displayNumber = trim((string) ($data['display_number'] ?? ''));
         $planName = trim((string) ($data['plan_name'] ?? ''));
@@ -1233,6 +1236,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         DB::transaction(function () use (
             $phoneNumber,
             $displayNumber,
+            $numberSum,
             $serviceType,
             $networkCode,
             $planName,
@@ -1245,6 +1249,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         ) {
             $phoneNumber->fill([
                 'display_number' => $displayNumber !== '' ? $displayNumber : null,
+                'number_sum' => $numberSum,
                 'service_type' => $serviceType,
                 'network_code' => $networkCode !== '' ? $networkCode : 'true_dtac',
                 'plan_name' => $planName !== '' ? $planName : null,

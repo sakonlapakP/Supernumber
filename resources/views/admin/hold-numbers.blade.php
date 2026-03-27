@@ -98,6 +98,7 @@
         <thead>
           <tr>
             <th>เบอร์</th>
+            <th>ผลรวม</th>
             <th>ประเภท</th>
             <th>เครือข่าย</th>
             <th>ราคา / แพ็กเกจ</th>
@@ -112,6 +113,7 @@
                 <td>
                   <div class="admin-number">{{ $number->display_number ?: $number->phone_number }}</div>
                 </td>
+                <td>{{ $number->number_sum ?: '-' }}</td>
                 <td>{{ $number->service_type_label }}</td>
                 <td>{{ strtoupper(str_replace('_', '-', $number->network_code)) }}</td>
                 <td>{{ $number->payment_label }}</td>
@@ -128,11 +130,11 @@
               </tr>
             @endforeach
             <tr id="hold-numbers-empty-row" hidden>
-              <td colspan="6" class="admin-muted">ไม่พบเบอร์ที่ตรงกับคำค้นหา</td>
+              <td colspan="7" class="admin-muted">ไม่พบเบอร์ที่ตรงกับคำค้นหา</td>
             </tr>
           @else
             <tr>
-              <td colspan="6" class="admin-muted">ยังไม่มีเบอร์ที่อยู่ในสถานะ hold</td>
+              <td colspan="7" class="admin-muted">ยังไม่มีเบอร์ที่อยู่ในสถานะ hold</td>
             </tr>
           @endif
         </tbody>

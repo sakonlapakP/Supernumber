@@ -24,7 +24,7 @@
       <div>
         <h2 class="admin-feature-card__title">Search Numbers</h2>
         <p class="admin-feature-card__hint">
-          ค้นหาจากเบอร์, เครือข่าย, แพ็กเกจ, ราคา หรือสถานะ
+          ค้นหาจากเบอร์, ผลรวม, เครือข่าย, แพ็กเกจ, ราคา หรือสถานะ
           @if (($selectedServiceType ?? null) === \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID)
             | กำลังกรอง: รายเดือน
           @elseif (($selectedServiceType ?? null) === \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID)
@@ -59,6 +59,7 @@
         <thead>
           <tr>
             <th>เบอร์</th>
+            <th>ผลรวม</th>
             <th>ประเภท</th>
             <th>เครือข่าย</th>
             <th>ราคา / แพ็กเกจ</th>
@@ -72,6 +73,7 @@
               <td>
                 <div class="admin-number">{{ $number->display_number ?: $number->phone_number }}</div>
               </td>
+              <td>{{ $number->number_sum ?: '-' }}</td>
               <td>{{ $number->service_type_label }}</td>
               <td>{{ strtoupper(str_replace('_', '-', $number->network_code)) }}</td>
               <td>{{ $number->payment_label }}</td>
@@ -90,7 +92,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="6" class="admin-muted">
+              <td colspan="7" class="admin-muted">
                 {{ ($search ?? '') !== '' ? 'ไม่พบเบอร์ที่ตรงกับคำค้นหา' : 'ยังไม่มีข้อมูลเบอร์ในระบบ' }}
               </td>
             </tr>

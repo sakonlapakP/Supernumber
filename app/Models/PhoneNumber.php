@@ -23,6 +23,7 @@ class PhoneNumber extends Model
     protected $fillable = [
         'phone_number',
         'display_number',
+        'number_sum',
         'service_type',
         'network_code',
         'plan_name',

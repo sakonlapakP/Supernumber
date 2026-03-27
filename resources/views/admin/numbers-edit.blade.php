@@ -69,6 +69,11 @@
       </div>
 
       <div class="admin-field">
+        <label for="number_sum">ผลรวมเบอร์</label>
+        <input id="number_sum" class="admin-input" type="number" name="number_sum" min="1" max="999" step="1" value="{{ old('number_sum', $phoneNumber->number_sum) }}" placeholder="เช่น 36" />
+      </div>
+
+      <div class="admin-field">
         <label for="service_type">ประเภทเบอร์</label>
         <select id="service_type" class="admin-select" name="service_type" required>
           @foreach (\App\Models\PhoneNumber::serviceTypeOptions() as $serviceType)
