@@ -20,10 +20,13 @@
     @if ($articles->count())
       <div class="article-grid">
         @foreach ($articles as $article)
+          @php
+            $listingCoverPath = $article->cover_image_landscape_path ?: ($article->cover_image_path ?: $article->cover_image_square_path);
+          @endphp
           <article class="article-card">
-            @if ($article->cover_image_path)
+            @if ($listingCoverPath)
               <a href="{{ route('articles.show', $article->slug) }}" class="article-card__cover-link" aria-label="อ่านบทความ {{ $article->title }}">
-                <img src="{{ asset('storage/' . $article->cover_image_path) }}" alt="{{ $article->title }}" class="article-card__cover" loading="lazy" />
+                <img src="{{ asset('storage/' . $listingCoverPath) }}" alt="{{ $article->title }}" class="article-card__cover" loading="lazy" />
               </a>
             @endif
             <div class="article-card__body">

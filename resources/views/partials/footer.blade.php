@@ -18,7 +18,7 @@
         <li><a href="{{ route('home') }}">หน้าหลัก</a></li>
         <li><a href="{{ route('numbers.index') }}">เบอร์ทั้งหมด</a></li>
         <li><a href="#">คำทำนายละเอียด</a></li>
-        <li><a href="#">เลือกเบอร์ให้เหมาะกับคุณ</a></li>
+        <li><a href="{{ route('estimate') }}">เลือกเบอร์ให้เหมาะกับคุณ</a></li>
         <li><a href="#">ติดต่อเรา</a></li>
       </ul>
     </div>

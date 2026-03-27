@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
 @section('title', 'Supernumber | ผลการวิเคราะห์เบอร์')
-@section('meta_description', 'ผลการวิเคราะห์เบอร์มงคลแบบเข้าใจง่าย พร้อมแนวโน้มและเลขคู่ที่ส่งเสริมหรือควรระวัง')
+@section('meta_description', 'สรุปความหมายเบอร์มงคลแบบเข้าใจง่าย พร้อมจุดเด่นและคำแนะนำการใช้งาน')
 @section('og_title', 'Supernumber | ผลการวิเคราะห์เบอร์')
-@section('og_description', 'ผลการวิเคราะห์เบอร์มงคลแบบเข้าใจง่าย พร้อมแนวโน้มและเลขคู่ที่ส่งเสริมหรือควรระวัง')
+@section('og_description', 'สรุปความหมายเบอร์มงคลแบบเข้าใจง่าย พร้อมจุดเด่นและคำแนะนำการใช้งาน')
 @section('canonical', url('/evaluate'))
 @section('og_url', url('/evaluate'))
 @section('og_image', asset('images/evaluate_banner.jpg'))
@@ -11,44 +11,74 @@
 
 @section('content')
   @php
-    $rawPhone = request('phone');
-    $phone = preg_replace('/[^0-9]/', '', $rawPhone ?? '');
-    if ($phone === '') {
-        $phone = '0641234567';
+    $rawPhone = $phone ?? request('phone');
+    $number = preg_replace('/[^0-9]/', '', $rawPhone ?? '');
+    if ($number === '') {
+        $number = '0645391429';
     }
-    if (strlen($phone) < 7) {
-        $phone = '0641234567';
+    if (strlen($number) < 7) {
+        $number = '0645391429';
     }
-    $lastSeven = substr($phone, -7);
-    $endingPair = substr($lastSeven, -2);
-    $endingDigit = substr($lastSeven, -1);
-    $endingWarning = false;
-    $endingRuleLabel = null;
-    $endingReason = null;
-    if (in_array($endingPair, ['69', '96'], true)) {
-        $endingWarning = true;
-        $endingRuleLabel = '69 96';
-        $endingReason = 'ทำให้เก็บเงินไม่อยู่ ใช้เงินหมดง่าย และสิ่งที่คิดว่าจะได้มักหลุดมือ';
-    } elseif ($endingDigit === '2') {
-        $endingWarning = true;
-        $endingRuleLabel = '2';
-        $endingReason = 'อารมณ์อ่อนไหวง่าย ไม่หนักแน่น ส่งผลให้การตัดสินใจคลาดเคลื่อนได้บ่อย';
-    } elseif ($endingDigit === '8') {
-        $endingWarning = true;
-        $endingRuleLabel = '8';
-        $endingReason = 'อารมณ์ขึ้นลงไว ตัดสินใจเร็ว ขาดความยับยั้งชั่งใจ เสี่ยงต่อการตัดสินใจพลาด';
+    $phone = $number;
+    $currentNumberModel = \App\Models\PhoneNumber::query()
+        ->where('phone_number', $number)
+        ->first();
+    $currentPackage = $currentNumberModel?->normalized_package_price ?? 699;
+
+    $recommendedNumbers = \App\Models\PhoneNumber::query()
+        ->available()
+        ->where('network_code', 'true_dtac')
+        ->where('phone_number', '!=', $number)
+        ->inRandomOrder()
+        ->limit(12)
+        ->get();
+
+    if ($recommendedNumbers->count() < 12) {
+        $excludedNumbers = $recommendedNumbers
+            ->pluck('phone_number')
+            ->push($number)
+            ->all();
+        $extraNumbers = \App\Models\PhoneNumber::query()
+            ->available()
+            ->where('network_code', 'true_dtac')
+            ->whereNotIn('phone_number', $excludedNumbers)
+            ->inRandomOrder()
+            ->limit(12 - $recommendedNumbers->count())
+            ->get();
+        $recommendedNumbers = $recommendedNumbers->concat($extraNumbers);
     }
+
+    $lastSeven = substr($number, -7);
     $pairs = [];
     for ($i = 0; $i < 6; $i++) {
-        $pair = substr($lastSeven, $i, 2);
-        $pairs[] = [
+        $pairs[] = substr($lastSeven, $i, 2);
+    }
+    $groupedPairs = [];
+    foreach ($pairs as $index => $pair) {
+        $chars = str_split($pair);
+        sort($chars);
+        $key = implode('', $chars);
+        if (!isset($groupedPairs[$key])) {
+            $groupedPairs[$key] = [
+                'key' => $key,
+                'primary_pair' => $pair,
+                'first_index' => $index,
+            ];
+        }
+    }
+    usort($groupedPairs, fn ($a, $b) => $a['first_index'] <=> $b['first_index']);
+
+    $pairsWithScore = [];
+    for ($i = 0; $i < 6; $i++) {
+        $pair = $pairs[$i];
+        $pairsWithScore[] = [
             'pair' => $pair,
             'score' => $i < 5 ? 10 : 30,
             'position' => $i + 1,
         ];
     }
     $groupScores = [];
-    foreach ($pairs as $index => $data) {
+    foreach ($pairsWithScore as $index => $data) {
         $chars = str_split($data['pair']);
         sort($chars);
         $key = implode('', $chars);
@@ -75,16 +105,28 @@
         }
     }
     $topGroupKey = $topGroup['key'];
-    $topGroupScore = $topGroup['score'];
-    $topGroupLabel = $topGroupKey;
-    if (strlen($topGroupKey) === 2 && $topGroupKey[0] !== $topGroupKey[1]) {
-        $topGroupLabel = $topGroupKey . ' ' . strrev($topGroupKey);
-    }
+
     $statusLabelMap = [
-        'good' => 'เลขส่งเสริม',
+        'good' => 'ตรง',
         'bad' => 'เลขควรระวัง',
         'conditional' => 'ใช้ได้บางกรณี',
     ];
+    $statusClassMap = [
+        'good' => 'is-good',
+        'bad' => 'is-danger',
+        'conditional' => 'is-neutral',
+        'neutral' => 'is-neutral',
+    ];
+    $pairHeadingMap = [
+        'good' => 'คู่เลขดี',
+        'bad' => 'คู่เลขเสีย',
+        'conditional' => 'คู่เลขดีกับคู่เลขเสีย',
+        'neutral' => 'คู่เลขดีกับคู่เลขเสีย',
+    ];
+    $pairMeaningMap = \App\Models\PairMeaning::whereIn('pair', $pairs)
+        ->get()
+        ->keyBy('pair');
+
     $topMeaningRecord = \App\Models\PairMeaning::where('pair', $topGroupKey)->first();
     $topMeaning = [
         'title' => $topMeaningRecord ? ($statusLabelMap[$topMeaningRecord->status] ?? 'เลขทั่วไป') : 'เลขทั่วไป',
@@ -92,31 +134,96 @@
             ? ($topMeaningRecord->long_meaning ?: $topMeaningRecord->short_meaning)
             : 'คู่นี้มีคะแนนสูงสุดตามตำแหน่ง แนะนำประเมินร่วมกับคู่เลขอื่นเพื่อความแม่นยำ',
     ];
-    $statusClassMap = [
-        'good' => 'is-good',
-        'bad' => 'is-alert',
-        'conditional' => 'is-neutral',
+    $topMeaningSummary = trim($topMeaning['desc']);
+    if (($topMeaningRecord?->status ?? null) === 'good') {
+        $topMeaningSummary = preg_replace('/^เลขชุดนี้/u', 'ผู้ที่ใช้เบอร์นี้', $topMeaningSummary) ?? $topMeaningSummary;
+    } else {
+        $topMeaningSummary = $topMeaning['title'] . ' — ' . $topMeaningSummary;
+    }
+
+    $topicPairMap = [
+        'การสื่อสาร' => [
+            'good' => ['14', '22', '23', '24', '32', '41', '42', '44', '45', '46', '49', '54', '64'],
+            'bad' => ['03', '04', '05', '06', '12', '13', '18', '21', '27', '30', '31', '34', '40', '43', '48', '50', '57', '60', '72', '75', '81', '84'],
+            'conditional' => ['33', '47', '74'],
+        ],
+        'ความรัก/เสน่ห์' => [
+            'good' => ['22', '23', '24', '26', '28', '29', '32', '35', '36', '41', '42', '44', '46', '62', '63', '64', '66', '69'],
+            'bad' => ['00', '02', '06', '08', '12', '20', '21', '25', '27', '34', '37', '38', '43', '52', '57', '58', '60', '67', '68', '72', '73', '75', '76', '80', '83', '85', '86', '88'],
+            'conditional' => ['33'],
+        ],
+        'ผู้ใหญ่เมตตา/อุปถัมภ์' => [
+            'good' => ['14', '15', '22', '23', '24', '32', '35', '36', '41', '42', '45', '51', '53', '54', '55', '56', '59', '63', '65'],
+            'bad' => ['05', '13', '25', '31', '50', '52', '57', '75'],
+            'conditional' => [],
+        ],
+        'การงาน/ความก้าวหน้า' => [
+            'good' => ['14', '15', '16', '19', '23', '24', '26', '28', '29', '32', '35', '36', '39', '41', '42', '44', '45', '46', '49', '51', '53', '54', '55', '56', '59', '61', '62', '63', '64', '65'],
+            'bad' => ['00', '01', '02', '03', '04', '07', '08', '09', '10', '11', '12', '13', '17', '18', '20', '21', '25', '27', '30', '31', '34', '37', '38', '40', '43', '48', '52', '57', '58', '67', '68', '70', '71', '72', '73', '75', '76', '77', '80', '81', '83', '84', '85', '86', '88', '90'],
+            'conditional' => ['33', '47', '74'],
+        ],
+        'การเงิน/โชคลาภ' => [
+            'good' => ['28', '78', '82', '87'],
+            'bad' => ['01', '02', '04', '06', '10', '12', '18', '20', '21', '25', '27', '34', '37', '40', '43', '52', '58', '60', '67', '68', '72', '73', '76', '81', '85', '86', '88'],
+            'conditional' => ['47', '74'],
+        ],
+        'ภาวะผู้นำ/อำนาจ' => [
+            'good' => ['35', '53', '39', '93', '28', '82', '78', '87', '89', '98'],
+            'bad' => ['08', '80', '88'],
+            'conditional' => ['47', '74'],
+        ],
+        'ความคิดสร้างสรรค์/ไอเดีย' => [
+            'good' => ['19', '29', '69', '91', '92', '96'],
+            'bad' => [],
+            'conditional' => [],
+        ],
+        'สติปัญญา/การเรียนรู้' => [
+            'good' => ['14', '15', '41', '44', '45', '49', '51', '54', '55'],
+            'bad' => [],
+            'conditional' => [],
+        ],
+        'สุขภาพ/ความเครียด' => [
+            'good' => ['15', '24', '29', '42', '45', '51', '54', '59', '69', '92', '95', '99'],
+            'bad' => ['00', '01', '02', '03', '04', '05', '06', '07', '09', '10', '11', '12', '13', '17', '20', '21', '25', '27', '30', '31', '34', '37', '40', '43', '48', '50', '52', '57', '58', '60', '70', '71', '72', '73', '75', '77', '84', '85', '90'],
+            'conditional' => ['47', '74'],
+        ],
+        'ระวังอุบัติเหตุ/เหตุฉุกเฉิน' => [
+            'good' => [],
+            'bad' => ['13', '31', '37', '48', '73', '84'],
+            'conditional' => [],
+        ],
+        'ระวังอารมณ์/ความใจร้อน' => [
+            'good' => [],
+            'bad' => ['00', '01', '03', '09', '10', '11', '12', '13', '17', '18', '21', '30', '31', '38', '71', '81', '83', '88', '90'],
+            'conditional' => ['33'],
+        ],
+        'ศาสตร์เร้นลับ/ลางสังหรณ์' => [
+            'good' => ['49', '59', '79', '89', '94', '95', '97', '98', '99'],
+            'bad' => ['00', '09', '90'],
+            'conditional' => [],
+        ],
     ];
-    $pairMeaningMap = \App\Models\PairMeaning::whereIn('pair', collect($pairs)->pluck('pair'))
-        ->get()
-        ->keyBy('pair');
-    $groupedPairs = [];
-    foreach ($pairs as $index => $data) {
-        $chars = str_split($data['pair']);
-        sort($chars);
-        $key = implode('', $chars);
-        if (!isset($groupedPairs[$key])) {
-            $groupedPairs[$key] = [
-                'key' => $key,
-                'primary_pair' => $data['pair'],
-                'first_index' => $index,
-            ];
+
+    $groupKeys = array_values(array_unique(array_column($groupedPairs, 'key')));
+    $summaryTags = [];
+    foreach ($topicPairMap as $topic => $topicPairs) {
+        if (count(array_intersect($groupKeys, $topicPairs['bad'])) > 0) {
+            $summaryTags[] = ['label' => $topic, 'class' => 'badge-alert'];
+            continue;
+        }
+        if (count(array_intersect($groupKeys, $topicPairs['good'])) > 0) {
+            $summaryTags[] = ['label' => $topic, 'class' => 'badge-good'];
+            continue;
+        }
+        if (count(array_intersect($groupKeys, $topicPairs['conditional'])) > 0) {
+            $summaryTags[] = ['label' => $topic, 'class' => 'badge-neutral'];
         }
     }
-    usort($groupedPairs, fn ($a, $b) => $a['first_index'] <=> $b['first_index']);
+
     $pairCards = [];
-    $hasBadPair = $endingWarning;
-    $pairCardsData = [];
+    $hasBadPair = false;
+    $warningThemePairs = ['33', '47', '74'];
+    $hasWarningPair = count(array_intersect($pairs, $warningThemePairs)) > 0;
     foreach ($groupedPairs as $group) {
         $label = $group['key'];
         if (strlen($label) === 2 && $label[0] !== $label[1]) {
@@ -129,69 +236,124 @@
         if ($status === 'bad') {
             $hasBadPair = true;
         }
-        $desc = $meaning?->short_meaning ?? 'ยังไม่มีข้อมูลความหมายแบบสั้นสำหรับคู่นี้';
-        $pairCardsData[] = [
+        $pairCards[] = [
             'pair' => $label,
-            'key' => $group['key'],
             'status' => $status,
             'label' => $statusLabelMap[$status] ?? 'เลขทั่วไป',
-            'desc' => $desc,
+            'heading' => $pairHeadingMap[$status] ?? 'คู่เลขดีกับคู่เลขเสีย',
+            'desc' => $meaning?->short_meaning ?? 'ยังไม่มีข้อมูลความหมายแบบสั้นสำหรับคู่นี้',
+            'class' => $statusClassMap[$status] ?? 'is-neutral',
         ];
     }
-    $badCardClass = $hasBadPair ? 'is-danger' : 'is-alert';
-    foreach ($pairCardsData as $card) {
-        $cardClass = $card['status'] === 'bad'
-            ? $badCardClass
-            : ($statusClassMap[$card['status']] ?? 'is-neutral');
-        $pairCards[] = $card + ['class' => $cardClass];
+
+    $themeState = $hasBadPair ? 'danger' : ($hasWarningPair ? 'warning' : 'good');
+    $heroClass = match ($themeState) {
+        'danger' => 'evaluate-hero evaluate-hero--danger',
+        'warning' => 'evaluate-hero evaluate-hero--warning',
+        default => 'evaluate-hero',
+    };
+    $resultsClass = match ($themeState) {
+        'danger' => 'evaluate-results evaluate-results--danger',
+        'warning' => 'evaluate-results evaluate-results--warning',
+        default => 'evaluate-results',
+    };
+    $summaryNumberClass = match ($themeState) {
+        'danger' => 'summary-number summary-number--danger',
+        'warning' => 'summary-number summary-number--warning',
+        default => 'summary-number',
+    };
+    $ctaClass = match ($themeState) {
+        'danger' => 'evaluate-cta evaluate-cta--danger',
+        'warning' => 'evaluate-cta evaluate-cta--warning',
+        default => 'evaluate-cta',
+    };
+    $heroKicker = match ($themeState) {
+        'danger' => 'รายงานความเสี่ยง',
+        'warning' => 'รายงานเฝ้าระวัง',
+        default => 'ผลการวิเคราะห์',
+    };
+    $summaryHeading = match ($themeState) {
+        'danger' => 'เบอร์นี้มีคู่เลขที่ควรระวัง',
+        'warning' => 'เบอร์นี้มีคู่เลขใช้ได้บางกรณี',
+        default => 'เบอร์นี้ดี',
+    };
+    $recommendHeading = match ($themeState) {
+        'danger' => 'เบอร์แนะนำเพื่อปรับสมดุล',
+        'warning' => 'เบอร์แนะนำเพื่อเสริมสมดุล',
+        default => 'เลือกเบอร์อื่นเพิ่มเติม',
+    };
+    $ctaHeading = match ($themeState) {
+        'danger' => 'ต้องการให้ผู้เชี่ยวชาญช่วยวิเคราะห์แบบละเอียด?',
+        'warning' => 'อยากได้เบอร์ที่สมดุลและนิ่งขึ้น?',
+        default => 'อยากได้เบอร์ที่ตรงกับเป้าหมายมากขึ้น?',
+    };
+    $ctaDescription = match ($themeState) {
+        'danger' => 'ให้ทีม Supernumber คัดเบอร์ใหม่ที่เหมาะกับคุณ ลดความเสี่ยงและเพิ่มโอกาสในชีวิต',
+        'warning' => 'ให้ทีม Supernumber ช่วยคัดเบอร์ที่บาลานซ์กว่าเดิม ลดจุดผันผวนและเพิ่มความนิ่งในการใช้งาน',
+        default => 'ให้ทีม Supernumber ช่วยคัดเบอร์มงคลที่ตอบโจทย์งาน เงิน และความรักของคุณ',
+    };
+    $displayTags = $summaryTags;
+    if ($themeState === 'danger') {
+        $displayTags = collect($summaryTags)
+            ->filter(fn ($tag) => ($tag['class'] ?? null) === 'badge-alert')
+            ->unique('label')
+            ->values()
+            ->all();
     }
   @endphp
-  <section class="evaluate-hero{{ $hasBadPair ? ' evaluate-hero--danger' : '' }}" aria-labelledby="evaluate-title">
+
+  <section class="{{ $heroClass }}" aria-labelledby="evaluate-title">
     <div class="evaluate-overlay"></div>
     <div class="container evaluate-hero__content">
-      <div class="evaluate-hero__text">
-        <p class="evaluate-kicker">ผลการวิเคราะห์</p>
-        <h1 id="evaluate-title">ผลการวิเคราะห์เบอร์มงคลของคุณ</h1>
-        <p>
-          วิเคราะห์เสริมพลังให้ชัดเจน เข้าใจง่าย พร้อมคำแนะนำที่เหมาะกับคุณโดยทีม Supernumber
+      <div class="good-number-hero__text">
+        <p class="evaluate-kicker">{{ $heroKicker }}</p>
+        <h1 id="evaluate-title">
+          <span class="good-number-hero__title-text">ความหมายของหมายเลข</span>
+          <span class="good-number-hero__title-number">{{ $number }}</span>
+        </h1>
+        <p class="good-number-hero__lead">
+          อ่านความหมายของเบอร์ พร้อมคำแนะนำการใช้งานของตัวเลขให้เหมาะกับจังหวะของชีวิตและความต้องการของคุณ
         </p>
       </div>
     </div>
   </section>
 
-  <section class="evaluate-results{{ $hasBadPair ? ' evaluate-results--danger' : '' }}">
+  <section class="{{ $resultsClass }}">
     <div class="container">
       <div class="evaluate-summary">
-        <div class="summary-number{{ $hasBadPair ? ' summary-number--danger' : '' }}">
-          <span>หมายเลขมือถือ</span>
-          <strong>{{ $phone }}</strong>
-          <small>ผลวิเคราะห์โดย Supernumber</small>
+        <div class="{{ $summaryNumberClass }}">
+          <span>หมายเลขที่คุณเลือก</span>
+          <strong>{{ $number }}</strong>
+          <a class="summary-order-btn" href="{{ route('book', ['number' => $number, 'package' => $currentPackage]) }}">สั่งซื้อ</a>
         </div>
         <div class="summary-body">
-          <h2>คู่เลขเด่นคะแนนสูงสุด: {{ $topGroupLabel }} ({{ $topGroupScore }} คะแนน)</h2>
-          <p>
-            {{ $topMeaning['title'] }} — {{ $topMeaning['desc'] }}
-          </p>
+          <h2>{{ $summaryHeading }}</h2>
+          <p>{{ $topMeaningSummary }}</p>
           <div class="summary-tags">
-            <span class="badge badge-good">เลขส่งเสริม</span>
-            <span class="badge badge-alert">เลขควรระวัง</span>
-            <span class="badge badge-neutral">แนะนำปรับสมดุล</span>
+            @foreach ($displayTags as $tag)
+              <span class="badge {{ $tag['class'] }}">{{ $tag['label'] }}</span>
+            @endforeach
           </div>
         </div>
       </div>
 
-      @if ($hasBadPair)
+      @if ($themeState === 'danger')
         <div class="danger-banner">
           <div class="danger-icon">!</div>
           <div>
             <h3>คำเตือนระดับสูง</h3>
             <p>
-              @if ($endingWarning)
-                เลข {{ $endingRuleLabel }} ไม่ควรอยู่ท้ายสุดของเบอร์ — {{ $endingReason }}
-                ควรพิจารณาปรับสมดุลโดยผู้เชี่ยวชาญ
-              @else
-                ระบบพบอย่างน้อย 1 คู่เลขที่จัดอยู่ในกลุ่มควรระวังสูง แนะนำให้พิจารณาใช้งานอย่างระมัดระวังและปรับสมดุลโดยผู้เชี่ยวชาญ
-              @endif
+              พบคู่เลขเสียอย่างน้อย 1 คู่ในเบอร์นี้ จึงเปลี่ยนการแสดงผลเป็นธีมเตือนเพื่อเน้นจุดที่ควรระวังและการปรับสมดุล
+            </p>
+          </div>
+        </div>
+      @elseif ($themeState === 'warning')
+        <div class="warning-banner">
+          <div class="danger-icon">!</div>
+          <div>
+            <h3>คู่เลขต้องดูจังหวะการใช้งาน</h3>
+            <p>
+              พบคู่เลข 47, 74 หรือ 33 ในเบอร์นี้ จึงใช้ธีมเหลืองเพื่อบอกว่าเป็นเลขที่ใช้ได้บางกรณี ควรดูเป้าหมายและบริบทการใช้งานร่วมด้วย
             </p>
           </div>
         </div>
@@ -199,16 +361,16 @@
 
       <div class="evaluate-highlight">
         <div class="highlight-card">
-          <h3>ภาพรวมการงาน</h3>
-          <p>การเจรจาโดดเด่น มีโอกาสปิดงานเร็ว เหมาะกับงานขายและงานบริการ</p>
+          <h3>การงานและธุรกิจ</h3>
+          <p>ช่วยให้ปิดดีลง่ายขึ้น เสริมพลังการตัดสินใจ และทำให้ทีมเชื่อมั่นในทิศทางของคุณ</p>
         </div>
         <div class="highlight-card">
-          <h3>ภาพรวมการเงิน</h3>
-          <p>รายรับเข้ามาเป็นระยะ แต่ควรควบคุมรายจ่ายกะทันหันและเลี่ยงการลงทุนเสี่ยง</p>
+          <h3>การเงินและโชคลาภ</h3>
+          <p>รายรับเข้ามาเป็นจังหวะดี เหมาะกับการเริ่มโปรเจกต์ใหม่และขยายฐานลูกค้า</p>
         </div>
         <div class="highlight-card">
-          <h3>ภาพรวมความรัก</h3>
-          <p>เสน่ห์ดี มีคนเข้ามา แต่ควรสื่อสารให้ชัดเจน ลดการตีความผิดพลาด</p>
+          <h3>ความรักและความสัมพันธ์</h3>
+          <p>เสน่ห์นุ่มนวล สื่อสารตรงใจ ลดความเข้าใจผิด เหมาะกับการปรับความสัมพันธ์ให้มั่นคง</p>
         </div>
       </div>
 
@@ -216,118 +378,36 @@
         @foreach ($pairCards as $card)
           <article class="pair-card {{ $card['class'] }}">
             <div class="pair-score">{{ $card['pair'] }}</div>
-            <h4>{{ $card['label'] }}</h4>
+            <h4>{{ $card['heading'] }}</h4>
             <p>{{ $card['desc'] }}</p>
           </article>
         @endforeach
       </div>
 
       <section class="recommend-section" aria-labelledby="recommend-title">
-        <h2 id="recommend-title">เบอร์แนะนำสำหรับคุณ</h2>
-        <div class="recommend-grid">
-          <article class="number-card">
-            <div class="card-top">0646495945</div>
-            <div class="card-body">
-              <div class="card-meta-stack">
-                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
-                <span class="card-meta-plan">โปรโมชั่น 4G+ Super Smart</span>
-                <span>1499 ขึ้นไป</span>
+        <h2 id="recommend-title">{{ $recommendHeading }}</h2>
+        <div class="card-grid">
+          @forelse ($recommendedNumbers as $recommended)
+            <article class="number-card">
+              <div class="card-top">{{ $recommended->display_number ?: $recommended->phone_number }}</div>
+              <div class="card-body">
+                <div class="card-meta-stack">
+                  <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
+                  <span class="card-meta-plan">{{ $recommended->package_label }}</span>
+                </div>
               </div>
-            </div>
-            <a class="card-btn" href="{{ route('good-number', ['number' => '0646495945']) }}">ดูความหมาย</a>
-            <a class="card-btn card-btn--buy" href="{{ route('book', ['number' => '0646495945', 'package' => 1499]) }}">สั่งซื้อ</a>
-          </article>
-          <article class="number-card">
-            <div class="card-top">0645164549</div>
-            <div class="card-body">
-              <div class="card-meta-stack">
-                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
-                <span class="card-meta-plan">โปรโมชั่น 4G+ Super Smart</span>
-                <span>699 ขึ้นไป</span>
-              </div>
-            </div>
-            <a class="card-btn" href="{{ route('good-number', ['number' => '0645164549']) }}">ดูความหมาย</a>
-            <a class="card-btn card-btn--buy" href="{{ route('book', ['number' => '0645164549', 'package' => 699]) }}">สั่งซื้อ</a>
-          </article>
-          <article class="number-card">
-            <div class="card-top">0645953639</div>
-            <div class="card-body">
-              <div class="card-meta-stack">
-                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
-                <span class="card-meta-plan">โปรโมชั่น 4G+ Super Smart</span>
-                <span>1499 ขึ้นไป</span>
-              </div>
-            </div>
-            <a class="card-btn" href="{{ route('good-number', ['number' => '0645953639']) }}">ดูความหมาย</a>
-            <a class="card-btn card-btn--buy" href="{{ route('book', ['number' => '0645953639', 'package' => 1499]) }}">สั่งซื้อ</a>
-          </article>
-          <article class="number-card">
-            <div class="card-top">0645636463</div>
-            <div class="card-body">
-              <div class="card-meta-stack">
-                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
-                <span class="card-meta-plan">โปรโมชั่น 4G+ Super Smart</span>
-                <span>1099 ขึ้นไป</span>
-              </div>
-            </div>
-            <a class="card-btn" href="{{ route('good-number', ['number' => '0645636463']) }}">ดูความหมาย</a>
-            <a class="card-btn card-btn--buy" href="{{ route('book', ['number' => '0645636463', 'package' => 1099]) }}">สั่งซื้อ</a>
-          </article>
-          <article class="number-card">
-            <div class="card-top">0644697923</div>
-            <div class="card-body">
-              <div class="card-meta-stack">
-                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
-                <span class="card-meta-plan">โปรโมชั่น 4G+ Super Smart</span>
-                <span>699 ขึ้นไป</span>
-              </div>
-            </div>
-            <a class="card-btn" href="{{ route('good-number', ['number' => '0644697923']) }}">ดูความหมาย</a>
-            <a class="card-btn card-btn--buy" href="{{ route('book', ['number' => '0644697923', 'package' => 699]) }}">สั่งซื้อ</a>
-          </article>
-          <article class="number-card">
-            <div class="card-top">0646396926</div>
-            <div class="card-body">
-              <div class="card-meta-stack">
-                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
-                <span class="card-meta-plan">โปรโมชั่น 4G+ Super Smart</span>
-                <span>1099 ขึ้นไป</span>
-              </div>
-            </div>
-            <a class="card-btn" href="{{ route('good-number', ['number' => '0646396926']) }}">ดูความหมาย</a>
-            <a class="card-btn card-btn--buy" href="{{ route('book', ['number' => '0646396926', 'package' => 1099]) }}">สั่งซื้อ</a>
-          </article>
-          <article class="number-card">
-            <div class="card-top">0645635964</div>
-            <div class="card-body">
-              <div class="card-meta-stack">
-                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
-                <span class="card-meta-plan">โปรโมชั่น 4G+ Super Smart</span>
-                <span>1099 ขึ้นไป</span>
-              </div>
-            </div>
-            <a class="card-btn" href="{{ route('good-number', ['number' => '0645635964']) }}">ดูความหมาย</a>
-            <a class="card-btn card-btn--buy" href="{{ route('book', ['number' => '0645635964', 'package' => 1099]) }}">สั่งซื้อ</a>
-          </article>
-          <article class="number-card">
-            <div class="card-top">0645632656</div>
-            <div class="card-body">
-              <div class="card-meta-stack">
-                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
-                <span class="card-meta-plan">โปรโมชั่น 4G+ Super Smart</span>
-                <span>1099 ขึ้นไป</span>
-              </div>
-            </div>
-            <a class="card-btn" href="{{ route('good-number', ['number' => '0645632656']) }}">ดูความหมาย</a>
-            <a class="card-btn card-btn--buy" href="{{ route('book', ['number' => '0645632656', 'package' => 1099]) }}">สั่งซื้อ</a>
-          </article>
+              <a class="card-btn card-btn--buy" href="{{ route('evaluate', ['phone' => $recommended->phone_number]) }}">สั่งซื้อ</a>
+            </article>
+          @empty
+            <p class="numbers-empty">ยังไม่มีเบอร์แนะนำในระบบตอนนี้</p>
+          @endforelse
         </div>
       </section>
 
-      <div class="evaluate-cta{{ $hasBadPair ? ' evaluate-cta--danger' : '' }}">
+      <div class="{{ $ctaClass }}">
         <div>
-          <h3>อยากได้เบอร์ที่เหมาะกับคุณมากขึ้น?</h3>
-          <p>ให้ทีม Supernumber ช่วยคัดเลขมงคลที่ส่งเสริมชีวิตและงานของคุณได้ทันที</p>
+          <h3>{{ $ctaHeading }}</h3>
+          <p>{{ $ctaDescription }}</p>
         </div>
         <a class="cta-btn" href="{{ route('home') }}">กลับไปเลือกเบอร์</a>
       </div>

@@ -15,7 +15,7 @@
   </div>
 
   @if (session('status_message'))
-    <div class="admin-alert admin-alert--success">{{ session('status_message') }}</div>
+    <div class="admin-alert admin-alert--success" style="margin-bottom: 18px;">{{ session('status_message') }}</div>
   @endif
 
   @if ($errors->any())

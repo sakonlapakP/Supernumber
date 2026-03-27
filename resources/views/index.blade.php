@@ -8,6 +8,7 @@
 @section('og_url', url('/'))
 @section('og_image', asset('images/home_banner.jpg'))
 @section('preload_image', asset('images/home_banner.jpg'))
+@section('body_class', 'home-scale-soft')
 
 @section('content')
   <section class="hero" aria-labelledby="hero-title">
@@ -24,9 +25,27 @@
         <form class="hero-form" action="{{ route('evaluate') }}" method="get">
           <label class="hero-label" for="phone">กรอกเบอร์มือถือ</label>
           <div class="hero-input">
-            <input id="phone" name="phone" type="tel" placeholder="0XX-XXX-XXXX" />
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              inputmode="numeric"
+              autocomplete="tel-national"
+              placeholder="0xx123456"
+              pattern="[0-9]{10}"
+              minlength="10"
+              maxlength="10"
+              value="{{ old('phone') }}"
+              aria-describedby="phone-help{{ $errors->has('phone') ? ' phone-error' : '' }}"
+              @error('phone') aria-invalid="true" @enderror
+              required
+            />
             <button type="submit">วิเคราะห์</button>
           </div>
+          <p class="hero-help" id="phone-help">กรอกได้เฉพาะตัวเลข 10 หลัก</p>
+          @error('phone')
+            <p class="hero-error" id="phone-error">{{ $message }}</p>
+          @enderror
         </form>
       </div>
     </div>
@@ -42,23 +61,32 @@
               'phone_number' => $number->phone_number,
               'display_number' => $number->display_number ?: $number->phone_number,
               'package_label' => $number->package_label,
-              'good_number_url' => route('good-number', ['number' => $number->phone_number]),
+              'good_number_url' => route('evaluate', ['phone' => $number->phone_number]),
           ];
       })->values();
       $initialNumbers = $numbersPayload->take($pageSize);
       $totalPages = max(1, (int) ceil($numbersPayload->count() / $pageSize));
-      $numbersAllUrl = route('numbers.index');
+      $startPage = 1;
+      $endPage = min($totalPages, 3);
     @endphp
     <div class="container">
-      <div class="section-title">
-        <h2 id="numbers-title">เบอร์มงคลชีวิต</h2>
-        <p>คัดสรรเบอร์เด่นพร้อมพลังงานเหมาะกับคุณ</p>
+      <div class="section-title numbers-catalog-title">
+        <div class="numbers-catalog-title__content">
+          <h2 id="numbers-title">เบอร์มงคลชีวิต</h2>
+          <p>คัดสรรเบอร์เด่นพร้อมพลังงานเหมาะกับคุณ</p>
+        </div>
+        @if ($numbersPayload->isNotEmpty())
+          <div class="numbers-view-toggle" id="home-view-toggle" role="group" aria-label="เลือกรูปแบบการแสดงผลหน้าแรก">
+            <button class="numbers-view-toggle__button" type="button" data-view="list" aria-pressed="false">List</button>
+            <button class="numbers-view-toggle__button" type="button" data-view="grid" aria-pressed="false">Grid</button>
+          </div>
+        @endif
       </div>
 
       @if ($numbersPayload->isNotEmpty())
-        <div class="card-grid" id="home-card-grid">
+        <div class="card-grid home-card-grid" id="home-card-grid" data-view="grid">
           @foreach ($initialNumbers as $number)
-            <article class="number-card">
+            <article class="number-card number-card--home">
               <div class="card-top">{{ $number['display_number'] }}</div>
               <div class="card-body">
                 <div class="card-meta-stack">
@@ -72,9 +100,20 @@
         </div>
 
         <nav class="numbers-pagination home-pagination" id="home-pagination" aria-label="เปลี่ยนหน้ารายการเบอร์" @if ($numbersPayload->count() <= 16) hidden @endif>
-          <button class="numbers-pagination__link" id="home-prev" type="button">ก่อนหน้า</button>
-          <span class="numbers-pagination__link is-active" id="home-page-info">1 / {{ $totalPages }}</span>
-          <button class="numbers-pagination__link" id="home-next" type="button">ดูต่อไป</button>
+          <span class="numbers-pagination__link is-disabled">ก่อนหน้า</span>
+          @for ($page = $startPage; $page <= $endPage; $page++)
+            @if ($page === 1)
+              <span class="numbers-pagination__link is-active" aria-current="page">{{ $page }}</span>
+            @else
+              <button class="numbers-pagination__link" type="button" data-page="{{ $page }}">{{ $page }}</button>
+            @endif
+          @endfor
+
+          @if ($totalPages > 1)
+            <button class="numbers-pagination__link" type="button" data-action="next">ถัดไป</button>
+          @else
+            <span class="numbers-pagination__link is-disabled">ถัดไป</span>
+          @endif
         </nav>
       @else
         <p class="numbers-empty">ยังไม่มีเบอร์พร้อมขายในระบบตอนนี้</p>
@@ -82,20 +121,19 @@
     </div>
   </section>
 
-  @if ($numbersPayload->count() > 16)
+  @if ($numbersPayload->isNotEmpty())
     <script>
       (() => {
         const numbers = @json($numbersPayload);
         const pageSize = {{ $pageSize }};
         const totalPages = Math.max(1, Math.ceil(numbers.length / pageSize));
-        const allNumbersUrl = @json($numbersAllUrl);
 
         const grid = document.getElementById("home-card-grid");
-        const prevBtn = document.getElementById("home-prev");
-        const nextBtn = document.getElementById("home-next");
-        const pageInfo = document.getElementById("home-page-info");
+        const pager = document.getElementById("home-pagination");
+        const toggle = document.getElementById("home-view-toggle");
+        const storageKey = "home-numbers-view";
 
-        if (!grid || !prevBtn || !nextBtn || !pageInfo) return;
+        if (!grid || !toggle) return;
 
         let currentPage = 1;
 
@@ -118,7 +156,7 @@
           });
 
         const renderCard = (number) => `
-          <article class="number-card">
+          <article class="number-card number-card--home">
             <div class="card-top">${escapeHtml(number.display_number)}</div>
             <div class="card-body">
               <div class="card-meta-stack">
@@ -130,19 +168,34 @@
           </article>
         `;
 
-        const updatePagerState = () => {
-          const isFirst = currentPage <= 1;
-          const isLast = currentPage >= totalPages;
+        const renderPager = () => {
+          if (!pager) return;
 
-          prevBtn.disabled = isFirst;
-          nextBtn.disabled = false;
+          const startPage = Math.max(1, currentPage - 2);
+          const endPage = Math.min(totalPages, currentPage + 2);
+          const controls = [];
 
-          prevBtn.classList.toggle("is-disabled", isFirst);
-          nextBtn.classList.toggle("is-disabled", false);
+          if (currentPage <= 1) {
+            controls.push('<span class="numbers-pagination__link is-disabled">ก่อนหน้า</span>');
+          } else {
+            controls.push('<button class="numbers-pagination__link" type="button" data-action="prev">ก่อนหน้า</button>');
+          }
 
-          nextBtn.textContent = isLast ? "ดูเบอร์ทั้งหมด" : "ดูต่อไป";
+          for (let page = startPage; page <= endPage; page += 1) {
+            if (page === currentPage) {
+              controls.push(`<span class="numbers-pagination__link is-active" aria-current="page">${page}</span>`);
+            } else {
+              controls.push(`<button class="numbers-pagination__link" type="button" data-page="${page}">${page}</button>`);
+            }
+          }
 
-          pageInfo.textContent = `${currentPage} / ${totalPages}`;
+          if (currentPage >= totalPages) {
+            controls.push('<span class="numbers-pagination__link is-disabled">ถัดไป</span>');
+          } else {
+            controls.push('<button class="numbers-pagination__link" type="button" data-action="next">ถัดไป</button>');
+          }
+
+          pager.innerHTML = controls.join("");
         };
 
         const renderPage = (page) => {
@@ -150,24 +203,88 @@
           const start = (currentPage - 1) * pageSize;
           const pageItems = numbers.slice(start, start + pageSize);
           grid.innerHTML = pageItems.map(renderCard).join("");
-          updatePagerState();
+          renderPager();
         };
 
-        prevBtn.addEventListener("click", () => {
-          if (currentPage > 1) renderPage(currentPage - 1);
-        });
+        const buttons = Array.from(toggle.querySelectorAll("[data-view]"));
 
-        nextBtn.addEventListener("click", () => {
-          if (currentPage < totalPages) {
-            renderPage(currentPage + 1);
-            return;
+        const applyView = (view) => {
+          const normalizedView = view === "list" ? "list" : "grid";
+          grid.dataset.view = normalizedView;
+
+          buttons.forEach((button) => {
+            const isActive = button.dataset.view === normalizedView;
+            button.classList.toggle("is-active", isActive);
+            button.setAttribute("aria-pressed", isActive ? "true" : "false");
+          });
+        };
+
+        try {
+          const savedView = localStorage.getItem(storageKey);
+          applyView(savedView === "list" ? "list" : "grid");
+        } catch (error) {
+          applyView("grid");
+        }
+
+        toggle.addEventListener("click", (event) => {
+          const target = event.target.closest("[data-view]");
+          if (!target) return;
+
+          applyView(target.dataset.view);
+
+          try {
+            localStorage.setItem(storageKey, target.dataset.view);
+          } catch (error) {
+            // Ignore storage errors and keep the in-memory state.
           }
-
-          window.location.href = allNumbersUrl;
         });
+
+        if (pager) {
+          pager.addEventListener("click", (event) => {
+            const control = event.target.closest("[data-page], [data-action]");
+            if (!control) return;
+
+            const targetPage = Number.parseInt(control.dataset.page || "", 10);
+            if (Number.isFinite(targetPage)) {
+              renderPage(targetPage);
+              return;
+            }
+
+            if (control.dataset.action === "prev" && currentPage > 1) {
+              renderPage(currentPage - 1);
+              return;
+            }
+
+            if (control.dataset.action === "next" && currentPage < totalPages) {
+              renderPage(currentPage + 1);
+            }
+          });
+        }
 
         renderPage(1);
       })();
     </script>
   @endif
+
+  <script>
+    (() => {
+      const phoneInput = document.getElementById("phone");
+
+      if (!phoneInput) return;
+
+      const syncPhoneValue = () => {
+        const digits = (phoneInput.value || "").replace(/\D+/g, "").slice(0, 10);
+        phoneInput.value = digits;
+        phoneInput.setCustomValidity(
+          digits.length === 10 ? "" : "กรุณากรอกเบอร์มือถือให้ครบ 10 หลัก"
+        );
+      };
+
+      phoneInput.addEventListener("input", syncPhoneValue);
+      phoneInput.addEventListener("blur", syncPhoneValue);
+      phoneInput.addEventListener("invalid", syncPhoneValue);
+
+      syncPhoneValue();
+    })();
+  </script>
 @endsection

@@ -17,7 +17,7 @@ class NumberSearchTest extends TestCase
             'network_code' => 'true_dtac',
             'plan_name' => 'Promo A',
             'sale_price' => 100,
-            'status' => 'available',
+            'status' => PhoneNumber::STATUS_ACTIVE,
         ]);
 
         PhoneNumber::create([
@@ -25,7 +25,7 @@ class NumberSearchTest extends TestCase
             'network_code' => 'true_dtac',
             'plan_name' => 'Promo A',
             'sale_price' => 100,
-            'status' => 'available',
+            'status' => PhoneNumber::STATUS_ACTIVE,
         ]);
 
         PhoneNumber::create([
@@ -33,7 +33,7 @@ class NumberSearchTest extends TestCase
             'network_code' => 'true_dtac',
             'plan_name' => 'Promo A',
             'sale_price' => 100,
-            'status' => 'available',
+            'status' => PhoneNumber::STATUS_ACTIVE,
         ]);
 
         PhoneNumber::create([
@@ -60,7 +60,7 @@ class NumberSearchTest extends TestCase
             'network_code' => 'true_dtac',
             'plan_name' => 'Promo A',
             'sale_price' => 100,
-            'status' => 'available',
+            'status' => PhoneNumber::STATUS_ACTIVE,
         ]);
 
         PhoneNumber::create([
@@ -68,7 +68,7 @@ class NumberSearchTest extends TestCase
             'network_code' => 'true_dtac',
             'plan_name' => 'Promo B',
             'sale_price' => 110,
-            'status' => 'available',
+            'status' => PhoneNumber::STATUS_ACTIVE,
         ]);
 
         PhoneNumber::create([
@@ -76,7 +76,7 @@ class NumberSearchTest extends TestCase
             'network_code' => 'true_dtac',
             'plan_name' => 'Promo A',
             'sale_price' => 90,
-            'status' => 'available',
+            'status' => PhoneNumber::STATUS_ACTIVE,
         ]);
 
         $response = $this->get('/numbers?prefix=089&p5=3&p10=9&plan=Promo%20A');
@@ -86,5 +86,59 @@ class NumberSearchTest extends TestCase
         $response->assertViewHas('numbers', function ($numbers) {
             return $numbers->getCollection()->pluck('phone_number')->all() === ['0890300009'];
         });
+    }
+
+    public function test_it_lists_distinct_plan_labels_from_database(): void
+    {
+        PhoneNumber::create([
+            'phone_number' => '0810000001',
+            'network_code' => 'true_dtac',
+            'plan_name' => 'True Super Value',
+            'sale_price' => 699,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
+        PhoneNumber::create([
+            'phone_number' => '0810000002',
+            'network_code' => 'true_dtac',
+            'plan_name' => 'True Super Value',
+            'sale_price' => 699,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
+        PhoneNumber::create([
+            'phone_number' => '0810000003',
+            'network_code' => 'true_dtac',
+            'plan_name' => 'True Super Value',
+            'sale_price' => 1099,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->get('/numbers');
+
+        $response->assertOk();
+        $response->assertViewHas('plans', function ($plans) {
+            return $plans->values()->all() === [
+                'True Super Value 699',
+                'True Super Value 1099',
+            ];
+        });
+        $response->assertSee('True Super Value 699');
+    }
+
+    public function test_book_page_uses_promotion_name_from_database(): void
+    {
+        PhoneNumber::create([
+            'phone_number' => '0644514194',
+            'network_code' => 'true_dtac',
+            'plan_name' => 'True Super Value',
+            'sale_price' => 699,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->get('/book?number=0644514194&package=699');
+
+        $response->assertOk();
+        $response->assertSee('ชื่อโปร: True Super Value 699');
     }
 }

@@ -95,7 +95,14 @@
 
       <div class="admin-field">
         <label for="status">สถานะ</label>
-        <input id="status" class="admin-input" type="text" name="status" value="{{ old('status', $order->status) }}" required />
+        <input id="status" class="admin-input" type="text" name="status" value="{{ old('status', $order->status) }}" list="order-status-options" required />
+        <datalist id="order-status-options">
+          <option value="submitted"></option>
+          <option value="paid"></option>
+          <option value="completed"></option>
+          <option value="cancelled"></option>
+        </datalist>
+        <p class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem;">LINE จะแจ้งเมื่อเปลี่ยนเป็นสถานะที่อยู่ใน `LINE_ORDER_STATUS_EVENTS` เช่น `submitted`, `paid`, `completed`</p>
       </div>
 
       <div class="admin-field">

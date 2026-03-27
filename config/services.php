@@ -37,7 +37,20 @@ return [
 
     'line' => [
         'channel_access_token' => env('LINE_CHANNEL_ACCESS_TOKEN'),
+        'channel_secret' => env('LINE_CHANNEL_SECRET'),
         'group_id' => env('LINE_GROUP_ID'),
+        'groups' => [
+            'estimate' => env('LINE_ESTIMATE_GROUP_ID'),
+            'order_submission' => env('LINE_ORDER_GROUP_ID'),
+            'order_status' => env('LINE_ORDER_STATUS_GROUP_ID'),
+            'admin_test' => env('LINE_TEST_GROUP_ID'),
+        ],
+        'order_status_events' => array_values(array_filter(array_map(
+            static fn (string $value): string => trim($value),
+            explode(',', (string) env('LINE_ORDER_STATUS_EVENTS', 'submitted,paid,completed'))
+        ))),
+        'retry_times' => (int) env('LINE_RETRY_TIMES', 3),
+        'retry_sleep_ms' => (int) env('LINE_RETRY_SLEEP_MS', 1000),
     ],
 
 ];

@@ -5,6 +5,7 @@
 @section('content')
   @php
     $orderedNumber = request('number', '-');
+    $packagePlanName = trim((string) ($packagePlanName ?? \App\Models\PhoneNumber::PACKAGE_NAME));
     $allPackages = [499, 599, 699, 899, 999, 1199, 1499, 1699, 1999, 2199, 2499, 2699, 2999, 3499];
     $packageCatalog = [
         499 => ['label' => 'พื้นฐาน', 'data' => '50GB', 'speed' => '1 Mbps (หลังหมดสปีดเต็ม)', 'voice' => '150 นาที', 'ent' => 'ไม่รวม'],
@@ -31,6 +32,7 @@
     if (!in_array($selectedPackage, $availablePackages, true)) {
         $selectedPackage = $basePackage;
     }
+    $selectedPackageLabel = \App\Models\PhoneNumber::buildPackageLabel($packagePlanName, $selectedPackage);
   @endphp
 
   <section class="book-page">
@@ -101,7 +103,7 @@
                     @php $plan = $packageCatalog[$packagePrice]; @endphp
                     <option
                       value="{{ $packagePrice }}"
-                      data-promo="5G Super Value_{{ $packagePrice }}"
+                      data-promo="{{ \App\Models\PhoneNumber::buildPackageLabel($packagePlanName, $packagePrice) }}"
                       data-label="{{ $plan['label'] }}"
                       data-data="{{ $plan['data'] }}"
                       data-speed="{{ $plan['speed'] }}"
@@ -117,8 +119,8 @@
             </div>
             @php $selectedPlan = $packageCatalog[$selectedPackage]; @endphp
             <div class="full package-preview" id="package-preview">
-              <p class="package-preview__name" id="preview-name">ชื่อโปร: 5G Super Value_{{ $selectedPackage }}</p>
-              <h4>โปรโมชั่นแพคเกจ {{ number_format($selectedPackage) }} บาท ({{ $selectedPlan['label'] }})</h4>
+              <p class="package-preview__name" id="preview-name">ชื่อโปร: {{ $selectedPackageLabel }}</p>
+              <h4>โปรโมชั่นแพคเกจ {{ number_format($selectedPackage) }} บาท</h4>
               <div class="package-preview__grid">
                 <div><span>Data</span><strong id="preview-data">{{ $selectedPlan['data'] }}</strong></div>
                 <div><span>ความเร็วหลังเน็ตเต็มสปีด</span><strong id="preview-speed">{{ $selectedPlan['speed'] }}</strong></div>
@@ -356,7 +358,7 @@
         if (!opt) return;
         const priceText = Number(opt.value).toLocaleString("th-TH");
         if (nameEl) nameEl.textContent = `ชื่อโปร: ${opt.dataset.promo || "-"}`;
-        title.textContent = `โปรโมชั่นแพคเกจ ${priceText} บาท (${opt.dataset.label})`;
+        title.textContent = `โปรโมชั่นแพคเกจ ${priceText} บาท`;
         dataEl.textContent = opt.dataset.data || "-";
         speedEl.textContent = opt.dataset.speed || "-";
         voiceEl.textContent = opt.dataset.voice || "-";

@@ -11,10 +11,91 @@
 
 @section('content')
   @php
-    $rawPhone = request('phone');
-    $phone = preg_replace('/[^0-9]/', '', $rawPhone ?? '');
-    if ($phone === '') {
-        $phone = '0641234567';
+    $lastSeven = substr($phone, -7);
+    $pairs = [];
+    for ($i = 0; $i < 6; $i++) {
+        $pairs[] = substr($lastSeven, $i, 2);
+    }
+
+    $groupedPairs = [];
+    foreach ($pairs as $index => $pair) {
+        $chars = str_split($pair);
+        sort($chars);
+        $key = implode('', $chars);
+        if (! isset($groupedPairs[$key])) {
+            $groupedPairs[$key] = [
+                'key' => $key,
+                'primary_pair' => $pair,
+                'first_index' => $index,
+            ];
+        }
+    }
+    usort($groupedPairs, fn ($a, $b) => $a['first_index'] <=> $b['first_index']);
+
+    $statusLabelMap = [
+        'good' => 'ตรง',
+        'bad' => 'เลขควรระวัง',
+        'conditional' => 'ใช้ได้บางกรณี',
+    ];
+    $statusClassMap = [
+        'good' => 'is-good',
+        'bad' => 'is-danger',
+        'conditional' => 'is-neutral',
+        'neutral' => 'is-neutral',
+    ];
+    $pairHeadingMap = [
+        'good' => 'คู่เลขดี',
+        'bad' => 'คู่เลขเสีย',
+        'conditional' => 'คู่เลขดีกับคู่เลขเสีย',
+        'neutral' => 'คู่เลขดีกับคู่เลขเสีย',
+    ];
+    $pairMeaningMap = \App\Models\PairMeaning::whereIn('pair', $pairs)
+        ->get()
+        ->keyBy('pair');
+
+    $pairCards = [];
+    foreach ($groupedPairs as $group) {
+        $label = $group['key'];
+        if (strlen($label) === 2 && $label[0] !== $label[1]) {
+            $label = $label . ' ' . strrev($label);
+        }
+
+        $meaning = $pairMeaningMap->get($group['primary_pair'])
+            ?? $pairMeaningMap->get($group['key'])
+            ?? $pairMeaningMap->get(strrev($group['key']));
+        $status = $meaning?->status ?? 'neutral';
+
+        $pairCards[] = [
+            'pair' => $label,
+            'status' => $status,
+            'label' => $statusLabelMap[$status] ?? 'เลขทั่วไป',
+            'heading' => $pairHeadingMap[$status] ?? 'คู่เลขดีกับคู่เลขเสีย',
+            'desc' => $meaning?->short_meaning ?? 'ยังไม่มีข้อมูลความหมายแบบสั้นสำหรับคู่นี้',
+            'class' => $statusClassMap[$status] ?? 'is-neutral',
+        ];
+    }
+
+    $recommendedNumbers = \App\Models\PhoneNumber::query()
+        ->available()
+        ->where('network_code', 'true_dtac')
+        ->where('phone_number', '!=', $phone)
+        ->inRandomOrder()
+        ->limit(12)
+        ->get();
+
+    if ($recommendedNumbers->count() < 12) {
+        $excludedNumbers = $recommendedNumbers
+            ->pluck('phone_number')
+            ->push($phone)
+            ->all();
+        $extraNumbers = \App\Models\PhoneNumber::query()
+            ->available()
+            ->where('network_code', 'true_dtac')
+            ->whereNotIn('phone_number', $excludedNumbers)
+            ->inRandomOrder()
+            ->limit(12 - $recommendedNumbers->count())
+            ->get();
+        $recommendedNumbers = $recommendedNumbers->concat($extraNumbers);
     }
   @endphp
   <section class="evaluate-hero evaluate-hero--danger" aria-labelledby="evaluate-title">
@@ -64,89 +145,32 @@
       </div>
 
       <div class="pair-grid">
-        <article class="pair-card is-danger">
-          <div class="pair-score">12</div>
-          <h4>เลขควรระวัง</h4>
-          <p>ใจร้อน หุนหันพลันแล่น ส่งผลต่อการตัดสินใจและความสัมพันธ์</p>
-        </article>
-        <article class="pair-card is-good">
-          <div class="pair-score">23</div>
-          <h4>เลขส่งเสริม</h4>
-          <p>ช่วยดึงดูดโอกาสใหม่ ลดแรงเสียดทานจากคู่เลขอันตราย</p>
-        </article>
-        <article class="pair-card is-danger">
-          <div class="pair-score">34</div>
-          <h4>เลขควรระวัง</h4>
-          <p>กดดันทางอารมณ์สูง ส่งผลให้สื่อสารผิดพลาดและอ่อนล้า</p>
-        </article>
-        <article class="pair-card is-good">
-          <div class="pair-score">45</div>
-          <h4>เลขส่งเสริม</h4>
-          <p>เพิ่มความน่าเชื่อถือ ช่วยประคองพลังด้านงานและภาพลักษณ์</p>
-        </article>
-        <article class="pair-card is-good">
-          <div class="pair-score">56</div>
-          <h4>เลขส่งเสริม</h4>
-          <p>เพิ่มความสุขและความสัมพันธ์ที่ดี ช่วยลดแรงกดดันภายใน</p>
-        </article>
-        <article class="pair-card is-danger">
-          <div class="pair-score">67</div>
-          <h4>เลขควรระวัง</h4>
-          <p>ความเครียดสะสมสูง เสี่ยงต่อความผิดพลาดซ้ำ ๆ หากไม่พักผ่อนให้พอ</p>
-        </article>
+        @foreach ($pairCards as $card)
+          <article class="pair-card {{ $card['class'] }}">
+            <div class="pair-score">{{ $card['pair'] }}</div>
+            <h4>{{ $card['heading'] }}</h4>
+            <p>{{ $card['desc'] }}</p>
+          </article>
+        @endforeach
       </div>
 
       <section class="recommend-section" aria-labelledby="recommend-title">
         <h2 id="recommend-title">เบอร์แนะนำเพื่อปรับสมดุล</h2>
-        <div class="recommend-grid">
-          <article class="number-card">
-            <div class="card-top">0646495945</div>
-            <div class="card-body">
-              <div class="card-meta-stack">
-                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
-                <span class="card-meta-plan">โปรโมชั่น 4G+ Super Smart</span>
-                <span>1499 ขึ้นไป</span>
+        <div class="card-grid">
+          @forelse ($recommendedNumbers as $recommended)
+            <article class="number-card">
+              <div class="card-top">{{ $recommended->display_number ?: $recommended->phone_number }}</div>
+              <div class="card-body">
+                <div class="card-meta-stack">
+                  <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
+                  <span class="card-meta-plan">{{ $recommended->package_label }}</span>
+                </div>
               </div>
-            </div>
-            <a class="card-btn" href="{{ route('good-number', ['number' => '0646495945']) }}">ดูความหมาย</a>
-            <a class="card-btn card-btn--buy" href="{{ route('book', ['number' => '0646495945', 'package' => 1499]) }}">สั่งซื้อ</a>
-          </article>
-          <article class="number-card">
-            <div class="card-top">0645164549</div>
-            <div class="card-body">
-              <div class="card-meta-stack">
-                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
-                <span class="card-meta-plan">โปรโมชั่น 4G+ Super Smart</span>
-                <span>699 ขึ้นไป</span>
-              </div>
-            </div>
-            <a class="card-btn" href="{{ route('good-number', ['number' => '0645164549']) }}">ดูความหมาย</a>
-            <a class="card-btn card-btn--buy" href="{{ route('book', ['number' => '0645164549', 'package' => 699]) }}">สั่งซื้อ</a>
-          </article>
-          <article class="number-card">
-            <div class="card-top">0645953639</div>
-            <div class="card-body">
-              <div class="card-meta-stack">
-                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
-                <span class="card-meta-plan">โปรโมชั่น 4G+ Super Smart</span>
-                <span>1499 ขึ้นไป</span>
-              </div>
-            </div>
-            <a class="card-btn" href="{{ route('good-number', ['number' => '0645953639']) }}">ดูความหมาย</a>
-            <a class="card-btn card-btn--buy" href="{{ route('book', ['number' => '0645953639', 'package' => 1499]) }}">สั่งซื้อ</a>
-          </article>
-          <article class="number-card">
-            <div class="card-top">0645636463</div>
-            <div class="card-body">
-              <div class="card-meta-stack">
-                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">รายเดือน</span></span>
-                <span class="card-meta-plan">โปรโมชั่น 4G+ Super Smart</span>
-                <span>1099 ขึ้นไป</span>
-              </div>
-            </div>
-            <a class="card-btn" href="{{ route('good-number', ['number' => '0645636463']) }}">ดูความหมาย</a>
-            <a class="card-btn card-btn--buy" href="{{ route('book', ['number' => '0645636463', 'package' => 1099]) }}">สั่งซื้อ</a>
-          </article>
+              <a class="card-btn card-btn--buy" href="{{ route('evaluate', ['phone' => $recommended->phone_number]) }}">สั่งซื้อ</a>
+            </article>
+          @empty
+            <p class="numbers-empty">ยังไม่มีเบอร์แนะนำในระบบตอนนี้</p>
+          @endforelse
         </div>
       </section>
 

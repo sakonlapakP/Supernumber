@@ -10,7 +10,7 @@ class PhoneNumber extends Model
 {
     public const PHONE_NUMBER_LENGTH = 10;
     public const PREFIX_LENGTH = 3;
-    public const PACKAGE_NAME = '4G+ Super Smart';
+    public const PACKAGE_NAME = 'True Super Value';
     public const PACKAGE_PRICE_BASIC = 699;
     public const PACKAGE_PRICE_STANDARD = 1099;
     public const PACKAGE_PRICE_PREMIUM = 1499;
@@ -107,10 +107,19 @@ class PhoneNumber extends Model
 
     public static function buildPackageLabel(?string $planName, mixed $salePrice): string
     {
-        $price = self::normalizePackagePrice($salePrice);
+        $planName = trim((string) $planName);
+        $price = self::packagePrice($salePrice);
+
+        if ($planName !== '' && $price !== null) {
+            return $planName . ' ' . $price;
+        }
+
+        if ($planName !== '') {
+            return $planName;
+        }
 
         if ($price !== null) {
-            return self::PACKAGE_NAME . ' ' . $price;
+            return (string) $price;
         }
 
         return '-';
@@ -124,20 +133,31 @@ class PhoneNumber extends Model
             return [null, null];
         }
 
-        if (preg_match('/^(.*)\s+(\d+)$/', $label, $matches) === 1) {
-            return [self::PACKAGE_NAME, self::normalizePackagePrice((int) $matches[2])];
+        if (preg_match('/^\d+$/', $label) === 1) {
+            return [null, self::packagePrice($label)];
         }
 
-        return [self::PACKAGE_NAME, null];
+        if (preg_match('/^(.*)\s+(\d+)$/u', $label, $matches) === 1) {
+            $planName = trim($matches[1]);
+
+            return [$planName !== '' ? $planName : null, self::packagePrice($matches[2])];
+        }
+
+        return [$label, null];
     }
 
-    public static function packageLabels(): array
+    public static function packageLabelsForQuery(Builder $query): array
     {
-        return [
-            self::buildPackageLabel(self::PACKAGE_NAME, self::PACKAGE_PRICE_BASIC),
-            self::buildPackageLabel(self::PACKAGE_NAME, self::PACKAGE_PRICE_STANDARD),
-            self::buildPackageLabel(self::PACKAGE_NAME, self::PACKAGE_PRICE_PREMIUM),
-        ];
+        return (clone $query)
+            ->select('plan_name', 'sale_price')
+            ->distinct()
+            ->orderBy('sale_price')
+            ->orderBy('plan_name')
+            ->get()
+            ->map(fn (self $phoneNumber) => self::buildPackageLabel($phoneNumber->plan_name, $phoneNumber->sale_price))
+            ->reject(fn (string $label) => $label === '-')
+            ->values()
+            ->all();
     }
 
     public static function adminStatusOptions(): array
@@ -183,5 +203,16 @@ class PhoneNumber extends Model
         }
 
         return self::PACKAGE_PRICE_BASIC;
+    }
+
+    protected static function packagePrice(mixed $salePrice): ?int
+    {
+        if (! is_numeric($salePrice)) {
+            return null;
+        }
+
+        $price = (int) $salePrice;
+
+        return $price > 0 ? $price : null;
     }
 }

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class CustomerOrder extends Model
 {
@@ -52,5 +53,9 @@ class CustomerOrder extends Model
             $this->zipcode,
         ])));
     }
-}
 
+    public function lineNotificationLogs(): MorphMany
+    {
+        return $this->morphMany(LineNotificationLog::class, 'notifiable');
+    }
+}

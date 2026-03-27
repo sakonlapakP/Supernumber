@@ -25,7 +25,7 @@
       method="post"
       enctype="multipart/form-data"
       class="admin-form"
-      data-has-cover="{{ $article->cover_image_path ? '1' : '0' }}"
+      data-has-cover="{{ ($article->cover_image_path || $article->cover_image_landscape_path || $article->cover_image_square_path) ? '1' : '0' }}"
     >
       @csrf
       @method('PUT')
@@ -84,32 +84,38 @@
       </div>
 
       <div class="admin-field">
-        <label for="cover_image">เปลี่ยนรูปปก</label>
-        <input type="file" id="cover_image" name="cover_image" class="admin-input" accept="image/*" />
-        @if ($article->cover_image_path)
-          <p class="admin-subtitle" style="margin: 0;">ไฟล์ปัจจุบัน: <code>{{ $article->cover_image_path }}</code></p>
+        <label for="cover_image_landscape">รูปหน้ารวมบทความ (แนวนอน)</label>
+        <input type="file" id="cover_image_landscape" name="cover_image_landscape" class="admin-input" accept="image/*" data-cover-input data-cover-path-id="cover-selected-path-landscape" />
+        @if ($article->cover_image_landscape_path)
+          <p class="admin-subtitle" style="margin: 0;">ไฟล์ปัจจุบัน: <code>{{ $article->cover_image_landscape_path }}</code></p>
+        @elseif ($article->cover_image_path)
+          <p class="admin-subtitle" style="margin: 0;">ไฟล์สำรองที่ใช้งานได้: <code>{{ $article->cover_image_path }}</code></p>
         @endif
-        <p id="cover-selected-path" class="admin-subtitle" style="margin: 0; display: none;"></p>
+        <p id="cover-selected-path-landscape" class="admin-subtitle" style="margin: 0; display: none;"></p>
+        @if ($article->cover_image_landscape_path || $article->cover_image_path)
+          @php
+            $landscapePreview = $article->cover_image_landscape_path ?: $article->cover_image_path;
+          @endphp
+          <img src="{{ asset('storage/' . $landscapePreview) }}" alt="{{ $article->title }} - Landscape" style="width: 240px; border-radius: 12px; border:1px solid #d8e0ec; display:block;" />
+        @endif
       </div>
 
-      @if ($article->cover_image_path)
-        <div class="admin-field">
-          <div id="cover-preview-wrap" style="position: relative; width: 220px;">
-            <img id="cover-preview-image" src="{{ asset('storage/' . $article->cover_image_path) }}" alt="{{ $article->title }}" style="width: 220px; border-radius: 12px; border:1px solid #d8e0ec; display:block;" />
-            <button
-              type="button"
-              id="cover-replace-toggle"
-              title="เปลี่ยนรูปปก"
-              style="position:absolute; top:8px; right:8px; width:28px; height:28px; border-radius:999px; border:1px solid #d8e0ec; background:#ffffff; color:#334155; font-size:18px; line-height:1; display:grid; place-items:center; cursor:pointer;"
-            >
-              ×
-            </button>
-          </div>
-          <p id="cover-replace-note" class="admin-subtitle" style="margin: 0; display:none; color:#b45309;">
-            โหมดเปลี่ยนรูปถูกเปิดแล้ว: รูปเดิมจะถูกลบจริงเมื่อเลือกไฟล์ใหม่และกดบันทึกการเปลี่ยนแปลง
-          </p>
-        </div>
-      @endif
+      <div class="admin-field">
+        <label for="cover_image_square">รูปหน้ารายละเอียดบทความ (สี่เหลี่ยมจัตุรัส)</label>
+        <input type="file" id="cover_image_square" name="cover_image_square" class="admin-input" accept="image/*" data-cover-input data-cover-path-id="cover-selected-path-square" />
+        @if ($article->cover_image_square_path)
+          <p class="admin-subtitle" style="margin: 0;">ไฟล์ปัจจุบัน: <code>{{ $article->cover_image_square_path }}</code></p>
+        @elseif ($article->cover_image_path)
+          <p class="admin-subtitle" style="margin: 0;">ไฟล์สำรองที่ใช้งานได้: <code>{{ $article->cover_image_path }}</code></p>
+        @endif
+        <p id="cover-selected-path-square" class="admin-subtitle" style="margin: 0; display: none;"></p>
+        @if ($article->cover_image_square_path || $article->cover_image_path)
+          @php
+            $squarePreview = $article->cover_image_square_path ?: $article->cover_image_path;
+          @endphp
+          <img src="{{ asset('storage/' . $squarePreview) }}" alt="{{ $article->title }} - Square" style="width: 220px; aspect-ratio:1/1; object-fit:cover; border-radius: 12px; border:1px solid #d8e0ec; display:block;" />
+        @endif
+      </div>
 
       <label class="admin-field" style="grid-template-columns: auto 1fr; align-items: center; gap: 10px; display: grid;">
         <input type="checkbox" name="is_published" value="1" @checked(old('is_published', $article->is_published)) />
@@ -198,15 +204,12 @@
   <script>
     (() => {
       const updateForm = document.getElementById("article-update-form");
-      const coverInput = document.getElementById("cover_image");
+      const coverInputs = Array.from(document.querySelectorAll("[data-cover-input]"));
       const modal = document.getElementById("article-cover-confirm-modal");
       const continueBtn = document.getElementById("article-cover-confirm-continue");
       const closeBtn = document.getElementById("article-cover-confirm-close");
-      const replaceToggleBtn = document.getElementById("cover-replace-toggle");
-      const replaceNote = document.getElementById("cover-replace-note");
 
       let bypassCoverConfirm = false;
-      let replaceMode = false;
 
       const initRichText = (shell) => {
         const editor = shell.querySelector("[data-rte-editor]");
@@ -241,51 +244,28 @@
 
       document.querySelectorAll("[data-rte-shell]").forEach(initRichText);
 
-      if (updateForm && coverInput && modal && continueBtn && closeBtn) {
-        if (replaceToggleBtn) {
-          replaceToggleBtn.addEventListener("click", () => {
-            replaceMode = !replaceMode;
+      if (updateForm && modal && continueBtn && closeBtn) {
+        coverInputs.forEach((input) => {
+          input.addEventListener("change", () => {
+            const targetId = input.dataset.coverPathId || "";
+            const selectedPathEl = targetId ? document.getElementById(targetId) : null;
+            if (!selectedPathEl) return;
 
-            if (replaceNote) {
-              replaceNote.style.display = replaceMode ? "block" : "none";
-            }
-
-            if (replaceMode) {
-              coverInput.focus();
-              coverInput.click();
+            if (input.files && input.files.length > 0) {
+              selectedPathEl.style.display = "block";
+              selectedPathEl.innerHTML = "ไฟล์ที่เลือก: <code>" + input.files[0].name + "</code>";
+            } else {
+              selectedPathEl.style.display = "none";
+              selectedPathEl.textContent = "";
             }
           });
-        }
-
-        coverInput.addEventListener("change", () => {
-          const selectedPathEl = document.getElementById("cover-selected-path");
-          if (!selectedPathEl) return;
-
-          if (coverInput.files && coverInput.files.length > 0) {
-            selectedPathEl.style.display = "block";
-            selectedPathEl.innerHTML = "ไฟล์ที่เลือก: <code>" + coverInput.files[0].name + "</code>";
-            replaceMode = false;
-            if (replaceNote) {
-              replaceNote.style.display = "none";
-            }
-          } else {
-            selectedPathEl.style.display = "none";
-            selectedPathEl.textContent = "";
-          }
         });
 
         updateForm.addEventListener("submit", (event) => {
           const hasCover = updateForm.dataset.hasCover === "1";
-          const hasNewFile = coverInput.files && coverInput.files.length > 0;
+          const hasNewFile = coverInputs.some((input) => input.files && input.files.length > 0);
 
           if (bypassCoverConfirm || !hasCover || hasNewFile) {
-            return;
-          }
-
-          if (replaceMode && !hasNewFile) {
-            event.preventDefault();
-            window.alert("โปรดเลือกรูปใหม่ก่อนบันทึก ระบบจะลบรูปเก่าเมื่อมีรูปใหม่และกดบันทึกเท่านั้น");
-            coverInput.focus();
             return;
           }
 
@@ -301,7 +281,9 @@
 
         closeBtn.addEventListener("click", () => {
           modal.style.display = "none";
-          coverInput.focus();
+          if (coverInputs[0]) {
+            coverInputs[0].focus();
+          }
         });
       }
     })();

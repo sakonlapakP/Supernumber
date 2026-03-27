@@ -112,8 +112,15 @@
         </div>
 
         <div class="admin-field">
-          <label for="cover_image">รูปบทความ</label>
-          <input type="file" id="cover_image" name="cover_image" class="admin-input" accept="image/*" />
+          <label for="cover_image_landscape">รูปหน้ารวมบทความ (แนวนอน)</label>
+          <input type="file" id="cover_image_landscape" name="cover_image_landscape" class="admin-input" accept="image/*" />
+          <p class="admin-subtitle" style="margin: 0;">ใช้ในหน้า <code>/articles</code> (แนะนำอัตราส่วน 16:9 หรือ 4:3)</p>
+        </div>
+
+        <div class="admin-field">
+          <label for="cover_image_square">รูปหน้ารายละเอียดบทความ (สี่เหลี่ยมจัตุรัส)</label>
+          <input type="file" id="cover_image_square" name="cover_image_square" class="admin-input" accept="image/*" />
+          <p class="admin-subtitle" style="margin: 0;">ใช้ในหน้า <code>/articles/{slug}</code> (แนะนำอัตราส่วน 1:1)</p>
         </div>
 
         <div class="admin-field">

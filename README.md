@@ -57,3 +57,32 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 ## License
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+
+## LINE Notifications
+
+This project can send LINE Messaging API notifications for:
+
+- Estimate form submissions (`/estimate`)
+- New number orders (`/book`)
+- Admin order status changes for configured statuses
+- Manual test sends from the admin order detail page
+
+Environment variables:
+
+- `LINE_CHANNEL_ACCESS_TOKEN`
+- `LINE_GROUP_ID` as the default fallback group
+- `LINE_ESTIMATE_GROUP_ID`
+- `LINE_ORDER_GROUP_ID`
+- `LINE_ORDER_STATUS_GROUP_ID`
+- `LINE_TEST_GROUP_ID`
+- `LINE_ORDER_STATUS_EVENTS` such as `submitted,paid,completed`
+- `LINE_RETRY_TIMES`
+- `LINE_RETRY_SLEEP_MS`
+
+Delivery logs are stored in the `line_notification_logs` table.
+
+For background delivery and queue retries, use a queue driver such as `database` and run a worker for the `notifications` queue:
+
+```bash
+php artisan queue:work --queue=notifications
+```

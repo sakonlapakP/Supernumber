@@ -19,6 +19,30 @@
     <div class="admin-alert admin-alert--success">{{ session('status_message') }}</div>
   @endif
 
+  <section class="admin-card admin-feature-card admin-feature-card--compact">
+    <div class="admin-feature-card__head">
+      <div>
+        <h2 class="admin-feature-card__title">Search Numbers</h2>
+        <p class="admin-feature-card__hint">ค้นหาจากเบอร์, เครือข่าย, แพ็กเกจ, ราคา หรือสถานะ</p>
+      </div>
+    </div>
+
+    <form action="{{ route('admin.numbers') }}" method="get" class="admin-form admin-form--inline">
+      <div class="admin-field">
+        <label for="admin-number-search">Search</label>
+        <input
+          id="admin-number-search"
+          class="admin-input"
+          type="text"
+          name="q"
+          value="{{ $search ?? '' }}"
+          placeholder="เช่น 064929, dtac, 1499, active"
+        />
+      </div>
+      <button type="submit" class="admin-button admin-button--compact">Search</button>
+    </form>
+  </section>
+
   <section class="admin-card admin-table-card">
     <div class="admin-table-wrap">
       <table class="admin-table">
@@ -42,7 +66,9 @@
             </tr>
           @empty
             <tr>
-              <td colspan="4" class="admin-muted">ยังไม่มีข้อมูลเบอร์ในระบบ</td>
+              <td colspan="4" class="admin-muted">
+                {{ ($search ?? '') !== '' ? 'ไม่พบเบอร์ที่ตรงกับคำค้นหา' : 'ยังไม่มีข้อมูลเบอร์ในระบบ' }}
+              </td>
             </tr>
           @endforelse
         </tbody>
@@ -54,7 +80,7 @@
         @if ($numbers->onFirstPage())
           <span>ก่อนหน้า</span>
         @else
-          <a href="{{ $numbers->previousPageUrl() }}">ก่อนหน้า</a>
+          <a href="{{ $numbers->appends(request()->query())->previousPageUrl() }}">ก่อนหน้า</a>
         @endif
 
         @php
@@ -66,12 +92,12 @@
           @if ($page === $numbers->currentPage())
             <span class="is-active">{{ $page }}</span>
           @else
-            <a href="{{ $numbers->url($page) }}">{{ $page }}</a>
+            <a href="{{ $numbers->appends(request()->query())->url($page) }}">{{ $page }}</a>
           @endif
         @endfor
 
         @if ($numbers->hasMorePages())
-          <a href="{{ $numbers->nextPageUrl() }}">ถัดไป</a>
+          <a href="{{ $numbers->appends(request()->query())->nextPageUrl() }}">ถัดไป</a>
         @else
           <span>ถัดไป</span>
         @endif

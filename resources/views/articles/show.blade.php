@@ -6,8 +6,11 @@
 @section('og_title', $article->title . ' | Supernumber')
 @section('og_description', $article->meta_description ?: ($article->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($article->content), 160)))
 @section('og_url', route('articles.show', $article->slug))
-@if ($article->cover_image_path)
-  @section('og_image', asset('storage/' . $article->cover_image_path))
+@php
+  $detailCoverPath = $article->cover_image_square_path ?: $article->cover_image_path;
+@endphp
+@if ($detailCoverPath)
+  @section('og_image', asset('storage/' . $detailCoverPath))
 @endif
 
 @section('content')
@@ -72,9 +75,9 @@
         @endif
       </header>
 
-      @if ($article->cover_image_path)
+      @if ($detailCoverPath)
         <figure class="article-detail__cover-wrap">
-          <img src="{{ asset('storage/' . $article->cover_image_path) }}" alt="{{ $article->title }}" class="article-detail__cover" />
+          <img src="{{ asset('storage/' . $detailCoverPath) }}" alt="{{ $article->title }}" class="article-detail__cover" />
         </figure>
       @endif
 
@@ -147,7 +150,7 @@
                 <div class="article-detail__numbers">
                   @foreach ($numberTokens as $number)
                     @if (isset($activeNumbers[$number]))
-                      <a href="{{ route('good-number', ['number' => $number]) }}">{{ $number }}</a>
+                      <a href="{{ route('evaluate', ['phone' => $number]) }}">{{ $number }}</a>
                     @else
                       <span class="is-disabled">{{ $number }}</span>
                     @endif
@@ -161,7 +164,7 @@
         </div>
       @endif
 
-      <section class="article-comments">
+      <section class="article-comments article-comments--readers">
         <h2>คอมเมนต์จากผู้อ่าน</h2>
 
         @if (session('comment_status_message'))

@@ -15,6 +15,8 @@ class Article extends Model
         'excerpt',
         'content',
         'cover_image_path',
+        'cover_image_landscape_path',
+        'cover_image_square_path',
         'meta_description',
         'is_published',
         'published_at',

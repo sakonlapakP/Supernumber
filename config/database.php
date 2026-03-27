@@ -2,6 +2,16 @@
 
 use Illuminate\Support\Str;
 
+$resolvedDatabaseSocket = (static function (): string {
+    $socket = trim((string) env('DB_SOCKET', ''));
+
+    if ($socket === '') {
+        return '';
+    }
+
+    return file_exists($socket) ? $socket : '';
+})();
+
 return [
 
     /*
@@ -51,7 +61,7 @@ return [
             'database' => env('DB_DATABASE', 'laravel'),
             'username' => env('DB_USERNAME', 'root'),
             'password' => env('DB_PASSWORD', ''),
-            'unix_socket' => env('DB_SOCKET', ''),
+            'unix_socket' => $resolvedDatabaseSocket,
             'charset' => env('DB_CHARSET', 'utf8mb4'),
             'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
             'prefix' => '',
@@ -71,7 +81,7 @@ return [
             'database' => env('DB_DATABASE', 'laravel'),
             'username' => env('DB_USERNAME', 'root'),
             'password' => env('DB_PASSWORD', ''),
-            'unix_socket' => env('DB_SOCKET', ''),
+            'unix_socket' => $resolvedDatabaseSocket,
             'charset' => env('DB_CHARSET', 'utf8mb4'),
             'collation' => env('DB_COLLATION', 'utf8mb4_unicode_ci'),
             'prefix' => '',

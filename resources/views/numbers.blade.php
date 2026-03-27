@@ -7,8 +7,21 @@
 @section('canonical', url('/numbers'))
 @section('og_url', url('/numbers'))
 @section('og_image', asset('images/home_banner.jpg'))
+@section('preload_image', asset('images/home_banner.jpg'))
+@section('body_class', 'numbers-scale-soft')
 
 @section('content')
+  <section class="numbers-hero" aria-labelledby="numbers-hero-title">
+    <div class="numbers-hero-overlay"></div>
+    <div class="container numbers-hero__content">
+      <div class="numbers-hero__text">
+        <p class="hero-kicker">ค้นหาเบอร์มงคล</p>
+        <h1 id="numbers-hero-title">เบอร์ทั้งหมดที่พร้อมขาย</h1>
+        <p>เลือกเบอร์ที่ตรงใจจากคลังเบอร์คุณภาพ พร้อมตัวกรองที่ช่วยค้นหาได้ไวขึ้น</p>
+      </div>
+    </div>
+  </section>
+
   <section class="numbers-catalog-page" aria-labelledby="numbers-catalog-title">
     <div class="container numbers-catalog-shell">
       <div class="numbers-catalog-toolbar">
@@ -97,15 +110,21 @@
       @endif
 
       <div class="section-title numbers-catalog-title">
-        <h2 id="numbers-catalog-title">เบอร์ทั้งหมด</h2>
-        <p>
-          แสดง
-          {{ $numbers->count() ? $numbers->firstItem() . '-' . $numbers->lastItem() : '0' }}
-          จาก {{ number_format($numbers->total()) }} เบอร์
-        </p>
+        <div class="numbers-catalog-title__content">
+          <h2 id="numbers-catalog-title">เบอร์ทั้งหมด</h2>
+          <p>
+            แสดง
+            {{ $numbers->count() ? $numbers->firstItem() . '-' . $numbers->lastItem() : '0' }}
+            จาก {{ number_format($numbers->total()) }} เบอร์
+          </p>
+        </div>
+        <div class="numbers-view-toggle" id="numbers-view-toggle" role="group" aria-label="เลือกรูปแบบการแสดงผล">
+          <button class="numbers-view-toggle__button" type="button" data-view="list" aria-pressed="false">List</button>
+          <button class="numbers-view-toggle__button" type="button" data-view="grid" aria-pressed="false">Grid</button>
+        </div>
       </div>
 
-      <div class="numbers-catalog-grid">
+      <div class="numbers-catalog-grid" id="numbers-catalog-grid">
         @forelse ($numbers as $number)
           <article class="number-card number-card--catalog">
             <div class="card-top">{{ $number->display_number ?: $number->phone_number }}</div>
@@ -115,7 +134,7 @@
                 <span class="card-meta-plan">{{ $number->package_label }}</span>
               </div>
             </div>
-            <a class="card-btn card-btn--buy" href="{{ route('good-number', ['number' => $number->phone_number]) }}">สั่งซื้อ</a>
+            <a class="card-btn card-btn--buy" href="{{ route('evaluate', ['phone' => $number->phone_number]) }}">สั่งซื้อ</a>
           </article>
         @empty
           <p class="numbers-empty">ไม่พบบัญชีเบอร์ตามเงื่อนไขที่ค้นหา</p>
@@ -239,6 +258,69 @@
           fillFromIndex(index, pasted);
         });
       });
+    })();
+
+    (() => {
+      const storageKey = "numbers-catalog-view";
+      const catalogGrid = document.getElementById("numbers-catalog-grid");
+      const toggle = document.getElementById("numbers-view-toggle");
+
+      if (!catalogGrid || !toggle) return;
+
+      const buttons = Array.from(toggle.querySelectorAll("[data-view]"));
+      const mediaQuery = window.matchMedia("(max-width: 680px)");
+      let hasManualPreference = false;
+
+      const defaultView = () => (mediaQuery.matches ? "list" : "grid");
+
+      const applyView = (view) => {
+        const normalizedView = view === "list" ? "list" : "grid";
+        catalogGrid.dataset.view = normalizedView;
+
+        buttons.forEach((button) => {
+          const isActive = button.dataset.view === normalizedView;
+          button.classList.toggle("is-active", isActive);
+          button.setAttribute("aria-pressed", isActive ? "true" : "false");
+        });
+      };
+
+      try {
+        const savedView = localStorage.getItem(storageKey);
+        if (savedView === "list" || savedView === "grid") {
+          hasManualPreference = true;
+          applyView(savedView);
+        } else {
+          applyView(defaultView());
+        }
+      } catch (error) {
+        applyView(defaultView());
+      }
+
+      toggle.addEventListener("click", (event) => {
+        const target = event.target.closest("[data-view]");
+        if (!target) return;
+
+        hasManualPreference = true;
+        applyView(target.dataset.view);
+
+        try {
+          localStorage.setItem(storageKey, target.dataset.view);
+        } catch (error) {
+          // Ignore storage errors and keep the in-memory state.
+        }
+      });
+
+      const handleViewportChange = () => {
+        if (!hasManualPreference) {
+          applyView(defaultView());
+        }
+      };
+
+      if (typeof mediaQuery.addEventListener === "function") {
+        mediaQuery.addEventListener("change", handleViewportChange);
+      } else if (typeof mediaQuery.addListener === "function") {
+        mediaQuery.addListener(handleViewportChange);
+      }
     })();
   </script>
 @endsection

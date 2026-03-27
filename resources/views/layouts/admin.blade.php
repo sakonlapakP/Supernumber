@@ -1,32 +1,38 @@
 <!doctype html>
 <html lang="th">
   <head>
+    @php
+      $staticPath = static fn (string $path): string => '/' . ltrim($path, '/');
+    @endphp
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@yield('title', 'Supernumber Admin')</title>
-    <link rel="icon" type="image/svg+xml" href="{{ secure_asset('images/favicon-s.svg') }}" />
-    <link rel="shortcut icon" href="{{ secure_asset('images/favicon-s.svg') }}" />
-    <link rel="alternate icon" href="{{ secure_asset('images/favicon-s.svg') }}" />
+    <link rel="shortcut icon" type="image/x-icon" href="{{ $staticPath('favicon-v2.ico') }}" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="{{ $staticPath('favicon.svg') }}" />
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ $staticPath('favicon-32x32.png') }}" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ $staticPath('favicon-16x16.png') }}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ $staticPath('apple-touch-icon.png') }}" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-      href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Kanit:wght@300;400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
     <style>
       :root {
-        --admin-bg: #f5f7fb;
+        --admin-bg: #eef3f7;
         --admin-panel: #ffffff;
-        --admin-border: #d8e0ec;
-        --admin-border-strong: #c9d4e3;
-        --admin-text: #172033;
-        --admin-muted: #70809f;
-        --admin-primary: #0f1d4d;
-        --admin-primary-soft: #eef3ff;
-        --admin-green: #23a58a;
-        --admin-green-soft: #e9fbf6;
-        --admin-gold: #e8b247;
-        --admin-shadow: 0 8px 18px rgba(15, 23, 42, 0.05);
+        --admin-panel-soft: #f8fbff;
+        --admin-border: #d6dfeb;
+        --admin-border-strong: #bcc9db;
+        --admin-text: #162033;
+        --admin-muted: #627495;
+        --admin-primary: #1d3557;
+        --admin-primary-soft: #e9f1fb;
+        --admin-green: #1f8f78;
+        --admin-green-soft: #e8f7f3;
+        --admin-gold: #d8a34a;
+        --admin-shadow: 0 16px 36px rgba(19, 34, 58, 0.08);
       }
 
       * {
@@ -34,14 +40,14 @@
       }
 
       html {
-        background: var(--admin-bg);
+        background: linear-gradient(180deg, #f8fafc 0%, var(--admin-bg) 100%);
       }
 
       body {
         margin: 0;
         font-family: "Kanit", sans-serif;
         color: var(--admin-text);
-        background: var(--admin-bg);
+        background: transparent;
       }
 
       a {
@@ -54,8 +60,9 @@
       }
 
       .admin-topbar {
-        background: rgba(255, 255, 255, 0.96);
-        border-bottom: 1px solid var(--admin-border);
+        background: rgba(255, 255, 255, 0.88);
+        border-bottom: 1px solid rgba(188, 201, 219, 0.7);
+        backdrop-filter: blur(14px);
       }
 
       .admin-topbar__inner {
@@ -191,29 +198,89 @@
         top: 18px;
       }
 
+      .admin-sidebar-stack {
+        display: grid;
+        gap: 14px;
+      }
+
       .admin-nav {
         margin: 0;
-        padding: 14px 12px;
-        border-radius: 16px;
-        border: 1px solid var(--admin-border);
-        background: rgba(255, 255, 255, 0.92);
+        padding: 16px 14px;
+        border-radius: 22px;
+        border: 1px solid rgba(188, 201, 219, 0.9);
+        background: linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 251, 255, 0.95) 100%);
+        box-shadow: var(--admin-shadow);
         display: flex;
         flex-direction: column;
         justify-content: flex-start;
+        gap: 10px;
+      }
+
+      .admin-user-panel {
+        padding: 16px 16px 14px;
+        border-radius: 22px;
+        border: 1px solid rgba(195, 207, 225, 0.9);
+        background:
+          radial-gradient(circle at top right, rgba(216, 163, 74, 0.14), transparent 28%),
+          linear-gradient(180deg, #ffffff 0%, #f3f8ff 100%);
+        box-shadow: var(--admin-shadow);
+      }
+
+      .admin-user-panel__label {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: #7c8dab;
+      }
+
+      .admin-user-panel__name {
+        margin-top: 6px;
+        font-size: 20px;
+        font-weight: 800;
+        line-height: 1.2;
+        color: var(--admin-text);
+        word-break: break-word;
+      }
+
+      .admin-user-panel__meta {
+        margin-top: 8px;
+        display: flex;
+        flex-wrap: wrap;
         gap: 8px;
+      }
+
+      .admin-user-panel__pill {
+        min-height: 28px;
+        padding: 5px 10px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid #d6dfeb;
+        color: #4a5d7c;
+        font-size: 12px;
+        font-weight: 700;
+      }
+
+      .admin-user-panel__pill--role {
+        background: #edf3ff;
+        border-color: #c9d7f3;
+        color: #26436f;
       }
 
       .admin-nav__link {
         min-height: 44px;
-        padding: 10px 14px;
-        border-radius: 12px;
+        padding: 11px 14px;
+        border-radius: 14px;
         display: inline-flex;
         align-items: center;
         justify-content: flex-start;
         text-decoration: none;
         font-size: 15px;
-        font-weight: 500;
-        color: var(--admin-muted);
+        font-weight: 600;
+        color: #64789c;
         background: transparent;
         border: 1px solid transparent;
         transition: all 0.16s ease;
@@ -221,16 +288,16 @@
 
       .admin-nav__link:hover {
         color: var(--admin-text);
-        background: #f8fbff;
-        border-color: #dbe5f3;
+        background: #f6f9fd;
+        border-color: #d7e1ef;
       }
 
       .admin-nav__link.is-active {
         color: var(--admin-text);
-        font-weight: 700;
-        background: #ffffff;
-        border-color: var(--admin-border);
-        box-shadow: 0 2px 10px rgba(15, 23, 42, 0.06);
+        font-weight: 800;
+        background: linear-gradient(180deg, #ffffff 0%, #f7faff 100%);
+        border-color: #ccd8ea;
+        box-shadow: 0 6px 16px rgba(28, 50, 84, 0.08);
       }
 
       .admin-nav__link--danger {
@@ -294,8 +361,8 @@
 
       .admin-card {
         background: var(--admin-panel);
-        border: 1px solid var(--admin-border);
-        border-radius: 22px;
+        border: 1px solid rgba(188, 201, 219, 0.9);
+        border-radius: 24px;
         box-shadow: var(--admin-shadow);
       }
 
@@ -307,7 +374,8 @@
       .admin-login-card h1,
       .admin-page-head h1 {
         margin: 0;
-        font-size: 26px;
+        font-size: 28px;
+        font-weight: 800;
         line-height: 1.15;
       }
 
@@ -316,6 +384,7 @@
         color: var(--admin-muted);
         line-height: 1.6;
         font-size: 15px;
+        font-weight: 500;
       }
 
       .admin-form {
@@ -340,12 +409,12 @@
         width: 100%;
         min-height: 50px;
         border: 1px solid var(--admin-border-strong);
-        border-radius: 14px;
+        border-radius: 16px;
         padding: 12px 16px;
         font-family: inherit;
         font-size: 15px;
         color: var(--admin-text);
-        background: #ffffff;
+        background: #fbfdff;
         outline: none;
         transition: border-color 0.2s ease, box-shadow 0.2s ease;
       }
@@ -404,20 +473,20 @@
       .admin-button {
         min-height: 48px;
         border: 1px solid transparent;
-        border-radius: 14px;
+        border-radius: 16px;
         padding: 12px 18px;
-        background: var(--admin-primary);
+        background: linear-gradient(135deg, #27436f 0%, #162c4d 100%);
         color: #ffffff;
         font-family: inherit;
         font-size: 15px;
         font-weight: 700;
         cursor: pointer;
-        box-shadow: 0 2px 8px rgba(15, 29, 77, 0.16);
+        box-shadow: 0 12px 24px rgba(24, 42, 72, 0.18);
       }
 
       .admin-button--secondary {
-        background: var(--admin-green);
-        box-shadow: none;
+        background: linear-gradient(135deg, #2d9d85 0%, #1f7f6c 100%);
+        box-shadow: 0 10px 22px rgba(31, 127, 108, 0.16);
       }
 
       .admin-button--muted {
@@ -480,8 +549,9 @@
       }
 
       .admin-summary {
-        color: var(--admin-muted);
+        color: #7081a0;
         font-size: 14px;
+        font-weight: 600;
       }
 
       .admin-page-actions {
@@ -624,6 +694,7 @@
 
       .admin-table-card {
         overflow: hidden;
+        background: linear-gradient(180deg, #ffffff 0%, #fbfcff 100%);
       }
 
       .admin-table-wrap {
@@ -639,7 +710,7 @@
       .admin-table th,
       .admin-table td {
         padding: 16px 18px;
-        border-bottom: 1px solid #e6ebf3;
+        border-bottom: 1px solid #e3eaf4;
         text-align: left;
         vertical-align: middle;
         font-size: 14px;
@@ -647,24 +718,24 @@
 
       .admin-table th {
         font-size: 13px;
-        font-weight: 600;
-        color: var(--admin-muted);
-        background: #f9fbfe;
+        font-weight: 700;
+        color: #6f82a3;
+        background: #f6f9fd;
         text-transform: none;
         letter-spacing: 0;
       }
 
       .admin-table tbody tr:nth-child(even) td {
-        background: #fcfdff;
+        background: #fbfcfe;
       }
 
       .admin-table tbody tr:hover td {
-        background: #f7faff;
+        background: #f2f7fd;
       }
 
       .admin-number {
         font-size: 17px;
-        font-weight: 700;
+        font-weight: 800;
       }
 
       .admin-muted {
@@ -745,7 +816,7 @@
       .admin-footer {
         margin-top: 42px;
         padding-top: 18px;
-        border-top: 1px solid var(--admin-border);
+        border-top: 1px solid #d8e1ed;
       }
 
       .admin-footer__inner {
@@ -871,6 +942,10 @@
           gap: 10px;
         }
 
+        .admin-user-panel {
+          width: 100%;
+        }
+
         .admin-feature-card--compact .admin-feature-card__head {
           align-items: flex-start;
         }
@@ -990,16 +1065,32 @@
       <div class="admin-shell">
         @php
           $showAdminSidebar = session('admin_authenticated') && trim($__env->yieldContent('hide_admin_sidebar')) !== '1';
+          $adminDisplayName = trim((string) session('admin_user_name', ''));
+          $adminDisplayRole = trim((string) session('admin_user_role', ''));
+          $adminDisplayId = session('admin_user_id');
+          $adminRoleLabel = $adminDisplayRole !== '' ? ucfirst($adminDisplayRole) : 'User';
         @endphp
 
         @if ($showAdminSidebar)
           <nav id="admin-mobile-nav" class="admin-mobile-nav" aria-label="เมนูผู้ดูแลระบบสำหรับมือถือ">
+            <div class="admin-user-panel">
+              <div class="admin-user-panel__label">Signed In</div>
+              <div class="admin-user-panel__name">{{ $adminDisplayName !== '' ? $adminDisplayName : 'Administrator' }}</div>
+              <div class="admin-user-panel__meta">
+                <span class="admin-user-panel__pill admin-user-panel__pill--role">{{ $adminRoleLabel }}</span>
+                @if ($adminDisplayId !== null)
+                  <span class="admin-user-panel__pill">ID #{{ $adminDisplayId }}</span>
+                @endif
+              </div>
+            </div>
             <a href="{{ route('admin.numbers') }}" class="admin-nav__link @if (request()->routeIs('admin.numbers')) is-active @endif">All Numbers</a>
             <a href="{{ route('admin.hold-numbers') }}" class="admin-nav__link @if (request()->routeIs('admin.hold-numbers')) is-active @endif">Hold Numbers</a>
             <a href="{{ route('admin.orders') }}" class="admin-nav__link @if (request()->routeIs('admin.orders')) is-active @endif">Orders</a>
             <a href="{{ route('admin.articles') }}" class="admin-nav__link @if (request()->routeIs('admin.articles*')) is-active @endif">Articles</a>
             <a href="{{ route('admin.comments') }}" class="admin-nav__link @if (request()->routeIs('admin.comments*')) is-active @endif">Comments</a>
             @if (session('admin_user_role') === 'manager')
+              <a href="{{ route('admin.line-settings') }}" class="admin-nav__link @if (request()->routeIs('admin.line-settings*')) is-active @endif">LINE Settings</a>
+              <a href="{{ route('admin.logs') }}" class="admin-nav__link @if (request()->routeIs('admin.logs')) is-active @endif">Application Logs</a>
               <a href="{{ route('admin.users') }}" class="admin-nav__link @if (request()->routeIs('admin.users')) is-active @endif">Users</a>
               <a href="{{ route('admin.activity-logs') }}" class="admin-nav__link @if (request()->routeIs('admin.activity-logs')) is-active @endif">Activity Logs</a>
             @endif
@@ -1013,13 +1104,27 @@
         <div class="@if ($showAdminSidebar) admin-layout @endif">
           @if ($showAdminSidebar)
             <aside class="admin-sidebar">
-              <nav class="admin-nav" aria-label="เมนูผู้ดูแลระบบ">
+              <div class="admin-sidebar-stack">
+                <div class="admin-user-panel">
+                  <div class="admin-user-panel__label">Signed In</div>
+                  <div class="admin-user-panel__name">{{ $adminDisplayName !== '' ? $adminDisplayName : 'Administrator' }}</div>
+                  <div class="admin-user-panel__meta">
+                    <span class="admin-user-panel__pill admin-user-panel__pill--role">{{ $adminRoleLabel }}</span>
+                    @if ($adminDisplayId !== null)
+                      <span class="admin-user-panel__pill">ID #{{ $adminDisplayId }}</span>
+                    @endif
+                  </div>
+                </div>
+
+                <nav class="admin-nav" aria-label="เมนูผู้ดูแลระบบ">
                 <a href="{{ route('admin.numbers') }}" class="admin-nav__link @if (request()->routeIs('admin.numbers')) is-active @endif">All Numbers</a>
                 <a href="{{ route('admin.hold-numbers') }}" class="admin-nav__link @if (request()->routeIs('admin.hold-numbers')) is-active @endif">Hold Numbers</a>
                 <a href="{{ route('admin.orders') }}" class="admin-nav__link @if (request()->routeIs('admin.orders')) is-active @endif">Orders</a>
                 <a href="{{ route('admin.articles') }}" class="admin-nav__link @if (request()->routeIs('admin.articles*')) is-active @endif">Articles</a>
                 <a href="{{ route('admin.comments') }}" class="admin-nav__link @if (request()->routeIs('admin.comments*')) is-active @endif">Comments</a>
               @if (session('admin_user_role') === 'manager')
+                <a href="{{ route('admin.line-settings') }}" class="admin-nav__link @if (request()->routeIs('admin.line-settings*')) is-active @endif">LINE Settings</a>
+                <a href="{{ route('admin.logs') }}" class="admin-nav__link @if (request()->routeIs('admin.logs')) is-active @endif">Application Logs</a>
                 <a href="{{ route('admin.users') }}" class="admin-nav__link @if (request()->routeIs('admin.users')) is-active @endif">Users</a>
                 <a href="{{ route('admin.activity-logs') }}" class="admin-nav__link @if (request()->routeIs('admin.activity-logs')) is-active @endif">Activity Logs</a>
               @endif
@@ -1028,6 +1133,7 @@
                 <button type="submit" class="admin-nav__link admin-nav__link--danger">ออกจากระบบ</button>
               </form>
             </nav>
+              </div>
           </aside>
         @endif
 
