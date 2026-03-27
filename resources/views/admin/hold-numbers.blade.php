@@ -117,10 +117,13 @@
                 <td>{{ $number->payment_label }}</td>
                 <td><span class="admin-status-pill admin-status-pill--hold">{{ $number->status ?: '-' }}</span></td>
                 <td class="admin-action-cell">
-                  <form action="{{ route('admin.hold-numbers.activate', $number) }}" method="post">
-                    @csrf
-                    <button type="submit" class="admin-button admin-button--secondary admin-button--compact">Activate</button>
-                  </form>
+                  <div class="admin-action-group">
+                    <a href="{{ route('admin.numbers.edit', $number) }}" class="admin-button admin-button--secondary admin-button--compact">Edit</a>
+                    <form action="{{ route('admin.hold-numbers.activate', $number) }}" method="post">
+                      @csrf
+                      <button type="submit" class="admin-button admin-button--secondary admin-button--compact">Activate</button>
+                    </form>
+                  </div>
                 </td>
               </tr>
             @endforeach

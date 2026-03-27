@@ -219,6 +219,14 @@ class PhoneNumber extends Model
             ->all();
     }
 
+    public static function serviceTypeOptions(): array
+    {
+        return [
+            self::SERVICE_TYPE_POSTPAID,
+            self::SERVICE_TYPE_PREPAID,
+        ];
+    }
+
     public static function adminStatusOptions(): array
     {
         return [

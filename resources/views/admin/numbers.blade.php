@@ -53,6 +53,7 @@
             <th>เครือข่าย</th>
             <th>ราคา / แพ็กเกจ</th>
             <th>สถานะ</th>
+            <th>Action</th>
           </tr>
         </thead>
         <tbody>
@@ -65,10 +66,13 @@
               <td>{{ strtoupper(str_replace('_', '-', $number->network_code)) }}</td>
               <td>{{ $number->payment_label }}</td>
               <td>{{ $number->status ?: '-' }}</td>
+              <td class="admin-action-cell">
+                <a href="{{ route('admin.numbers.edit', $number) }}" class="admin-button admin-button--secondary admin-button--compact">Edit</a>
+              </td>
             </tr>
           @empty
             <tr>
-              <td colspan="5" class="admin-muted">
+              <td colspan="6" class="admin-muted">
                 {{ ($search ?? '') !== '' ? 'ไม่พบเบอร์ที่ตรงกับคำค้นหา' : 'ยังไม่มีข้อมูลเบอร์ในระบบ' }}
               </td>
             </tr>

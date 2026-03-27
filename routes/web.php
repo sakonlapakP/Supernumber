@@ -488,7 +488,30 @@ $defaultOrderStatus = function (string $serviceType): string {
         : 'submitted';
 };
 
-$syncPhoneNumberStatusFromOrder = function (CustomerOrder $order, ?int $userId = null) use ($normalizeServiceType) {
+$logPhoneNumberStatusChange = function (PhoneNumber $phoneNumber, ?string $fromStatus, ?int $userId = null) {
+    $toStatus = (string) $phoneNumber->status;
+    $fromStatus = $fromStatus !== null ? (string) $fromStatus : null;
+
+    if ($fromStatus === $toStatus) {
+        return;
+    }
+
+    $action = match ($toStatus) {
+        PhoneNumber::STATUS_SOLD => 'sell',
+        PhoneNumber::STATUS_ACTIVE => 'release',
+        default => 'hold',
+    };
+
+    PhoneNumberStatusLog::query()->create([
+        'phone_number_id' => $phoneNumber->id,
+        'user_id' => $userId,
+        'action' => $action,
+        'from_status' => $fromStatus,
+        'to_status' => $toStatus,
+    ]);
+};
+
+$syncPhoneNumberStatusFromOrder = function (CustomerOrder $order, ?int $userId = null) use ($normalizeServiceType, $logPhoneNumberStatusChange) {
     if ($normalizeServiceType($order->service_type) !== PhoneNumber::SERVICE_TYPE_PREPAID) {
         return;
     }
@@ -518,25 +541,13 @@ $syncPhoneNumberStatusFromOrder = function (CustomerOrder $order, ?int $userId =
         return;
     }
 
-    $action = match ($targetStatus) {
-        PhoneNumber::STATUS_SOLD => 'sell',
-        PhoneNumber::STATUS_ACTIVE => 'release',
-        default => 'hold',
-    };
-
     $fromStatus = $phoneNumber->status;
 
     $phoneNumber->update([
         'status' => $targetStatus,
     ]);
 
-    PhoneNumberStatusLog::query()->create([
-        'phone_number_id' => $phoneNumber->id,
-        'user_id' => $userId,
-        'action' => $action,
-        'from_status' => $fromStatus,
-        'to_status' => $targetStatus,
-    ]);
+    $logPhoneNumberStatusChange($phoneNumber, $fromStatus, $userId);
 };
 
 Route::redirect('/', '/under-construction')->name('home');
@@ -1052,6 +1063,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     $resolveAdminLogViewer,
     $latestLineWebhookEvents,
     $storeOrderPaymentSlip,
+    $logPhoneNumberStatusChange,
+    $normalizeServiceType,
     $syncPhoneNumberStatusFromOrder
 ) {
     Route::get('/login', function (Request $request) use ($currentAdmin) {
@@ -1145,6 +1158,88 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         return view('admin.numbers', compact('numbers', 'search'));
     })->name('numbers');
+
+    Route::get('/numbers/{phoneNumber}/edit', function (PhoneNumber $phoneNumber) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+
+        return view('admin.numbers-edit', compact('phoneNumber'));
+    })->name('numbers.edit');
+
+    Route::put('/numbers/{phoneNumber}', function (Request $request, PhoneNumber $phoneNumber) use ($ensureAdmin, $normalizeServiceType, $logPhoneNumberStatusChange) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+
+        $data = $request->validate([
+            'display_number' => ['nullable', 'string', 'max:20'],
+            'service_type' => ['required', 'string', Rule::in(PhoneNumber::serviceTypeOptions())],
+            'network_code' => ['required', 'string', 'max:20'],
+            'plan_name' => ['nullable', 'string', 'max:255'],
+            'price_text' => ['nullable', 'string', 'max:255'],
+            'sale_price' => ['required', 'integer', 'min:1'],
+            'status' => ['required', 'string', Rule::in(PhoneNumber::adminStatusOptions())],
+        ]);
+
+        $adminUserId = session('admin_user_id');
+        $previousStatus = (string) $phoneNumber->status;
+        $serviceType = $normalizeServiceType($data['service_type']);
+        $networkCode = strtolower(trim((string) $data['network_code']));
+        $networkCode = preg_replace('/[^a-z0-9]+/', '_', $networkCode) ?? '';
+        $networkCode = trim($networkCode, '_');
+        $salePrice = (int) $data['sale_price'];
+        $displayNumber = trim((string) ($data['display_number'] ?? ''));
+        $planName = trim((string) ($data['plan_name'] ?? ''));
+        $priceText = trim((string) ($data['price_text'] ?? ''));
+
+        if ($serviceType === PhoneNumber::SERVICE_TYPE_PREPAID && $planName === '') {
+            $planName = 'เติมเงิน';
+        }
+
+        if ($serviceType === PhoneNumber::SERVICE_TYPE_POSTPAID && $planName === '') {
+            $planName = PhoneNumber::PACKAGE_NAME;
+        }
+
+        if ($priceText === '') {
+            $priceText = (string) $salePrice;
+        }
+
+        DB::transaction(function () use (
+            $phoneNumber,
+            $displayNumber,
+            $serviceType,
+            $networkCode,
+            $planName,
+            $priceText,
+            $salePrice,
+            $data,
+            $previousStatus,
+            $adminUserId,
+            $logPhoneNumberStatusChange
+        ) {
+            $phoneNumber->fill([
+                'display_number' => $displayNumber !== '' ? $displayNumber : null,
+                'service_type' => $serviceType,
+                'network_code' => $networkCode !== '' ? $networkCode : 'true_dtac',
+                'plan_name' => $planName !== '' ? $planName : null,
+                'price_text' => $priceText !== '' ? $priceText : null,
+                'sale_price' => $salePrice,
+                'status' => trim((string) $data['status']),
+            ]);
+            $phoneNumber->save();
+
+            $logPhoneNumberStatusChange(
+                $phoneNumber,
+                $previousStatus,
+                is_numeric($adminUserId) ? (int) $adminUserId : null
+            );
+        });
+
+        return redirect()
+            ->route('admin.numbers.edit', $phoneNumber)
+            ->with('status_message', 'อัปเดตข้อมูลเบอร์เรียบร้อยแล้ว');
+    })->name('numbers.update');
 
     Route::get('/orders', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {

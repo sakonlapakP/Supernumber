@@ -1083,7 +1083,7 @@
                 @endif
               </div>
             </div>
-            <a href="{{ route('admin.numbers') }}" class="admin-nav__link @if (request()->routeIs('admin.numbers')) is-active @endif">All Numbers</a>
+            <a href="{{ route('admin.numbers') }}" class="admin-nav__link @if (request()->routeIs('admin.numbers*')) is-active @endif">All Numbers</a>
             <a href="{{ route('admin.hold-numbers') }}" class="admin-nav__link @if (request()->routeIs('admin.hold-numbers')) is-active @endif">Hold Numbers</a>
             <a href="{{ route('admin.orders') }}" class="admin-nav__link @if (request()->routeIs('admin.orders')) is-active @endif">Orders</a>
             <a href="{{ route('admin.articles') }}" class="admin-nav__link @if (request()->routeIs('admin.articles*')) is-active @endif">Articles</a>
@@ -1117,7 +1117,7 @@
                 </div>
 
                 <nav class="admin-nav" aria-label="เมนูผู้ดูแลระบบ">
-                <a href="{{ route('admin.numbers') }}" class="admin-nav__link @if (request()->routeIs('admin.numbers')) is-active @endif">All Numbers</a>
+                <a href="{{ route('admin.numbers') }}" class="admin-nav__link @if (request()->routeIs('admin.numbers*')) is-active @endif">All Numbers</a>
                 <a href="{{ route('admin.hold-numbers') }}" class="admin-nav__link @if (request()->routeIs('admin.hold-numbers')) is-active @endif">Hold Numbers</a>
                 <a href="{{ route('admin.orders') }}" class="admin-nav__link @if (request()->routeIs('admin.orders')) is-active @endif">Orders</a>
                 <a href="{{ route('admin.articles') }}" class="admin-nav__link @if (request()->routeIs('admin.articles*')) is-active @endif">Articles</a>
