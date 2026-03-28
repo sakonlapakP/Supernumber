@@ -115,6 +115,7 @@ class ImportTruePrepaidNumbersCommandTest extends TestCase
         $this->assertDatabaseHas('phone_numbers', [
             'phone_number' => '0802829197',
             'display_number' => '080-282-9197',
+            'number_sum' => 46,
             'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
             'sale_price' => 13500,
             'status' => PhoneNumber::STATUS_ACTIVE,
@@ -123,6 +124,7 @@ class ImportTruePrepaidNumbersCommandTest extends TestCase
         $this->assertDatabaseHas('phone_numbers', [
             'phone_number' => '0661414265',
             'display_number' => '066-141-4265',
+            'number_sum' => 35,
             'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
             'sale_price' => 15000,
             'status' => PhoneNumber::STATUS_ACTIVE,

@@ -32,6 +32,15 @@ class PhoneNumber extends Model
         'status',
     ];
 
+    protected static function booted(): void
+    {
+        static::saving(function (self $phoneNumber): void {
+            if ($phoneNumber->number_sum === null || $phoneNumber->isDirty('phone_number')) {
+                $phoneNumber->number_sum = self::calculateNumberSum($phoneNumber->phone_number);
+            }
+        });
+    }
+
     public function scopeAvailable(Builder $query): Builder
     {
         return $query
@@ -226,6 +235,20 @@ class PhoneNumber extends Model
             self::SERVICE_TYPE_POSTPAID,
             self::SERVICE_TYPE_PREPAID,
         ];
+    }
+
+    public static function calculateNumberSum(mixed $phoneNumber): ?int
+    {
+        $digits = self::digitsOnly($phoneNumber);
+
+        if ($digits === '') {
+            return null;
+        }
+
+        return array_sum(array_map(
+            static fn (string $digit): int => (int) $digit,
+            str_split($digits)
+        ));
     }
 
     public static function adminStatusOptions(): array

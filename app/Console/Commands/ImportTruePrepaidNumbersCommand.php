@@ -95,7 +95,7 @@ class ImportTruePrepaidNumbersCommand extends Command
 
                 $payload = [
                     'display_number' => $this->formatDisplayNumber($phoneNumber),
-                    'number_sum' => $row['number_sum'] ?? $existing?->number_sum,
+                    'number_sum' => $row['number_sum'] ?? PhoneNumber::calculateNumberSum($phoneNumber),
                     'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
                     'network_code' => 'true_dtac',
                     'plan_name' => 'เติมเงิน',

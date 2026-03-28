@@ -51,6 +51,7 @@ class CloudRunDemoSeeder extends Seeder
             $rows[] = [
                 'phone_number' => $phoneNumber,
                 'display_number' => $this->formatDisplayNumber($phoneNumber),
+                'number_sum' => PhoneNumber::calculateNumberSum($phoneNumber),
                 'network_code' => 'true_dtac',
                 'plan_name' => PhoneNumber::PACKAGE_NAME,
                 'price_text' => (string) $price,
