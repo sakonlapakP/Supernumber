@@ -14,7 +14,7 @@ class ImportTruePrepaidNumbersCommand extends Command
         {file : Path to the TRUE prepaid spreadsheet (.xlsx)}
         {--dry-run : Parse the spreadsheet and show the summary without writing to the database}';
 
-    protected $description = 'Import TRUE prepaid numbers from spreadsheet using number, sum, and price columns';
+    protected $description = 'Import prepaid stock spreadsheet using number, optional sum, price, and status columns';
 
     private const XML_NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
 
@@ -52,6 +52,7 @@ class ImportTruePrepaidNumbersCommand extends Command
         $this->line('อ่านได้ทั้งหมด: ' . number_format($parsed['row_count']) . ' แถว');
         $this->line('พร้อม import: ' . number_format($parsed['record_count']) . ' เบอร์');
         $this->line('พบซ้ำในไฟล์: ' . number_format($parsed['duplicate_count']) . ' เบอร์');
+        $this->line('ข้ามสถานะขาย: ' . number_format($parsed['skipped_sold_count']) . ' เบอร์');
         $this->line('มีอยู่ในระบบแล้ว: ' . number_format($existingNumbers->count()) . ' เบอร์');
 
         if ($parsed['duplicate_count'] > 0) {
@@ -94,7 +95,7 @@ class ImportTruePrepaidNumbersCommand extends Command
 
                 $payload = [
                     'display_number' => $this->formatDisplayNumber($phoneNumber),
-                    'number_sum' => $row['number_sum'],
+                    'number_sum' => $row['number_sum'] ?? $existing?->number_sum,
                     'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
                     'network_code' => 'true_dtac',
                     'plan_name' => 'เติมเงิน',
@@ -140,8 +141,9 @@ class ImportTruePrepaidNumbersCommand extends Command
      *     row_count:int,
      *     record_count:int,
      *     duplicate_count:int,
-     *     duplicates:array<string, array<int, int>>,
-     *     records:array<string, array{row:int, number_sum:int, sale_price:int}>
+     *     skipped_sold_count:int,
+     *     duplicates:array<string, array<int, string>>,
+     *     records:array<string, array{row:string, number_sum:int|null, sale_price:int}>
      * }
      */
     private function parseWorkbook(string $path): array
@@ -153,31 +155,126 @@ class ImportTruePrepaidNumbersCommand extends Command
         }
 
         $sharedStringsXml = $archive->getFromName('xl/sharedStrings.xml');
-        $sheetXml = $archive->getFromName('xl/worksheets/sheet1.xml');
-        $archive->close();
+        $workbookXml = $archive->getFromName('xl/workbook.xml');
+        $workbookRelsXml = $archive->getFromName('xl/_rels/workbook.xml.rels');
 
-        if ($sheetXml === false) {
-            throw new \RuntimeException('Worksheet xl/worksheets/sheet1.xml was not found.');
+        if ($workbookXml === false || $workbookRelsXml === false) {
+            $archive->close();
+
+            throw new \RuntimeException('Workbook metadata is missing from xlsx archive.');
         }
 
         $sharedStrings = $this->parseSharedStrings($sharedStringsXml !== false ? $sharedStringsXml : null);
-        $sheet = $this->loadXml($sheetXml);
-        $rows = $sheet->xpath('//a:sheetData/a:row') ?: [];
+        $sheetDefinitions = $this->parseWorkbookSheets($workbookXml, $workbookRelsXml);
 
         $records = [];
         $duplicates = [];
         $rowCount = 0;
+        $skippedSoldCount = 0;
 
-        foreach ($rows as $row) {
-            $rowIndex = (int) ($row['r'] ?? 0);
+        foreach ($sheetDefinitions as $sheetDefinition) {
+            $sheetXml = $archive->getFromName($sheetDefinition['path']);
 
-            if ($rowIndex < 6) {
+            if ($sheetXml === false) {
                 continue;
             }
 
-            $rowCount++;
-            $cells = [];
+            $sheetResult = $this->parseWorksheet(
+                $sheetXml,
+                $sharedStrings,
+                $sheetDefinition['name']
+            );
+
+            $rowCount += $sheetResult['row_count'];
+            $skippedSoldCount += $sheetResult['skipped_sold_count'];
+            foreach ($sheetResult['duplicates'] as $phoneNumber => $rows) {
+                $duplicates[$phoneNumber] ??= [];
+                $duplicates[$phoneNumber] = array_values(array_unique([
+                    ...$duplicates[$phoneNumber],
+                    ...$rows,
+                ]));
+            }
+
+            foreach ($sheetResult['records'] as $phoneNumber => $record) {
+                if (isset($records[$phoneNumber])) {
+                    $duplicates[$phoneNumber] ??= [$records[$phoneNumber]['row']];
+                    $duplicates[$phoneNumber][] = $record['row'];
+
+                    continue;
+                }
+
+                $records[$phoneNumber] = $record;
+            }
+        }
+
+        $archive->close();
+
+        return [
+            'row_count' => $rowCount,
+            'record_count' => count($records),
+            'duplicate_count' => count($duplicates),
+            'skipped_sold_count' => $skippedSoldCount,
+            'duplicates' => $duplicates,
+            'records' => $records,
+        ];
+    }
+
+    /**
+     * @return array<int, array{name:string,path:string}>
+     */
+    private function parseWorkbookSheets(string $workbookXml, string $workbookRelsXml): array
+    {
+        $workbook = $this->loadXml($workbookXml);
+        $relationships = $this->loadRelationshipsXml($workbookRelsXml);
+        $relationMap = [];
+
+        foreach ($relationships->Relationship as $relationship) {
+            $relationMap[(string) $relationship['Id']] = 'xl/' . ltrim((string) $relationship['Target'], '/');
+        }
+
+        $sheets = [];
+
+        foreach ($workbook->xpath('//a:sheets/a:sheet') ?: [] as $sheet) {
+            $sheetId = (string) $sheet->attributes('http://schemas.openxmlformats.org/officeDocument/2006/relationships')['id'];
+            $sheetPath = $relationMap[$sheetId] ?? null;
+
+            if ($sheetPath === null) {
+                continue;
+            }
+
+            $sheets[] = [
+                'name' => trim((string) ($sheet['name'] ?? 'Sheet')),
+                'path' => $sheetPath,
+            ];
+        }
+
+        return $sheets;
+    }
+
+    /**
+     * @param  array<int, string>  $sharedStrings
+     * @return array{
+     *     row_count:int,
+     *     skipped_sold_count:int,
+     *     duplicates:array<string, array<int, string>>,
+     *     records:array<string, array{row:string, number_sum:int|null, sale_price:int}>
+     * }
+     */
+    private function parseWorksheet(string $sheetXml, array $sharedStrings, string $sheetName): array
+    {
+        $sheet = $this->loadXml($sheetXml);
+        $rows = $sheet->xpath('//a:sheetData/a:row') ?: [];
+        $headerColumns = null;
+        $headerRow = null;
+        $rowCount = 0;
+        $skippedSoldCount = 0;
+        $records = [];
+        $duplicates = [];
+
+        foreach ($rows as $row) {
+            $rowIndex = (int) ($row['r'] ?? 0);
             $row->registerXPathNamespace('a', self::XML_NS);
+            $cells = [];
 
             foreach ($row->xpath('a:c') ?: [] as $cell) {
                 $column = $this->extractColumnName((string) ($cell['r'] ?? ''));
@@ -189,27 +286,49 @@ class ImportTruePrepaidNumbersCommand extends Command
                 $cells[$column] = $this->extractCellValue($cell, $sharedStrings);
             }
 
-            $phoneNumber = preg_replace('/\D+/', '', (string) ($cells['B'] ?? '')) ?? '';
-            $numberSum = $this->normalizeInteger($cells['C'] ?? null);
-            $salePrice = $this->normalizeInteger($cells['F'] ?? null);
+            if ($headerColumns === null) {
+                $headerColumns = $this->matchHeaderColumns($cells);
 
-            if (
-                strlen($phoneNumber) !== PhoneNumber::PHONE_NUMBER_LENGTH
-                || $numberSum === null
-                || $salePrice === null
-            ) {
+                if ($headerColumns !== null) {
+                    $headerRow = $rowIndex;
+                }
+
+                continue;
+            }
+
+            if ($headerRow !== null && $rowIndex <= $headerRow) {
+                continue;
+            }
+
+            $rowCount++;
+            $phoneNumber = $this->normalizePhoneNumber($cells[$headerColumns['phone']] ?? null);
+            $salePrice = $this->normalizeInteger($cells[$headerColumns['price']] ?? null);
+            $status = isset($headerColumns['status'])
+                ? trim((string) ($cells[$headerColumns['status']] ?? ''))
+                : '';
+            $numberSum = isset($headerColumns['number_sum'])
+                ? $this->normalizeInteger($cells[$headerColumns['number_sum']] ?? null)
+                : null;
+
+            if ($this->shouldSkipStatus($status)) {
+                $skippedSoldCount++;
+
+                continue;
+            }
+
+            if ($phoneNumber === null || $salePrice === null) {
                 continue;
             }
 
             if (isset($records[$phoneNumber])) {
                 $duplicates[$phoneNumber] ??= [$records[$phoneNumber]['row']];
-                $duplicates[$phoneNumber][] = $rowIndex;
+                $duplicates[$phoneNumber][] = $sheetName . ':' . $rowIndex;
 
                 continue;
             }
 
             $records[$phoneNumber] = [
-                'row' => $rowIndex,
+                'row' => $sheetName . ':' . $rowIndex,
                 'number_sum' => $numberSum,
                 'sale_price' => $salePrice,
             ];
@@ -217,8 +336,7 @@ class ImportTruePrepaidNumbersCommand extends Command
 
         return [
             'row_count' => $rowCount,
-            'record_count' => count($records),
-            'duplicate_count' => count($duplicates),
+            'skipped_sold_count' => $skippedSoldCount,
             'duplicates' => $duplicates,
             'records' => $records,
         ];
@@ -261,6 +379,19 @@ class ImportTruePrepaidNumbersCommand extends Command
         }
 
         $parsed->registerXPathNamespace('a', self::XML_NS);
+
+        return $parsed;
+    }
+
+    private function loadRelationshipsXml(string $xml): SimpleXMLElement
+    {
+        $previous = libxml_use_internal_errors(true);
+        $parsed = simplexml_load_string($xml);
+        libxml_use_internal_errors($previous);
+
+        if (! $parsed instanceof SimpleXMLElement) {
+            throw new \RuntimeException('Invalid relationship XML inside xlsx archive.');
+        }
 
         return $parsed;
     }
@@ -314,6 +445,63 @@ class ImportTruePrepaidNumbersCommand extends Command
         }
 
         return (int) $digits;
+    }
+
+    /**
+     * @param  array<string, string|null>  $cells
+     * @return array{phone:string,price:string,status?:string,number_sum?:string}|null
+     */
+    private function matchHeaderColumns(array $cells): ?array
+    {
+        $matched = [];
+
+        foreach ($cells as $column => $value) {
+            $label = trim((string) $value);
+
+            if ($label === 'เบอร์') {
+                $matched['phone'] = $column;
+            }
+
+            if ($label === 'ราคา') {
+                $matched['price'] = $column;
+            }
+
+            if ($label === 'สถานะ') {
+                $matched['status'] = $column;
+            }
+
+            if ($label === 'ผลรวม') {
+                $matched['number_sum'] = $column;
+            }
+        }
+
+        if (! isset($matched['phone'], $matched['price'])) {
+            return null;
+        }
+
+        return $matched;
+    }
+
+    private function normalizePhoneNumber(mixed $value): ?string
+    {
+        $digits = preg_replace('/\D+/', '', (string) $value) ?? '';
+
+        if (strlen($digits) === PhoneNumber::PHONE_NUMBER_LENGTH) {
+            return $digits;
+        }
+
+        if (strlen($digits) === PhoneNumber::PHONE_NUMBER_LENGTH - 1) {
+            return '0' . $digits;
+        }
+
+        return null;
+    }
+
+    private function shouldSkipStatus(string $status): bool
+    {
+        $status = trim(mb_strtolower($status));
+
+        return in_array($status, ['ขาย', 'sold'], true);
     }
 
     private function resolveImportedStatus(?PhoneNumber $phoneNumber): string

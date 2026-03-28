@@ -26,11 +26,21 @@ class ImportTruePrepaidNumbersCommandTest extends TestCase
         ]);
 
         $path = storage_path('app/testing/import-true-prepaid.xlsx');
-        $this->createSpreadsheet($path, [
-            ['096-141-4645', 40, 12900],
-            ['095-141-5156', 37, 12900],
-            ['095-824-4997', 57, 29900],
-            ['095-824-4997', 57, 29900],
+        $this->createWorkbook($path, [
+            [
+                'name' => 'Sheet1',
+                'header' => [
+                    'B' => 'เบอร์',
+                    'C' => 'ผลรวม',
+                    'F' => 'ราคา',
+                ],
+                'rows' => [
+                    ['B' => '096-141-4645', 'C' => 40, 'F' => 12900],
+                    ['B' => '095-141-5156', 'C' => 37, 'F' => 12900],
+                    ['B' => '095-824-4997', 'C' => 57, 'F' => 29900],
+                    ['B' => '095-824-4997', 'C' => 57, 'F' => 29900],
+                ],
+            ],
         ]);
 
         $this->artisan('numbers:import-true-prepaid', ['file' => $path])
@@ -64,10 +74,73 @@ class ImportTruePrepaidNumbersCommandTest extends TestCase
         );
     }
 
+    public function test_it_skips_sold_rows_and_normalizes_nine_digit_numbers_from_multiple_sheets(): void
+    {
+        $path = storage_path('app/testing/import-prepaid-stock.xlsx');
+        $this->createWorkbook($path, [
+            [
+                'name' => 'TRUE',
+                'header' => [
+                    'B' => 'เบอร์',
+                    'C' => 'ปก',
+                    'D' => 'เครือข่าย',
+                    'E' => 'โปร',
+                    'F' => 'ราคา',
+                    'G' => 'สถานะ',
+                ],
+                'rows' => [
+                    ['B' => '802829197', 'C' => 'แดง', 'D' => '1', 'E' => 'เติมเงิน', 'F' => 13500, 'G' => ''],
+                    ['B' => '802829287', 'C' => 'แดง', 'D' => '1', 'E' => 'เติมเงิน', 'F' => 15900, 'G' => 'ขาย'],
+                ],
+            ],
+            [
+                'name' => 'DTAC',
+                'header' => [
+                    'B' => 'เบอร์',
+                    'C' => 'เครือข่าย',
+                    'D' => 'โปร',
+                    'E' => 'ราคา',
+                    'F' => 'สถานะ',
+                ],
+                'rows' => [
+                    ['B' => '661414265', 'C' => 'DTAC', 'D' => 'เติมเงิน', 'E' => 15000, 'F' => ''],
+                    ['B' => '661414515', 'C' => 'DTAC', 'D' => 'เติมเงิน', 'E' => 45500, 'F' => 'ขาย'],
+                ],
+            ],
+        ]);
+
+        $this->artisan('numbers:import-true-prepaid', ['file' => $path])
+            ->assertExitCode(0);
+
+        $this->assertDatabaseHas('phone_numbers', [
+            'phone_number' => '0802829197',
+            'display_number' => '080-282-9197',
+            'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
+            'sale_price' => 13500,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
+        $this->assertDatabaseHas('phone_numbers', [
+            'phone_number' => '0661414265',
+            'display_number' => '066-141-4265',
+            'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
+            'sale_price' => 15000,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
+        $this->assertDatabaseMissing('phone_numbers', [
+            'phone_number' => '0802829287',
+        ]);
+
+        $this->assertDatabaseMissing('phone_numbers', [
+            'phone_number' => '0661414515',
+        ]);
+    }
+
     /**
-     * @param  array<int, array{0:string,1:int,2:int}>  $rows
+     * @param  array<int, array{name:string,header:array<string, string>,rows:array<int, array<string, int|string>>}>  $sheets
      */
-    private function createSpreadsheet(string $path, array $rows): void
+    private function createWorkbook(string $path, array $sheets): void
     {
         $directory = dirname($path);
 
@@ -82,31 +155,12 @@ class ImportTruePrepaidNumbersCommandTest extends TestCase
             $this->fail('Unable to create test spreadsheet archive.');
         }
 
-        $sheetRows = [
-            '<row r="1"><c r="A1" t="inlineStr"><is><t>TRUE เติมเงิน ปกขาว-ม่วง</t></is></c><c r="G1" t="inlineStr"><is><t>เบอร์ทั้งหมด</t></is></c><c r="H1"><v>4</v></c></row>',
-            '<row r="2"><c r="G2" t="inlineStr"><is><t>ขาย</t></is></c><c r="H2"><v>0</v></c></row>',
-            '<row r="3"><c r="G3" t="inlineStr"><is><t>เหลือ</t></is></c><c r="H3"><v>4</v></c></row>',
-            '<row r="5"><c r="B5" t="inlineStr"><is><t>เบอร์</t></is></c><c r="C5" t="inlineStr"><is><t>ผลรวม</t></is></c><c r="F5" t="inlineStr"><is><t>ราคา</t></is></c></row>',
-        ];
-
-        foreach ($rows as $index => [$phoneNumber, $numberSum, $salePrice]) {
-            $rowNumber = $index + 6;
-            $sheetRows[] = sprintf(
-                '<row r="%1$d"><c r="B%1$d" t="inlineStr"><is><t>%2$s</t></is></c><c r="C%1$d"><v>%3$d</v></c><c r="F%1$d"><v>%4$d</v></c></row>',
-                $rowNumber,
-                htmlspecialchars($phoneNumber, ENT_XML1 | ENT_QUOTES, 'UTF-8'),
-                $numberSum,
-                $salePrice
-            );
-        }
-
         $zip->addFromString('[Content_Types].xml', <<<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
 <Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types">
   <Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/>
   <Default Extension="xml" ContentType="application/xml"/>
   <Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>
-  <Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>
 </Types>
 XML);
 
@@ -117,31 +171,106 @@ XML);
 </Relationships>
 XML);
 
-        $zip->addFromString('xl/workbook.xml', <<<'XML'
-<?xml version="1.0" encoding="UTF-8"?>
-<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
-  <sheets>
-    <sheet name="Sheet1" sheetId="1" r:id="rId1"/>
-  </sheets>
-</workbook>
-XML);
+        $workbookSheets = [];
+        $workbookRelationships = [];
 
-        $zip->addFromString('xl/_rels/workbook.xml.rels', <<<'XML'
-<?xml version="1.0" encoding="UTF-8"?>
-<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
-  <Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/>
-</Relationships>
-XML);
+        foreach ($sheets as $index => $sheet) {
+            $sheetId = $index + 1;
+            $relationshipId = 'rId' . $sheetId;
+            $sheetPath = 'xl/worksheets/sheet' . $sheetId . '.xml';
+            $workbookSheets[] = sprintf(
+                '<sheet name="%s" sheetId="%d" r:id="%s"/>',
+                htmlspecialchars($sheet['name'], ENT_XML1 | ENT_QUOTES, 'UTF-8'),
+                $sheetId,
+                $relationshipId
+            );
+            $workbookRelationships[] = sprintf(
+                '<Relationship Id="%s" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet%d.xml"/>',
+                $relationshipId,
+                $sheetId
+            );
 
-        $zip->addFromString('xl/worksheets/sheet1.xml', sprintf(<<<'XML'
+            $rowsXml = [
+                '<row r="1"><c r="A1" t="inlineStr"><is><t>รายการเบอร์เติมเงิน</t></is></c></row>',
+                '<row r="5">' . $this->buildCellsXml(5, $sheet['header']) . '</row>',
+            ];
+
+            foreach ($sheet['rows'] as $rowIndex => $rowValues) {
+                $excelRow = $rowIndex + 6;
+                $rowsXml[] = '<row r="' . $excelRow . '">'
+                    . $this->buildCellsXml($excelRow, ['A' => $rowIndex + 1, ...$rowValues])
+                    . '</row>';
+            }
+
+            $zip->addFromString($sheetPath, sprintf(<<<'XML'
 <?xml version="1.0" encoding="UTF-8"?>
 <worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main">
   <sheetData>
     %s
   </sheetData>
 </worksheet>
-XML, implode('', $sheetRows)));
+XML, implode('', $rowsXml)));
+
+            $zip->addFromString(
+                '[Content_Types].xml',
+                str_replace(
+                    '</Types>',
+                    sprintf(
+                        '  <Override PartName="/%s" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>%s</Types>',
+                        ltrim($sheetPath, '/'),
+                        PHP_EOL
+                    ),
+                    $zip->getFromName('[Content_Types].xml')
+                )
+            );
+        }
+
+        $zip->addFromString('xl/workbook.xml', sprintf(<<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships">
+  <sheets>
+    %s
+  </sheets>
+</workbook>
+XML, implode('', $workbookSheets)));
+
+        $zip->addFromString('xl/_rels/workbook.xml.rels', sprintf(<<<'XML'
+<?xml version="1.0" encoding="UTF-8"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">
+  %s
+</Relationships>
+XML, implode('', $workbookRelationships)));
 
         $zip->close();
+    }
+
+    /**
+     * @param  array<string, int|string>  $values
+     */
+    private function buildCellsXml(int $rowNumber, array $values): string
+    {
+        $cells = [];
+
+        foreach ($values as $column => $value) {
+            if (is_int($value) || (is_string($value) && $value !== '' && ctype_digit($value))) {
+                $cells[] = sprintf(
+                    '<c r="%1$s%2$d"><v>%3$s</v></c>',
+                    $column,
+                    $rowNumber,
+                    $value
+                );
+
+                continue;
+            }
+
+            $cells[] = sprintf(
+                '<c r="%1$s%2$d" t="inlineStr"><is><t>%3$s</t></is></c>',
+                $column,
+                $rowNumber,
+                htmlspecialchars((string) $value, ENT_XML1 | ENT_QUOTES, 'UTF-8')
+            );
+        }
+
+        return implode('', $cells);
     }
 }
