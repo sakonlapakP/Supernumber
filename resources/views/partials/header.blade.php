@@ -10,9 +10,8 @@
     <nav class="nav" aria-label="เมนูหลัก">
       <a class="nav-link {{ request()->routeIs('home') ? 'is-active' : '' }}" href="{{ route('home') }}">หน้าหลัก</a>
       <a class="nav-link {{ request()->routeIs('numbers.index') ? 'is-active' : '' }}" href="{{ route('numbers.index') }}">เบอร์ทั้งหมด</a>
-      <a class="nav-link {{ request()->routeIs('estimate') ? 'is-active' : '' }}" href="{{ route('estimate') }}">เลือกเบอร์ให้เหมาะกับคุณ</a>
       <a class="nav-link {{ request()->routeIs('articles.*') ? 'is-active' : '' }}" href="{{ route('articles.index') }}">บทความ</a>
-      <a class="nav-link" href="#">ติดต่อเรา</a>
+      <a class="nav-link {{ request()->routeIs('contact') ? 'is-active' : '' }}" href="{{ route('contact') }}">ติดต่อเรา</a>
     </nav>
     <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu">
       <span></span>
@@ -23,8 +22,7 @@
   <div id="mobile-menu" class="nav-mobile" aria-label="เมนูสำหรับมือถือ">
     <a href="{{ route('home') }}" class="nav-mobile__link">หน้าหลัก</a>
     <a href="{{ route('numbers.index') }}" class="nav-mobile__link">เบอร์ทั้งหมด</a>
-    <a href="{{ route('estimate') }}" class="nav-mobile__link">เลือกเบอร์ให้เหมาะกับคุณ</a>
     <a href="{{ route('articles.index') }}" class="nav-mobile__link">บทความ</a>
-    <a href="#" class="nav-mobile__link">ติดต่อเรา</a>
+    <a href="{{ route('contact') }}" class="nav-mobile__link">ติดต่อเรา</a>
   </div>
 </header>

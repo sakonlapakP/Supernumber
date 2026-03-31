@@ -4,6 +4,7 @@ use App\Models\PhoneNumberStatusLog;
 use App\Models\PhoneNumber;
 use App\Models\Article;
 use App\Models\ArticleComment;
+use App\Models\ContactMessage;
 use App\Models\CustomerOrder;
 use App\Models\EstimateLead;
 use App\Models\LotteryResult;
@@ -13,6 +14,8 @@ use App\Services\EnvironmentEditor;
 use App\Services\AdminLogViewer;
 use App\Services\LineEstimateLeadNotifier;
 use App\Services\LineOrderNotifier;
+use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -550,7 +553,29 @@ $syncPhoneNumberStatusFromOrder = function (CustomerOrder $order, ?int $userId =
     $logPhoneNumberStatusChange($phoneNumber, $fromStatus, $userId);
 };
 
-Route::redirect('/', '/under-construction')->name('home');
+Route::get('/', function () {
+    $homeNumbersLimitPerType = 48;
+
+    $baseQuery = PhoneNumber::query()
+        ->available()
+        ->where('network_code', 'true_dtac');
+
+    $prepaidNumbers = (clone $baseQuery)
+        ->where('service_type', PhoneNumber::SERVICE_TYPE_PREPAID)
+        ->inRandomOrder()
+        ->limit($homeNumbersLimitPerType)
+        ->get()
+        ->values();
+
+    $postpaidNumbers = (clone $baseQuery)
+        ->where('service_type', PhoneNumber::SERVICE_TYPE_POSTPAID)
+        ->inRandomOrder()
+        ->limit($homeNumbersLimitPerType)
+        ->get()
+        ->values();
+
+    return view('index', compact('prepaidNumbers', 'postpaidNumbers'));
+})->name('home');
 Route::view('/under-construction', 'under-construction')->name('under-construction');
 Route::redirect('/underconsturter', '/under-construction');
 
@@ -572,30 +597,173 @@ Route::get('/numbers', function () {
             $query->where('service_type', $selectedServiceType);
         });
 
-    $plans = collect(PhoneNumber::packageLabelsForQuery($baseQuery));
+    $buildPlanOptions = static fn (array $labels): array => collect($labels)
+        ->map(static fn (string $label): array => [
+            'value' => $label,
+            'label' => $label,
+        ])
+        ->values()
+        ->all();
 
-    [$selectedPlanName, $selectedPlanPrice] = PhoneNumber::parsePackageLabel($selectedPlan);
+    $planOptionsByServiceType = [
+        'all' => $buildPlanOptions(PhoneNumber::packageLabelsForQuery(
+            PhoneNumber::query()
+                ->available()
+                ->where('network_code', 'true_dtac')
+        )),
+        PhoneNumber::SERVICE_TYPE_POSTPAID => $buildPlanOptions(PhoneNumber::packageLabelsForQuery(
+            PhoneNumber::query()
+                ->available()
+                ->where('network_code', 'true_dtac')
+                ->where('service_type', PhoneNumber::SERVICE_TYPE_POSTPAID)
+        )),
+        PhoneNumber::SERVICE_TYPE_PREPAID => PhoneNumber::prepaidPriceRangeOptions(),
+    ];
 
-    $numbers = (clone $baseQuery)
-        ->when($searchDigits !== '', function ($query) use ($searchDigits) {
-            $query->where('phone_number', 'like', '%' . $searchDigits . '%');
-        })
-        ->matchingPattern($positionPattern)
-        ->when($selectedPlan !== '', function ($query) use ($selectedPlanName, $selectedPlanPrice) {
-            if ($selectedPlanName !== null) {
-                $query->where('plan_name', $selectedPlanName);
+    $planOptionKey = $selectedServiceType !== '' ? $selectedServiceType : 'all';
+    $plans = collect($planOptionsByServiceType[$planOptionKey] ?? []);
+    $allowedPlanValues = $plans->pluck('value')->all();
+
+    if ($selectedPlan !== '' && ! in_array($selectedPlan, $allowedPlanValues, true)) {
+        $selectedPlan = '';
+    }
+
+    $selectedPrepaidPriceRange = $selectedServiceType === PhoneNumber::SERVICE_TYPE_PREPAID
+        ? PhoneNumber::resolvePrepaidPriceRange($selectedPlan)
+        : null;
+    [$selectedPlanName, $selectedPlanPrice] = $selectedServiceType === PhoneNumber::SERVICE_TYPE_PREPAID
+        ? [null, null]
+        : PhoneNumber::parsePackageLabel($selectedPlan);
+
+    $applyCatalogFilters = static function ($query) use ($searchDigits, $positionPattern, $selectedPlan, $selectedServiceType, $selectedPrepaidPriceRange, $selectedPlanName, $selectedPlanPrice) {
+        return $query
+            ->when($searchDigits !== '', function ($builder) use ($searchDigits) {
+                $builder->where('phone_number', 'like', '%' . $searchDigits . '%');
+            })
+            ->matchingPattern($positionPattern)
+            ->when($selectedPlan !== '', function ($builder) use ($selectedServiceType, $selectedPrepaidPriceRange, $selectedPlanName, $selectedPlanPrice) {
+                if ($selectedServiceType === PhoneNumber::SERVICE_TYPE_PREPAID && $selectedPrepaidPriceRange !== null) {
+                    $min = $selectedPrepaidPriceRange['min'];
+                    $max = $selectedPrepaidPriceRange['max'];
+
+                    if ($min === null && $max !== null) {
+                        $builder->where('sale_price', '<', $max);
+                        return;
+                    }
+
+                    if ($min !== null && $max === null) {
+                        $builder->where('sale_price', '>', $min);
+                        return;
+                    }
+
+                    if ($min !== null && $max !== null) {
+                        $builder->where('sale_price', '>=', $min)
+                            ->where('sale_price', '<', $max);
+                    }
+
+                    return;
+                }
+
+                if ($selectedPlanName !== null) {
+                    $builder->where('plan_name', $selectedPlanName);
+                }
+
+                if ($selectedPlanPrice !== null) {
+                    $builder->where('sale_price', $selectedPlanPrice);
+                }
+            })
+            ->orderBy('sale_price')
+            ->orderBy('phone_number');
+    };
+
+    $isDefaultSplitLayout = $searchDigits === ''
+        && $selectedPlan === ''
+        && $selectedServiceType === ''
+        && $positionPattern === null;
+
+    $defaultPrepaidNumbers = collect();
+    $defaultPostpaidNumbers = collect();
+
+    if ($isDefaultSplitLayout) {
+        $perPage = 24;
+        $perColumn = (int) ceil($perPage / 2);
+        $currentPage = Paginator::resolveCurrentPage('page');
+        $columnOffset = max(0, ($currentPage - 1) * $perColumn);
+
+        $prepaidQuery = $applyCatalogFilters(
+            (clone $baseQuery)->where('service_type', PhoneNumber::SERVICE_TYPE_PREPAID)
+        );
+        $postpaidQuery = $applyCatalogFilters(
+            (clone $baseQuery)->where('service_type', PhoneNumber::SERVICE_TYPE_POSTPAID)
+        );
+
+        $prepaidTotal = (clone $prepaidQuery)->count();
+        $postpaidTotal = (clone $postpaidQuery)->count();
+
+        $prepaidNumbers = (clone $prepaidQuery)
+            ->offset($columnOffset)
+            ->limit($perColumn)
+            ->get();
+
+        $postpaidNumbers = (clone $postpaidQuery)
+            ->offset($columnOffset)
+            ->limit($perColumn)
+            ->get();
+
+        $defaultPrepaidNumbers = $prepaidNumbers->values();
+        $defaultPostpaidNumbers = $postpaidNumbers->values();
+
+        $overflowNumbers = collect();
+        $remainingSlots = $perPage - ($prepaidNumbers->count() + $postpaidNumbers->count());
+
+        if ($remainingSlots > 0) {
+            if ($prepaidNumbers->count() < $perColumn) {
+                $overflowNumbers = $overflowNumbers->concat(
+                    (clone $postpaidQuery)
+                        ->offset($columnOffset + $postpaidNumbers->count())
+                        ->limit($remainingSlots)
+                        ->get()
+                );
+            } elseif ($postpaidNumbers->count() < $perColumn) {
+                $overflowNumbers = $overflowNumbers->concat(
+                    (clone $prepaidQuery)
+                        ->offset($columnOffset + $prepaidNumbers->count())
+                        ->limit($remainingSlots)
+                        ->get()
+                );
+            }
+        }
+
+        $rows = max($prepaidNumbers->count(), $postpaidNumbers->count());
+        $interleavedNumbers = collect();
+
+        for ($index = 0; $index < $rows; $index += 1) {
+            if ($prepaidNumbers->has($index)) {
+                $interleavedNumbers->push($prepaidNumbers->get($index));
             }
 
-            if ($selectedPlanPrice !== null) {
-                $query->where('sale_price', $selectedPlanPrice);
+            if ($postpaidNumbers->has($index)) {
+                $interleavedNumbers->push($postpaidNumbers->get($index));
             }
-        })
-        ->orderBy('sale_price')
-        ->orderBy('phone_number')
-        ->paginate(24)
-        ->withQueryString();
+        }
 
-    return view('numbers', compact('numbers', 'plans', 'search', 'selectedPlan', 'selectedServiceType', 'positionPattern'));
+        $numbers = new LengthAwarePaginator(
+            $interleavedNumbers->concat($overflowNumbers)->values(),
+            $prepaidTotal + $postpaidTotal,
+            $perPage,
+            $currentPage,
+            [
+                'path' => request()->url(),
+                'query' => request()->query(),
+            ]
+        );
+    } else {
+        $numbers = $applyCatalogFilters(clone $baseQuery)
+            ->paginate(24)
+            ->withQueryString();
+    }
+
+    return view('numbers', compact('numbers', 'plans', 'planOptionsByServiceType', 'search', 'selectedPlan', 'selectedServiceType', 'positionPattern', 'isDefaultSplitLayout', 'defaultPrepaidNumbers', 'defaultPostpaidNumbers'));
 })->name('numbers.index');
 
 Route::get('/articles', function () {
@@ -681,6 +849,40 @@ Route::get('/estimate', function () {
     return view('estimate');
 })->name('estimate');
 
+Route::get('/contact-us', function () {
+    return view('contact');
+})->name('contact');
+
+Route::post('/contact-us', function (Request $request) {
+    $data = $request->validate([
+        'name' => ['required', 'string', 'max:120'],
+        'phone' => ['required', 'string', 'max:20'],
+        'message' => ['required', 'string', 'max:2000'],
+    ]);
+
+    $phone = preg_replace('/\D+/', '', (string) $data['phone']) ?? '';
+
+    if ($phone === '' || strlen($phone) !== PhoneNumber::PHONE_NUMBER_LENGTH) {
+        return redirect()
+            ->route('contact')
+            ->withInput($request->except('_token'))
+            ->withErrors(['phone' => 'กรุณากรอกเบอร์ติดต่อให้ครบ 10 หลัก']);
+    }
+
+    ContactMessage::query()->create([
+        'name' => trim((string) $data['name']),
+        'phone' => $phone,
+        'message' => trim((string) $data['message']),
+        'ip_address' => $request->ip(),
+        'user_agent' => substr((string) $request->userAgent(), 0, 65535),
+        'submitted_at' => Carbon::now(),
+    ]);
+
+    return redirect()
+        ->route('contact')
+        ->with('contact_status_message', 'ส่งข้อความเรียบร้อยแล้ว ทีมงานจะติดต่อกลับตามข้อมูลที่แจ้งไว้');
+})->name('contact.store');
+
 Route::post('/estimate', function (Request $request) use ($safelyRunLineNotification) {
     $data = $request->validate([
         'first_name' => ['required', 'string', 'max:120'],
@@ -753,7 +955,51 @@ Route::get('/book', function () {
     return view('book', compact('currentNumber', 'packagePlanName', 'serviceType'));
 })->name('book');
 
-Route::post('/book/save-step2', function (Request $request) use ($defaultOrderStatus, $normalizeServiceType, $storeOrderPaymentSlip, $safelyRunLineNotification, $syncPhoneNumberStatusFromOrder) {
+$normalizeOrderCustomerDetails = static function (array $data, string $currentPhone, string $zipcode): array {
+    return [
+        'title_prefix' => trim((string) ($data['title_prefix'] ?? '')),
+        'first_name' => trim((string) ($data['first_name'] ?? '')),
+        'last_name' => trim((string) ($data['last_name'] ?? '')),
+        'email' => trim((string) ($data['email'] ?? '')),
+        'current_phone' => $currentPhone,
+        'shipping_address_line' => trim((string) ($data['shipping_address_line'] ?? '')),
+        'district' => trim((string) ($data['district'] ?? '')),
+        'amphoe' => trim((string) ($data['amphoe'] ?? '')),
+        'province' => trim((string) ($data['province'] ?? '')),
+        'zipcode' => $zipcode,
+    ];
+};
+
+$validatePrepaidOrderCustomerDetails = static function (array $customerDetails): void {
+    validator($customerDetails, [
+        'title_prefix' => ['required', 'string', 'max:50'],
+        'first_name' => ['required', 'string', 'max:120'],
+        'last_name' => ['required', 'string', 'max:120'],
+        'email' => ['required', 'email', 'max:255'],
+        'current_phone' => ['required', 'digits:10'],
+        'shipping_address_line' => ['required', 'string', 'max:255'],
+        'district' => ['required', 'string', 'max:120'],
+        'amphoe' => ['required', 'string', 'max:120'],
+        'province' => ['required', 'string', 'max:120'],
+        'zipcode' => ['required', 'digits:5'],
+    ], [
+        'title_prefix.required' => 'กรุณาเลือกคำนำหน้าชื่อ',
+        'first_name.required' => 'กรุณากรอกชื่อ',
+        'last_name.required' => 'กรุณากรอกนามสกุล',
+        'email.required' => 'กรุณากรอกอีเมลล์',
+        'email.email' => 'กรุณากรอกอีเมลล์ให้ถูกต้อง',
+        'current_phone.required' => 'กรุณากรอกเบอร์มือถือปัจจุบัน',
+        'current_phone.digits' => 'กรุณากรอกเบอร์มือถือปัจจุบันให้ครบ 10 หลัก',
+        'shipping_address_line.required' => 'กรุณากรอกที่อยู่ที่จัดส่ง',
+        'district.required' => 'กรุณากรอกตำบล / แขวง',
+        'amphoe.required' => 'กรุณากรอกอำเภอ / เขต',
+        'province.required' => 'กรุณากรอกจังหวัด',
+        'zipcode.required' => 'กรุณากรอกรหัสไปรษณีย์',
+        'zipcode.digits' => 'กรุณากรอกรหัสไปรษณีย์ให้ครบ 5 หลัก',
+    ])->validate();
+};
+
+Route::post('/book/save-step2', function (Request $request) use ($defaultOrderStatus, $normalizeServiceType, $storeOrderPaymentSlip, $safelyRunLineNotification, $syncPhoneNumberStatusFromOrder, $normalizeOrderCustomerDetails, $validatePrepaidOrderCustomerDetails) {
     $data = $request->validate([
         'saved_order_id' => ['nullable', 'integer'],
         'ordered_number' => ['required', 'string', 'max:20'],
@@ -777,6 +1023,7 @@ Route::post('/book/save-step2', function (Request $request) use ($defaultOrderSt
     $orderedNumber = $digitsOnly($data['ordered_number']);
     $currentPhone = $digitsOnly($data['current_phone'] ?? null);
     $zipcode = $digitsOnly($data['zipcode'] ?? null);
+    $customerDetails = $normalizeOrderCustomerDetails($data, $currentPhone, $zipcode);
 
     $orderId = isset($data['saved_order_id']) ? (int) $data['saved_order_id'] : 0;
     $order = $orderId > 0 ? CustomerOrder::query()->find($orderId) : null;
@@ -796,6 +1043,11 @@ Route::post('/book/save-step2', function (Request $request) use ($defaultOrderSt
     }
 
     $serviceType = $normalizeServiceType($currentNumber->service_type);
+
+    if ($serviceType === PhoneNumber::SERVICE_TYPE_PREPAID) {
+        $validatePrepaidOrderCustomerDetails($customerDetails);
+    }
+
     $isSameSavedOrder = $order->exists
         && $orderedNumber !== ''
         && $orderedNumber === (preg_replace('/\D+/', '', (string) $order->ordered_number) ?? '');
@@ -822,16 +1074,16 @@ Route::post('/book/save-step2', function (Request $request) use ($defaultOrderSt
         'ordered_number' => $orderedNumber !== '' ? $orderedNumber : trim((string) $data['ordered_number']),
         'service_type' => $serviceType,
         'selected_package' => $selectedPackage,
-        'title_prefix' => trim((string) ($data['title_prefix'] ?? '')) ?: null,
-        'first_name' => trim((string) ($data['first_name'] ?? '')) ?: null,
-        'last_name' => trim((string) ($data['last_name'] ?? '')) ?: null,
-        'email' => trim((string) ($data['email'] ?? '')) ?: null,
-        'current_phone' => $currentPhone !== '' ? $currentPhone : null,
-        'shipping_address_line' => trim((string) ($data['shipping_address_line'] ?? '')) ?: null,
-        'district' => trim((string) ($data['district'] ?? '')) ?: null,
-        'amphoe' => trim((string) ($data['amphoe'] ?? '')) ?: null,
-        'province' => trim((string) ($data['province'] ?? '')) ?: null,
-        'zipcode' => $zipcode !== '' ? $zipcode : null,
+        'title_prefix' => $customerDetails['title_prefix'] !== '' ? $customerDetails['title_prefix'] : null,
+        'first_name' => $customerDetails['first_name'] !== '' ? $customerDetails['first_name'] : null,
+        'last_name' => $customerDetails['last_name'] !== '' ? $customerDetails['last_name'] : null,
+        'email' => $customerDetails['email'] !== '' ? $customerDetails['email'] : null,
+        'current_phone' => $customerDetails['current_phone'] !== '' ? $customerDetails['current_phone'] : null,
+        'shipping_address_line' => $customerDetails['shipping_address_line'] !== '' ? $customerDetails['shipping_address_line'] : null,
+        'district' => $customerDetails['district'] !== '' ? $customerDetails['district'] : null,
+        'amphoe' => $customerDetails['amphoe'] !== '' ? $customerDetails['amphoe'] : null,
+        'province' => $customerDetails['province'] !== '' ? $customerDetails['province'] : null,
+        'zipcode' => $customerDetails['zipcode'] !== '' ? $customerDetails['zipcode'] : null,
         'appointment_date' => $serviceType === PhoneNumber::SERVICE_TYPE_PREPAID ? null : ($data['appointment_date'] ?? null),
         'appointment_time_slot' => $serviceType === PhoneNumber::SERVICE_TYPE_PREPAID
             ? null
@@ -860,7 +1112,7 @@ Route::post('/book/save-step2', function (Request $request) use ($defaultOrderSt
     ]);
 })->name('book.save-step2');
 
-Route::post('/book', function (Request $request) use ($defaultOrderStatus, $normalizeServiceType, $storeOrderPaymentSlip, $safelyRunLineNotification, $syncPhoneNumberStatusFromOrder) {
+Route::post('/book', function (Request $request) use ($defaultOrderStatus, $normalizeServiceType, $storeOrderPaymentSlip, $safelyRunLineNotification, $syncPhoneNumberStatusFromOrder, $normalizeOrderCustomerDetails, $validatePrepaidOrderCustomerDetails) {
     $data = $request->validate([
         'saved_order_id' => ['nullable', 'integer'],
         'ordered_number' => ['required', 'string', 'max:20'],
@@ -884,6 +1136,7 @@ Route::post('/book', function (Request $request) use ($defaultOrderStatus, $norm
     $orderedNumber = $digitsOnly($data['ordered_number']);
     $currentPhone = $digitsOnly($data['current_phone'] ?? null);
     $zipcode = $digitsOnly($data['zipcode'] ?? null);
+    $customerDetails = $normalizeOrderCustomerDetails($data, $currentPhone, $zipcode);
 
     $orderId = isset($data['saved_order_id']) ? (int) $data['saved_order_id'] : 0;
     $order = $orderId > 0 ? CustomerOrder::query()->find($orderId) : null;
@@ -903,6 +1156,11 @@ Route::post('/book', function (Request $request) use ($defaultOrderStatus, $norm
     }
 
     $serviceType = $normalizeServiceType($currentNumber->service_type);
+
+    if ($serviceType === PhoneNumber::SERVICE_TYPE_PREPAID) {
+        $validatePrepaidOrderCustomerDetails($customerDetails);
+    }
+
     $isSameSavedOrder = $order->exists
         && $orderedNumber !== ''
         && $orderedNumber === (preg_replace('/\D+/', '', (string) $order->ordered_number) ?? '');
@@ -936,16 +1194,16 @@ Route::post('/book', function (Request $request) use ($defaultOrderStatus, $norm
         'ordered_number' => $orderedNumber !== '' ? $orderedNumber : trim((string) $data['ordered_number']),
         'service_type' => $serviceType,
         'selected_package' => $selectedPackage,
-        'title_prefix' => trim((string) ($data['title_prefix'] ?? '')) ?: null,
-        'first_name' => trim((string) ($data['first_name'] ?? '')) ?: null,
-        'last_name' => trim((string) ($data['last_name'] ?? '')) ?: null,
-        'email' => trim((string) ($data['email'] ?? '')) ?: null,
-        'current_phone' => $currentPhone !== '' ? $currentPhone : null,
-        'shipping_address_line' => trim((string) ($data['shipping_address_line'] ?? '')) ?: null,
-        'district' => trim((string) ($data['district'] ?? '')) ?: null,
-        'amphoe' => trim((string) ($data['amphoe'] ?? '')) ?: null,
-        'province' => trim((string) ($data['province'] ?? '')) ?: null,
-        'zipcode' => $zipcode !== '' ? $zipcode : null,
+        'title_prefix' => $customerDetails['title_prefix'] !== '' ? $customerDetails['title_prefix'] : null,
+        'first_name' => $customerDetails['first_name'] !== '' ? $customerDetails['first_name'] : null,
+        'last_name' => $customerDetails['last_name'] !== '' ? $customerDetails['last_name'] : null,
+        'email' => $customerDetails['email'] !== '' ? $customerDetails['email'] : null,
+        'current_phone' => $customerDetails['current_phone'] !== '' ? $customerDetails['current_phone'] : null,
+        'shipping_address_line' => $customerDetails['shipping_address_line'] !== '' ? $customerDetails['shipping_address_line'] : null,
+        'district' => $customerDetails['district'] !== '' ? $customerDetails['district'] : null,
+        'amphoe' => $customerDetails['amphoe'] !== '' ? $customerDetails['amphoe'] : null,
+        'province' => $customerDetails['province'] !== '' ? $customerDetails['province'] : null,
+        'zipcode' => $customerDetails['zipcode'] !== '' ? $customerDetails['zipcode'] : null,
         'appointment_date' => $serviceType === PhoneNumber::SERVICE_TYPE_PREPAID ? null : ($data['appointment_date'] ?? null),
         'appointment_time_slot' => $serviceType === PhoneNumber::SERVICE_TYPE_PREPAID
             ? null
@@ -1982,6 +2240,29 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         return view('admin.comments', compact('comments'));
     })->name('comments');
+
+    Route::get('/contact-messages', function () use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+
+        $messages = ContactMessage::query()
+            ->latest('submitted_at')
+            ->latest('id')
+            ->paginate(40);
+
+        return view('admin.contact-messages', compact('messages'));
+    })->name('contact-messages');
+
+    Route::delete('/contact-messages/{contactMessage}', function (ContactMessage $contactMessage) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+
+        $contactMessage->delete();
+
+        return back()->with('status_message', 'ลบข้อความติดต่อเรียบร้อย');
+    })->name('contact-messages.delete');
 
     Route::post('/comments/{comment}/approve', function (ArticleComment $comment) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {

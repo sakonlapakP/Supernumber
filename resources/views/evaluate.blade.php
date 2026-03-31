@@ -216,26 +216,16 @@
         ],
     ];
 
-    $groupKeys = array_values(array_unique(array_column($groupedPairs, 'key')));
-    $summaryTags = [];
-    foreach ($topicPairMap as $topic => $topicPairs) {
-        if (count(array_intersect($groupKeys, $topicPairs['bad'])) > 0) {
-            $summaryTags[] = ['label' => $topic, 'class' => 'badge-alert'];
-            continue;
-        }
-        if (count(array_intersect($groupKeys, $topicPairs['good'])) > 0) {
-            $summaryTags[] = ['label' => $topic, 'class' => 'badge-good'];
-            continue;
-        }
-        if (count(array_intersect($groupKeys, $topicPairs['conditional'])) > 0) {
-            $summaryTags[] = ['label' => $topic, 'class' => 'badge-neutral'];
-        }
-    }
-
     $pairCards = [];
     $hasBadPair = false;
+    $allPairsGood = true;
     $warningThemePairs = ['33', '47', '74'];
     $hasWarningPair = count(array_intersect($pairs, $warningThemePairs)) > 0;
+    $activeTopicPairs = [
+        'good' => [],
+        'bad' => [],
+        'conditional' => [],
+    ];
     foreach ($groupedPairs as $group) {
         $label = $group['key'];
         if (strlen($label) === 2 && $label[0] !== $label[1]) {
@@ -248,6 +238,14 @@
         if ($status === 'bad') {
             $hasBadPair = true;
         }
+        if ($status !== 'good') {
+            $allPairsGood = false;
+        }
+        if (isset($activeTopicPairs[$status])) {
+            foreach (array_unique([$group['primary_pair'], $group['key'], strrev($group['key'])]) as $pairVariant) {
+                $activeTopicPairs[$status][] = $pairVariant;
+            }
+        }
         $pairCards[] = [
             'pair' => $label,
             'status' => $status,
@@ -256,6 +254,24 @@
             'desc' => $meaning?->short_meaning ?? 'ยังไม่มีข้อมูลความหมายแบบสั้นสำหรับคู่นี้',
             'class' => $statusClassMap[$status] ?? 'is-neutral',
         ];
+    }
+    foreach ($activeTopicPairs as $status => $pairsByStatus) {
+        $activeTopicPairs[$status] = array_values(array_unique($pairsByStatus));
+    }
+
+    $summaryTags = [];
+    foreach ($topicPairMap as $topic => $topicPairs) {
+        if (count(array_intersect($activeTopicPairs['bad'], $topicPairs['bad'])) > 0) {
+            $summaryTags[] = ['label' => $topic, 'class' => 'badge-alert'];
+            continue;
+        }
+        if (count(array_intersect($activeTopicPairs['good'], $topicPairs['good'])) > 0) {
+            $summaryTags[] = ['label' => $topic, 'class' => 'badge-good'];
+            continue;
+        }
+        if (count(array_intersect($activeTopicPairs['conditional'], $topicPairs['conditional'])) > 0) {
+            $summaryTags[] = ['label' => $topic, 'class' => 'badge-neutral'];
+        }
     }
 
     $themeState = $hasBadPair ? 'danger' : ($hasWarningPair ? 'warning' : 'good');
@@ -305,9 +321,15 @@
         default => 'ให้ทีม Supernumber ช่วยคัดเบอร์มงคลที่ตอบโจทย์งาน เงิน และความรักของคุณ',
     };
     $displayTags = $summaryTags;
-    if ($themeState === 'danger') {
+    if ($hasBadPair) {
         $displayTags = collect($summaryTags)
             ->filter(fn ($tag) => ($tag['class'] ?? null) === 'badge-alert')
+            ->unique('label')
+            ->values()
+            ->all();
+    } elseif ($allPairsGood) {
+        $displayTags = collect($summaryTags)
+            ->filter(fn ($tag) => ($tag['class'] ?? null) === 'badge-good')
             ->unique('label')
             ->values()
             ->all();
@@ -371,7 +393,7 @@
         </div>
       @endif
 
-      <div class="evaluate-highlight">
+      <!-- <div class="evaluate-highlight">
         <div class="highlight-card">
           <h3>การงานและธุรกิจ</h3>
           <p>ช่วยให้ปิดดีลง่ายขึ้น เสริมพลังการตัดสินใจ และทำให้ทีมเชื่อมั่นในทิศทางของคุณ</p>
@@ -384,7 +406,7 @@
           <h3>ความรักและความสัมพันธ์</h3>
           <p>เสน่ห์นุ่มนวล สื่อสารตรงใจ ลดความเข้าใจผิด เหมาะกับการปรับความสัมพันธ์ให้มั่นคง</p>
         </div>
-      </div>
+      </div> -->
 
       <div class="pair-grid">
         @foreach ($pairCards as $card)
@@ -398,9 +420,9 @@
 
       <section class="recommend-section" aria-labelledby="recommend-title">
         <h2 id="recommend-title">{{ $recommendHeading }}</h2>
-        <div class="card-grid">
+        <div class="card-grid recommend-grid">
           @forelse ($recommendedNumbers as $recommended)
-            <article class="number-card">
+            <article class="number-card number-card--recommend">
               <div class="card-top">{{ $recommended->display_number ?: $recommended->phone_number }}</div>
               <div class="card-body">
                 <div class="card-meta-stack">

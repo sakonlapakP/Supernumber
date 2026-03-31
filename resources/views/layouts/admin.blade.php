@@ -1097,6 +1097,7 @@
             <a href="{{ route('admin.orders') }}" class="admin-nav__link @if (request()->routeIs('admin.orders')) is-active @endif">Orders</a>
             <a href="{{ route('admin.articles') }}" class="admin-nav__link @if (request()->routeIs('admin.articles*')) is-active @endif">Articles</a>
             <a href="{{ route('admin.comments') }}" class="admin-nav__link @if (request()->routeIs('admin.comments*')) is-active @endif">Comments</a>
+            <a href="{{ route('admin.contact-messages') }}" class="admin-nav__link @if (request()->routeIs('admin.contact-messages*')) is-active @endif">Contact Messages</a>
             @if (session('admin_user_role') === 'manager')
               <a href="{{ route('admin.line-settings') }}" class="admin-nav__link @if (request()->routeIs('admin.line-settings*')) is-active @endif">LINE Settings</a>
               <a href="{{ route('admin.logs') }}" class="admin-nav__link @if (request()->routeIs('admin.logs')) is-active @endif">Application Logs</a>
@@ -1133,6 +1134,7 @@
                 <a href="{{ route('admin.orders') }}" class="admin-nav__link @if (request()->routeIs('admin.orders')) is-active @endif">Orders</a>
                 <a href="{{ route('admin.articles') }}" class="admin-nav__link @if (request()->routeIs('admin.articles*')) is-active @endif">Articles</a>
                 <a href="{{ route('admin.comments') }}" class="admin-nav__link @if (request()->routeIs('admin.comments*')) is-active @endif">Comments</a>
+                <a href="{{ route('admin.contact-messages') }}" class="admin-nav__link @if (request()->routeIs('admin.contact-messages*')) is-active @endif">Contact Messages</a>
               @if (session('admin_user_role') === 'manager')
                 <a href="{{ route('admin.line-settings') }}" class="admin-nav__link @if (request()->routeIs('admin.line-settings*')) is-active @endif">LINE Settings</a>
                 <a href="{{ route('admin.logs') }}" class="admin-nav__link @if (request()->routeIs('admin.logs')) is-active @endif">Application Logs</a>

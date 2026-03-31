@@ -82,7 +82,7 @@
         <div class="book-step" data-step-pill="3">
           <span class="book-step__index">3</span>
           <div>
-            <h2>{{ $isPrepaid ? 'ตรวจสอบและยืนยันคำสั่งซื้อ' : 'การนัดหมายและยืนยันตัวตน' }}</h2>
+            <h2>{{ $isPrepaid ? 'สำเร็จ' : 'การนัดหมายและยืนยันตัวตน' }}</h2>
           </div>
         </div>
       </div>
@@ -169,7 +169,7 @@
             <div class="full book-name-row">
               <label class="book-name-row__prefix">
                 คำนำหน้าชื่อ
-                <select name="title_prefix">
+                <select name="title_prefix" {{ $isPrepaid ? 'required' : '' }}>
                   <option value="">เลือกคำนำหน้า</option>
                   <option value="นาย">นาย</option>
                   <option value="นาง">นาง</option>
@@ -178,41 +178,41 @@
               </label>
               <label class="book-name-row__first">
                 ชื่อ
-                <input type="text" name="first_name" placeholder="ชื่อจริง">
+                <input type="text" name="first_name" placeholder="ชื่อจริง" {{ $isPrepaid ? 'required' : '' }}>
               </label>
               <label class="book-name-row__last">
                 นามสกุล
-                <input type="text" name="last_name" placeholder="นามสกุล">
+                <input type="text" name="last_name" placeholder="นามสกุล" {{ $isPrepaid ? 'required' : '' }}>
               </label>
             </div>
             <label>
               อีเมลล์
-              <input type="email" name="email" placeholder="name@example.com">
+              <input type="email" name="email" placeholder="name@example.com" {{ $isPrepaid ? 'required' : '' }}>
             </label>
             <label>
               เบอร์มือถือปัจจุบัน
-              <input type="tel" name="current_phone" inputmode="numeric" pattern="[0-9]*" maxlength="10" placeholder="เบอร์ที่ติดต่อได้">
+              <input type="tel" name="current_phone" inputmode="numeric" pattern="[0-9]*" maxlength="10" placeholder="เบอร์ที่ติดต่อได้" {{ $isPrepaid ? 'required' : '' }}>
             </label>
             <label class="full">
               <span class="address-section-title">ที่อยู่ที่จัดส่ง</span>
-              <input type="text" name="shipping_address_line" placeholder="บ้านเลขที่,ซอย,หมู่,ถนน,แขวง/ตำบล">
+              <input type="text" name="shipping_address_line" placeholder="บ้านเลขที่,ซอย,หมู่,ถนน,แขวง/ตำบล" {{ $isPrepaid ? 'required' : '' }}>
             </label>
             <label class="address-autocomplete">
               ตำบล / แขวง
-              <input type="text" id="th-district" name="district" placeholder="เช่น คลองตันเหนือ" autocomplete="off">
+              <input type="text" id="th-district" name="district" placeholder="เช่น คลองตันเหนือ" autocomplete="off" {{ $isPrepaid ? 'required' : '' }}>
               <div class="address-suggest" id="district-suggest" hidden></div>
             </label>
             <label>
               อำเภอ / เขต
-              <input type="text" id="th-amphoe" name="amphoe" list="amphoe-list" placeholder="เช่น วัฒนา">
+              <input type="text" id="th-amphoe" name="amphoe" list="amphoe-list" placeholder="เช่น วัฒนา" {{ $isPrepaid ? 'required' : '' }}>
             </label>
             <label>
               จังหวัด
-              <input type="text" id="th-province" name="province" list="province-list" placeholder="เช่น กรุงเทพมหานคร">
+              <input type="text" id="th-province" name="province" list="province-list" placeholder="เช่น กรุงเทพมหานคร" {{ $isPrepaid ? 'required' : '' }}>
             </label>
             <label>
               รหัสไปรษณีย์
-              <input type="text" id="th-zipcode" name="zipcode" inputmode="numeric" maxlength="5" placeholder="10110">
+              <input type="text" id="th-zipcode" name="zipcode" inputmode="numeric" maxlength="5" placeholder="10110" {{ $isPrepaid ? 'required' : '' }}>
             </label>
           </div>
         </div>
@@ -259,12 +259,23 @@
         </div>
 
         <div class="book-card book-card-step is-hidden" data-step-panel="3">
-          <h3>ขั้นตอนที่ 3. {{ $isPrepaid ? 'ตรวจสอบข้อมูลก่อนยืนยันคำสั่งซื้อ' : 'ยืนยันตัวตน' }}</h3>
+          <h3>ขั้นตอนที่ 3. {{ $isPrepaid ? 'สำเร็จ' : 'ยืนยันตัวตน' }}</h3>
           @if ($isPrepaid)
             <p class="book-note">
-              หลังจากยืนยันคำสั่งซื้อ ระบบจะเก็บรายการไว้ในสถานะรอตรวจสอบและ hold เบอร์นี้ไว้ก่อน
-              จากนั้นแอดมินจะตรวจสอบหลักฐานการโอนเงินและเปลี่ยนสถานะเบอร์เป็น sold ก่อนจัดส่งซิมตามที่อยู่ที่คุณแจ้งไว้
+              บันทึกรายการคำสั่งซื้อเรียบร้อยแล้ว กรุณาทวนรายละเอียดผู้รับและที่อยู่จัดส่งอีกครั้ง
+              ทีมงานจะจัดส่งซิมตามชื่อและที่อยู่ที่คุณแจ้งไว้ภายในวันและเวลาทำการของบริษัท
             </p>
+            <div class="step2-summary" aria-label="สรุปรายการคำสั่งซื้อและที่อยู่จัดส่ง">
+              <h4>สรุปรายการคำสั่งซื้อ</h4>
+              <div class="step2-summary__grid">
+                <p><span>เบอร์ที่สั่งซื้อ</span><strong id="final-summary-ordered-number">-</strong></p>
+                <p><span>ยอดชำระ</span><strong id="final-summary-package">-</strong></p>
+                <p><span>ชื่อผู้รับ</span><strong id="final-summary-full-name">-</strong></p>
+                <p><span>เบอร์มือถือปัจจุบัน</span><strong id="final-summary-phone">-</strong></p>
+                <p><span>อีเมลล์</span><strong id="final-summary-email">-</strong></p>
+                <p><span>ที่อยู่จัดส่ง</span><strong id="final-summary-address">-</strong></p>
+              </div>
+            </div>
           @else
             <p class="book-note">
               บริษัท ซุปเปอร์นัมเบอร์ ตระหนักถึงความสำคัญของความปลอดภัยของข้อมูลส่วนบุคคลเป็นลำดับแรก
@@ -303,10 +314,12 @@
           <button type="button" class="card-btn" data-go-step="1">ย้อนกลับ</button>
           <button type="button" class="card-btn card-btn--buy" id="step2-next-btn">บันทึกและไปขั้นตอนต่อไป</button>
         </div>
-        <div class="book-wizard-actions book-wizard-actions--outside book-card-step is-hidden" data-step-panel="3">
-          <button type="button" class="card-btn" data-go-step="2">ย้อนกลับ</button>
-          <button type="submit" class="card-btn card-btn--buy" id="step3-submit-btn">{{ $isPrepaid ? 'ยืนยันคำสั่งซื้อ' : 'สั่งซื้อ' }}</button>
-        </div>
+        @unless ($isPrepaid)
+          <div class="book-wizard-actions book-wizard-actions--outside book-card-step is-hidden" data-step-panel="3">
+            <button type="button" class="card-btn" data-go-step="2">ย้อนกลับ</button>
+            <button type="submit" class="card-btn card-btn--buy" id="step3-submit-btn">สั่งซื้อ</button>
+          </div>
+        @endunless
       </form>
     </div>
   </section>
@@ -349,6 +362,12 @@
       const summaryPhone = document.getElementById("summary-phone");
       const summaryEmail = document.getElementById("summary-email");
       const summaryAddress = document.getElementById("summary-address");
+      const finalSummaryOrderedNumber = document.getElementById("final-summary-ordered-number");
+      const finalSummaryPackage = document.getElementById("final-summary-package");
+      const finalSummaryFullName = document.getElementById("final-summary-full-name");
+      const finalSummaryPhone = document.getElementById("final-summary-phone");
+      const finalSummaryEmail = document.getElementById("final-summary-email");
+      const finalSummaryAddress = document.getElementById("final-summary-address");
       const bankAccountNoEl = document.getElementById("bank-account-no");
       const copyAccountBtn = document.getElementById("copy-account-btn");
       const copyAccountHint = document.getElementById("copy-account-hint");
@@ -410,11 +429,36 @@
         if (payCardTitle) payCardTitle.textContent = `ขั้นตอนที่ 2. ชำระเงิน ${priceText} บาท`;
         if (payCardNote) payCardNote.textContent = `โอนเงินจำนวน ${priceText} บาท แล้วแนบสลิปด้านล่าง`;
         if (summaryPackage) summaryPackage.textContent = isPrepaid ? `${priceText} บาท` : `${priceText} บาท / เดือน`;
+        if (finalSummaryPackage) finalSummaryPackage.textContent = isPrepaid ? `${priceText} บาท` : `${priceText} บาท / เดือน`;
       };
 
       const clean = (value) => (value || "").toString().trim();
       const dash = (value) => (value ? value : "-");
       const phoneInput = form.elements.namedItem("current_phone");
+      const prepaidRequiredFields = isPrepaid ? [
+        { name: "title_prefix", emptyMessage: "กรุณาเลือกคำนำหน้าชื่อ" },
+        { name: "first_name", emptyMessage: "กรุณากรอกชื่อ" },
+        { name: "last_name", emptyMessage: "กรุณากรอกนามสกุล" },
+        { name: "email", emptyMessage: "กรุณากรอกอีเมลล์" },
+        {
+          name: "current_phone",
+          emptyMessage: "กรุณากรอกเบอร์มือถือปัจจุบัน",
+          invalidMessage: "กรุณากรอกเบอร์มือถือปัจจุบันให้ครบ 10 หลัก",
+          normalize: (value) => value.replace(/\D+/g, ""),
+          isValid: (value) => value.length === 10,
+        },
+        { name: "shipping_address_line", emptyMessage: "กรุณากรอกที่อยู่ที่จัดส่ง" },
+        { name: "district", emptyMessage: "กรุณากรอกตำบล / แขวง" },
+        { name: "amphoe", emptyMessage: "กรุณากรอกอำเภอ / เขต" },
+        { name: "province", emptyMessage: "กรุณากรอกจังหวัด" },
+        {
+          name: "zipcode",
+          emptyMessage: "กรุณากรอกรหัสไปรษณีย์",
+          invalidMessage: "กรุณากรอกรหัสไปรษณีย์ให้ครบ 5 หลัก",
+          normalize: (value) => value.replace(/\D+/g, ""),
+          isValid: (value) => value.length === 5,
+        },
+      ] : [];
 
       const copyBankAccount = async () => {
         const accountNo = clean(bankAccountNoEl?.textContent);
@@ -512,11 +556,28 @@
         if (summaryPhone) summaryPhone.textContent = dash(phone);
         if (summaryEmail) summaryEmail.textContent = dash(email);
         if (summaryAddress) summaryAddress.textContent = dash(address);
+        if (finalSummaryOrderedNumber) finalSummaryOrderedNumber.textContent = dash(orderedNumber);
+        if (finalSummaryFullName) finalSummaryFullName.textContent = dash(fullName);
+        if (finalSummaryPhone) finalSummaryPhone.textContent = dash(phone);
+        if (finalSummaryEmail) finalSummaryEmail.textContent = dash(email);
+        if (finalSummaryAddress) finalSummaryAddress.textContent = dash(address);
       };
 
       const enforceNumericPhone = () => {
         if (!phoneInput || phoneInput instanceof RadioNodeList) return;
         phoneInput.value = (phoneInput.value || "").replace(/\D+/g, "");
+      };
+
+      const enforceNumericZipcode = () => {
+        if (!zipcodeInput) return;
+        zipcodeInput.value = (zipcodeInput.value || "").replace(/\D+/g, "");
+      };
+
+      const clearPrepaidFieldValidity = (fieldName) => {
+        if (!isPrepaid) return;
+        const field = form.elements.namedItem(fieldName);
+        if (!field || field instanceof RadioNodeList || typeof field.setCustomValidity !== "function") return;
+        field.setCustomValidity("");
       };
 
       const normalizeAddressRecord = (item) => {
@@ -721,9 +782,51 @@
         }
       };
 
+      const validatePrepaidStepOne = (revealStepOne = false) => {
+        if (!isPrepaid) return true;
+
+        let firstInvalidField = null;
+        prepaidRequiredFields.forEach((config) => {
+          const field = form.elements.namedItem(config.name);
+          if (!field || field instanceof RadioNodeList || typeof field.setCustomValidity !== "function") return;
+
+          field.setCustomValidity("");
+          const rawValue = clean(field.value);
+          const normalizedValue = typeof config.normalize === "function" ? config.normalize(rawValue) : rawValue;
+
+          let errorMessage = "";
+          if (!normalizedValue) {
+            errorMessage = config.emptyMessage;
+          } else if (typeof config.isValid === "function" && !config.isValid(normalizedValue)) {
+            errorMessage = config.invalidMessage || config.emptyMessage;
+          }
+
+          if (errorMessage !== "") {
+            field.setCustomValidity(errorMessage);
+            if (!firstInvalidField) {
+              firstInvalidField = field;
+            }
+          }
+        });
+
+        if (!firstInvalidField) {
+          return true;
+        }
+
+        if (revealStepOne) {
+          setStep(1);
+        }
+        firstInvalidField.reportValidity();
+        firstInvalidField.focus();
+        return false;
+      };
+
       goStepButtons.forEach((btn) => {
         btn.addEventListener("click", () => {
           const target = Number(btn.dataset.goStep || 1);
+          if (target === 2 && !validatePrepaidStepOne()) {
+            return;
+          }
           if (target === 3) {
             const hasFile = Boolean(paymentSlipInput && paymentSlipInput.files && paymentSlipInput.files.length > 0);
             if (!hasFile) {
@@ -738,6 +841,9 @@
       });
 
       step2NextBtn?.addEventListener("click", async () => {
+        if (!validatePrepaidStepOne(true)) {
+          return;
+        }
         saveDraft();
         updateOrderSummary();
         const saved = await saveOrderAtStep2();
@@ -747,6 +853,10 @@
       });
 
       form.addEventListener("submit", (event) => {
+        if (!validatePrepaidStepOne(true)) {
+          event.preventDefault();
+          return;
+        }
         const hasFile = Boolean(paymentSlipInput && paymentSlipInput.files && paymentSlipInput.files.length > 0);
         const alreadySaved = Boolean(clean(savedOrderIdInput?.value));
         if (!hasFile && !alreadySaved) {
@@ -771,6 +881,26 @@
           saveDraft();
           updateOrderSummary();
         }, 0);
+      });
+      zipcodeInput?.addEventListener("input", () => {
+        enforceNumericZipcode();
+        clearPrepaidFieldValidity("zipcode");
+        saveDraft();
+        updateOrderSummary();
+      });
+      zipcodeInput?.addEventListener("paste", () => {
+        window.setTimeout(() => {
+          enforceNumericZipcode();
+          clearPrepaidFieldValidity("zipcode");
+          saveDraft();
+          updateOrderSummary();
+        }, 0);
+      });
+      prepaidRequiredFields.forEach(({ name }) => {
+        const field = form.elements.namedItem(name);
+        if (!field || field instanceof RadioNodeList) return;
+        field.addEventListener("input", () => clearPrepaidFieldValidity(name));
+        field.addEventListener("change", () => clearPrepaidFieldValidity(name));
       });
       window.addEventListener("popstate", (event) => {
         const next = Number(event.state?.bookStep || 1);
@@ -802,6 +932,7 @@
       appointmentDateInput?.addEventListener("change", refillTimeSlots);
       refillTimeSlots();
       enforceNumericPhone();
+      enforceNumericZipcode();
       updateSlipClearButton();
       updatePreview();
       updateOrderSummary();

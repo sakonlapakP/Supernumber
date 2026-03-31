@@ -20,7 +20,7 @@
         </p>
         <div class="tier-legend">
           <span class="tier-legend__item tier-legend__item--silver">Bronze · 699+</span>
-          <span class="tier-legend__item tier-legend__item--gold">Gold · 1099+</span>
+          <span class="tier-legend__item tier-legend__item--gold">Gold · 1199+</span>
           <span class="tier-legend__item tier-legend__item--platinum">Platinum · 1499+</span>
         </div>
       </div>
@@ -50,7 +50,7 @@
           <div>
             <span class="tier-badge">Gold</span>
             <h2 class="tier-name">ระดับยอดนิยม</h2>
-            <p class="tier-price">1099 บาทขึ้นไป</p>
+            <p class="tier-price">1199 บาทขึ้นไป</p>
           </div>
           <ul class="tier-features">
             <li>สมดุลทั้งความหมายและความสวยของเลข</li>

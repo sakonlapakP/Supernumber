@@ -79,7 +79,7 @@ class NumberSearchTest extends TestCase
             'status' => PhoneNumber::STATUS_ACTIVE,
         ]);
 
-        $response = $this->get('/numbers?prefix=089&p5=3&p10=9&plan=Promo%20A');
+        $response = $this->get('/numbers?prefix=089&p5=3&p10=9&plan=Promo%20A%20100');
 
         $response->assertOk();
         $response->assertViewHas('positionPattern', '089_3____9');
@@ -110,7 +110,7 @@ class NumberSearchTest extends TestCase
             'phone_number' => '0810000003',
             'network_code' => 'true_dtac',
             'plan_name' => 'True Super Value',
-            'sale_price' => 1099,
+            'sale_price' => 1199,
             'status' => PhoneNumber::STATUS_ACTIVE,
         ]);
 
@@ -119,8 +119,8 @@ class NumberSearchTest extends TestCase
         $response->assertOk();
         $response->assertViewHas('plans', function ($plans) {
             return $plans->values()->all() === [
-                'True Super Value 699',
-                'True Super Value 1099',
+                ['value' => 'True Super Value 699', 'label' => 'True Super Value 699'],
+                ['value' => 'True Super Value 1199', 'label' => 'True Super Value 1199'],
             ];
         });
         $response->assertSee('True Super Value 699');

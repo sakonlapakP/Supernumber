@@ -156,9 +156,9 @@
 
       <section class="recommend-section" aria-labelledby="recommend-title">
         <h2 id="recommend-title">เบอร์แนะนำเพื่อปรับสมดุล</h2>
-        <div class="card-grid">
+        <div class="card-grid recommend-grid">
           @forelse ($recommendedNumbers as $recommended)
-            <article class="number-card">
+            <article class="number-card number-card--recommend">
               <div class="card-top">{{ $recommended->display_number ?: $recommended->phone_number }}</div>
               <div class="card-body">
                 <div class="card-meta-stack">

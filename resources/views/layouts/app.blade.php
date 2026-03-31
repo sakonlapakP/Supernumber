@@ -7,6 +7,7 @@
     @endphp
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="format-detection" content="telephone=no" />
     <title>@yield('title', 'Supernumber')</title>
     <meta name="description" content="@yield('meta_description', 'ดูดวงเบอร์มือถือฟรี วิเคราะห์เสริมพลัง และคัดเบอร์มงคลที่เหมาะกับคุณ')" />
     <meta name="robots" content="@yield('robots', 'index, follow')" />
@@ -49,6 +50,19 @@
       @include('partials.footer')
     @endif
 
+    <div class="cookie-consent" data-cookie-consent hidden>
+      <div class="cookie-consent__inner">
+        <div class="cookie-consent__copy">
+          <strong>เว็บไซต์นี้ใช้คุกกี้</strong>
+          <p>เราใช้คุกกี้เพื่อช่วยให้เว็บไซต์ทำงานได้ดีขึ้น วิเคราะห์การใช้งาน และปรับปรุงประสบการณ์ของคุณ</p>
+        </div>
+        <div class="cookie-consent__actions">
+          <button type="button" class="cookie-consent__button cookie-consent__button--ghost" data-cookie-dismiss>ปิด</button>
+          <button type="button" class="cookie-consent__button cookie-consent__button--accept" data-cookie-accept>ยอมรับ</button>
+        </div>
+      </div>
+    </div>
+
     <script>
       (() => {
         const toggle = document.querySelector(".nav-toggle");
@@ -71,6 +85,37 @@
             closeMenu();
           }
         });
+      })();
+
+      (() => {
+        const storageKey = "supernumber_cookie_consent";
+        const banner = document.querySelector("[data-cookie-consent]");
+        const acceptButton = document.querySelector("[data-cookie-accept]");
+        const dismissButton = document.querySelector("[data-cookie-dismiss]");
+
+        if (!banner || !acceptButton || !dismissButton) return;
+
+        const hideBanner = () => {
+          banner.hidden = true;
+        };
+
+        const showBanner = () => {
+          banner.hidden = false;
+        };
+
+        if (window.localStorage.getItem(storageKey) === "accepted") {
+          hideBanner();
+          return;
+        }
+
+        showBanner();
+
+        acceptButton.addEventListener("click", () => {
+          window.localStorage.setItem(storageKey, "accepted");
+          hideBanner();
+        });
+
+        dismissButton.addEventListener("click", hideBanner);
       })();
     </script>
   </body>

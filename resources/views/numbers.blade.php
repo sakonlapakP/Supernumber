@@ -11,6 +11,9 @@
 @section('body_class', 'numbers-scale-soft')
 
 @section('content')
+  @php
+    $selectedView = request('view') === 'list' ? 'list' : 'grid';
+  @endphp
   <section class="numbers-hero" aria-labelledby="numbers-hero-title">
     <div class="numbers-hero-overlay"></div>
     <div class="container numbers-hero__content">
@@ -26,6 +29,7 @@
     <div class="container numbers-catalog-shell">
       <div class="numbers-catalog-toolbar">
         <form class="numbers-filter-form" action="{{ route('numbers.index') }}" method="get">
+          <input id="numbers-view-input" type="hidden" name="view" value="{{ $selectedView }}">
           <div class="numbers-filter-panel">
             <div class="numbers-filter-modes">
               <div class="numbers-filter-card numbers-filter-card--sequence">
@@ -99,12 +103,11 @@
                 <select id="numbers-plan" class="numbers-filter-select" name="plan">
                   <option value="">ราคา / โปรโมชั่น</option>
                   @foreach ($plans as $plan)
-                    <option value="{{ $plan }}" @selected($selectedPlan === $plan)>{{ $plan }}</option>
+                    <option value="{{ $plan['value'] }}" @selected($selectedPlan === $plan['value'])>{{ $plan['label'] }}</option>
                   @endforeach
                 </select>
                 <button class="numbers-filter-submit" type="submit">ค้นหา</button>
               </div>
-              <p class="numbers-filter-actions__note">ใช้ตัวกรองประเภทเบอร์ร่วมกับการค้นหาตามตำแหน่งหรือชุดตัวเลขได้</p>
             </div>
           </div>
         </form>
@@ -124,27 +127,73 @@
           </p>
         </div>
         <div class="numbers-view-toggle" id="numbers-view-toggle" role="group" aria-label="เลือกรูปแบบการแสดงผล">
-          <button class="numbers-view-toggle__button" type="button" data-view="list" aria-pressed="false">List</button>
-          <button class="numbers-view-toggle__button" type="button" data-view="grid" aria-pressed="false">Grid</button>
+          <button class="numbers-view-toggle__button {{ $selectedView === 'list' ? 'is-active' : '' }}" type="button" data-view="list" aria-pressed="{{ $selectedView === 'list' ? 'true' : 'false' }}">List</button>
+          <button class="numbers-view-toggle__button {{ $selectedView === 'grid' ? 'is-active' : '' }}" type="button" data-view="grid" aria-pressed="{{ $selectedView === 'grid' ? 'true' : 'false' }}">Grid</button>
         </div>
       </div>
 
-      <div class="numbers-catalog-grid" id="numbers-catalog-grid">
-        @forelse ($numbers as $number)
-          <article class="number-card number-card--catalog">
-            <div class="card-top">{{ $number->display_number ?: $number->phone_number }}</div>
-            <div class="card-body">
-              <div class="card-meta-stack">
-                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">{{ $number->service_type_label }}</span></span>
-                <span class="card-meta-plan">{{ $number->payment_label }}</span>
-              </div>
+      @if ($isDefaultSplitLayout)
+        <div class="numbers-default-columns" id="numbers-catalog-grid" data-view="{{ $selectedView }}">
+          <section class="numbers-default-column numbers-default-column--prepaid">
+            <div class="numbers-default-column__head">
+              <h3>เบอร์เติมเงิน</h3>
+              <p>แสดงก่อนเมื่อยังไม่ได้ค้นหา</p>
             </div>
-            <a class="card-btn card-btn--buy" href="{{ route('evaluate', ['phone' => $number->phone_number]) }}">สั่งซื้อ</a>
-          </article>
-        @empty
-          <p class="numbers-empty">ไม่พบบัญชีเบอร์ตามเงื่อนไขที่ค้นหา</p>
-        @endforelse
-      </div>
+            <div class="numbers-catalog-grid listing-card-grid is-default-split" data-view="{{ $selectedView }}">
+              @foreach ($defaultPrepaidNumbers as $number)
+                <article class="number-card number-card--listing number-card--catalog">
+                  <div class="card-top">{{ $number->display_number ?: $number->phone_number }}</div>
+                  <div class="card-body">
+                    <div class="card-meta-stack">
+                      <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">{{ $number->service_type_label }}</span></span>
+                      <span class="card-meta-plan">{{ $number->payment_label }}</span>
+                    </div>
+                  </div>
+                  <a class="card-btn card-btn--buy" href="{{ route('evaluate', ['phone' => $number->phone_number]) }}">สั่งซื้อ</a>
+                </article>
+              @endforeach
+            </div>
+          </section>
+
+          <section class="numbers-default-column numbers-default-column--postpaid">
+            <div class="numbers-default-column__head">
+              <h3>เบอร์รายเดือน</h3>
+              <p>แสดงถัดลงมาเมื่อยังไม่ได้ค้นหา</p>
+            </div>
+            <div class="numbers-catalog-grid listing-card-grid is-default-split" data-view="{{ $selectedView }}">
+              @foreach ($defaultPostpaidNumbers as $number)
+                <article class="number-card number-card--listing number-card--catalog">
+                  <div class="card-top">{{ $number->display_number ?: $number->phone_number }}</div>
+                  <div class="card-body">
+                    <div class="card-meta-stack">
+                      <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">{{ $number->service_type_label }}</span></span>
+                      <span class="card-meta-plan">{{ $number->payment_label }}</span>
+                    </div>
+                  </div>
+                  <a class="card-btn card-btn--buy" href="{{ route('evaluate', ['phone' => $number->phone_number]) }}">สั่งซื้อ</a>
+                </article>
+              @endforeach
+            </div>
+          </section>
+        </div>
+      @else
+        <div class="numbers-catalog-grid listing-card-grid" id="numbers-catalog-grid" data-view="{{ $selectedView }}">
+          @forelse ($numbers as $number)
+            <article class="number-card number-card--listing number-card--catalog">
+              <div class="card-top">{{ $number->display_number ?: $number->phone_number }}</div>
+              <div class="card-body">
+                <div class="card-meta-stack">
+                  <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">{{ $number->service_type_label }}</span></span>
+                  <span class="card-meta-plan">{{ $number->payment_label }}</span>
+                </div>
+              </div>
+              <a class="card-btn card-btn--buy" href="{{ route('evaluate', ['phone' => $number->phone_number]) }}">สั่งซื้อ</a>
+            </article>
+          @empty
+            <p class="numbers-empty">ไม่พบบัญชีเบอร์ตามเงื่อนไขที่ค้นหา</p>
+          @endforelse
+        </div>
+      @endif
 
       @if ($numbers->hasPages())
         @php
@@ -266,21 +315,100 @@
     })();
 
     (() => {
-      const storageKey = "numbers-catalog-view";
-      const catalogGrid = document.getElementById("numbers-catalog-grid");
-      const toggle = document.getElementById("numbers-view-toggle");
+      const serviceTypeSelect = document.getElementById("numbers-service-type");
+      const planSelect = document.getElementById("numbers-plan");
+      const planOptionsByServiceType = @json($planOptionsByServiceType);
+      const serviceTypePostpaid = @json(\App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID);
+      const serviceTypePrepaid = @json(\App\Models\PhoneNumber::SERVICE_TYPE_PREPAID);
+      const placeholderLabel = "ราคา / โปรโมชั่น";
 
-      if (!catalogGrid || !toggle) return;
+      if (!serviceTypeSelect || !planSelect) return;
+
+      const escapeHtml = (value) =>
+        String(value ?? "").replace(/[&<>"']/g, (char) => {
+          switch (char) {
+            case "&":
+              return "&amp;";
+            case "<":
+              return "&lt;";
+            case ">":
+              return "&gt;";
+            case '"':
+              return "&quot;";
+            case "'":
+              return "&#39;";
+            default:
+              return char;
+          }
+        });
+
+      const resolveOptionKey = (value) => {
+        if (value === serviceTypePostpaid || value === serviceTypePrepaid) {
+          return value;
+        }
+
+        return "all";
+      };
+
+      const renderPlanOptions = (serviceType) => {
+        const optionKey = resolveOptionKey(serviceType);
+        const options = planOptionsByServiceType[optionKey] ?? [];
+        const currentValue = planSelect.value;
+        const renderedOptions = options
+          .map((option) => `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`)
+          .join("");
+
+        planSelect.innerHTML = `<option value="">${placeholderLabel}</option>${renderedOptions}`;
+
+        const hasCurrentValue = options.some((option) => option.value === currentValue);
+        planSelect.value = hasCurrentValue ? currentValue : "";
+      };
+
+      renderPlanOptions(serviceTypeSelect.value);
+
+      serviceTypeSelect.addEventListener("change", () => {
+        renderPlanOptions(serviceTypeSelect.value);
+      });
+    })();
+
+    (() => {
+      const catalogRoot = document.getElementById("numbers-catalog-grid");
+      const toggle = document.getElementById("numbers-view-toggle");
+      const viewInput = document.getElementById("numbers-view-input");
+
+      if (!catalogRoot || !toggle) return;
 
       const buttons = Array.from(toggle.querySelectorAll("[data-view]"));
-      const mediaQuery = window.matchMedia("(max-width: 680px)");
-      let hasManualPreference = false;
+      const catalogGrids = catalogRoot.classList.contains("numbers-catalog-grid")
+        ? [catalogRoot]
+        : Array.from(catalogRoot.querySelectorAll(".numbers-catalog-grid"));
+      const paginationLinks = Array.from(document.querySelectorAll(".numbers-pagination a.numbers-pagination__link"));
 
-      const defaultView = () => (mediaQuery.matches ? "list" : "grid");
+      const updateUrlState = (view) => {
+        const url = new URL(window.location.href);
+        url.searchParams.set("view", view);
+        window.history.replaceState({}, "", url);
+      };
+
+      const updatePaginationLinks = (view) => {
+        paginationLinks.forEach((link) => {
+          const url = new URL(link.href, window.location.origin);
+          url.searchParams.set("view", view);
+          link.href = url.toString();
+        });
+      };
 
       const applyView = (view) => {
         const normalizedView = view === "list" ? "list" : "grid";
-        catalogGrid.dataset.view = normalizedView;
+        catalogRoot.dataset.view = normalizedView;
+        catalogGrids.forEach((grid) => {
+          grid.dataset.view = normalizedView;
+        });
+        if (viewInput) {
+          viewInput.value = normalizedView;
+        }
+        updatePaginationLinks(normalizedView);
+        updateUrlState(normalizedView);
 
         buttons.forEach((button) => {
           const isActive = button.dataset.view === normalizedView;
@@ -289,43 +417,14 @@
         });
       };
 
-      try {
-        const savedView = localStorage.getItem(storageKey);
-        if (savedView === "list" || savedView === "grid") {
-          hasManualPreference = true;
-          applyView(savedView);
-        } else {
-          applyView(defaultView());
-        }
-      } catch (error) {
-        applyView(defaultView());
-      }
+      applyView(@json($selectedView));
 
       toggle.addEventListener("click", (event) => {
         const target = event.target.closest("[data-view]");
         if (!target) return;
 
-        hasManualPreference = true;
         applyView(target.dataset.view);
-
-        try {
-          localStorage.setItem(storageKey, target.dataset.view);
-        } catch (error) {
-          // Ignore storage errors and keep the in-memory state.
-        }
       });
-
-      const handleViewportChange = () => {
-        if (!hasManualPreference) {
-          applyView(defaultView());
-        }
-      };
-
-      if (typeof mediaQuery.addEventListener === "function") {
-        mediaQuery.addEventListener("change", handleViewportChange);
-      } else if (typeof mediaQuery.addListener === "function") {
-        mediaQuery.addListener(handleViewportChange);
-      }
     })();
   </script>
 @endsection

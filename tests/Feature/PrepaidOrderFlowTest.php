@@ -31,7 +31,8 @@ class PrepaidOrderFlowTest extends TestCase
         $response->assertOk();
         $response->assertSee('ราคาขายเบอร์');
         $response->assertSee('ไม่ต้องยืนยันตัวตน');
-        $response->assertSee('ตรวจสอบข้อมูลก่อนยืนยันคำสั่งซื้อ');
+        $response->assertSee('สำเร็จ');
+        $response->assertSee('สรุปรายการคำสั่งซื้อ');
     }
 
     public function test_prepaid_step_two_save_creates_pending_review_order_and_holds_the_number(): void
@@ -54,6 +55,7 @@ class PrepaidOrderFlowTest extends TestCase
             'title_prefix' => 'คุณ',
             'first_name' => 'สมหญิง',
             'last_name' => 'ใจดี',
+            'email' => 'prepaid@example.com',
             'current_phone' => '081-111-2222',
             'shipping_address_line' => '123 ถนนสุขุมวิท',
             'district' => 'คลองเตย',
@@ -88,6 +90,88 @@ class PrepaidOrderFlowTest extends TestCase
             'action' => 'hold',
             'from_status' => PhoneNumber::STATUS_ACTIVE,
             'to_status' => PhoneNumber::STATUS_HOLD,
+        ]);
+    }
+
+    public function test_prepaid_step_two_save_requires_complete_customer_and_shipping_details(): void
+    {
+        Storage::fake('public');
+
+        PhoneNumber::query()->create([
+            'phone_number' => '0891234567',
+            'display_number' => '089-123-4567',
+            'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
+            'network_code' => 'true_dtac',
+            'plan_name' => 'เติมเงิน',
+            'sale_price' => 5000,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->post(route('book.save-step2'), [
+            'ordered_number' => '089-123-4567',
+            'selected_package' => 5000,
+            'payment_slip' => UploadedFile::fake()->image('slip.jpg'),
+        ], [
+            'Accept' => 'application/json',
+            'X-Requested-With' => 'XMLHttpRequest',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonValidationErrors([
+                'title_prefix',
+                'first_name',
+                'last_name',
+                'email',
+                'current_phone',
+                'shipping_address_line',
+                'district',
+                'amphoe',
+                'province',
+                'zipcode',
+            ]);
+
+        $this->assertDatabaseMissing('customer_orders', [
+            'ordered_number' => '0891234567',
+        ]);
+    }
+
+    public function test_prepaid_final_submit_requires_complete_customer_and_shipping_details(): void
+    {
+        Storage::fake('public');
+
+        PhoneNumber::query()->create([
+            'phone_number' => '0891234567',
+            'display_number' => '089-123-4567',
+            'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
+            'network_code' => 'true_dtac',
+            'plan_name' => 'เติมเงิน',
+            'sale_price' => 5000,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->from('/book?number=0891234567')
+            ->post(route('book.submit'), [
+                'ordered_number' => '089-123-4567',
+                'selected_package' => 5000,
+                'payment_slip' => UploadedFile::fake()->image('slip.jpg'),
+            ]);
+
+        $response->assertRedirect('/book?number=0891234567');
+        $response->assertSessionHasErrors([
+            'title_prefix',
+            'first_name',
+            'last_name',
+            'email',
+            'current_phone',
+            'shipping_address_line',
+            'district',
+            'amphoe',
+            'province',
+            'zipcode',
+        ]);
+
+        $this->assertDatabaseMissing('customer_orders', [
+            'ordered_number' => '0891234567',
         ]);
     }
 

@@ -14,7 +14,7 @@ class PhoneNumber extends Model
     public const SERVICE_TYPE_PREPAID = 'prepaid';
     public const PACKAGE_NAME = 'True Super Value';
     public const PACKAGE_PRICE_BASIC = 699;
-    public const PACKAGE_PRICE_STANDARD = 1099;
+    public const PACKAGE_PRICE_STANDARD = 1199;
     public const PACKAGE_PRICE_PREMIUM = 1499;
     public const STATUS_ACTIVE = 'active';
     public const STATUS_HOLD = 'hold';
@@ -227,6 +227,52 @@ class PhoneNumber extends Model
             ->reject(fn (string $label) => $label === '-')
             ->values()
             ->all();
+    }
+
+    /**
+     * @return array<int, array{value: string, label: string, min: ?int, max: ?int}>
+     */
+    public static function prepaidPriceRanges(): array
+    {
+        return [
+            ['value' => 'prepaid_under_5000', 'label' => 'น้อยกว่า 5,000', 'min' => null, 'max' => 5000],
+            ['value' => 'prepaid_5000_10000', 'label' => '5,000 - 10,000', 'min' => 5000, 'max' => 10000],
+            ['value' => 'prepaid_10000_20000', 'label' => '10,000 - 20,000', 'min' => 10000, 'max' => 20000],
+            ['value' => 'prepaid_20000_30000', 'label' => '20,000 - 30,000', 'min' => 20000, 'max' => 30000],
+            ['value' => 'prepaid_30000_50000', 'label' => '30,000 - 50,000', 'min' => 30000, 'max' => 50000],
+            ['value' => 'prepaid_50000_100000', 'label' => '50,000 - 100,000', 'min' => 50000, 'max' => 100001],
+            ['value' => 'prepaid_over_100000', 'label' => 'มากกว่า 100,000', 'min' => 100000, 'max' => null],
+        ];
+    }
+
+    /**
+     * @return array<int, array{value: string, label: string}>
+     */
+    public static function prepaidPriceRangeOptions(): array
+    {
+        return array_map(
+            static fn (array $range): array => [
+                'value' => $range['value'],
+                'label' => $range['label'],
+            ],
+            self::prepaidPriceRanges()
+        );
+    }
+
+    /**
+     * @return array{value: string, label: string, min: ?int, max: ?int}|null
+     */
+    public static function resolvePrepaidPriceRange(?string $value): ?array
+    {
+        $value = trim((string) $value);
+
+        foreach (self::prepaidPriceRanges() as $range) {
+            if ($range['value'] === $value) {
+                return $range;
+            }
+        }
+
+        return null;
     }
 
     public static function serviceTypeOptions(): array
