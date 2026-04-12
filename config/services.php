@@ -41,6 +41,7 @@ return [
         'group_id' => env('LINE_GROUP_ID'),
         'groups' => [
             'estimate' => env('LINE_ESTIMATE_GROUP_ID'),
+            'lottery' => env('LINE_LOTTERY_GROUP_ID'),
             'order_submission' => env('LINE_ORDER_GROUP_ID'),
             'order_status' => env('LINE_ORDER_STATUS_GROUP_ID'),
             'admin_test' => env('LINE_TEST_GROUP_ID'),
@@ -51,6 +52,25 @@ return [
         ))),
         'retry_times' => (int) env('LINE_RETRY_TIMES', 3),
         'retry_sleep_ms' => (int) env('LINE_RETRY_SLEEP_MS', 1000),
+    ],
+
+    'gemini' => [
+        'api_key' => env('GEMINI_API_KEY'),
+        'model' => env('GEMINI_MODEL', 'gemini-2.5-flash'),
+        'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com'),
+        'timeout' => (int) env('GEMINI_TIMEOUT', 60),
+    ],
+
+    'ga4' => [
+        'measurement_id' => env('GA4_MEASUREMENT_ID'),
+        'property_id' => env('GA4_PROPERTY_ID'),
+        'service_account_json_base64' => env('GA4_SERVICE_ACCOUNT_JSON_BASE64'),
+        'dashboard_cache_seconds' => (int) env('GA4_DASHBOARD_CACHE_SECONDS', 900),
+    ],
+
+    'turnstile' => [
+        'site_key' => env('TURNSTILE_SITE_KEY'),
+        'secret_key' => env('TURNSTILE_SECRET_KEY'),
     ],
 
 ];

@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Supernumber Admin | Edit Number')
+@section('title', 'Supernumber Admin | แก้ไขเบอร์')
 
 @section('content')
   @php
@@ -14,15 +14,15 @@
     }
 
     $returnLabel = match ($serviceTypeFilter) {
-      \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID => 'กลับหน้า Postpaid Numbers',
-      \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID => 'กลับหน้า Prepaid Numbers',
-      default => 'กลับหน้า All Numbers',
+      \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID => 'กลับหน้าเบอร์รายเดือน',
+      \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID => 'กลับหน้าเบอร์เติมเงิน',
+      default => 'กลับหน้าเบอร์ทั้งหมด',
     };
   @endphp
 
   <div class="admin-page-head">
     <div>
-      <h1>Edit Number</h1>
+      <h1>แก้ไขเบอร์</h1>
       <p class="admin-subtitle">ตั้งค่าประเภทเบอร์ ราคา และสถานะจากหลังบ้าน</p>
     </div>
     <div class="admin-page-actions">

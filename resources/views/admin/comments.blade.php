@@ -1,11 +1,11 @@
 @extends('layouts.admin')
 
-@section('title', 'Supernumber Admin | Comments')
+@section('title', 'Supernumber Admin | คอมเมนต์')
 
 @section('content')
   <div class="admin-page-head">
     <div>
-      <h1>Comments</h1>
+      <h1>คอมเมนต์</h1>
       <p class="admin-subtitle">จัดการคอมเมนต์บทความจากหน้าเว็บไซต์</p>
     </div>
     <div class="admin-summary">ทั้งหมด {{ number_format($comments->total()) }} คอมเมนต์</div>
@@ -45,11 +45,11 @@
               <td style="max-width: 380px; white-space: normal; line-height: 1.6;">{{ $comment->content }}</td>
               <td>
                 @if ($comment->status === \App\Models\ArticleComment::STATUS_APPROVED)
-                  <span class="admin-status-pill admin-status-pill--active">Approved</span>
+                  <span class="admin-status-pill admin-status-pill--active">อนุมัติแล้ว</span>
                 @elseif ($comment->status === \App\Models\ArticleComment::STATUS_REJECTED)
-                  <span class="admin-status-pill" style="background:#fef3f2; color:#b42318; border-color:#fecdca;">Rejected</span>
+                  <span class="admin-status-pill" style="background:#fef3f2; color:#b42318; border-color:#fecdca;">ปฏิเสธแล้ว</span>
                 @else
-                  <span class="admin-status-pill admin-status-pill--hold">Pending</span>
+                  <span class="admin-status-pill admin-status-pill--hold">รอพิจารณา</span>
                 @endif
               </td>
               <td class="admin-action-cell">

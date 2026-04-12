@@ -11,6 +11,7 @@ return new class extends Migration
         Schema::create('customer_orders', function (Blueprint $table) {
             $table->id();
             $table->string('ordered_number', 20);
+            $table->foreignId('phone_number_id')->nullable()->constrained('phone_numbers')->nullOnDelete();
             $table->unsignedInteger('selected_package');
             $table->string('title_prefix', 50)->nullable();
             $table->string('first_name', 120)->nullable();
@@ -37,4 +38,3 @@ return new class extends Migration
         Schema::dropIfExists('customer_orders');
     }
 };
-

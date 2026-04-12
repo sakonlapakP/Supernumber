@@ -125,3 +125,18 @@
     </div>
   </section>
 @endsection
+
+@push('scripts')
+  @if (session('estimate_status_message'))
+    <script>
+      (() => {
+        if (!window.SupernumberAnalytics) return;
+
+        window.SupernumberAnalytics.track("generate_lead", {
+          lead_type: "estimate_request",
+          form_name: "estimate",
+        });
+      })();
+    </script>
+  @endif
+@endpush

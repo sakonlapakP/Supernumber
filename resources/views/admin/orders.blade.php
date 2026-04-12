@@ -1,11 +1,11 @@
 @extends('layouts.admin')
 
-@section('title', 'Supernumber Admin | Orders')
+@section('title', 'Supernumber Admin | คำสั่งซื้อ')
 
 @section('content')
   <div class="admin-page-head">
     <div>
-      <h1>Orders</h1>
+      <h1>คำสั่งซื้อ</h1>
       <p class="admin-subtitle">รายการคำสั่งซื้อจากลูกค้าหน้าเว็บ พร้อมหลักฐานการโอน</p>
     </div>
     <div class="admin-summary">
@@ -30,7 +30,7 @@
             <th>ชื่อผู้สั่งซื้อ</th>
             <th>โทรศัพท์</th>
             <th>สถานะ</th>
-            <th>Action</th>
+            <th>จัดการ</th>
           </tr>
         </thead>
         <tbody>

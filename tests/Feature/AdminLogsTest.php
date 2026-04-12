@@ -26,7 +26,7 @@ class AdminLogsTest extends TestCase
             ->get(route('admin.logs'));
 
         $response->assertOk();
-        $response->assertSee('Application Logs');
+        $response->assertSee('บันทึกระบบ');
         $response->assertSee('Sample line for manager view');
     }
 

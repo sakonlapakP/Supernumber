@@ -4,11 +4,13 @@ namespace App\Console\Commands;
 
 use App\Models\Article;
 use App\Models\LotteryResult;
+use App\Services\LineLotteryNotifier;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Symfony\Component\Process\Process;
@@ -23,7 +25,6 @@ class FetchLatestLotteryCommand extends Command
 
     private const API_URL = 'https://www.glo.or.th/api/lottery/getLatestLottery';
     private const TZ = 'Asia/Bangkok';
-    private const TARGET_ARTICLE_SLUG = 'thai-government-lottery-latest-results';
     private const PLAYWRIGHT_RENDER_SCRIPT = 'scripts/render_lottery_cover.mjs';
     private const SQUARE_RENDER_SELECTOR = '.article-lottery-poster__frame';
     private const LANDSCAPE_RENDER_SELECTOR = '.landscape-poster';
@@ -46,10 +47,11 @@ class FetchLatestLotteryCommand extends Command
         }
 
         $existing = LotteryResult::query()
+            ->with('prizes')
             ->whereDate('draw_date', $targetDate->toDateString())
             ->first();
 
-        if (! $this->option('force') && $now->minute > 0 && $existing?->is_complete) {
+        if (! $this->option('force') && $existing?->is_complete) {
             $this->line(sprintf('Skipped: draw %s is already complete.', $targetDate->toDateString()));
 
             return self::SUCCESS;
@@ -95,22 +97,32 @@ class FetchLatestLotteryCommand extends Command
         [$drawDateText, $sourceDrawDate] = $this->extractDrawDate($payload);
         $storageDate = ($sourceDrawDate ?? $targetDate)->copy()->startOfDay();
         $prizes = $this->extractPrizes($payload);
-        $isComplete = $this->isCompletePayload($prizes, $sourceDrawDate, $storageDate);
+        $storedResult = LotteryResult::query()
+            ->with('prizes')
+            ->whereDate('draw_date', $storageDate->toDateString())
+            ->first();
+        $wasAlreadyComplete = $storedResult?->is_complete ?? false;
+        $shouldReplacePrizes = $this->shouldReplacePrizes($prizes, $storedResult?->prizes);
+        $effectivePrizes = $shouldReplacePrizes
+            ? $prizes
+            : $this->serializePrizeRows($storedResult?->prizes);
+        $effectiveSourceDrawDate = $sourceDrawDate ?? $storedResult?->source_draw_date;
+        $isComplete = $this->isCompletePayload($effectivePrizes, $effectiveSourceDrawDate, $storageDate);
 
         $savedResult = null;
-        DB::transaction(function () use ($storageDate, $sourceDrawDate, $drawDateText, $isComplete, $now, $payload, $prizes, &$savedResult): void {
+        DB::transaction(function () use ($storageDate, $sourceDrawDate, $drawDateText, $isComplete, $now, $payload, $prizes, $storedResult, $shouldReplacePrizes, &$savedResult): void {
             $savedResult = LotteryResult::query()->updateOrCreate(
                 ['draw_date' => $storageDate->toDateString()],
-                [
-                    'source_draw_date' => $sourceDrawDate?->toDateString(),
-                    'source_draw_date_text' => $drawDateText,
-                    'is_complete' => $isComplete,
-                    'fetched_at' => $now->toDateTimeString(),
-                    'source_payload' => $payload,
-                ]
-            );
+                    [
+                        'source_draw_date' => $sourceDrawDate?->toDateString() ?? $storedResult?->source_draw_date?->toDateString(),
+                        'source_draw_date_text' => $drawDateText ?? $storedResult?->source_draw_date_text,
+                        'is_complete' => $isComplete,
+                        'fetched_at' => $now->copy()->utc()->toDateTimeString(),
+                        'source_payload' => $payload !== [] ? $payload : $storedResult?->source_payload,
+                    ]
+                );
 
-            if (! empty($prizes)) {
+            if ($shouldReplacePrizes && ! empty($prizes)) {
                 $savedResult->prizes()->delete();
 
                 foreach ($prizes as $index => $prize) {
@@ -126,6 +138,7 @@ class FetchLatestLotteryCommand extends Command
         if ($savedResult instanceof LotteryResult) {
             $savedResult->load('prizes');
             $this->syncLotteryArticleCover($savedResult, $now);
+            $this->notifyLineWhenCompleted($savedResult, $wasAlreadyComplete);
         }
 
         $this->info(sprintf(
@@ -159,11 +172,7 @@ class FetchLatestLotteryCommand extends Command
             return false;
         }
 
-        if ($now->hour !== 16) {
-            return false;
-        }
-
-        return in_array($now->minute, [0, 10, 20, 30], true);
+        return $now->hour >= 16;
     }
 
     private function touchResultWithoutPrizes(Carbon $targetDate, ?LotteryResult $existing, Carbon $now): LotteryResult
@@ -173,32 +182,32 @@ class FetchLatestLotteryCommand extends Command
             [
                 'source_draw_date' => $existing?->source_draw_date?->toDateString(),
                 'source_draw_date_text' => $existing?->source_draw_date_text,
-                'is_complete' => false,
-                'fetched_at' => $now->toDateTimeString(),
+                'is_complete' => $existing?->is_complete ?? false,
+                'fetched_at' => $now->copy()->utc()->toDateTimeString(),
                 'source_payload' => $existing?->source_payload,
             ]
         );
     }
 
-    private function syncLotteryArticleCover(LotteryResult $result, Carbon $now): void
+    private function notifyLineWhenCompleted(LotteryResult $result, bool $wasAlreadyComplete): void
     {
-        $article = Article::query()
-            ->where('slug', self::TARGET_ARTICLE_SLUG)
-            ->first();
-
-        if (! $article) {
-            $article = Article::query()
-                ->where('title', 'like', '%สลากกินแบ่งรัฐบาล%')
-                ->latest('id')
-                ->first();
-        }
-
-        if (! $article) {
-            $this->line('Skipped cover sync: lottery article not found.');
-
+        if ($wasAlreadyComplete || ! $result->is_complete) {
             return;
         }
 
+        try {
+            app(LineLotteryNotifier::class)->sendCompleted($result);
+        } catch (\Throwable $exception) {
+            Log::warning('Lottery LINE notification failed.', [
+                'lottery_result_id' => $result->id,
+                'draw_date' => $result->draw_date?->toDateString(),
+                'error' => $exception->getMessage(),
+            ]);
+        }
+    }
+
+    private function syncLotteryArticleCover(LotteryResult $result, Carbon $now): void
+    {
         if (! $result->relationLoaded('prizes')) {
             $result->load('prizes');
         }
@@ -206,76 +215,178 @@ class FetchLatestLotteryCommand extends Command
         $drawDate = $result->source_draw_date ?? $result->draw_date ?? $now;
         $year = $drawDate->format('Y');
         $month = $drawDate->format('m');
-        $round = ((int) $drawDate->format('j') === 1) ? 'first' : 'second';
+        $round = $this->resolveDrawRound($drawDate);
         $articleName = sprintf('thai-goverment-lottery-%s%s%s', $year, $month, $round);
         $articleDir = sprintf('article/%s/%s', $year, $articleName);
         $squareFilename = sprintf('%s/%s.png', $articleDir, $articleName);
         $landscapeFilename = sprintf('%s/%s_cover.png', $articleDir, $articleName);
+        $squareSvgFilename = sprintf('%s/%s.svg', $articleDir, $articleName);
+        $landscapeSvgFilename = sprintf('%s/%s_cover.svg', $articleDir, $articleName);
         $thaiDateLabel = $this->toThaiDateLabel($drawDate->copy());
         $articleTitle = 'สลากกินแบ่งรัฐบาล ประจำวันที่ '.$thaiDateLabel;
-        $articleExcerpt = null;
+        $article = Article::query()->firstOrNew([
+            'slug' => $articleName,
+        ]);
+        $articleExcerpt = $this->buildLotteryArticleExcerpt($result, $drawDate->copy());
+        $articleContent = $this->buildLotteryArticleContent($result, $drawDate->copy(), $now->copy());
+        $articleMetaDescription = $this->buildLotteryArticleMetaDescription($result, $drawDate->copy());
+        $publishedAt = $result->is_complete
+            ? ($article->published_at?->copy() ?? $result->fetched_at?->copy() ?? $now->copy())
+            : null;
+
+        $previousLegacyPath = (string) ($article->cover_image_path ?? '');
+        $previousSquarePath = (string) ($article->cover_image_square_path ?? '');
+        $previousLandscapePath = (string) ($article->cover_image_landscape_path ?? '');
+        $coverSyncSucceeded = false;
+        $coverSyncMode = 'skipped';
 
         try {
             $renderedSquare = $this->renderLotteryCoverPng($result, self::SQUARE_RENDER_SELECTOR, 'square');
             $renderedLandscape = $this->renderLotteryCoverPng($result, self::LANDSCAPE_RENDER_SELECTOR, 'landscape');
 
             if ($renderedSquare === null) {
-                $this->warn('Skipped cover sync: square cover render failed.');
+                $this->warn('Falling back to SVG cover: square cover render failed.');
 
-                return;
+                if ($renderedLandscape !== null) {
+                    @unlink($renderedLandscape);
+                }
+
+                $svgContents = $this->buildLotteryCoverSvg($result);
+                Storage::disk('public')->put($squareSvgFilename, $svgContents);
+                Storage::disk('public')->put($landscapeSvgFilename, $svgContents);
+
+                $article->cover_image_square_path = $squareSvgFilename;
+                $article->cover_image_landscape_path = $landscapeSvgFilename;
+                $article->cover_image_path = $squareSvgFilename;
+                $coverSyncSucceeded = true;
+                $coverSyncMode = 'svg-fallback';
             } else {
                 $squareContents = file_get_contents($renderedSquare) ?: '';
                 Storage::disk('public')->put($squareFilename, $squareContents);
                 @unlink($renderedSquare);
-            }
+                $coverSyncSucceeded = true;
+                $coverSyncMode = 'png';
 
-            if ($renderedLandscape === null) {
-                Storage::disk('public')->put($landscapeFilename, $squareContents ?? '');
-            } else {
-                Storage::disk('public')->put($landscapeFilename, file_get_contents($renderedLandscape) ?: '');
-                @unlink($renderedLandscape);
+                if ($renderedLandscape === null) {
+                    Storage::disk('public')->put($landscapeFilename, $squareContents);
+                } else {
+                    Storage::disk('public')->put($landscapeFilename, file_get_contents($renderedLandscape) ?: '');
+                    @unlink($renderedLandscape);
+                }
             }
         } catch (\Throwable $exception) {
             $this->warn('Failed to write lottery cover image: '.$exception->getMessage());
-
-            return;
         }
 
-        $previousLegacyPath = (string) ($article->cover_image_path ?? '');
-        $previousSquarePath = (string) ($article->cover_image_square_path ?? '');
-        $previousLandscapePath = (string) ($article->cover_image_landscape_path ?? '');
+        if ($coverSyncSucceeded && $coverSyncMode === 'png') {
+            $article->cover_image_square_path = $squareFilename;
+            $article->cover_image_landscape_path = $landscapeFilename;
+            $article->cover_image_path = $squareFilename;
+        }
 
-        $article->cover_image_square_path = $squareFilename;
-        $article->cover_image_landscape_path = $landscapeFilename;
-        $article->cover_image_path = $squareFilename;
         $article->title = $articleTitle;
         $article->excerpt = $articleExcerpt;
+        $article->content = $articleContent;
+        $article->meta_description = $articleMetaDescription;
+        $article->is_published = $result->is_complete;
+        $article->published_at = $publishedAt;
         $article->save();
 
-        $activePaths = array_values(array_unique(array_filter([
-            (string) $article->cover_image_path,
-            $squareFilename,
-            $landscapeFilename,
-        ])));
-        $oldPosterPaths = array_values(array_unique(array_filter([
-            $previousLegacyPath,
-            $previousSquarePath,
-            $previousLandscapePath,
-        ])));
+        if ($coverSyncSucceeded) {
+            $activePaths = array_values(array_unique(array_filter([
+                (string) $article->cover_image_path,
+                (string) $article->cover_image_square_path,
+                (string) $article->cover_image_landscape_path,
+            ])));
+            $oldPosterPaths = array_values(array_unique(array_filter([
+                $previousLegacyPath,
+                $previousSquarePath,
+                $previousLandscapePath,
+            ])));
 
-        foreach ($oldPosterPaths as $path) {
-            if (in_array($path, $activePaths, true)) {
-                continue;
+            foreach ($oldPosterPaths as $path) {
+                if (in_array($path, $activePaths, true)) {
+                    continue;
+                }
+
+                Storage::disk('public')->delete($path);
             }
-
-            Storage::disk('public')->delete($path);
         }
 
         $this->line(sprintf(
-            'Updated lottery article covers: square=%s, landscape=%s',
-            $squareFilename,
-            $landscapeFilename
+            'Synced lottery article %s (published=%s, cover=%s).',
+            $article->slug,
+            $article->is_published ? 'yes' : 'no',
+            $coverSyncSucceeded ? $coverSyncMode : 'skipped'
         ));
+    }
+
+    private function buildLotteryArticleExcerpt(LotteryResult $result, Carbon $drawDate): string
+    {
+        /** @var Collection<int, mixed> $prizes */
+        $prizes = $result->prizes;
+        $thaiDate = $this->toThaiDateLabel($drawDate->copy());
+        $firstPrize = $this->pickFirstPrizeNumber($prizes, 'รางวัลที่ 1', '-');
+        $lastTwo = $this->pickFirstPrizeNumber($prizes, 'เลขท้าย 2 ตัว', '-');
+
+        return sprintf(
+            'สรุปผลสลากกินแบ่งรัฐบาล งวดประจำวันที่ %s รางวัลที่ 1 %s และเลขท้าย 2 ตัว %s',
+            $thaiDate,
+            $firstPrize,
+            $lastTwo
+        );
+    }
+
+    private function buildLotteryArticleMetaDescription(LotteryResult $result, Carbon $drawDate): string
+    {
+        return $this->buildLotteryArticleExcerpt($result, $drawDate);
+    }
+
+    private function buildLotteryArticleContent(LotteryResult $result, Carbon $drawDate, Carbon $now): string
+    {
+        /** @var Collection<int, mixed> $prizes */
+        $prizes = $result->prizes;
+        $thaiDate = $this->toThaiDateLabel($drawDate->copy());
+        $updatedAt = ($result->fetched_at?->copy() ?? $now->copy())
+            ->timezone(self::TZ)
+            ->format('d/m/Y H:i');
+        $firstPrize = $this->pickFirstPrizeNumber($prizes, 'รางวัลที่ 1', '-');
+        $frontThree = $this->formatPrizeNumbers($this->pickPrizeNumbers($prizes, 'เลขหน้า 3 ตัว', 2));
+        $backThree = $this->formatPrizeNumbers($this->pickPrizeNumbers($prizes, 'เลขท้าย 3 ตัว', 2));
+        $lastTwo = $this->pickFirstPrizeNumber($prizes, 'เลขท้าย 2 ตัว', '-');
+        $nearFirst = $this->formatPrizeNumbers($this->pickPrizeNumbers($prizes, 'ข้างเคียง', 2));
+        $statusLabel = $result->is_complete ? 'ผลรางวัลออกครบแล้ว' : 'ผลรางวัลยังอยู่ระหว่างอัปเดต';
+
+        return <<<HTML
+<p>ตรวจผลสลากกินแบ่งรัฐบาล งวดประจำวันที่ {$this->escapeHtml($thaiDate)} {$this->escapeHtml($statusLabel)}</p>
+<h2>สรุปผลรางวัล</h2>
+<ul>
+  <li>รางวัลที่ 1: <strong>{$this->escapeHtml($firstPrize)}</strong></li>
+  <li>เลขหน้า 3 ตัว: <strong>{$this->escapeHtml($frontThree)}</strong></li>
+  <li>เลขท้าย 3 ตัว: <strong>{$this->escapeHtml($backThree)}</strong></li>
+  <li>เลขท้าย 2 ตัว: <strong>{$this->escapeHtml($lastTwo)}</strong></li>
+  <li>ข้างเคียงรางวัลที่ 1: <strong>{$this->escapeHtml($nearFirst)}</strong></li>
+</ul>
+<p>อัปเดตล่าสุด {$this->escapeHtml($updatedAt)} น. บทความนี้จัดทำอัตโนมัติจากข้อมูลผลรางวัลที่ระบบดึงล่าสุด เพื่อให้อ่านและแชร์ต่อได้สะดวก</p>
+HTML;
+    }
+
+    /**
+     * @param  array<int, string>  $numbers
+     */
+    private function formatPrizeNumbers(array $numbers, string $fallback = '-'): string
+    {
+        $numbers = array_values(array_filter(array_map(
+            static fn ($number) => trim((string) $number),
+            $numbers
+        )));
+
+        return $numbers !== [] ? implode(' ', $numbers) : $fallback;
+    }
+
+    private function resolveDrawRound(Carbon $drawDate): string
+    {
+        return (int) $drawDate->format('j') <= 15 ? 'first' : 'second';
     }
 
     private function renderLotteryCoverPng(
@@ -983,22 +1094,95 @@ SVG;
         return $name !== '' ? $name : 'รางวัล';
     }
 
-    private function isCompletePayload(array $prizes, ?Carbon $sourceDrawDate, Carbon $storageDate): bool
+    private function shouldReplacePrizes(array $incomingPrizes, ?Collection $existingPrizes): bool
     {
-        if (count($prizes) < 6) {
+        if (empty($incomingPrizes)) {
             return false;
         }
 
-        $hasSixDigits = false;
-        $hasTwoDigits = false;
+        $incomingShape = $this->describePrizeShape($incomingPrizes);
+        $existingShape = $this->describePrizeShape($this->serializePrizeRows($existingPrizes));
 
-        foreach ($prizes as $prize) {
-            $len = strlen((string) ($prize['number'] ?? ''));
-            $hasSixDigits = $hasSixDigits || $len === 6;
-            $hasTwoDigits = $hasTwoDigits || $len === 2;
+        if ($incomingShape['score'] > $existingShape['score']) {
+            return true;
         }
 
-        if (! $hasSixDigits || ! $hasTwoDigits) {
+        if ($incomingShape['score'] < $existingShape['score']) {
+            return false;
+        }
+
+        if ($incomingShape['total'] > $existingShape['total']) {
+            return true;
+        }
+
+        if ($incomingShape['total'] < $existingShape['total']) {
+            return false;
+        }
+
+        return true;
+    }
+
+    private function serializePrizeRows(?Collection $prizes): array
+    {
+        if ($prizes === null) {
+            return [];
+        }
+
+        return $prizes
+            ->map(fn ($prize) => [
+                'name' => trim((string) data_get($prize, 'prize_name', data_get($prize, 'name', ''))),
+                'number' => trim((string) data_get($prize, 'prize_number', data_get($prize, 'number', ''))),
+            ])
+            ->filter(fn (array $prize) => $prize['name'] !== '' && $prize['number'] !== '')
+            ->values()
+            ->all();
+    }
+
+    private function describePrizeShape(array $prizes): array
+    {
+        $firstPrize = $this->countPrizeMatches($prizes, 'รางวัลที่ 1', 6);
+        $frontThree = $this->countPrizeMatches($prizes, 'เลขหน้า 3 ตัว', 3);
+        $backThree = $this->countPrizeMatches($prizes, 'เลขท้าย 3 ตัว', 3);
+        $lastTwo = $this->countPrizeMatches($prizes, 'เลขท้าย 2 ตัว', 2);
+        $nearFirst = $this->countPrizeMatches($prizes, 'ข้างเคียง', 6);
+
+        return [
+            'total' => count($prizes),
+            'first_prize' => $firstPrize,
+            'front_three' => $frontThree,
+            'back_three' => $backThree,
+            'last_two' => $lastTwo,
+            'near_first' => $nearFirst,
+            'score' => min($firstPrize, 1)
+                + min($frontThree, 2)
+                + min($backThree, 2)
+                + min($lastTwo, 1)
+                + min($nearFirst, 2),
+        ];
+    }
+
+    private function countPrizeMatches(array $prizes, string $nameNeedle, int $digits): int
+    {
+        return collect($prizes)
+            ->filter(function (array $prize) use ($nameNeedle, $digits): bool {
+                $name = (string) ($prize['name'] ?? '');
+                $number = preg_replace('/\D+/', '', (string) ($prize['number'] ?? '')) ?? '';
+
+                return str_contains($name, $nameNeedle) && strlen($number) === $digits;
+            })
+            ->count();
+    }
+
+    private function isCompletePayload(array $prizes, ?Carbon $sourceDrawDate, Carbon $storageDate): bool
+    {
+        $shape = $this->describePrizeShape($prizes);
+
+        if (
+            $shape['first_prize'] !== 1
+            || $shape['front_three'] !== 2
+            || $shape['back_three'] !== 2
+            || $shape['last_two'] !== 1
+        ) {
             return false;
         }
 

@@ -4,10 +4,12 @@
     @php
       $staticPath = static fn (string $path): string => '/' . ltrim($path, '/');
       $cssVersion = @filemtime(public_path('css/supernumber.css')) ?: time();
+      $gaMeasurementId = trim((string) config('services.ga4.measurement_id', ''));
     @endphp
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="format-detection" content="telephone=no" />
+    <meta name="csrf-token" content="{{ csrf_token() }}" />
     <title>@yield('title', 'Supernumber')</title>
     <meta name="description" content="@yield('meta_description', 'ดูดวงเบอร์มือถือฟรี วิเคราะห์เสริมพลัง และคัดเบอร์มงคลที่เหมาะกับคุณ')" />
     <meta name="robots" content="@yield('robots', 'index, follow')" />
@@ -24,12 +26,6 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{ $staticPath('favicon-32x32.png') }}" />
     <link rel="icon" type="image/png" sizes="16x16" href="{{ $staticPath('favicon-16x16.png') }}" />
     <link rel="apple-touch-icon" sizes="180x180" href="{{ $staticPath('apple-touch-icon.png') }}" />
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Kanit:wght@300;400;500;600;700&display=swap"
-      rel="stylesheet"
-    />
     @hasSection('preload_image')
       <link rel="preload" as="image" href="@yield('preload_image')" />
     @endif
@@ -62,6 +58,111 @@
         </div>
       </div>
     </div>
+
+    <script>
+      (() => {
+        const measurementId = @json($gaMeasurementId);
+
+        const noopAnalytics = {
+          enable: () => false,
+          track: () => false,
+          isEnabled: () => false,
+        };
+
+        if (!measurementId) {
+          window.SupernumberAnalytics = noopAnalytics;
+          return;
+        }
+
+        const storageKey = "supernumber_cookie_consent";
+        let enabled = false;
+        let scriptRequested = false;
+
+        const sanitizeUrl = (value) => {
+          if (!value) return "";
+
+          try {
+            const parsed = new URL(value, window.location.origin);
+            return `${parsed.origin}${parsed.pathname}`;
+          } catch (_) {
+            return "";
+          }
+        };
+
+        const pagePath = () => window.location.pathname || "/";
+        const pageLocation = () => sanitizeUrl(window.location.href);
+        const pageReferrer = () => sanitizeUrl(document.referrer);
+
+        const loadScript = () => {
+          if (scriptRequested) return;
+
+          scriptRequested = true;
+
+          const script = document.createElement("script");
+          script.async = true;
+          script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
+          document.head.appendChild(script);
+        };
+
+        window.dataLayer = window.dataLayer || [];
+        window.gtag = window.gtag || function gtag() {
+          window.dataLayer.push(arguments);
+        };
+
+        const track = (eventName, params = {}) => {
+          if (!enabled || !eventName) return false;
+
+          const payload = {
+            transport_type: "beacon",
+            page_path: pagePath(),
+            page_location: pageLocation(),
+            page_referrer: pageReferrer(),
+            ...params,
+          };
+
+          Object.keys(payload).forEach((key) => {
+            if (payload[key] === "" || payload[key] === null || typeof payload[key] === "undefined") {
+              delete payload[key];
+            }
+          });
+
+          window.gtag("event", eventName, payload);
+
+          return true;
+        };
+
+        const enable = () => {
+          if (enabled) return true;
+
+          loadScript();
+          window.gtag("js", new Date());
+          enabled = true;
+          window.gtag("config", measurementId, {
+            send_page_view: false,
+            anonymize_ip: true,
+            page_path: pagePath(),
+            page_location: pageLocation(),
+          });
+          track("page_view", {
+            page_title: document.title,
+          });
+
+          return true;
+        };
+
+        window.SupernumberAnalytics = {
+          enable,
+          track,
+          isEnabled: () => enabled,
+        };
+
+        if (window.localStorage.getItem(storageKey) === "accepted") {
+          enable();
+        }
+
+        window.addEventListener("supernumber:analytics-consent-granted", enable);
+      })();
+    </script>
 
     <script>
       (() => {
@@ -112,11 +213,13 @@
 
         acceptButton.addEventListener("click", () => {
           window.localStorage.setItem(storageKey, "accepted");
+          window.dispatchEvent(new CustomEvent("supernumber:analytics-consent-granted"));
           hideBanner();
         });
 
         dismissButton.addEventListener("click", hideBanner);
       })();
     </script>
+    @stack('scripts')
   </body>
 </html>

@@ -1,11 +1,11 @@
 @extends('layouts.admin')
 
-@section('title', 'Supernumber Admin | Activity Logs')
+@section('title', 'Supernumber Admin | บันทึกกิจกรรม')
 
 @section('content')
   <div class="admin-page-head">
     <div>
-      <h1>Activity Logs</h1>
+      <h1>บันทึกกิจกรรม</h1>
       <p class="admin-subtitle">บันทึกว่าใครเปลี่ยนข้อมูลเมื่อไร และเปลี่ยนสถานะจากอะไรเป็นอะไร</p>
     </div>
     <div class="admin-summary">
@@ -23,7 +23,7 @@
             <th>เวลา</th>
             <th>ผู้ใช้</th>
             <th>เบอร์</th>
-            <th>Action</th>
+            <th>การกระทำ</th>
             <th>เปลี่ยนสถานะ</th>
           </tr>
         </thead>
@@ -31,7 +31,7 @@
           @forelse ($logs as $log)
             <tr>
               <td>{{ $log->created_at?->format('Y-m-d H:i:s') ?: '-' }}</td>
-              <td>{{ $log->user?->name ?: 'Unknown' }}</td>
+              <td>{{ $log->user?->name ?: 'ไม่ทราบชื่อ' }}</td>
               <td>{{ $log->phoneNumber?->display_number ?: $log->phoneNumber?->phone_number ?: '-' }}</td>
               <td>{{ $log->action }}</td>
               <td>{{ ($log->from_status ?: '-') . ' -> ' . ($log->to_status ?: '-') }}</td>

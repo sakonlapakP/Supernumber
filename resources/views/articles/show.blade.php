@@ -7,7 +7,15 @@
 @section('og_description', $article->meta_description ?: ($article->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($article->content), 160)))
 @section('og_url', route('articles.show', $article->slug))
 @php
-  $detailCoverPath = $article->cover_image_square_path ?: $article->cover_image_path;
+  $detailCoverCandidate = $article->cover_image_square_path ?: $article->cover_image_path;
+  $detailCoverPath = null;
+
+  if ($detailCoverCandidate) {
+      $normalizedCoverPath = ltrim((string) $detailCoverCandidate, '/');
+      if (\Illuminate\Support\Facades\Storage::disk('public')->exists($normalizedCoverPath)) {
+          $detailCoverPath = $normalizedCoverPath;
+      }
+  }
 @endphp
 @if ($detailCoverPath)
   @section('og_image', asset('storage/' . $detailCoverPath))
@@ -75,10 +83,26 @@
         @endif
       </header>
 
-      @if ($detailCoverPath)
+      @if ($detailCoverPath && ! empty($lotteryResult))
+        <div class="article-detail__lottery-cover-media" data-lottery-cover-media>
+          <figure class="article-detail__cover-wrap article-detail__cover-wrap--media">
+            <img
+              src="{{ asset('storage/' . $detailCoverPath) }}"
+              alt="{{ $article->title }}"
+              class="article-detail__cover"
+              onerror="const media=this.closest('[data-lottery-cover-media]'); if(media){ media.classList.add('is-fallback'); }"
+            />
+          </figure>
+          <div class="article-detail__cover-wrap article-detail__cover-wrap--fallback" data-lottery-cover-fallback>
+            @include('articles.partials.lottery-cover-fallback', ['lotteryResult' => $lotteryResult, 'wrapFigure' => false])
+          </div>
+        </div>
+      @elseif ($detailCoverPath)
         <figure class="article-detail__cover-wrap">
           <img src="{{ asset('storage/' . $detailCoverPath) }}" alt="{{ $article->title }}" class="article-detail__cover" />
         </figure>
+      @elseif (! empty($lotteryResult))
+        @include('articles.partials.lottery-cover-fallback', ['lotteryResult' => $lotteryResult])
       @endif
 
       @if ($hasHtml && ! $usePatternBlocks)

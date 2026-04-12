@@ -1,16 +1,16 @@
 @extends('layouts.admin')
 
-@section('title', 'Supernumber Admin | Articles')
+@section('title', 'Supernumber Admin | บทความ')
 
 @section('content')
   <div class="admin-page-head">
     <div>
-      <h1>Articles</h1>
-      <p class="admin-subtitle">จัดการบทความทั้งหมดแบบลิสต์ พร้อม Action ด้านท้ายแต่ละแถว</p>
+      <h1>บทความ</h1>
+      <p class="admin-subtitle">จัดการบทความทั้งหมดแบบลิสต์ พร้อมปุ่มจัดการด้านท้ายแต่ละแถว</p>
     </div>
     <div class="admin-page-actions">
       <div class="admin-kpi">
-        <div class="admin-kpi__label">Visible Articles</div>
+        <div class="admin-kpi__label">บทความที่แสดงอยู่</div>
         <div class="admin-kpi__value"><span id="article-visible-count">{{ number_format($articles->count()) }}</span></div>
         <div class="admin-summary">จาก {{ number_format($articles->total()) }} บทความ</div>
       </div>
@@ -29,17 +29,17 @@
     <section class="admin-card admin-feature-card admin-feature-card--compact">
       <div class="admin-feature-card__head">
         <div>
-          <h2 class="admin-feature-card__title">Live Search</h2>
+          <h2 class="admin-feature-card__title">ค้นหาแบบทันที</h2>
           <p class="admin-feature-card__hint">ค้นหาบทความจากหัวข้อหรือ slug ได้ทันที</p>
         </div>
         <div class="admin-feature-card__actions">
-          <button type="button" id="article-add-toggle" class="admin-button admin-button--compact">Add</button>
+          <button type="button" id="article-add-toggle" class="admin-button admin-button--compact">เพิ่ม</button>
         </div>
       </div>
 
       <div class="admin-search-shell">
         <div class="admin-field">
-          <label for="article-search">Search</label>
+          <label for="article-search">ค้นหา</label>
           <input id="article-search" class="admin-input" type="text" placeholder="ค้นหาหัวข้อ หรือ slug" />
         </div>
       </div>
@@ -96,10 +96,10 @@
               <button type="button" class="admin-rte__btn" data-rte-cmd="italic">I</button>
               <button type="button" class="admin-rte__btn" data-rte-cmd="underline">U</button>
               <button type="button" class="admin-rte__btn" data-rte-cmd="formatBlock" data-rte-value="h2">H2</button>
-              <button type="button" class="admin-rte__btn" data-rte-cmd="insertUnorderedList">• List</button>
-              <button type="button" class="admin-rte__btn" data-rte-cmd="insertOrderedList">1. List</button>
-              <button type="button" class="admin-rte__btn" data-rte-action="link">Link</button>
-              <button type="button" class="admin-rte__btn" data-rte-cmd="removeFormat">Clear</button>
+              <button type="button" class="admin-rte__btn" data-rte-cmd="insertUnorderedList">• รายการ</button>
+              <button type="button" class="admin-rte__btn" data-rte-cmd="insertOrderedList">1. ลำดับ</button>
+              <button type="button" class="admin-rte__btn" data-rte-action="link">ลิงก์</button>
+              <button type="button" class="admin-rte__btn" data-rte-cmd="removeFormat">ล้างรูปแบบ</button>
             </div>
             <div class="admin-rte__editor" contenteditable="true" data-rte-editor data-placeholder="พิมพ์เนื้อหาบทความที่นี่..."></div>
           </div>
@@ -107,7 +107,7 @@
         </div>
 
         <div class="admin-field">
-          <label for="meta_description">Meta Description</label>
+          <label for="meta_description">คำอธิบายเมตา</label>
           <input type="text" id="meta_description" name="meta_description" class="admin-input" value="{{ old('meta_description') }}" maxlength="255" />
         </div>
 
@@ -141,8 +141,8 @@
   <section class="admin-card admin-table-card">
     <div class="admin-feature-card__head" style="padding: 18px 20px 0;">
       <div>
-        <h2 class="admin-feature-card__title">Articles List</h2>
-        <p class="admin-feature-card__hint">ลิสต์บทความทั้งหมดพร้อม Action ด้านท้ายแถว</p>
+        <h2 class="admin-feature-card__title">รายการบทความ</h2>
+        <p class="admin-feature-card__hint">ลิสต์บทความทั้งหมดพร้อมปุ่มจัดการด้านท้ายแถว</p>
       </div>
     </div>
     <div class="admin-table-wrap admin-table-wrap--articles">
@@ -152,7 +152,7 @@
             <th>หัวข้อ</th>
             <th>สถานะ</th>
             <th>เวลาเผยแพร่</th>
-            <th>Action</th>
+            <th>จัดการ</th>
           </tr>
         </thead>
         <tbody>
@@ -163,16 +163,16 @@
               </td>
               <td>
                 @if ($article->is_published)
-                  <span class="admin-status-pill admin-status-pill--active">Published</span>
+                  <span class="admin-status-pill admin-status-pill--active">เผยแพร่แล้ว</span>
                 @else
-                  <span class="admin-status-pill admin-status-pill--hold">Draft</span>
+                  <span class="admin-status-pill admin-status-pill--hold">ฉบับร่าง</span>
                 @endif
               </td>
               <td>{{ optional($article->published_at)->format('Y-m-d H:i') ?: '-' }}</td>
               <td class="admin-action-cell">
                 <div class="admin-action-group">
-                  <a href="{{ route('admin.articles.preview', $article) }}" target="_blank" rel="noopener noreferrer" class="admin-button admin-button--compact" style="background:#1d4f9f;">View</a>
-                  <a href="{{ route('admin.articles.edit', $article) }}" class="admin-button admin-button--compact">Edit</a>
+                  <a href="{{ route('admin.articles.preview', $article) }}" target="_blank" rel="noopener noreferrer" class="admin-button admin-button--compact" style="background:#1d4f9f;">ดู</a>
+                  <a href="{{ route('admin.articles.edit', $article) }}" class="admin-button admin-button--compact">แก้ไข</a>
                 </div>
               </td>
             </tr>

@@ -74,6 +74,7 @@ class PrepaidOrderFlowTest extends TestCase
             ]);
 
         $this->assertDatabaseHas('customer_orders', [
+            'phone_number_id' => $phoneNumber->id,
             'ordered_number' => '0891234567',
             'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
             'selected_package' => 5000,

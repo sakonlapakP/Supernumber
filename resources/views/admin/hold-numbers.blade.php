@@ -1,16 +1,16 @@
 @extends('layouts.admin')
 
-@section('title', 'Supernumber Admin | Hold Numbers')
+@section('title', 'Supernumber Admin | เบอร์ที่พักไว้')
 
 @section('content')
   <div class="admin-page-head">
     <div>
-      <h1>Hold Numbers</h1>
+      <h1>เบอร์ที่พักไว้</h1>
       <p class="admin-subtitle">แสดงเบอร์ทั้งหมดที่อยู่ในสถานะ hold และสามารถเปลี่ยนกลับเป็น active ได้</p>
     </div>
     <div class="admin-page-actions">
       <div class="admin-kpi">
-        <div class="admin-kpi__label">Visible Hold Numbers</div>
+        <div class="admin-kpi__label">เบอร์ที่พักไว้ที่แสดงอยู่</div>
         <div class="admin-kpi__value"><span id="hold-visible-count">{{ number_format($numbers->count()) }}</span></div>
         <div class="admin-summary">จาก {{ number_format($numbers->count()) }} เบอร์</div>
       </div>
@@ -29,7 +29,7 @@
     >
       <div class="admin-feature-card__head">
         <div>
-          <h2 class="admin-feature-card__title">Add Hold Number</h2>
+          <h2 class="admin-feature-card__title">เพิ่มเบอร์เข้าคิวพัก</h2>
           <p class="admin-feature-card__hint">กรอกเบอร์ 10 หลัก ระบบจะเปลี่ยนเป็น hold ทันที ถ้าผ่านเงื่อนไข</p>
         </div>
       </div>
@@ -37,7 +37,7 @@
       <form action="{{ route('admin.hold-numbers.add') }}" method="post" class="admin-form admin-form--inline">
         @csrf
         <div class="admin-field">
-          <label for="hold-lookup-number">Phone Number</label>
+          <label for="hold-lookup-number">หมายเลขโทรศัพท์</label>
           <input
             id="hold-lookup-number"
             class="admin-input"
@@ -51,7 +51,7 @@
             required
           />
         </div>
-        <button type="submit" class="admin-button admin-button--compact">Hold Now</button>
+        <button type="submit" class="admin-button admin-button--compact">พักเบอร์ทันที</button>
       </form>
 
       @if (session('error_message'))
@@ -62,17 +62,17 @@
     <section class="admin-card admin-feature-card admin-feature-card--compact">
       <div class="admin-feature-card__head">
         <div>
-          <h2 class="admin-feature-card__title">Live Search</h2>
-          <p class="admin-feature-card__hint">จำนวนเบอร์ Hold ทั้งหมด {{ number_format($numbers->count()) }} เบอร์</p>
+          <h2 class="admin-feature-card__title">ค้นหาแบบทันที</h2>
+          <p class="admin-feature-card__hint">จำนวนเบอร์ที่พักไว้ทั้งหมด {{ number_format($numbers->count()) }} เบอร์</p>
         </div>
         <div class="admin-feature-card__actions">
-          <button type="button" id="hold-add-toggle" class="admin-button admin-button--compact">Add</button>
+          <button type="button" id="hold-add-toggle" class="admin-button admin-button--compact">เพิ่ม</button>
         </div>
       </div>
 
       <div class="admin-search-shell">
         <div class="admin-field">
-          <label for="hold-number-search">Search</label>
+          <label for="hold-number-search">ค้นหา</label>
           <input
             id="hold-number-search"
             class="admin-input"
@@ -89,7 +89,7 @@
   <section class="admin-card admin-table-card">
     <div class="admin-feature-card__head" style="padding: 18px 20px 0;">
       <div>
-        <h2 class="admin-feature-card__title">Current Hold Queue</h2>
+        <h2 class="admin-feature-card__title">รายการเบอร์ที่พักไว้ตอนนี้</h2>
         <p class="admin-feature-card__hint">รายการเบอร์ที่ถูกพักไว้และสามารถเปลี่ยนกลับเป็น active ได้ทันที</p>
       </div>
     </div>
@@ -103,7 +103,7 @@
             <th>เครือข่าย</th>
             <th>ราคา / แพ็กเกจ</th>
             <th>สถานะ</th>
-            <th>Action</th>
+            <th>จัดการ</th>
           </tr>
         </thead>
         <tbody>
@@ -120,10 +120,10 @@
                 <td><span class="admin-status-pill admin-status-pill--hold">{{ $number->status ?: '-' }}</span></td>
                 <td class="admin-action-cell">
                   <div class="admin-action-group">
-                    <a href="{{ route('admin.numbers.edit', $number) }}" class="admin-button admin-button--secondary admin-button--compact">Edit</a>
+                    <a href="{{ route('admin.numbers.edit', $number) }}" class="admin-button admin-button--secondary admin-button--compact">แก้ไข</a>
                     <form action="{{ route('admin.hold-numbers.activate', $number) }}" method="post">
                       @csrf
-                      <button type="submit" class="admin-button admin-button--secondary admin-button--compact">Activate</button>
+                      <button type="submit" class="admin-button admin-button--secondary admin-button--compact">เปิดใช้งาน</button>
                     </form>
                   </div>
                 </td>

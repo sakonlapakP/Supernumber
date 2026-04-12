@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('plan_name')->nullable();
             $table->string('price_text')->nullable();
             $table->unsignedInteger('sale_price')->nullable();
-            $table->string('status', 30)->nullable();
+            $table->string('status', 30)->default('active');
             $table->timestamps();
 
             $table->index(['network_code', 'status']);

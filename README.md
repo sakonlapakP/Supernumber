@@ -63,6 +63,7 @@ The Laravel framework is open-sourced software licensed under the [MIT license](
 This project can send LINE Messaging API notifications for:
 
 - Estimate form submissions (`/estimate`)
+- Lottery result completion (`lottery:fetch-latest`)
 - New number orders (`/book`)
 - Admin order status changes for configured statuses
 - Manual test sends from the admin order detail page
@@ -72,6 +73,7 @@ Environment variables:
 - `LINE_CHANNEL_ACCESS_TOKEN`
 - `LINE_GROUP_ID` as the default fallback group
 - `LINE_ESTIMATE_GROUP_ID`
+- `LINE_LOTTERY_GROUP_ID`
 - `LINE_ORDER_GROUP_ID`
 - `LINE_ORDER_STATUS_GROUP_ID`
 - `LINE_TEST_GROUP_ID`
@@ -86,3 +88,49 @@ For background delivery and queue retries, use a queue driver such as `database`
 ```bash
 php artisan queue:work --queue=notifications
 ```
+
+## Server Scripts
+
+This repository includes shell helpers for production server setup:
+
+- `scripts/deploy-production.sh` installs PHP and Node dependencies, builds assets, installs Playwright Chromium, runs migrations, refreshes Laravel caches, and ensures `public/storage` is linked.
+- `scripts/run-notification-worker.sh` starts a queue worker for the `notifications` queue.
+- `scripts/install-scheduler-cron.sh` installs the Laravel scheduler into the current user's crontab.
+
+Typical server flow:
+
+```bash
+cd /var/www/supernumber
+bash scripts/deploy-production.sh
+bash scripts/install-scheduler-cron.sh
+bash scripts/run-notification-worker.sh
+```
+
+Useful environment overrides:
+
+- `APP_DIR=/var/www/supernumber`
+- `BRANCH=main`
+- `RUN_GIT_PULL=0`
+- `INSTALL_PLAYWRIGHT=0`
+- `PLAYWRIGHT_WITH_DEPS=1`
+- `QUEUE_CONNECTION=database`
+
+## Google Analytics 4
+
+This project supports GA4 in two layers:
+
+- Frontend tracking with `GA4_MEASUREMENT_ID`
+- Manager dashboard reporting in `/admin/analytics` with the GA4 Data API
+
+Environment variables:
+
+- `GA4_MEASUREMENT_ID`
+- `GA4_PROPERTY_ID`
+- `GA4_SERVICE_ACCOUNT_JSON_BASE64`
+- `GA4_DASHBOARD_CACHE_SECONDS`
+
+Notes:
+
+- Frontend tracking strips query strings before sending page URLs to GA4 so phone numbers from routes like `/evaluate?phone=...` are not sent to Google Analytics.
+- To enable the manager dashboard, create a Google service account, then grant that service account access to the GA4 property as at least Viewer or Analyst.
+- The admin page accepts the raw service account JSON and stores it in `GA4_SERVICE_ACCOUNT_JSON_BASE64` automatically.

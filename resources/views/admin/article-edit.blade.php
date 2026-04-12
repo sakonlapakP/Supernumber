@@ -1,11 +1,11 @@
 @extends('layouts.admin')
 
-@section('title', 'Supernumber Admin | Edit Article')
+@section('title', 'Supernumber Admin | แก้ไขบทความ')
 
 @section('content')
   <div class="admin-page-head">
     <div>
-      <h1>Edit Article</h1>
+      <h1>แก้ไขบทความ</h1>
       <p class="admin-subtitle">แก้ไขข้อมูลบทความและการเผยแพร่</p>
     </div>
   </div>
@@ -53,10 +53,10 @@
             <button type="button" class="admin-rte__btn" data-rte-cmd="italic">I</button>
             <button type="button" class="admin-rte__btn" data-rte-cmd="underline">U</button>
             <button type="button" class="admin-rte__btn" data-rte-cmd="formatBlock" data-rte-value="h2">H2</button>
-            <button type="button" class="admin-rte__btn" data-rte-cmd="insertUnorderedList">• List</button>
-            <button type="button" class="admin-rte__btn" data-rte-cmd="insertOrderedList">1. List</button>
-            <button type="button" class="admin-rte__btn" data-rte-action="link">Link</button>
-            <button type="button" class="admin-rte__btn" data-rte-cmd="removeFormat">Clear</button>
+            <button type="button" class="admin-rte__btn" data-rte-cmd="insertUnorderedList">• รายการ</button>
+            <button type="button" class="admin-rte__btn" data-rte-cmd="insertOrderedList">1. ลำดับ</button>
+            <button type="button" class="admin-rte__btn" data-rte-action="link">ลิงก์</button>
+            <button type="button" class="admin-rte__btn" data-rte-cmd="removeFormat">ล้างรูปแบบ</button>
           </div>
           <div class="admin-rte__editor" contenteditable="true" data-rte-editor data-placeholder="พิมพ์เนื้อหาบทความที่นี่..."></div>
         </div>
@@ -64,7 +64,7 @@
       </div>
 
       <div class="admin-field">
-        <label for="meta_description">Meta Description</label>
+        <label for="meta_description">คำอธิบายเมตา</label>
         <input type="text" id="meta_description" name="meta_description" class="admin-input" value="{{ old('meta_description', $article->meta_description) }}" maxlength="255" />
       </div>
 
@@ -121,7 +121,7 @@
         <input type="checkbox" name="is_published" value="1" @checked(old('is_published', $article->is_published)) />
         <span style="font-size: 14px;">เผยแพร่บทความ</span>
       </label>
-      <p class="admin-subtitle" style="margin: 0;">สถานะปัจจุบัน: <strong>{{ $article->is_published ? 'Published' : 'Draft' }}</strong></p>
+      <p class="admin-subtitle" style="margin: 0;">สถานะปัจจุบัน: <strong>{{ $article->is_published ? 'เผยแพร่แล้ว' : 'ฉบับร่าง' }}</strong></p>
 
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
         <button type="submit" class="admin-button">บันทึกการเปลี่ยนแปลง</button>
@@ -145,8 +145,8 @@
   <section class="admin-card admin-table-card" style="margin-top: 16px;">
     <div class="admin-feature-card__head" style="padding: 18px 20px 0;">
       <div>
-        <h2 class="admin-feature-card__title">Comments ({{ $comments->count() }})</h2>
-        <p class="admin-feature-card__hint">คอมเมนต์ทั้งหมดของโพสต์นี้ พร้อมปุ่ม Archive / Unarchive</p>
+        <h2 class="admin-feature-card__title">คอมเมนต์ ({{ $comments->count() }})</h2>
+        <p class="admin-feature-card__hint">คอมเมนต์ทั้งหมดของโพสต์นี้ พร้อมปุ่มเก็บซ่อน / ยกเลิกเก็บซ่อน</p>
       </div>
     </div>
     <div class="admin-table-wrap">
@@ -157,7 +157,7 @@
             <th>ผู้คอมเมนต์</th>
             <th>เนื้อหา</th>
             <th>สถานะ</th>
-            <th>Action</th>
+            <th>จัดการ</th>
           </tr>
         </thead>
         <tbody>
@@ -168,23 +168,23 @@
               <td style="max-width: 460px; white-space: normal; line-height: 1.6;">{{ $comment->content }}</td>
               <td>
                 @if ($comment->status === \App\Models\ArticleComment::STATUS_APPROVED)
-                  <span class="admin-status-pill admin-status-pill--active">Approved</span>
+                  <span class="admin-status-pill admin-status-pill--active">อนุมัติแล้ว</span>
                 @elseif ($comment->status === \App\Models\ArticleComment::STATUS_REJECTED)
-                  <span class="admin-status-pill" style="background:#fef3f2; color:#b42318; border-color:#fecdca;">Archived</span>
+                  <span class="admin-status-pill" style="background:#fef3f2; color:#b42318; border-color:#fecdca;">เก็บซ่อนแล้ว</span>
                 @else
-                  <span class="admin-status-pill admin-status-pill--hold">Pending</span>
+                  <span class="admin-status-pill admin-status-pill--hold">รอพิจารณา</span>
                 @endif
               </td>
               <td class="admin-action-cell">
                 @if ($comment->status !== \App\Models\ArticleComment::STATUS_REJECTED)
-                  <form action="{{ route('admin.articles.comments.archive', [$article, $comment]) }}" method="post" onsubmit="return confirm('Archive คอมเมนต์นี้?');">
+                  <form action="{{ route('admin.articles.comments.archive', [$article, $comment]) }}" method="post" onsubmit="return confirm('เก็บซ่อนคอมเมนต์นี้หรือไม่?');">
                     @csrf
-                    <button type="submit" class="admin-button admin-button--compact" style="background:#b45309;">Archive</button>
+                    <button type="submit" class="admin-button admin-button--compact" style="background:#b45309;">เก็บซ่อน</button>
                   </form>
                 @else
-                  <form action="{{ route('admin.articles.comments.unarchive', [$article, $comment]) }}" method="post" onsubmit="return confirm('Unarchive คอมเมนต์นี้?');">
+                  <form action="{{ route('admin.articles.comments.unarchive', [$article, $comment]) }}" method="post" onsubmit="return confirm('ยกเลิกเก็บซ่อนคอมเมนต์นี้หรือไม่?');">
                     @csrf
-                    <button type="submit" class="admin-button admin-button--compact" style="background:#2563eb;">Unarchive</button>
+                    <button type="submit" class="admin-button admin-button--compact" style="background:#2563eb;">ยกเลิกเก็บซ่อน</button>
                   </form>
                 @endif
               </td>

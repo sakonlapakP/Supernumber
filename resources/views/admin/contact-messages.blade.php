@@ -1,12 +1,12 @@
 @extends('layouts.admin')
 
-@section('title', 'Supernumber Admin | Contact Messages')
+@section('title', 'Supernumber Admin | ข้อความติดต่อ')
 
 @section('content')
   <div class="admin-page-head">
     <div>
-      <h1>Contact Messages</h1>
-      <p class="admin-subtitle">รายการข้อความที่ลูกค้าส่งมาจากหน้า Contact Us</p>
+      <h1>ข้อความติดต่อ</h1>
+      <p class="admin-subtitle">รายการข้อความที่ลูกค้าส่งมาจากหน้าติดต่อเรา</p>
     </div>
     <div class="admin-summary">ทั้งหมด {{ number_format($messages->total()) }} รายการ</div>
   </div>
@@ -48,7 +48,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="6" class="admin-muted">ยังไม่มีข้อความจากหน้า Contact Us</td>
+              <td colspan="6" class="admin-muted">ยังไม่มีข้อความจากหน้าติดต่อเรา</td>
             </tr>
           @endforelse
         </tbody>

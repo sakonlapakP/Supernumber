@@ -1,16 +1,16 @@
 @extends('layouts.admin')
 
-@section('title', 'Supernumber Admin | Edit Order')
+@section('title', 'Supernumber Admin | แก้ไขคำสั่งซื้อ')
 
 @section('content')
   <div class="admin-page-head">
     <div>
-      <h1>Edit Order</h1>
+      <h1>แก้ไขคำสั่งซื้อ</h1>
       <p class="admin-subtitle">แก้ไขข้อมูลคำสั่งซื้อ</p>
     </div>
     <div class="admin-page-actions">
       <a href="{{ route('admin.orders.show', $order) }}" class="admin-button admin-button--secondary admin-button--compact">ดูรายละเอียด</a>
-      <a href="{{ route('admin.orders') }}" class="admin-button admin-button--secondary admin-button--compact">กลับหน้า Orders</a>
+      <a href="{{ route('admin.orders') }}" class="admin-button admin-button--secondary admin-button--compact">กลับหน้าคำสั่งซื้อ</a>
     </div>
   </div>
 

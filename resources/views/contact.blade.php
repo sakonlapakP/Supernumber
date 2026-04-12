@@ -10,11 +10,15 @@
 @section('preload_image', asset('images/home_banner.jpg'))
 
 @section('content')
+  @php
+    $turnstileSiteKey = trim((string) config('services.turnstile.site_key', ''));
+  @endphp
+
   <section class="contact-hero" aria-labelledby="contact-title">
     <div class="contact-hero__overlay"></div>
     <div class="container contact-hero__content">
       <div class="contact-hero__text">
-        <p class="hero-kicker">Contact Supernumber</p>
+        <p class="hero-kicker">ติดต่อ Supernumber</p>
         <h1 id="contact-title">พูดคุยกับทีมงานได้หลายช่องทาง</h1>
         <p>สอบถามเรื่องเบอร์มงคล แพ็กเกจ การสั่งซื้อ หรือขอคำแนะนำจากทีมงานได้โดยตรง เราพร้อมช่วยให้คุณเลือกเบอร์ได้ง่ายและมั่นใจขึ้น</p>
         <div class="contact-hero__actions">
@@ -48,6 +52,11 @@
 
             <form class="contact-form" action="{{ route('contact.store') }}" method="post">
               @csrf
+              <div class="contact-form__honeypot" aria-hidden="true">
+                <label for="contact-website">เว็บไซต์</label>
+                <input id="contact-website" type="text" name="website" value="" tabindex="-1" autocomplete="new-password">
+              </div>
+
               <div class="contact-form__grid">
                 <label class="contact-form__field">
                   ชื่อ*
@@ -64,6 +73,16 @@
                 ข้อความที่ต้องการพิมพ์*
                 <textarea name="message" rows="6" maxlength="2000" placeholder="แจ้งรายละเอียดที่ต้องการสอบถามได้ที่นี่">{{ old('message') }}</textarea>
               </label>
+
+              @if ($turnstileSiteKey !== '')
+                <div class="contact-form__captcha">
+                  <p class="contact-form__help">ยืนยันก่อนส่งข้อความเพื่อช่วยป้องกันสแปม</p>
+                  <div class="cf-turnstile" data-sitekey="{{ $turnstileSiteKey }}" data-language="th"></div>
+                  @error('cf-turnstile-response')
+                    <p class="contact-form__help contact-form__help--error">{{ $message }}</p>
+                  @enderror
+                </div>
+              @endif
 
               <div class="contact-form__actions">
                 <button type="submit">ส่งข้อความ</button>
@@ -92,7 +111,7 @@
             </div>
               <p class="contact-address">1414 ถนนพระราม 4 แขวงคลองเตย เขตคลองเตย กรุงเทพมหานคร 10110</p>
 
-              <a class="contact-map-link" href="https://maps.app.goo.gl/Lwe3KfLYt3PKhug38" target="_blank" rel="noopener noreferrer">เปิดใน Google Maps</a>
+              <a class="contact-map-link" href="https://maps.app.goo.gl/Lwe3KfLYt3PKhug38" target="_blank" rel="noopener noreferrer">เปิดในแผนที่ Google</a>
                           
 
              
@@ -106,3 +125,22 @@
     </div>
   </section>
 @endsection
+
+@push('scripts')
+  @if ($turnstileSiteKey !== '')
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  @endif
+
+  @if (session('contact_status_message'))
+    <script>
+      (() => {
+        if (!window.SupernumberAnalytics) return;
+
+        window.SupernumberAnalytics.track("generate_lead", {
+          lead_type: "contact_message",
+          form_name: "contact_us",
+        });
+      })();
+    </script>
+  @endif
+@endpush

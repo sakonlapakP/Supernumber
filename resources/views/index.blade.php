@@ -153,8 +153,8 @@
         </div>
         @if ($hasHomeNumbers)
           <div class="numbers-view-toggle" id="home-view-toggle" role="group" aria-label="เลือกรูปแบบการแสดงผลหน้าแรก">
-            <button class="numbers-view-toggle__button" type="button" data-view="list" aria-pressed="false">List</button>
-            <button class="numbers-view-toggle__button is-active" type="button" data-view="grid" aria-pressed="true">Grid</button>
+            <button class="numbers-view-toggle__button" type="button" data-view="list" aria-pressed="false">รายการ</button>
+            <button class="numbers-view-toggle__button is-active" type="button" data-view="grid" aria-pressed="true">ตาราง</button>
           </div>
         @endif
       </div>

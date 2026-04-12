@@ -127,8 +127,8 @@
           </p>
         </div>
         <div class="numbers-view-toggle" id="numbers-view-toggle" role="group" aria-label="เลือกรูปแบบการแสดงผล">
-          <button class="numbers-view-toggle__button {{ $selectedView === 'list' ? 'is-active' : '' }}" type="button" data-view="list" aria-pressed="{{ $selectedView === 'list' ? 'true' : 'false' }}">List</button>
-          <button class="numbers-view-toggle__button {{ $selectedView === 'grid' ? 'is-active' : '' }}" type="button" data-view="grid" aria-pressed="{{ $selectedView === 'grid' ? 'true' : 'false' }}">Grid</button>
+          <button class="numbers-view-toggle__button {{ $selectedView === 'list' ? 'is-active' : '' }}" type="button" data-view="list" aria-pressed="{{ $selectedView === 'list' ? 'true' : 'false' }}">รายการ</button>
+          <button class="numbers-view-toggle__button {{ $selectedView === 'grid' ? 'is-active' : '' }}" type="button" data-view="grid" aria-pressed="{{ $selectedView === 'grid' ? 'true' : 'false' }}">ตาราง</button>
         </div>
       </div>
 
@@ -428,3 +428,22 @@
     })();
   </script>
 @endsection
+
+@push('scripts')
+  @if ($search !== '' || $selectedPlan !== '' || $selectedServiceType !== '' || $positionPattern !== null)
+    <script>
+      (() => {
+        if (!window.SupernumberAnalytics) return;
+
+        window.SupernumberAnalytics.track("search", {
+          search_context: "numbers_catalog",
+          has_sequence_query: @json($search !== ''),
+          has_position_pattern: @json($positionPattern !== null),
+          has_plan_filter: @json($selectedPlan !== ''),
+          service_type: @json($selectedServiceType !== '' ? $selectedServiceType : 'all'),
+          results_count: {{ (int) $numbers->total() }},
+        });
+      })();
+    </script>
+  @endif
+@endpush

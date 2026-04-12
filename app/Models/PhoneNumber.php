@@ -35,6 +35,14 @@ class PhoneNumber extends Model
     protected static function booted(): void
     {
         static::saving(function (self $phoneNumber): void {
+            $serviceType = self::normalizeServiceType($phoneNumber->service_type);
+            $phoneNumber->service_type = $serviceType ?? self::SERVICE_TYPE_POSTPAID;
+
+            $status = strtolower(trim((string) $phoneNumber->status));
+            $phoneNumber->status = in_array($status, self::adminStatusOptions(), true)
+                ? $status
+                : self::STATUS_ACTIVE;
+
             if ($phoneNumber->number_sum === null || $phoneNumber->isDirty('phone_number')) {
                 $phoneNumber->number_sum = self::calculateNumberSum($phoneNumber->phone_number);
             }
@@ -309,6 +317,11 @@ class PhoneNumber extends Model
     public function statusLogs(): HasMany
     {
         return $this->hasMany(PhoneNumberStatusLog::class);
+    }
+
+    public function orders(): HasMany
+    {
+        return $this->hasMany(CustomerOrder::class);
     }
 
     protected static function firstDigit(mixed $value): string

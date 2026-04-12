@@ -448,3 +448,15 @@
     </div>
   </section>
 @endsection
+
+@push('scripts')
+  <script>
+    (() => {
+      if (!window.SupernumberAnalytics) return;
+
+      window.SupernumberAnalytics.track("view_number_analysis", {
+        analysis_theme: @json($themeState ?? 'default'),
+      });
+    })();
+  </script>
+@endpush

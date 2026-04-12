@@ -34,4 +34,55 @@ class EstimateLead extends Model
     {
         return $this->morphMany(LineNotificationLog::class, 'notifiable');
     }
+
+    public static function genderLabels(): array
+    {
+        return [
+            'male' => 'ชาย',
+            'female' => 'หญิง',
+        ];
+    }
+
+    public static function workTypeLabels(): array
+    {
+        return [
+            'sales' => 'งานขาย / เจรจา',
+            'service' => 'งานบริการ / ดูแลลูกค้า',
+            'office' => 'งานออฟฟิศ / บริหาร',
+            'online' => 'งานออนไลน์ / คอนเทนต์',
+        ];
+    }
+
+    public static function goalLabels(): array
+    {
+        return [
+            'work' => 'เน้นการงาน / โอกาสใหม่',
+            'money' => 'เน้นการเงิน / ปิดการขาย',
+            'love' => 'เน้นความรัก / ความสัมพันธ์',
+            'balance' => 'เน้นสมดุลชีวิต',
+        ];
+    }
+
+    public function getFullNameAttribute(): string
+    {
+        return trim(implode(' ', array_filter([
+            $this->first_name,
+            $this->last_name,
+        ])));
+    }
+
+    public function getGenderLabelAttribute(): string
+    {
+        return static::genderLabels()[$this->gender] ?? '-';
+    }
+
+    public function getWorkTypeLabelAttribute(): string
+    {
+        return static::workTypeLabels()[$this->work_type] ?? '-';
+    }
+
+    public function getGoalLabelAttribute(): string
+    {
+        return static::goalLabels()[$this->goal] ?? '-';
+    }
 }

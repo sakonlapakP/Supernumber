@@ -5,15 +5,21 @@ use App\Models\PhoneNumber;
 use App\Models\Article;
 use App\Models\ArticleComment;
 use App\Models\ContactMessage;
+use App\Models\Customer;
 use App\Models\CustomerOrder;
 use App\Models\EstimateLead;
 use App\Models\LotteryResult;
 use App\Models\LineWebhookEvent;
+use App\Models\SalesDocument;
 use App\Models\User;
+use App\Services\ContactSpamFilter;
 use App\Services\EnvironmentEditor;
 use App\Services\AdminLogViewer;
+use App\Services\Ga4AnalyticsService;
 use App\Services\LineEstimateLeadNotifier;
 use App\Services\LineOrderNotifier;
+use App\Services\SalesDocumentPdfService;
+use App\Services\TurnstileVerifier;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Carbon;
@@ -31,6 +37,41 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\Route;
+
+Route::get('/__ops/migrate', function (Request $request) {
+    $token = trim((string) env('OPS_MIGRATE_TOKEN', ''));
+    $allowedIp = trim((string) env('OPS_MIGRATE_ALLOWED_IP', ''));
+
+    abort_if(app()->environment('local'), 404);
+    abort_if($token === '', 404);
+    abort_unless(hash_equals($token, (string) $request->query('token', '')), 403);
+
+    if ($allowedIp !== '') {
+        abort_unless($request->ip() === $allowedIp, 403);
+    }
+
+    $commands = [
+        ['command' => 'migrate', 'parameters' => ['--force' => true]],
+        ['command' => 'optimize:clear', 'parameters' => []],
+    ];
+
+    $results = [];
+
+    foreach ($commands as $entry) {
+        $exitCode = Artisan::call($entry['command'], $entry['parameters']);
+
+        $results[] = [
+            'command' => $entry['command'],
+            'exit_code' => $exitCode,
+            'output' => trim((string) Artisan::output()),
+        ];
+    }
+
+    return response()->json([
+        'ok' => collect($results)->every(fn (array $result): bool => $result['exit_code'] === 0),
+        'results' => $results,
+    ]);
+});
 
 $currentAdmin = function (): ?User {
     $userId = session('admin_user_id');
@@ -447,7 +488,7 @@ $resolveArticleImageMeta = function (string $slug, ?Carbon $date = null): array 
             'thai-goverment-lottery-%s%s%s',
             $year,
             $month,
-            $day === 1 ? 'first' : 'second'
+            $day <= 15 ? 'first' : 'second'
         );
     } else {
         $articleName = $normalizedSlug !== '' ? $normalizedSlug : 'article';
@@ -461,6 +502,47 @@ $resolveArticleImageMeta = function (string $slug, ?Carbon $date = null): array 
         'square_path' => sprintf('%s/%s.png', $directory, $articleName),
         'cover_path' => sprintf('%s/%s_cover.png', $directory, $articleName),
     ];
+};
+
+$resolveLotteryResultForArticle = function (Article $article): ?LotteryResult {
+    if (! Schema::hasTable('lottery_results') || ! Schema::hasTable('lottery_result_prizes')) {
+        return null;
+    }
+
+    $slug = Str::lower(trim((string) $article->slug));
+    $latestResultQuery = LotteryResult::query()
+        ->with('prizes')
+        ->orderByRaw('COALESCE(source_draw_date, draw_date) DESC')
+        ->orderByDesc('fetched_at')
+        ->orderByDesc('id');
+
+    if ($slug === 'thai-government-lottery-latest-results') {
+        return (clone $latestResultQuery)->first();
+    }
+
+    if (preg_match('/^thai-goverment-lottery-(\d{4})(\d{2})(first|second)$/', $slug, $matches) !== 1) {
+        return null;
+    }
+
+    $year = (int) ($matches[1] ?? 0);
+    $month = (int) ($matches[2] ?? 0);
+    $round = (string) ($matches[3] ?? '');
+
+    return (clone $latestResultQuery)
+        ->whereYear('draw_date', $year)
+        ->whereMonth('draw_date', $month)
+        ->get()
+        ->first(function (LotteryResult $result) use ($round): bool {
+            $drawDate = $result->source_draw_date ?? $result->draw_date;
+
+            if ($drawDate === null) {
+                return false;
+            }
+
+            return $round === 'first'
+                ? (int) $drawDate->format('j') <= 15
+                : (int) $drawDate->format('j') > 15;
+        });
 };
 
 $resolveAnalysisPhone = function (Request $request) {
@@ -486,9 +568,7 @@ $normalizeServiceType = function (?string $serviceType): string {
 };
 
 $defaultOrderStatus = function (string $serviceType): string {
-    return $serviceType === PhoneNumber::SERVICE_TYPE_PREPAID
-        ? 'pending_review'
-        : 'submitted';
+    return CustomerOrder::defaultStatusForServiceType($serviceType);
 };
 
 $logPhoneNumberStatusChange = function (PhoneNumber $phoneNumber, ?string $fromStatus, ?int $userId = null) {
@@ -519,26 +599,29 @@ $syncPhoneNumberStatusFromOrder = function (CustomerOrder $order, ?int $userId =
         return;
     }
 
-    $orderedNumber = preg_replace('/\D+/', '', (string) $order->ordered_number) ?? '';
-    if ($orderedNumber === '') {
-        return;
-    }
+    $phoneNumber = $order->phone_number_id !== null
+        ? $order->phoneNumber()->first()
+        : null;
 
-    $phoneNumber = PhoneNumber::query()
-        ->where('phone_number', $orderedNumber)
-        ->first();
+    if (! $phoneNumber) {
+        $orderedNumber = preg_replace('/\D+/', '', (string) $order->ordered_number) ?? '';
+        if ($orderedNumber === '') {
+            return;
+        }
+
+        $phoneNumber = PhoneNumber::query()
+            ->where('phone_number', $orderedNumber)
+            ->first();
+    }
 
     if (! $phoneNumber) {
         return;
     }
 
-    $normalizedStatus = Str::of((string) $order->status)->trim()->lower()->toString();
-
-    $targetStatus = match ($normalizedStatus) {
-        'sold', 'completed' => PhoneNumber::STATUS_SOLD,
-        'rejected', 'cancelled' => PhoneNumber::STATUS_ACTIVE,
-        default => PhoneNumber::STATUS_HOLD,
-    };
+    $targetStatus = CustomerOrder::resolvePhoneNumberStatus($order->status);
+    if ($targetStatus === null) {
+        return;
+    }
 
     if ($phoneNumber->status === $targetStatus) {
         return;
@@ -776,7 +859,7 @@ Route::get('/articles', function () {
     return view('articles.index', compact('articles'));
 })->name('articles.index');
 
-Route::get('/articles/{slug}', function (string $slug) {
+Route::get('/articles/{slug}', function (string $slug) use ($resolveLotteryResultForArticle) {
     $article = Article::query()
         ->published()
         ->with([
@@ -785,15 +868,7 @@ Route::get('/articles/{slug}', function (string $slug) {
         ->where('slug', $slug)
         ->firstOrFail();
 
-    $lotteryResult = null;
-    if (Schema::hasTable('lottery_results') && Schema::hasTable('lottery_result_prizes')) {
-        $lotteryResult = LotteryResult::query()
-            ->with('prizes')
-            ->orderByRaw('COALESCE(source_draw_date, draw_date) DESC')
-            ->orderByDesc('fetched_at')
-            ->orderByDesc('id')
-            ->first();
-    }
+    $lotteryResult = $resolveLotteryResultForArticle($article);
 
     return view('articles.show', compact('article', 'lotteryResult'));
 })->name('articles.show');
@@ -849,30 +924,75 @@ Route::get('/estimate', function () {
     return view('estimate');
 })->name('estimate');
 
+Route::get('/sales-documents', function () {
+    return redirect()->route('admin.sales-documents');
+})->name('sales-documents');
+
 Route::get('/contact-us', function () {
     return view('contact');
 })->name('contact');
 
-Route::post('/contact-us', function (Request $request) {
-    $data = $request->validate([
+Route::post('/contact-us', function (Request $request, TurnstileVerifier $turnstileVerifier, ContactSpamFilter $spamFilter) {
+    if (trim((string) $request->input('website', '')) !== '') {
+        Log::info('Blocked contact form submission via honeypot.', [
+            'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()
+            ->route('contact')
+            ->with('contact_status_message', 'ส่งข้อความเรียบร้อยแล้ว ทีมงานจะติดต่อกลับตามข้อมูลที่แจ้งไว้');
+    }
+
+    $rules = [
         'name' => ['required', 'string', 'max:120'],
         'phone' => ['required', 'string', 'max:20'],
         'message' => ['required', 'string', 'max:2000'],
+    ];
+
+    if ($turnstileVerifier->isEnabled()) {
+        $rules['cf-turnstile-response'] = ['required', 'string'];
+    }
+
+    $data = $request->validate($rules, [
+        'cf-turnstile-response.required' => 'กรุณายืนยันว่าไม่ใช่บอทก่อนส่งข้อความ',
     ]);
 
+    if ($turnstileVerifier->isEnabled() && ! $turnstileVerifier->verify((string) $request->input('cf-turnstile-response', ''), $request->ip())) {
+        return redirect()
+            ->route('contact')
+            ->withInput($request->except('_token', 'cf-turnstile-response', 'website'))
+            ->withErrors(['cf-turnstile-response' => 'ยืนยันความปลอดภัยไม่สำเร็จ กรุณาลองอีกครั้ง']);
+    }
+
     $phone = preg_replace('/\D+/', '', (string) $data['phone']) ?? '';
+    $name = trim((string) $data['name']);
+    $message = trim((string) $data['message']);
 
     if ($phone === '' || strlen($phone) !== PhoneNumber::PHONE_NUMBER_LENGTH) {
         return redirect()
             ->route('contact')
-            ->withInput($request->except('_token'))
+            ->withInput($request->except('_token', 'cf-turnstile-response', 'website'))
             ->withErrors(['phone' => 'กรุณากรอกเบอร์ติดต่อให้ครบ 10 หลัก']);
     }
 
+    $spamInspection = $spamFilter->inspect($name, $phone, $message);
+
+    if ($spamInspection['blocked']) {
+        Log::info('Blocked contact form spam submission.', [
+            'ip_address' => $request->ip(),
+            'reasons' => $spamInspection['reasons'],
+            'score' => $spamInspection['score'],
+        ]);
+
+        return redirect()
+            ->route('contact')
+            ->with('contact_status_message', 'ส่งข้อความเรียบร้อยแล้ว ทีมงานจะติดต่อกลับตามข้อมูลที่แจ้งไว้');
+    }
+
     ContactMessage::query()->create([
-        'name' => trim((string) $data['name']),
+        'name' => $name,
         'phone' => $phone,
-        'message' => trim((string) $data['message']),
+        'message' => $message,
         'ip_address' => $request->ip(),
         'user_agent' => substr((string) $request->userAgent(), 0, 65535),
         'submitted_at' => Carbon::now(),
@@ -881,7 +1001,7 @@ Route::post('/contact-us', function (Request $request) {
     return redirect()
         ->route('contact')
         ->with('contact_status_message', 'ส่งข้อความเรียบร้อยแล้ว ทีมงานจะติดต่อกลับตามข้อมูลที่แจ้งไว้');
-})->name('contact.store');
+})->middleware('throttle:contact-messages')->name('contact.store');
 
 Route::post('/estimate', function (Request $request) use ($safelyRunLineNotification) {
     $data = $request->validate([
@@ -1071,6 +1191,7 @@ Route::post('/book/save-step2', function (Request $request) use ($defaultOrderSt
     }
 
     $order->fill([
+        'phone_number_id' => $currentNumber->id,
         'ordered_number' => $orderedNumber !== '' ? $orderedNumber : trim((string) $data['ordered_number']),
         'service_type' => $serviceType,
         'selected_package' => $selectedPackage,
@@ -1191,6 +1312,7 @@ Route::post('/book', function (Request $request) use ($defaultOrderStatus, $norm
     }
 
     $order->fill([
+        'phone_number_id' => $currentNumber->id,
         'ordered_number' => $orderedNumber !== '' ? $orderedNumber : trim((string) $data['ordered_number']),
         'service_type' => $serviceType,
         'selected_package' => $selectedPackage,
@@ -1313,6 +1435,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     $currentAdmin,
     $ensureAdmin,
     $buildArticleSlug,
+    $resolveLotteryResultForArticle,
     $resolveArticleImageMeta,
     $resolveOrderPaymentSlip,
     $rejectAdminLogin,
@@ -1544,6 +1667,380 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.orders', compact('orders'));
     })->name('orders');
 
+    Route::get('/sales-documents', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+
+        $customers = Customer::query()
+            ->where('is_active', true)
+            ->orderByRaw('LOWER(COALESCE(company_name, first_name, last_name, ""))')
+            ->get();
+        $prefillPayload = null;
+
+        $savedDocumentId = (int) $request->integer('document');
+
+        if ($savedDocumentId > 0) {
+            $savedDocument = SalesDocument::query()->find($savedDocumentId);
+            $prefillPayload = $savedDocument?->payload;
+        }
+
+        return view('sales-documents', compact('customers', 'prefillPayload'));
+    })->name('sales-documents');
+
+    Route::post('/sales-documents/save-download', function (Request $request) use ($ensureAdmin, $currentAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return response()->json([
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $data = $request->validate([
+            'document_type' => ['required', 'string', Rule::in(['quotation', 'invoice'])],
+            'document_number' => ['required', 'string', 'max:255'],
+            'document_date' => ['nullable', 'date'],
+            'due_date' => ['nullable', 'date'],
+            'customer_id' => ['nullable', 'integer'],
+            'customer_name' => ['nullable', 'string', 'max:255'],
+            'payload' => ['required', 'array'],
+        ]);
+
+        $currentAdminUser = $currentAdmin();
+        $service = app(SalesDocumentPdfService::class);
+        $payload = $data['payload'];
+        $payload['document_type'] = $data['document_type'];
+        $payload['document_number'] = $data['document_number'];
+        $payload['document_date'] = $data['document_date'] ?? null;
+        $payload['due_date'] = $data['due_date'] ?? null;
+        $payload['customer_id'] = $data['customer_id'] ?? null;
+        $payload['customer_name'] = $data['customer_name'] ?? null;
+
+        $document = $service->saveDocument($payload, $currentAdminUser?->id);
+
+        return response()->json([
+            'message' => ($document->document_type === 'invoice' ? 'บันทึก Invoice' : 'บันทึก Quotation') . ' เรียบร้อยแล้ว กำลังเปิดหน้าพิมพ์สำหรับบันทึก PDF',
+            'document_id' => $document->id,
+            'download_url' => route('admin.saved-sales-documents.download', $document),
+            'show_url' => route('admin.saved-sales-documents.show', $document),
+            'file_name' => $document->file_name . '.pdf',
+            'pdf_path' => $document->pdf_path,
+        ]);
+    })->name('sales-documents.save-download');
+
+    Route::get('/saved-sales-documents', function () use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+
+        $documents = SalesDocument::query()
+            ->latest('updated_at')
+            ->paginate(30);
+
+        return view('admin.sales-documents-index', compact('documents'));
+    })->name('saved-sales-documents.index');
+
+    Route::get('/saved-sales-documents/{salesDocument}', function (SalesDocument $salesDocument) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+
+        return view('admin.sales-document-show', [
+            'document' => $salesDocument,
+        ]);
+    })->name('saved-sales-documents.show');
+
+    Route::get('/saved-sales-documents/{salesDocument}/preview', function (SalesDocument $salesDocument) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+
+        $service = app(SalesDocumentPdfService::class);
+
+        return response($service->renderDocumentHtml($salesDocument))
+            ->header('Content-Type', 'text/html; charset=UTF-8');
+    })->name('saved-sales-documents.preview');
+
+    Route::get('/saved-sales-documents/{salesDocument}/download', function (SalesDocument $salesDocument) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+
+        $disk = Storage::disk($salesDocument->pdf_disk ?: 'local');
+        $pdfPath = trim((string) $salesDocument->pdf_path);
+
+        if ($pdfPath !== '' && $disk->exists($pdfPath)) {
+            return $disk->download($pdfPath, $salesDocument->file_name . '.pdf');
+        }
+
+        $service = app(SalesDocumentPdfService::class);
+
+        return response($service->renderDocumentHtml($salesDocument, [
+            'showPrintToolbar' => true,
+            'autoPrint' => true,
+            'printButtonLabel' => 'พิมพ์ / บันทึก PDF',
+        ]))->header('Content-Type', 'text/html; charset=UTF-8');
+    })->name('saved-sales-documents.download');
+
+    Route::delete('/saved-sales-documents/{salesDocument}', function (SalesDocument $salesDocument) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        if (session('admin_user_role') !== User::ROLE_MANAGER) {
+            abort(403);
+        }
+
+        $disk = Storage::disk($salesDocument->pdf_disk ?: 'local');
+        $pdfPath = trim((string) $salesDocument->pdf_path);
+
+        if ($pdfPath !== '' && $disk->exists($pdfPath)) {
+            $disk->delete($pdfPath);
+        }
+
+        $salesDocument->delete();
+
+        return redirect()
+            ->route('admin.saved-sales-documents.index')
+            ->with('status_message', 'ลบเอกสารเรียบร้อยแล้ว');
+    })->name('saved-sales-documents.delete');
+
+    Route::get('/customers', function () use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+
+        $customers = Customer::query()
+            ->orderByDesc('is_active')
+            ->orderByRaw('LOWER(COALESCE(company_name, first_name, last_name, ""))')
+            ->get();
+
+        return view('admin.customers', compact('customers'));
+    })->name('customers');
+
+    Route::post('/customers', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+
+        $data = $request->validate([
+            'company_name' => ['nullable', 'string', 'max:255'],
+            'first_name' => ['nullable', 'string', 'max:120'],
+            'last_name' => ['nullable', 'string', 'max:120'],
+            'tax_id' => ['nullable', 'string', 'max:32'],
+            'address' => ['nullable', 'string', 'max:4000'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:32'],
+            'payment_term' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:4000'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $companyName = trim((string) ($data['company_name'] ?? ''));
+        $firstName = trim((string) ($data['first_name'] ?? ''));
+        $lastName = trim((string) ($data['last_name'] ?? ''));
+
+        if ($companyName === '' && $firstName === '' && $lastName === '') {
+            throw ValidationException::withMessages([
+                'company_name' => 'กรุณากรอกชื่อบริษัท หรือชื่อ-นามสกุลลูกค้าอย่างน้อย 1 รายการ',
+            ]);
+        }
+
+        Customer::query()->create([
+            'company_name' => $companyName !== '' ? $companyName : null,
+            'first_name' => $firstName !== '' ? $firstName : null,
+            'last_name' => $lastName !== '' ? $lastName : null,
+            'tax_id' => trim((string) ($data['tax_id'] ?? '')) ?: null,
+            'address' => trim((string) ($data['address'] ?? '')) ?: null,
+            'email' => trim((string) ($data['email'] ?? '')) ?: null,
+            'phone' => trim((string) ($data['phone'] ?? '')) ?: null,
+            'payment_term' => trim((string) ($data['payment_term'] ?? '')) ?: null,
+            'notes' => trim((string) ($data['notes'] ?? '')) ?: null,
+            'is_active' => (bool) ($data['is_active'] ?? true),
+        ]);
+
+        return redirect()
+            ->route('admin.customers')
+            ->with('status_message', 'บันทึกข้อมูลลูกค้าเรียบร้อยแล้ว');
+    })->name('customers.store');
+
+    Route::post('/customers/quick-store', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return response()->json([
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $data = $request->validate([
+            'company_name' => ['nullable', 'string', 'max:255'],
+            'contact_name' => ['nullable', 'string', 'max:255'],
+            'tax_id' => ['nullable', 'string', 'max:32'],
+            'address' => ['nullable', 'string', 'max:4000'],
+            'payment_term' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:32'],
+        ]);
+
+        $companyName = trim((string) ($data['company_name'] ?? ''));
+        $contactName = trim((string) ($data['contact_name'] ?? ''));
+        $taxId = trim((string) ($data['tax_id'] ?? ''));
+        $address = trim((string) ($data['address'] ?? ''));
+
+        if ($companyName === '' || $taxId === '' || $address === '') {
+            throw ValidationException::withMessages([
+                'company_name' => 'กรุณากรอกชื่อลูกค้า เลขภาษี และที่อยู่ให้ครบก่อนบันทึก',
+            ]);
+        }
+
+        $firstName = null;
+        $lastName = null;
+
+        if ($contactName !== '') {
+            $contactParts = preg_split('/\s+/', $contactName) ?: [];
+            $firstName = trim((string) array_shift($contactParts)) ?: null;
+            $lastName = trim(implode(' ', $contactParts)) ?: null;
+        }
+
+        $customer = Customer::query()->create([
+            'company_name' => $companyName,
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'tax_id' => $taxId,
+            'address' => $address,
+            'email' => trim((string) ($data['email'] ?? '')) ?: null,
+            'phone' => trim((string) ($data['phone'] ?? '')) ?: null,
+            'payment_term' => trim((string) ($data['payment_term'] ?? '')) ?: null,
+            'is_active' => true,
+        ]);
+
+        return response()->json([
+            'message' => 'บันทึกลูกค้าเรียบร้อยแล้ว',
+            'customer' => [
+                'id' => $customer->id,
+                'display_name' => $customer->display_name,
+                'company_name' => $customer->company_name,
+                'contact_name' => $customer->contact_name,
+                'tax_id' => $customer->tax_id,
+                'address' => $customer->address,
+                'email' => $customer->email,
+                'phone' => $customer->phone,
+                'payment_term' => $customer->payment_term,
+            ],
+        ]);
+    })->name('customers.quick-store');
+
+    Route::put('/customers/{customer}/quick-update', function (Request $request, Customer $customer) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return response()->json([
+                'message' => 'Unauthorized',
+            ], 401);
+        }
+
+        $data = $request->validate([
+            'company_name' => ['nullable', 'string', 'max:255'],
+            'contact_name' => ['nullable', 'string', 'max:255'],
+            'tax_id' => ['nullable', 'string', 'max:32'],
+            'address' => ['nullable', 'string', 'max:4000'],
+            'payment_term' => ['nullable', 'string', 'max:255'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:32'],
+        ]);
+
+        $companyName = trim((string) ($data['company_name'] ?? ''));
+        $contactName = trim((string) ($data['contact_name'] ?? ''));
+        $taxId = trim((string) ($data['tax_id'] ?? ''));
+        $address = trim((string) ($data['address'] ?? ''));
+
+        if ($companyName === '' || $taxId === '' || $address === '') {
+            throw ValidationException::withMessages([
+                'company_name' => 'กรุณากรอกชื่อลูกค้า เลขภาษี และที่อยู่ให้ครบก่อนบันทึก',
+            ]);
+        }
+
+        $firstName = null;
+        $lastName = null;
+
+        if ($contactName !== '') {
+            $contactParts = preg_split('/\s+/', $contactName) ?: [];
+            $firstName = trim((string) array_shift($contactParts)) ?: null;
+            $lastName = trim(implode(' ', $contactParts)) ?: null;
+        }
+
+        $customer->fill([
+            'company_name' => $companyName,
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'tax_id' => $taxId,
+            'address' => $address,
+            'email' => trim((string) ($data['email'] ?? '')) ?: null,
+            'phone' => trim((string) ($data['phone'] ?? '')) ?: null,
+            'payment_term' => trim((string) ($data['payment_term'] ?? '')) ?: null,
+            'is_active' => true,
+        ]);
+        $customer->save();
+
+        return response()->json([
+            'message' => 'อัปเดตข้อมูลลูกค้าเรียบร้อยแล้ว',
+            'customer' => [
+                'id' => $customer->id,
+                'display_name' => $customer->display_name,
+                'company_name' => $customer->company_name,
+                'contact_name' => $customer->contact_name,
+                'tax_id' => $customer->tax_id,
+                'address' => $customer->address,
+                'email' => $customer->email,
+                'phone' => $customer->phone,
+                'payment_term' => $customer->payment_term,
+            ],
+        ]);
+    })->name('customers.quick-update');
+
+    Route::put('/customers/{customer}', function (Request $request, Customer $customer) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+
+        $data = $request->validate([
+            'company_name' => ['nullable', 'string', 'max:255'],
+            'first_name' => ['nullable', 'string', 'max:120'],
+            'last_name' => ['nullable', 'string', 'max:120'],
+            'tax_id' => ['nullable', 'string', 'max:32'],
+            'address' => ['nullable', 'string', 'max:4000'],
+            'email' => ['nullable', 'email', 'max:255'],
+            'phone' => ['nullable', 'string', 'max:32'],
+            'payment_term' => ['nullable', 'string', 'max:255'],
+            'notes' => ['nullable', 'string', 'max:4000'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $companyName = trim((string) ($data['company_name'] ?? ''));
+        $firstName = trim((string) ($data['first_name'] ?? ''));
+        $lastName = trim((string) ($data['last_name'] ?? ''));
+
+        if ($companyName === '' && $firstName === '' && $lastName === '') {
+            throw ValidationException::withMessages([
+                'company_name' => 'กรุณากรอกชื่อบริษัท หรือชื่อ-นามสกุลลูกค้าอย่างน้อย 1 รายการ',
+            ]);
+        }
+
+        $customer->fill([
+            'company_name' => $companyName !== '' ? $companyName : null,
+            'first_name' => $firstName !== '' ? $firstName : null,
+            'last_name' => $lastName !== '' ? $lastName : null,
+            'tax_id' => trim((string) ($data['tax_id'] ?? '')) ?: null,
+            'address' => trim((string) ($data['address'] ?? '')) ?: null,
+            'email' => trim((string) ($data['email'] ?? '')) ?: null,
+            'phone' => trim((string) ($data['phone'] ?? '')) ?: null,
+            'payment_term' => trim((string) ($data['payment_term'] ?? '')) ?: null,
+            'notes' => trim((string) ($data['notes'] ?? '')) ?: null,
+            'is_active' => (bool) ($data['is_active'] ?? false),
+        ]);
+        $customer->save();
+
+        return redirect()
+            ->route('admin.customers')
+            ->with('status_message', 'อัปเดตข้อมูลลูกค้าเรียบร้อยแล้ว');
+    })->name('customers.update');
+
     Route::get('/orders/{order}', function (CustomerOrder $order) use ($ensureAdmin, $resolveOrderPaymentSlip) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
@@ -1612,7 +2109,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.orders-edit', compact('order'));
     })->name('orders.edit');
 
-    Route::put('/orders/{order}', function (Request $request, CustomerOrder $order) use ($ensureAdmin, $storeOrderPaymentSlip, $safelyRunLineNotification, $syncPhoneNumberStatusFromOrder) {
+    Route::put('/orders/{order}', function (Request $request, CustomerOrder $order) use ($ensureAdmin, $normalizeServiceType, $storeOrderPaymentSlip, $safelyRunLineNotification, $syncPhoneNumberStatusFromOrder) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
@@ -1632,7 +2129,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'zipcode' => ['nullable', 'string', 'max:10'],
             'appointment_date' => ['nullable', 'date'],
             'appointment_time_slot' => ['nullable', 'string', 'max:40'],
-            'status' => ['required', 'string', 'max:30'],
+            'status' => ['required', 'string', Rule::in(CustomerOrder::statusOptions())],
             'payment_slip' => ['nullable', 'file', 'mimes:jpg,jpeg,png,heic,heif,pdf', 'max:10240'],
         ]);
 
@@ -1643,9 +2140,16 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $zipcode = $digitsOnly($data['zipcode'] ?? null);
         $previousStatus = (string) $order->status;
         $adminUserId = session('admin_user_id');
+        $matchedPhoneNumber = $orderedNumber !== ''
+            ? PhoneNumber::query()->where('phone_number', $orderedNumber)->first()
+            : null;
 
         $order->fill([
+            'phone_number_id' => $matchedPhoneNumber?->id,
             'ordered_number' => $orderedNumber !== '' ? $orderedNumber : trim((string) $data['ordered_number']),
+            'service_type' => $matchedPhoneNumber
+                ? $normalizeServiceType($matchedPhoneNumber->service_type)
+                : (string) $order->service_type,
             'selected_package' => (int) $data['selected_package'],
             'title_prefix' => trim((string) ($data['title_prefix'] ?? '')) ?: null,
             'first_name' => trim((string) ($data['first_name'] ?? '')) ?: null,
@@ -1714,6 +2218,170 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return back()->with('status_message', 'ส่งคำสั่งทดสอบ LINE เรียบร้อยแล้ว');
     })->name('orders.line-test');
 
+    Route::get('/analytics', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        $rangeOptions = [
+            7 => '7 วันล่าสุด',
+            30 => '30 วันล่าสุด',
+            90 => '90 วันล่าสุด',
+        ];
+        $days = (int) $request->integer('range', 30);
+
+        if (! array_key_exists($days, $rangeOptions)) {
+            $days = 30;
+        }
+
+        $timezone = 'Asia/Bangkok';
+        $start = now($timezone)->startOfDay()->subDays($days - 1);
+        $end = now($timezone)->endOfDay();
+        $ga4 = app(Ga4AnalyticsService::class);
+        $ga4Dashboard = null;
+        $ga4Error = null;
+
+        if ($ga4->isReportingConfigured()) {
+            try {
+                $ga4Dashboard = $ga4->fetchDashboard($days);
+            } catch (\Throwable $e) {
+                Log::warning('GA4 analytics dashboard fetch failed.', [
+                    'error' => $e->getMessage(),
+                ]);
+
+                $ga4Error = $e->getMessage();
+            }
+        }
+
+        $buildDailyCounts = static function (string $table, string $column, Carbon $startDate, Carbon $endDate): array {
+            return DB::table($table)
+                ->selectRaw('DATE(' . $column . ') as day, COUNT(*) as aggregate')
+                ->whereBetween($column, [$startDate, $endDate])
+                ->groupBy(DB::raw('DATE(' . $column . ')'))
+                ->pluck('aggregate', 'day')
+                ->map(static fn ($value): int => (int) $value)
+                ->all();
+        };
+
+        $contactMessagesCount = ContactMessage::query()
+            ->whereBetween('submitted_at', [$start, $end])
+            ->count();
+        $estimateLeadsCount = EstimateLead::query()
+            ->whereBetween('submitted_at', [$start, $end])
+            ->count();
+        $ordersCreatedCount = CustomerOrder::query()
+            ->whereBetween('created_at', [$start, $end])
+            ->count();
+        $closedOrdersCount = CustomerOrder::query()
+            ->whereBetween('created_at', [$start, $end])
+            ->whereIn('status', [
+                CustomerOrder::STATUS_COMPLETED,
+                CustomerOrder::STATUS_SOLD,
+            ])
+            ->count();
+        $orderStatusBreakdown = CustomerOrder::query()
+            ->select('status', DB::raw('COUNT(*) as aggregate'))
+            ->whereBetween('created_at', [$start, $end])
+            ->groupBy('status')
+            ->orderByDesc('aggregate')
+            ->pluck('aggregate', 'status')
+            ->map(static fn ($value): int => (int) $value)
+            ->all();
+
+        $dailyContactMessages = $buildDailyCounts('contact_messages', 'submitted_at', $start, $end);
+        $dailyEstimateLeads = $buildDailyCounts('estimate_leads', 'submitted_at', $start, $end);
+        $dailyOrders = $buildDailyCounts('customer_orders', 'created_at', $start, $end);
+        $internalDaily = [];
+
+        for ($cursor = $start->copy(); $cursor->lte($end); $cursor->addDay()) {
+            $dateKey = $cursor->toDateString();
+
+            $internalDaily[] = [
+                'date' => $dateKey,
+                'label' => $cursor->locale('th')->translatedFormat('j M'),
+                'contact_messages' => $dailyContactMessages[$dateKey] ?? 0,
+                'estimate_leads' => $dailyEstimateLeads[$dateKey] ?? 0,
+                'orders_created' => $dailyOrders[$dateKey] ?? 0,
+            ];
+        }
+
+        return view('admin.analytics', [
+            'days' => $days,
+            'rangeOptions' => $rangeOptions,
+            'ga4Dashboard' => $ga4Dashboard,
+            'ga4Error' => $ga4Error,
+            'ga4Settings' => [
+                'measurement_id' => $ga4->measurementId(),
+                'property_id' => $ga4->propertyId(),
+                'service_account_json' => $ga4->editableServiceAccountJson(),
+            ],
+            'ga4ConfiguredForTracking' => $ga4->isClientTrackingConfigured(),
+            'ga4ConfiguredForReporting' => $ga4->isReportingConfigured(),
+            'ga4ServiceAccountEmail' => $ga4->serviceAccountEmail(),
+            'internalSummary' => [
+                'contact_messages' => $contactMessagesCount,
+                'estimate_leads' => $estimateLeadsCount,
+                'orders_created' => $ordersCreatedCount,
+                'closed_orders' => $closedOrdersCount,
+            ],
+            'internalDaily' => $internalDaily,
+            'orderStatusBreakdown' => $orderStatusBreakdown,
+        ]);
+    })->name('analytics');
+
+    Route::post('/analytics/settings', function (Request $request) use ($ensureAdmin, $resolveEnvironmentEditor) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        $environmentEditor = $resolveEnvironmentEditor();
+        $ga4 = app(Ga4AnalyticsService::class);
+        $data = $request->validate([
+            'ga4_measurement_id' => ['nullable', 'string', 'max:64'],
+            'ga4_property_id' => ['nullable', 'string', 'max:64'],
+            'ga4_service_account_json' => ['nullable', 'string', 'max:200000'],
+        ]);
+
+        $measurementId = strtoupper(trim((string) ($data['ga4_measurement_id'] ?? '')));
+        $propertyId = trim((string) ($data['ga4_property_id'] ?? ''));
+
+        if ($measurementId !== '' && preg_match('/^G-[A-Z0-9]+$/', $measurementId) !== 1) {
+            throw ValidationException::withMessages([
+                'ga4_measurement_id' => 'GA4 Measurement ID ต้องอยู่ในรูปแบบ `G-XXXXXXXXXX`',
+            ]);
+        }
+
+        if ($propertyId !== '' && preg_match('/^\d+$/', $propertyId) !== 1) {
+            throw ValidationException::withMessages([
+                'ga4_property_id' => 'GA4 Property ID ต้องเป็นตัวเลขเท่านั้น',
+            ]);
+        }
+
+        try {
+            $encodedCredentials = $ga4->normalizeServiceAccountJson($data['ga4_service_account_json'] ?? '');
+
+            $environmentEditor->setMany([
+                'GA4_MEASUREMENT_ID' => $measurementId,
+                'GA4_PROPERTY_ID' => $propertyId,
+                'GA4_SERVICE_ACCOUNT_JSON_BASE64' => $encodedCredentials,
+            ]);
+
+            config()->set('services.ga4.measurement_id', $measurementId);
+            config()->set('services.ga4.property_id', $propertyId);
+            config()->set('services.ga4.service_account_json_base64', $encodedCredentials);
+
+            Artisan::call('config:clear');
+        } catch (\Throwable $e) {
+            return back()
+                ->withInput()
+                ->withErrors(['analytics_settings' => $e->getMessage()]);
+        }
+
+        return redirect()
+            ->route('admin.analytics')
+            ->with('status_message', 'บันทึก GA4 settings เรียบร้อยแล้ว');
+    })->name('analytics.settings.update');
+
     Route::get('/line-settings', function () use ($ensureAdmin, $resolveEnvironmentEditor, $latestLineWebhookEvents) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
             return $redirect;
@@ -1725,12 +2393,22 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'LINE_CHANNEL_ACCESS_TOKEN',
             'LINE_CHANNEL_SECRET',
             'LINE_GROUP_ID',
+            'LINE_LOTTERY_GROUP_ID',
         ]);
         $baseUrl = rtrim((string) config('app.url', url('/')), '/');
         $webhookUrl = $baseUrl . route('line.webhook', [], false);
         $webhookEvents = $latestLineWebhookEvents();
+        $latestLotteryResult = null;
 
-        return view('admin.line-settings', compact('settings', 'webhookUrl', 'webhookEvents'));
+        if (Schema::hasTable('lottery_results')) {
+            $latestLotteryResult = LotteryResult::query()
+                ->orderByRaw('COALESCE(source_draw_date, draw_date) DESC')
+                ->orderByDesc('fetched_at')
+                ->orderByDesc('id')
+                ->first();
+        }
+
+        return view('admin.line-settings', compact('settings', 'webhookUrl', 'webhookEvents', 'latestLotteryResult'));
     })->name('line-settings');
 
     Route::post('/line-settings', function (Request $request) use ($ensureAdmin, $resolveEnvironmentEditor) {
@@ -1744,22 +2422,26 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'line_channel_access_token' => ['nullable', 'string', 'max:4000'],
             'line_channel_secret' => ['nullable', 'string', 'max:255'],
             'line_group_id' => ['nullable', 'string', 'max:255'],
+            'line_lottery_group_id' => ['nullable', 'string', 'max:255'],
         ]);
 
         try {
             $token = trim((string) ($data['line_channel_access_token'] ?? ''));
             $channelSecret = trim((string) ($data['line_channel_secret'] ?? ''));
             $groupId = trim((string) ($data['line_group_id'] ?? ''));
+            $lotteryGroupId = trim((string) ($data['line_lottery_group_id'] ?? ''));
 
             $environmentEditor->setMany([
                 'LINE_CHANNEL_ACCESS_TOKEN' => $token,
                 'LINE_CHANNEL_SECRET' => $channelSecret,
                 'LINE_GROUP_ID' => $groupId,
+                'LINE_LOTTERY_GROUP_ID' => $lotteryGroupId,
             ]);
 
             config()->set('services.line.channel_access_token', $token);
             config()->set('services.line.channel_secret', $channelSecret);
             config()->set('services.line.group_id', $groupId);
+            config()->set('services.line.groups.lottery', $lotteryGroupId);
 
             Artisan::call('config:clear');
         } catch (\Throwable $e) {
@@ -1772,6 +2454,38 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->route('admin.line-settings')
             ->with('status_message', 'บันทึก LINE settings เรียบร้อยแล้ว');
     })->name('line-settings.update');
+
+    Route::post('/lottery/fetch-force', function () use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        try {
+            $exitCode = Artisan::call('lottery:fetch-latest', [
+                '--force' => true,
+            ]);
+            $output = trim((string) Artisan::output());
+
+            if ($exitCode !== 0) {
+                return back()->withErrors([
+                    'lottery_force_fetch' => $output !== '' ? $output : 'เรียก lottery:fetch-latest --force ไม่สำเร็จ',
+                ]);
+            }
+
+            return redirect()
+                ->route('admin.line-settings')
+                ->with('status_message', 'สั่ง force เรียกหวยเรียบร้อยแล้ว')
+                ->with('lottery_force_output', $output);
+        } catch (\Throwable $e) {
+            Log::warning('Manual lottery force fetch failed.', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->withErrors([
+                'lottery_force_fetch' => $e->getMessage(),
+            ]);
+        }
+    })->name('lottery.fetch-force');
 
     Route::post('/line-settings/group-id', function (Request $request) use ($ensureAdmin, $resolveEnvironmentEditor) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
@@ -1999,7 +2713,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.article-edit', compact('article', 'comments'));
     })->name('articles.edit');
 
-    Route::get('/articles/{article}/preview', function (Article $article) use ($ensureAdmin) {
+    Route::get('/articles/{article}/preview', function (Article $article) use ($ensureAdmin, $resolveLotteryResultForArticle) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
@@ -2008,7 +2722,9 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'approvedComments' => fn ($query) => $query->latest('id'),
         ]);
 
-        return view('articles.show', compact('article'));
+        $lotteryResult = $resolveLotteryResultForArticle($article);
+
+        return view('articles.show', compact('article', 'lotteryResult'));
     })->name('articles.preview');
 
     Route::put('/articles/{article}', function (Request $request, Article $article) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta) {
@@ -2253,6 +2969,100 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         return view('admin.contact-messages', compact('messages'));
     })->name('contact-messages');
+
+    Route::get('/estimate-leads', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+
+        $search = trim((string) $request->query('q', ''));
+        $selectedGender = trim((string) $request->query('gender', ''));
+        $selectedWorkType = trim((string) $request->query('work_type', ''));
+        $selectedGoal = trim((string) $request->query('goal', ''));
+        $searchDigits = preg_replace('/\D+/', '', $search) ?? '';
+        $searchTerm = mb_strtolower($search);
+        $genderLabels = EstimateLead::genderLabels();
+        $workTypeLabels = EstimateLead::workTypeLabels();
+        $goalLabels = EstimateLead::goalLabels();
+
+        if (! array_key_exists($selectedGender, $genderLabels)) {
+            $selectedGender = '';
+        }
+
+        if (! array_key_exists($selectedWorkType, $workTypeLabels)) {
+            $selectedWorkType = '';
+        }
+
+        if (! array_key_exists($selectedGoal, $goalLabels)) {
+            $selectedGoal = '';
+        }
+
+        $leadQuery = EstimateLead::query()
+            ->when($search !== '', function ($query) use ($search, $searchDigits, $searchTerm) {
+                $query->where(function ($innerQuery) use ($search, $searchDigits, $searchTerm) {
+                    $innerQuery
+                        ->where('first_name', 'like', '%' . $search . '%')
+                        ->orWhere('last_name', 'like', '%' . $search . '%')
+                        ->orWhereRaw('LOWER(email) like ?', ['%' . $searchTerm . '%']);
+
+                    if ($searchDigits !== '') {
+                        $innerQuery
+                            ->orWhere('main_phone', 'like', '%' . $searchDigits . '%')
+                            ->orWhere('current_phone', 'like', '%' . $searchDigits . '%');
+                    }
+                });
+            })
+            ->when($selectedGender !== '', fn ($query) => $query->where('gender', $selectedGender))
+            ->when($selectedWorkType !== '', fn ($query) => $query->where('work_type', $selectedWorkType))
+            ->when($selectedGoal !== '', fn ($query) => $query->where('goal', $selectedGoal));
+
+        $timezone = 'Asia/Bangkok';
+        $todayStart = now($timezone)->startOfDay();
+        $lastSevenDaysStart = now($timezone)->subDays(6)->startOfDay();
+        $monthStart = now($timezone)->startOfMonth();
+
+        $stats = [
+            'total' => EstimateLead::query()->count(),
+            'today' => EstimateLead::query()->where('submitted_at', '>=', $todayStart)->count(),
+            'last_7_days' => EstimateLead::query()->where('submitted_at', '>=', $lastSevenDaysStart)->count(),
+            'this_month' => EstimateLead::query()->where('submitted_at', '>=', $monthStart)->count(),
+            'filtered' => (clone $leadQuery)->count(),
+        ];
+
+        $leads = $leadQuery
+            ->orderByRaw('COALESCE(submitted_at, created_at) DESC')
+            ->orderByDesc('id')
+            ->paginate(30)
+            ->withQueryString();
+
+        return view('admin.estimate-leads', compact(
+            'leads',
+            'search',
+            'selectedGender',
+            'selectedWorkType',
+            'selectedGoal',
+            'genderLabels',
+            'workTypeLabels',
+            'goalLabels',
+            'stats'
+        ));
+    })->name('estimate-leads');
+
+    Route::get('/estimate-leads/{estimateLead}', function (EstimateLead $estimateLead) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+
+        if (Schema::hasTable('line_notification_logs')) {
+            $estimateLead->load([
+                'lineNotificationLogs' => fn ($query) => $query->latest()->limit(20),
+            ]);
+        } else {
+            $estimateLead->setRelation('lineNotificationLogs', collect());
+        }
+
+        return view('admin.estimate-leads-show', compact('estimateLead'));
+    })->name('estimate-leads.show');
 
     Route::delete('/contact-messages/{contactMessage}', function (ContactMessage $contactMessage) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {

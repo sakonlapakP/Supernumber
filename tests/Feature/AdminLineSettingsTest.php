@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\User;
 use App\Models\LineWebhookEvent;
 use App\Services\EnvironmentEditor;
+use Illuminate\Support\Facades\Artisan;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -15,7 +16,7 @@ class AdminLineSettingsTest extends TestCase
     public function test_manager_can_view_line_settings_page(): void
     {
         $envPath = storage_path('framework/testing/line-settings-view.env');
-        file_put_contents($envPath, "LINE_CHANNEL_ACCESS_TOKEN=view-token\nLINE_CHANNEL_SECRET=view-secret\nLINE_GROUP_ID=view-group\n");
+        file_put_contents($envPath, "LINE_CHANNEL_ACCESS_TOKEN=view-token\nLINE_CHANNEL_SECRET=view-secret\nLINE_GROUP_ID=view-group\nLINE_LOTTERY_GROUP_ID=view-lottery-group\n");
 
         $this->app->instance(EnvironmentEditor::class, new EnvironmentEditor($envPath));
 
@@ -30,17 +31,18 @@ class AdminLineSettingsTest extends TestCase
             ->get(route('admin.line-settings'));
 
         $response->assertOk();
-        $response->assertSee('LINE Settings');
+        $response->assertSee('ตั้งค่า LINE');
         $response->assertSee('view-token');
         $response->assertSee('view-secret');
         $response->assertSee('view-group');
+        $response->assertSee('view-lottery-group');
         $response->assertSee(route('line.webhook'));
     }
 
     public function test_admin_can_view_line_settings_page(): void
     {
         $envPath = storage_path('framework/testing/line-settings-admin-view.env');
-        file_put_contents($envPath, "LINE_CHANNEL_ACCESS_TOKEN=admin-view-token\nLINE_CHANNEL_SECRET=admin-view-secret\nLINE_GROUP_ID=admin-view-group\n");
+        file_put_contents($envPath, "LINE_CHANNEL_ACCESS_TOKEN=admin-view-token\nLINE_CHANNEL_SECRET=admin-view-secret\nLINE_GROUP_ID=admin-view-group\nLINE_LOTTERY_GROUP_ID=admin-lottery-view-group\n");
 
         $this->app->instance(EnvironmentEditor::class, new EnvironmentEditor($envPath));
 
@@ -55,16 +57,17 @@ class AdminLineSettingsTest extends TestCase
             ->get(route('admin.line-settings'));
 
         $response->assertOk();
-        $response->assertSee('LINE Settings');
+        $response->assertSee('ตั้งค่า LINE');
         $response->assertSee('admin-view-token');
         $response->assertSee('admin-view-secret');
         $response->assertSee('admin-view-group');
+        $response->assertSee('admin-lottery-view-group');
     }
 
     public function test_manager_can_update_line_settings_from_admin_page(): void
     {
         $envPath = storage_path('framework/testing/line-settings-update.env');
-        file_put_contents($envPath, "LINE_CHANNEL_ACCESS_TOKEN=old-token\nLINE_CHANNEL_SECRET=old-secret\nLINE_GROUP_ID=old-group\n");
+        file_put_contents($envPath, "LINE_CHANNEL_ACCESS_TOKEN=old-token\nLINE_CHANNEL_SECRET=old-secret\nLINE_GROUP_ID=old-group\nLINE_LOTTERY_GROUP_ID=old-lottery-group\n");
 
         $this->app->instance(EnvironmentEditor::class, new EnvironmentEditor($envPath));
 
@@ -80,6 +83,7 @@ class AdminLineSettingsTest extends TestCase
                 'line_channel_access_token' => 'new-token-value',
                 'line_channel_secret' => 'new-secret-value',
                 'line_group_id' => 'new-group-id',
+                'line_lottery_group_id' => 'new-lottery-group-id',
             ]);
 
         $response->assertRedirect(route('admin.line-settings'));
@@ -90,6 +94,38 @@ class AdminLineSettingsTest extends TestCase
         $this->assertStringContainsString('LINE_CHANNEL_ACCESS_TOKEN=new-token-value', $contents);
         $this->assertStringContainsString('LINE_CHANNEL_SECRET=new-secret-value', $contents);
         $this->assertStringContainsString('LINE_GROUP_ID=new-group-id', $contents);
+        $this->assertStringContainsString('LINE_LOTTERY_GROUP_ID=new-lottery-group-id', $contents);
+    }
+
+    public function test_manager_can_force_fetch_lottery_from_admin_page(): void
+    {
+        $envPath = storage_path('framework/testing/line-settings-force-lottery.env');
+        file_put_contents($envPath, "LINE_CHANNEL_ACCESS_TOKEN=token\nLINE_CHANNEL_SECRET=secret\nLINE_GROUP_ID=group\n");
+
+        $this->app->instance(EnvironmentEditor::class, new EnvironmentEditor($envPath));
+
+        $manager = User::factory()->create([
+            'username' => 'manager-line-force-lottery',
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        Artisan::shouldReceive('call')
+            ->once()
+            ->with('lottery:fetch-latest', ['--force' => true])
+            ->andReturn(0);
+        Artisan::shouldReceive('output')
+            ->once()
+            ->andReturn("Saved draw 2026-04-02 (6 prizes, complete=yes).\n");
+
+        $response = $this
+            ->withSession($this->managerSession($manager))
+            ->from(route('admin.line-settings'))
+            ->post(route('admin.lottery.fetch-force'));
+
+        $response->assertRedirect(route('admin.line-settings'));
+        $response->assertSessionHas('status_message', 'สั่ง force เรียกหวยเรียบร้อยแล้ว');
+        $response->assertSessionHas('lottery_force_output');
     }
 
     public function test_manager_can_apply_group_id_from_a_captured_webhook_event(): void

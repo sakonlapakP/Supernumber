@@ -347,6 +347,14 @@
       const storageKey = `bookFormDraft:${form?.querySelector('[name=\"ordered_number\"]')?.value || "default"}`;
       if (!form || !packageSelect || !previewBox) return;
 
+      const trackAnalyticsEvent = (eventName, params = {}) => {
+        if (!window.SupernumberAnalytics || typeof window.SupernumberAnalytics.track !== "function") {
+          return false;
+        }
+
+        return window.SupernumberAnalytics.track(eventName, params);
+      };
+
       const title = previewBox.querySelector("h4");
       const nameEl = document.getElementById("preview-name");
       const dataEl = document.getElementById("preview-data");
@@ -728,6 +736,11 @@
             saveBanner.textContent = "บันทึกคำสั่งซื้อของคุณแล้ว";
           }
 
+          trackAnalyticsEvent(isPrepaid ? "purchase_request_submitted" : "add_payment_info", {
+            service_type: isPrepaid ? "prepaid" : "postpaid",
+            checkout_step: 2,
+          });
+
           return true;
         } catch (_) {
           window.alert("ไม่สามารถเชื่อมต่อระบบบันทึกคำสั่งซื้อได้ กรุณาลองใหม่อีกครั้ง");
@@ -939,6 +952,23 @@
       const hashStep = Number((location.hash.match(/step-(\d+)/) || [])[1] || 1);
       history.replaceState({ bookStep: hashStep }, "", location.hash || "#step-1");
       setStep(hashStep, false);
+
+      window.addEventListener("load", () => {
+        const hasSubmittedOrder = @json((bool) session('status_message'));
+
+        if (!hasSubmittedOrder) {
+          trackAnalyticsEvent("begin_checkout", {
+            service_type: isPrepaid ? "prepaid" : "postpaid",
+          });
+        }
+
+        @if (session('status_message') && ! $isPrepaid)
+          trackAnalyticsEvent("purchase_request_submitted", {
+            service_type: "postpaid",
+            checkout_step: 3,
+          });
+        @endif
+      }, { once: true });
 
       let fallbackTimer = null;
       if (window.jQuery && typeof window.jQuery.Thailand === "function") {

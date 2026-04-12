@@ -32,7 +32,7 @@ class AdminPhoneNumberEditTest extends TestCase
         $this->withSession($this->adminSession($manager))
             ->get(route('admin.numbers.edit', $phoneNumber))
             ->assertOk()
-            ->assertSee('Edit Number')
+            ->assertSee('แก้ไขเบอร์')
             ->assertSee('0891234567')
             ->assertSee('089-123-4567');
     }
@@ -119,7 +119,7 @@ class AdminPhoneNumberEditTest extends TestCase
         $this->withSession($this->adminSession($manager))
             ->get(route('admin.numbers', ['service_type' => PhoneNumber::SERVICE_TYPE_PREPAID]))
             ->assertOk()
-            ->assertSee('Prepaid Numbers')
+            ->assertSee('เบอร์เติมเงิน')
             ->assertSee('089-123-4567')
             ->assertDontSee('081-111-2222');
     }

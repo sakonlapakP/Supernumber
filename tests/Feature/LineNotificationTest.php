@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\CustomerOrder;
 use App\Models\LineNotificationLog;
+use App\Models\LotteryResult;
 use App\Models\PhoneNumber;
 use App\Models\User;
 use App\Services\LineOrderNotifier;
@@ -12,6 +13,7 @@ use Illuminate\Http\Client\Request as HttpRequest;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
+use Carbon\Carbon;
 use RuntimeException;
 use Tests\TestCase;
 
@@ -82,7 +84,7 @@ class LineNotificationTest extends TestCase
 
         Storage::fake('public');
 
-        PhoneNumber::query()->create([
+        $phoneNumber = PhoneNumber::query()->create([
             'phone_number' => '0891234567',
             'service_type' => PhoneNumber::SERVICE_TYPE_POSTPAID,
             'network_code' => 'true_dtac',
@@ -115,6 +117,7 @@ class LineNotificationTest extends TestCase
         ]));
 
         $this->assertDatabaseHas('customer_orders', [
+            'phone_number_id' => $phoneNumber->id,
             'ordered_number' => '0891234567',
             'selected_package' => 399,
             'current_phone' => '0812345678',
@@ -292,6 +295,102 @@ class LineNotificationTest extends TestCase
         ]);
     }
 
+    public function test_it_sends_line_notification_when_lottery_result_becomes_complete(): void
+    {
+        config()->set('services.line.channel_access_token', 'line-token');
+        config()->set('services.line.group_id', 'group-default');
+        config()->set('services.line.groups.lottery', 'group-lottery');
+        config()->set('services.line.retry_sleep_ms', 0);
+
+        Http::fake([
+            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([
+                'date' => '01/04/2026',
+                'data' => $this->completeLotteryPayload(),
+            ], 200),
+            'https://api.line.me/v2/bot/message/push' => Http::response([], 200),
+        ]);
+
+        \Carbon\Carbon::setTestNow(\Carbon\Carbon::create(2026, 4, 1, 16, 0, 0, 'Asia/Bangkok'));
+
+        $this->artisan('lottery:fetch-latest')
+            ->assertExitCode(0);
+
+        Http::assertSent(function (HttpRequest $request): bool {
+            $payload = $request->data();
+            $message = (string) ($payload['messages'][0]['text'] ?? '');
+
+            return $request->url() === 'https://api.line.me/v2/bot/message/push'
+                && ($payload['to'] ?? null) === 'group-lottery'
+                && str_contains($message, 'ผลหวยออกแล้ว')
+                && str_contains($message, 'รางวัลที่ 1: 123456')
+                && str_contains($message, 'เลขท้าย 2 ตัว: 12');
+        });
+
+        $this->assertDatabaseHas('line_notification_logs', [
+            'event_type' => 'lottery_completed',
+            'destination_key' => 'lottery',
+            'destination_id' => 'group-lottery',
+            'status' => LineNotificationLog::STATUS_SENT,
+        ]);
+    }
+
+    public function test_it_does_not_send_duplicate_lottery_line_notification_for_an_already_complete_draw(): void
+    {
+        config()->set('services.line.channel_access_token', 'line-token');
+        config()->set('services.line.group_id', 'group-default');
+        config()->set('services.line.groups.lottery', 'group-lottery');
+        config()->set('services.line.retry_sleep_ms', 0);
+
+        $result = LotteryResult::query()->create([
+            'draw_date' => '2026-04-01',
+            'source_draw_date' => '2026-04-01',
+            'source_draw_date_text' => '01/04/2026',
+            'is_complete' => true,
+            'fetched_at' => now(),
+            'source_payload' => [],
+        ]);
+
+        foreach ($this->completeLotteryPayload() as $index => $prize) {
+            $result->prizes()->create([
+                'position' => $index,
+                'prize_name' => $prize['name'],
+                'prize_number' => $prize['number'],
+            ]);
+        }
+
+        Http::fake([
+            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([
+                'date' => '01/04/2026',
+                'data' => $this->completeLotteryPayload(),
+            ], 200),
+            'https://api.line.me/v2/bot/message/push' => Http::response([], 200),
+        ]);
+
+        \Carbon\Carbon::setTestNow(\Carbon\Carbon::create(2026, 4, 1, 16, 20, 0, 'Asia/Bangkok'));
+
+        $this->artisan('lottery:fetch-latest', ['--force' => true])
+            ->assertExitCode(0);
+
+        Http::assertSentCount(1);
+
+        $this->assertDatabaseMissing('line_notification_logs', [
+            'event_type' => 'lottery_completed',
+            'destination_key' => 'lottery',
+        ]);
+    }
+
+    private function completeLotteryPayload(): array
+    {
+        return [
+            ['name' => 'รางวัลที่ 1', 'number' => '123456'],
+            ['name' => 'เลขหน้า 3 ตัว', 'number' => '123'],
+            ['name' => 'เลขหน้า 3 ตัว', 'number' => '456'],
+            ['name' => 'เลขท้าย 3 ตัว', 'number' => '789'],
+            ['name' => 'เลขท้าย 3 ตัว', 'number' => '012'],
+            ['name' => 'เลขท้าย 2 ตัว', 'number' => '12'],
+        ];
+    }
+
     public function test_it_does_not_send_order_status_notifications_for_unconfigured_statuses(): void
     {
         config()->set('services.line.channel_access_token', 'line-token');
@@ -427,5 +526,12 @@ class LineNotificationTest extends TestCase
             'admin_authenticated' => true,
             'admin_user_id' => $user->id,
         ];
+    }
+
+    protected function tearDown(): void
+    {
+        Carbon::setTestNow();
+
+        parent::tearDown();
     }
 }

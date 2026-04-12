@@ -31,7 +31,7 @@ class AdminContactMessagesTest extends TestCase
             ->get(route('admin.contact-messages'));
 
         $response->assertOk();
-        $response->assertSee('Contact Messages');
+        $response->assertSee('ข้อความติดต่อ');
         $response->assertSee('ลูกค้าทดสอบ');
         $response->assertSee('0812345678');
     }
