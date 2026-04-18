@@ -1,0 +1,3 @@
+Test File 3
+Path: domains/supernumber.co.th/public_html/ (No leading slash)
+We are hunting for the right folder!
