@@ -1,0 +1,3 @@
+This is a test file to verify GitHub FTP Deployment.
+Timestamp: 2026-04-18 13:15
+Status: If you see this, the deployment path is CORRECT!
