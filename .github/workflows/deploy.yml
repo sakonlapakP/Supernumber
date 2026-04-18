@@ -20,7 +20,7 @@ jobs:
         server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
-        server-dir: public_html/  # แก้ไขตรงนี้หากโฟลเดอร์บน server เป็นตัวอื่น เช่น domains/supernumber.co.th/public_html/
+        server-dir: domains/supernumber.co.th/public_html/
         exclude: |
           **/.git*
           **/.git*/**
