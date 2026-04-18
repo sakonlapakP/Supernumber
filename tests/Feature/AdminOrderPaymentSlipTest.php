@@ -68,6 +68,52 @@ class AdminOrderPaymentSlipTest extends TestCase
         $response->assertSee(route('admin.orders.payment-slip', $order));
     }
 
+    public function test_manager_sees_line_test_button_on_order_detail_page(): void
+    {
+        $order = CustomerOrder::query()->create([
+            'ordered_number' => '0891234567',
+            'selected_package' => 699,
+            'payment_slip_path' => 'payment-slips/line-test-visible.jpg',
+            'status' => 'submitted',
+        ]);
+
+        $manager = User::factory()->create([
+            'username' => 'manager-line-test-visible',
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        $response = $this
+            ->withSession($this->adminSession($manager))
+            ->get(route('admin.orders.show', $order));
+
+        $response->assertOk();
+        $response->assertSee('ทดสอบส่ง LINE');
+    }
+
+    public function test_admin_does_not_see_line_test_button_on_order_detail_page(): void
+    {
+        $order = CustomerOrder::query()->create([
+            'ordered_number' => '0891234567',
+            'selected_package' => 699,
+            'payment_slip_path' => 'payment-slips/line-test-hidden.jpg',
+            'status' => 'submitted',
+        ]);
+
+        $admin = User::factory()->create([
+            'username' => 'admin-line-test-hidden',
+            'role' => User::ROLE_ADMIN,
+            'is_active' => true,
+        ]);
+
+        $response = $this
+            ->withSession($this->adminSession($admin))
+            ->get(route('admin.orders.show', $order));
+
+        $response->assertOk();
+        $response->assertDontSee('ทดสอบส่ง LINE');
+    }
+
     public function test_signed_line_payment_slip_route_serves_file_without_admin_session(): void
     {
         Storage::fake('public');

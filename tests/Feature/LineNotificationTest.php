@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\Article;
 use App\Models\CustomerOrder;
 use App\Models\LineNotificationLog;
 use App\Models\LotteryResult;
@@ -15,6 +16,7 @@ use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 use RuntimeException;
+use Illuminate\Support\Facades\URL;
 use Tests\TestCase;
 
 class LineNotificationTest extends TestCase
@@ -301,6 +303,7 @@ class LineNotificationTest extends TestCase
         config()->set('services.line.group_id', 'group-default');
         config()->set('services.line.groups.lottery', 'group-lottery');
         config()->set('services.line.retry_sleep_ms', 0);
+        config()->set('app.url', 'https://supernumber.example');
 
         Http::fake([
             'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([
@@ -318,9 +321,14 @@ class LineNotificationTest extends TestCase
         Http::assertSent(function (HttpRequest $request): bool {
             $payload = $request->data();
             $message = (string) ($payload['messages'][0]['text'] ?? '');
+            $imageMessage = $payload['messages'][1] ?? [];
 
             return $request->url() === 'https://api.line.me/v2/bot/message/push'
                 && ($payload['to'] ?? null) === 'group-lottery'
+                && ($payload['messages'][0]['type'] ?? null) === 'text'
+                && ($imageMessage['type'] ?? null) === 'image'
+                && str_contains((string) ($imageMessage['originalContentUrl'] ?? ''), '/line/lottery-results/')
+                && str_contains((string) ($imageMessage['originalContentUrl'] ?? ''), 'signature=')
                 && str_contains($message, 'ผลหวยออกแล้ว')
                 && str_contains($message, 'รางวัลที่ 1: 123456')
                 && str_contains($message, 'เลขท้าย 2 ตัว: 12');
@@ -328,6 +336,50 @@ class LineNotificationTest extends TestCase
 
         $this->assertDatabaseHas('line_notification_logs', [
             'event_type' => 'lottery_completed',
+            'destination_key' => 'lottery',
+            'destination_id' => 'group-lottery',
+            'status' => LineNotificationLog::STATUS_SENT,
+        ]);
+    }
+
+    public function test_it_sends_a_text_only_line_notification_when_retry_day_ends_without_any_lottery_data(): void
+    {
+        config()->set('services.line.channel_access_token', 'line-token');
+        config()->set('services.line.group_id', 'group-default');
+        config()->set('services.line.groups.lottery', 'group-lottery');
+        config()->set('services.line.retry_sleep_ms', 0);
+
+        Http::fake([
+            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([], 200),
+            'https://api.line.me/v2/bot/message/push' => Http::response([], 200),
+        ]);
+
+        Carbon::setTestNow(Carbon::create(2026, 4, 17, 16, 20, 0, 'Asia/Bangkok'));
+
+        $this->artisan('lottery:fetch-latest')
+            ->assertExitCode(0);
+
+        Http::assertSent(function (HttpRequest $request): bool {
+            $payload = $request->data();
+            $messages = $payload['messages'] ?? [];
+            $message = (string) ($messages[0]['text'] ?? '');
+
+            return $request->url() === 'https://api.line.me/v2/bot/message/push'
+                && ($payload['to'] ?? null) === 'group-lottery'
+                && count($messages) === 1
+                && ($messages[0]['type'] ?? null) === 'text'
+                && str_contains($message, 'ยังไม่พบข้อมูลผลสลากกินแบ่งรัฐบาล')
+                && str_contains($message, 'งวดวันที่: 16/04/2026')
+                && str_contains($message, '17/04/2026 16:20');
+        });
+
+        $this->assertDatabaseHas('lottery_results', [
+            'draw_date' => '2026-04-16',
+            'is_complete' => 0,
+        ]);
+
+        $this->assertDatabaseHas('line_notification_logs', [
+            'event_type' => 'lottery_unavailable_after_retry',
             'destination_key' => 'lottery',
             'destination_id' => 'group-lottery',
             'status' => LineNotificationLog::STATUS_SENT,
@@ -377,6 +429,58 @@ class LineNotificationTest extends TestCase
             'event_type' => 'lottery_completed',
             'destination_key' => 'lottery',
         ]);
+    }
+
+    public function test_signed_lottery_line_image_route_serves_the_detail_image(): void
+    {
+        Storage::fake('public');
+
+        $result = LotteryResult::query()->create([
+            'draw_date' => '2026-04-01',
+            'source_draw_date' => '2026-04-01',
+            'source_draw_date_text' => '01/04/2026',
+            'is_complete' => true,
+            'fetched_at' => now(),
+            'source_payload' => [],
+        ]);
+
+        foreach ($this->completeLotteryPayload() as $index => $prize) {
+            $result->prizes()->create([
+                'position' => $index,
+                'prize_name' => $prize['name'],
+                'prize_number' => $prize['number'],
+            ]);
+        }
+
+        $validPng = base64_decode(
+            'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+pY9sAAAAASUVORK5CYII=',
+            true
+        );
+
+        $this->assertIsString($validPng);
+
+        Storage::disk('public')->put(
+            'article/2026/thai-goverment-lottery-202604first/thai-goverment-lottery-202604first.png',
+            $validPng
+        );
+
+        Article::query()->create([
+            'title' => 'สลากกินแบ่งรัฐบาล ประจำวันที่ 1 เมษายน 2569',
+            'slug' => 'thai-goverment-lottery-202604first',
+            'excerpt' => 'lottery summary',
+            'content' => '<p>lottery content</p>',
+            'cover_image_path' => 'article/2026/thai-goverment-lottery-202604first/thai-goverment-lottery-202604first.png',
+            'cover_image_square_path' => 'article/2026/thai-goverment-lottery-202604first/thai-goverment-lottery-202604first.png',
+            'is_published' => true,
+            'published_at' => now(),
+        ]);
+
+        $response = $this->get(URL::signedRoute('line.lottery-result-image', [
+            'lotteryResult' => $result,
+        ], absolute: false));
+
+        $response->assertOk();
+        $response->assertHeader('Content-Type', 'image/png');
     }
 
     private function completeLotteryPayload(): array
@@ -430,7 +534,7 @@ class LineNotificationTest extends TestCase
         ]);
     }
 
-    public function test_admin_can_trigger_a_line_test_message_from_the_order_detail_page(): void
+    public function test_manager_can_trigger_a_line_test_message_from_the_order_detail_page(): void
     {
         config()->set('services.line.channel_access_token', 'line-token');
         config()->set('services.line.group_id', 'group-default');
@@ -475,6 +579,28 @@ class LineNotificationTest extends TestCase
             'destination_id' => 'group-admin-test',
             'status' => LineNotificationLog::STATUS_SENT,
         ]);
+    }
+
+    public function test_admin_cannot_trigger_a_line_test_message_from_the_order_detail_page(): void
+    {
+        $order = CustomerOrder::query()->create([
+            'ordered_number' => '0891234567',
+            'selected_package' => 399,
+            'payment_slip_path' => 'payment-slips/slip.jpg',
+            'status' => 'submitted',
+        ]);
+
+        $admin = User::factory()->create([
+            'username' => 'admin-line-test-blocked',
+            'role' => User::ROLE_ADMIN,
+            'is_active' => true,
+        ]);
+
+        $response = $this
+            ->withSession($this->adminSession($admin))
+            ->post(route('admin.orders.line-test', $order));
+
+        $response->assertForbidden();
     }
 
     public function test_admin_line_test_returns_back_with_error_instead_of_500_when_notifier_throws(): void

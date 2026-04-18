@@ -215,17 +215,89 @@
             'conditional' => [],
         ],
     ];
+    $topicOverviewOrder = [
+        'การสื่อสาร',
+        'ความรัก/เสน่ห์',
+        'การงาน/ความก้าวหน้า',
+        'การเงิน/โชคลาภ',
+        'ภาวะผู้นำ/อำนาจ',
+        'ความคิดสร้างสรรค์/ไอเดีย',
+        'สติปัญญา/การเรียนรู้',
+        'สุขภาพ/ความเครียด',
+        'ศาสตร์เร้นลับ/ลางสังหรณ์',
+    ];
+    $topicIconMap = [
+        'การสื่อสาร' => '💬',
+        'ความรัก/เสน่ห์' => '💖',
+        'การงาน/ความก้าวหน้า' => '💼',
+        'การเงิน/โชคลาภ' => '💰',
+        'ภาวะผู้นำ/อำนาจ' => '👑',
+        'ความคิดสร้างสรรค์/ไอเดีย' => '💡',
+        'สติปัญญา/การเรียนรู้' => '🧠',
+        'สุขภาพ/ความเครียด' => '🌿',
+        'ศาสตร์เร้นลับ/ลางสังหรณ์' => '✨',
+    ];
+    $buildPairVariants = static function (string $pair): array {
+        $chars = str_split($pair);
+        sort($chars);
+        $normalized = implode('', $chars);
+
+        return array_values(array_unique([$pair, strrev($pair), $normalized]));
+    };
+    $weightedPairs = [];
+    $lastPairIndex = count($pairs) - 1;
+    foreach ($pairs as $index => $pair) {
+        $weightedPairs[] = [
+            'variants' => $buildPairVariants($pair),
+            'weight' => $index === $lastPairIndex ? 2 : 1,
+        ];
+    }
+    $topicOverviewCards = [];
+    foreach ($topicOverviewOrder as $topic) {
+        $topicPairs = $topicPairMap[$topic] ?? null;
+        if (!is_array($topicPairs)) {
+            continue;
+        }
+
+        $goodWeight = 0.0;
+        $conditionalWeight = 0.0;
+        $badWeight = 0.0;
+        foreach ($weightedPairs as $weightedPair) {
+            $variants = $weightedPair['variants'];
+            $weight = $weightedPair['weight'];
+
+            if (count(array_intersect($variants, $topicPairs['good'])) > 0) {
+                $goodWeight += $weight;
+                continue;
+            }
+
+            if (count(array_intersect($variants, $topicPairs['conditional'])) > 0) {
+                $conditionalWeight += $weight;
+                continue;
+            }
+
+            if (count(array_intersect($variants, $topicPairs['bad'])) > 0) {
+                $badWeight += $weight;
+            }
+        }
+
+        $supportsTopic = ($goodWeight + ($conditionalWeight * 0.5)) > $badWeight;
+        $tone = $supportsTopic ? 'supported' : 'muted';
+        $ariaLabel = $supportsTopic ? ($topic . ' ช่วย') : ($topic . ' ไม่ช่วย');
+
+        $topicOverviewCards[] = [
+            'label' => $topic,
+            'icon' => $topicIconMap[$topic] ?? '•',
+            'supports' => $supportsTopic,
+            'tone' => $tone,
+            'aria_label' => $ariaLabel,
+        ];
+    }
 
     $pairCards = [];
     $hasBadPair = false;
-    $allPairsGood = true;
     $warningThemePairs = ['33', '47', '74'];
     $hasWarningPair = count(array_intersect($pairs, $warningThemePairs)) > 0;
-    $activeTopicPairs = [
-        'good' => [],
-        'bad' => [],
-        'conditional' => [],
-    ];
     foreach ($groupedPairs as $group) {
         $label = $group['key'];
         if (strlen($label) === 2 && $label[0] !== $label[1]) {
@@ -238,14 +310,6 @@
         if ($status === 'bad') {
             $hasBadPair = true;
         }
-        if ($status !== 'good') {
-            $allPairsGood = false;
-        }
-        if (isset($activeTopicPairs[$status])) {
-            foreach (array_unique([$group['primary_pair'], $group['key'], strrev($group['key'])]) as $pairVariant) {
-                $activeTopicPairs[$status][] = $pairVariant;
-            }
-        }
         $pairCards[] = [
             'pair' => $label,
             'status' => $status,
@@ -254,24 +318,6 @@
             'desc' => $meaning?->short_meaning ?? 'ยังไม่มีข้อมูลความหมายแบบสั้นสำหรับคู่นี้',
             'class' => $statusClassMap[$status] ?? 'is-neutral',
         ];
-    }
-    foreach ($activeTopicPairs as $status => $pairsByStatus) {
-        $activeTopicPairs[$status] = array_values(array_unique($pairsByStatus));
-    }
-
-    $summaryTags = [];
-    foreach ($topicPairMap as $topic => $topicPairs) {
-        if (count(array_intersect($activeTopicPairs['bad'], $topicPairs['bad'])) > 0) {
-            $summaryTags[] = ['label' => $topic, 'class' => 'badge-alert'];
-            continue;
-        }
-        if (count(array_intersect($activeTopicPairs['good'], $topicPairs['good'])) > 0) {
-            $summaryTags[] = ['label' => $topic, 'class' => 'badge-good'];
-            continue;
-        }
-        if (count(array_intersect($activeTopicPairs['conditional'], $topicPairs['conditional'])) > 0) {
-            $summaryTags[] = ['label' => $topic, 'class' => 'badge-neutral'];
-        }
     }
 
     $themeState = $hasBadPair ? 'danger' : ($hasWarningPair ? 'warning' : 'good');
@@ -320,20 +366,6 @@
         'warning' => 'ให้ทีม Supernumber ช่วยคัดเบอร์ที่บาลานซ์กว่าเดิม ลดจุดผันผวนและเพิ่มความนิ่งในการใช้งาน',
         default => 'ให้ทีม Supernumber ช่วยคัดเบอร์มงคลที่ตอบโจทย์งาน เงิน และความรักของคุณ',
     };
-    $displayTags = $summaryTags;
-    if ($hasBadPair) {
-        $displayTags = collect($summaryTags)
-            ->filter(fn ($tag) => ($tag['class'] ?? null) === 'badge-alert')
-            ->unique('label')
-            ->values()
-            ->all();
-    } elseif ($allPairsGood) {
-        $displayTags = collect($summaryTags)
-            ->filter(fn ($tag) => ($tag['class'] ?? null) === 'badge-good')
-            ->unique('label')
-            ->values()
-            ->all();
-    }
   @endphp
 
   <section class="{{ $heroClass }}" aria-labelledby="evaluate-title">
@@ -363,11 +395,6 @@
         <div class="summary-body">
           <h2>{{ $summaryHeading }}</h2>
           <p>{{ $topMeaningSummary }}</p>
-          <div class="summary-tags">
-            @foreach ($displayTags as $tag)
-              <span class="badge {{ $tag['class'] }}">{{ $tag['label'] }}</span>
-            @endforeach
-          </div>
         </div>
       </div>
 
@@ -392,6 +419,23 @@
           </div>
         </div>
       @endif
+
+      <section class="theme-overview" aria-labelledby="theme-overview-title">
+        <div class="theme-overview__heading">
+          <h2 id="theme-overview-title">ภาพรวมหมวดที่เบอร์นี้ส่งเสริม</h2>
+          <p>แสดงผลจากหมวดวิเคราะห์ของระบบแบบภาพรวม เพื่อให้ดูออกทันทีว่าด้านไหนของเบอร์นี้เด่นมากหรือน้อย</p>
+        </div>
+        <div class="theme-overview__grid">
+          @foreach ($topicOverviewCards as $topicCard)
+            <article class="theme-meter-card theme-meter-card--{{ $topicCard['tone'] }}">
+              <h3><span class="theme-meter-card__icon" aria-hidden="true">{{ $topicCard['icon'] }}</span><span>{{ $topicCard['label'] }}</span></h3>
+              <div class="theme-meter" role="img" aria-label="{{ $topicCard['aria_label'] }}">
+                <span class="theme-meter__dot{{ $topicCard['supports'] ? ' is-active' : '' }}"></span>
+              </div>
+            </article>
+          @endforeach
+        </div>
+      </section>
 
       <!-- <div class="evaluate-highlight">
         <div class="highlight-card">
@@ -427,7 +471,27 @@
               <div class="card-body">
                 <div class="card-meta-stack">
                   <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">{{ $recommended->service_type_label }}</span></span>
-                  <span class="card-meta-plan">{{ $recommended->payment_label }}</span>
+                  @if ($recommended->is_prepaid)
+                    <span class="card-meta-plan">{{ $recommended->payment_label }}</span>
+                  @endif
+                  @if ($recommended->is_postpaid)
+                    <span class="card-meta-price">{!! $recommended->initial_payment_html !!}</span>
+                  @endif
+                  @if ($recommended->supported_topic_icons !== [])
+                    @php
+                      $topicIcons = collect($recommended->supported_topic_icons);
+                      $visibleTopicIcons = $topicIcons->take(4);
+                      $hasMoreTopicIcons = $topicIcons->count() > 4;
+                    @endphp
+                    <div class="card-topic-icons" aria-label="หมวดที่เบอร์นี้ช่วย">
+                      @foreach ($visibleTopicIcons as $topic)
+                        <span class="card-topic-icon" title="{{ $topic['topic'] }}" aria-label="{{ $topic['topic'] }}">{{ $topic['icon'] }}</span>
+                      @endforeach
+                      @if ($hasMoreTopicIcons)
+                        <span class="card-topic-icon card-topic-icon--more" aria-label="มีหมวดที่ช่วยเพิ่มเติม">+</span>
+                      @endif
+                    </div>
+                  @endif
                 </div>
               </div>
               <a class="card-btn card-btn--buy" href="{{ route('evaluate', ['phone' => $recommended->phone_number]) }}">สั่งซื้อ</a>

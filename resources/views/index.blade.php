@@ -105,10 +105,113 @@
             />
             <button type="submit">วิเคราะห์</button>
           </div>
-          <p class="hero-help" id="phone-help">กรอกได้เฉพาะตัวเลข 10 หลัก</p>
+
           @error('phone')
             <p class="hero-error" id="phone-error">{{ $message }}</p>
           @enderror
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <section class="home-search" aria-labelledby="home-search-title">
+    <div class="container container--narrow">
+      <div class="home-filter">
+        <div class="home-filter__header">
+          <h2 id="home-search-title">ค้นหาเบอร์มงคล</h2>
+          <p>ระบุตำแหน่งหรือชุดตัวเลขที่คุณต้องการ เพื่อความสำเร็จที่มากกว่า</p>
+        </div>
+
+        <form class="home-filter__form" action="{{ route('numbers.index') }}" method="get">
+          <div class="home-filter__main">
+            <!-- Sequence Search -->
+            <div class="home-filter__group">
+              <label class="home-filter__label" for="home-search-sequence">ค้นหาจากชุดตัวเลข</label>
+              <div class="home-filter__input-wrapper">
+                <i class="icon-search-small"></i>
+                <input
+                  id="home-search-sequence"
+                  class="home-filter__input"
+                  type="text"
+                  name="q"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  value="{{ $search }}"
+                  placeholder="เช่น 629"
+                />
+              </div>
+            </div>
+
+            <div class="home-filter__orb" aria-hidden="true"><span>หรือ</span></div>
+
+            <!-- Position Search -->
+            <div class="home-filter__group">
+              <label class="home-filter__label">ค้นหาตามตำแหน่ง</label>
+              <div class="home-filter__position-row">
+                <input
+                  class="home-filter__pos-prefix"
+                  type="text"
+                  name="prefix"
+                  inputmode="numeric"
+                  pattern="[0-9]*"
+                  maxlength="3"
+                  value="{{ request('prefix') }}"
+                  placeholder="0XX"
+                />
+                <span class="home-filter__pos-sep"></span>
+                <div class="home-filter__pos-digits">
+                  @foreach (range(4, 6) as $position)
+                    <input
+                      class="home-filter__pos-input"
+                      type="text"
+                      name="p{{ $position }}"
+                      inputmode="numeric"
+                      pattern="[0-9]*"
+                      maxlength="1"
+                      value="{{ request("p{$position}") }}"
+                      aria-label="ตำแหน่ง {{ $position }}"
+                    />
+                  @endforeach
+                  <span class="home-filter__pos-sep"></span>
+                  @foreach (range(7, 10) as $position)
+                    <input
+                      class="home-filter__pos-input"
+                      type="text"
+                      name="p{{ $position }}"
+                      inputmode="numeric"
+                      pattern="[0-9]*"
+                      maxlength="1"
+                      value="{{ request("p{$position}") }}"
+                      aria-label="ตำแหน่ง {{ $position }}"
+                    />
+                  @endforeach
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="home-filter__footer">
+            <div class="home-filter__footer-controls">
+              <div class="home-filter__select-wrapper">
+                <label>ประเภทเบอร์</label>
+                <select id="home-service-type" name="service_type">
+                  <option value="">ทั้งหมด</option>
+                  <option value="{{ \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID }}" @selected($selectedServiceType === \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID)>รายเดือน</option>
+                  <option value="{{ \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID }}" @selected($selectedServiceType === \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID)>เติมเงิน</option>
+                </select>
+              </div>
+              <div class="home-filter__select-wrapper">
+                <label>โปรโมชั่น / ราคาเบอร์</label>
+                <select id="home-plan" name="plan">
+                  <option value="">ทั้งหมด</option>
+                  @foreach ($plans as $plan)
+                    <option value="{{ $plan['value'] }}" @selected($selectedPlan === $plan['value'])>{{ $plan['label'] }}</option>
+                  @endforeach
+                </select>
+              </div>
+              <button class="home-filter__submit" type="submit">ค้นหาเบอร์</button>
+            </div>
+          </div>
         </form>
       </div>
     </div>
@@ -126,6 +229,10 @@
                   'display_number' => $number->display_number ?: $number->phone_number,
                   'service_type_label' => $number->service_type_label,
                   'payment_label' => $number->payment_label,
+                  'initial_payment_label' => $number->initial_payment_label,
+                  'initial_payment_html' => $number->initial_payment_html,
+                  'is_postpaid' => $number->is_postpaid,
+                  'supported_topic_icons' => $number->supported_topic_icons,
                   'good_number_url' => route('evaluate', ['phone' => $number->phone_number]),
               ];
           })->values();
@@ -173,10 +280,30 @@
                 @foreach ($initialPrepaidNumbers as $number)
                   <article class="number-card number-card--listing number-card--home">
                     <div class="card-top">{{ $number['display_number'] }}</div>
+                    @if (! empty($number['supported_topic_icons']))
+                      @php
+                        $topicIcons = collect($number['supported_topic_icons']);
+                        $visibleTopicIcons = $topicIcons->take(4);
+                        $hasMoreTopicIcons = $topicIcons->count() > 4;
+                      @endphp
+                      <div class="card-topic-icons" aria-label="หมวดที่เบอร์นี้ช่วย">
+                        @foreach ($visibleTopicIcons as $topic)
+                          <span class="card-topic-icon" title="{{ $topic['topic'] }}" aria-label="{{ $topic['topic'] }}">{{ $topic['icon'] }}</span>
+                        @endforeach
+                        @if ($hasMoreTopicIcons)
+                          <span class="card-topic-icon card-topic-icon--more" aria-label="มีหมวดที่ช่วยเพิ่มเติม">+</span>
+                        @endif
+                      </div>
+                    @endif
                     <div class="card-body">
                       <div class="card-meta-stack">
                         <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">{{ $number['service_type_label'] }}</span></span>
-                        <span class="card-meta-plan">{{ $number['payment_label'] }}</span>
+                        @if (! $number['is_postpaid'])
+                          <span class="card-meta-plan">{{ $number['payment_label'] }}</span>
+                        @endif
+                        @if ($number['is_postpaid'])
+                          <span class="card-meta-price">{!! $number['initial_payment_html'] !!}</span>
+                        @endif
                       </div>
                     </div>
                     <a class="card-btn card-btn--buy" href="{{ $number['good_number_url'] }}">สั่งซื้อ</a>
@@ -198,10 +325,30 @@
                 @foreach ($initialPostpaidNumbers as $number)
                   <article class="number-card number-card--listing number-card--home">
                     <div class="card-top">{{ $number['display_number'] }}</div>
+                    @if (! empty($number['supported_topic_icons']))
+                      @php
+                        $topicIcons = collect($number['supported_topic_icons']);
+                        $visibleTopicIcons = $topicIcons->take(4);
+                        $hasMoreTopicIcons = $topicIcons->count() > 4;
+                      @endphp
+                      <div class="card-topic-icons" aria-label="หมวดที่เบอร์นี้ช่วย">
+                        @foreach ($visibleTopicIcons as $topic)
+                          <span class="card-topic-icon" title="{{ $topic['topic'] }}" aria-label="{{ $topic['topic'] }}">{{ $topic['icon'] }}</span>
+                        @endforeach
+                        @if ($hasMoreTopicIcons)
+                          <span class="card-topic-icon card-topic-icon--more" aria-label="มีหมวดที่ช่วยเพิ่มเติม">+</span>
+                        @endif
+                      </div>
+                    @endif
                     <div class="card-body">
                       <div class="card-meta-stack">
                         <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">{{ $number['service_type_label'] }}</span></span>
-                        <span class="card-meta-plan">{{ $number['payment_label'] }}</span>
+                        @if (! $number['is_postpaid'])
+                          <span class="card-meta-plan">{{ $number['payment_label'] }}</span>
+                        @endif
+                        @if ($number['is_postpaid'])
+                          <span class="card-meta-price">{!! $number['initial_payment_html'] !!}</span>
+                        @endif
                       </div>
                     </div>
                     <a class="card-btn card-btn--buy" href="{{ $number['good_number_url'] }}">สั่งซื้อ</a>
@@ -281,10 +428,14 @@
         const renderCard = (number) => `
           <article class="number-card number-card--listing number-card--home">
             <div class="card-top">${escapeHtml(number.display_number)}</div>
+            ${Array.isArray(number.supported_topic_icons) && number.supported_topic_icons.length
+              ? `<div class="card-topic-icons" aria-label="หมวดที่เบอร์นี้ช่วย">${number.supported_topic_icons.slice(0, 4).map((topic) => `<span class="card-topic-icon" title="${escapeHtml(topic.topic)}" aria-label="${escapeHtml(topic.topic)}">${escapeHtml(topic.icon)}</span>`).join("")}${number.supported_topic_icons.length > 4 ? `<span class="card-topic-icon card-topic-icon--more" aria-label="มีหมวดที่ช่วยเพิ่มเติม">+</span>` : ""}</div>`
+              : ""}
             <div class="card-body">
               <div class="card-meta-stack">
                 <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">${escapeHtml(number.service_type_label)}</span></span>
-                <span class="card-meta-plan">${escapeHtml(number.payment_label)}</span>
+                ${!number.is_postpaid ? `<span class="card-meta-plan">${escapeHtml(number.payment_label)}</span>` : ""}
+                ${number.is_postpaid ? `<span class="card-meta-price">${number.initial_payment_html}</span>` : ""}
               </div>
             </div>
             <a class="card-btn card-btn--buy" href="${escapeHtml(number.good_number_url)}">สั่งซื้อ</a>
@@ -421,6 +572,75 @@
       phoneInput.addEventListener("invalid", syncPhoneValue);
 
       syncPhoneValue();
+    })();
+  </script>
+
+  <script>
+    (() => {
+      const serviceTypeSelect = document.getElementById("home-service-type");
+      const planSelect = document.getElementById("home-plan");
+      const planOptionsByServiceType = @json($plansByServiceType);
+      const serviceTypePostpaid = @json(\App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID);
+      const serviceTypePrepaid = @json(\App\Models\PhoneNumber::SERVICE_TYPE_PREPAID);
+      const labels = {
+        [serviceTypePostpaid]: "โปรรายเดือน",
+        [serviceTypePrepaid]: "ราคาเบอร์",
+        all: "โปรโมชั่น / ราคาเบอร์",
+      };
+
+      if (!serviceTypeSelect || !planSelect) return;
+
+      const escapeHtml = (value) =>
+        String(value ?? "").replace(/[&<>"']/g, (char) => {
+          switch (char) {
+            case "&": return "&amp;";
+            case "<": return "&lt;";
+            case ">": return "&gt;";
+            case '"': return "&quot;";
+            case "'": return "&#39;";
+            default: return char;
+          }
+        });
+
+      const resolveOptionKey = (value) => {
+        if (value === serviceTypePostpaid || value === serviceTypePrepaid) {
+          return value;
+        }
+        return "all";
+      };
+
+      const renderPlanOptions = (serviceType) => {
+        const optionKey = resolveOptionKey(serviceType);
+        const options = planOptionsByServiceType[optionKey] ?? [];
+        const currentValue = planSelect.value;
+        const placeholderLabel = labels[optionKey] || labels.all;
+
+        const renderedOptions = options
+          .map((option) => `<option value="${escapeHtml(option.value)}">${escapeHtml(option.label)}</option>`)
+          .join("");
+
+        planSelect.innerHTML = `<option value="">${placeholderLabel}</option>${renderedOptions}`;
+
+        const hasCurrentValue = options.some((option) => option.value === currentValue);
+        planSelect.value = hasCurrentValue ? currentValue : "";
+        
+        // Disable if "all" is selected
+        planSelect.disabled = (optionKey === "all");
+        planSelect.style.opacity = (optionKey === "all") ? "0.6" : "1";
+        planSelect.style.cursor = (optionKey === "all") ? "not-allowed" : "pointer";
+
+        // Update label above the select if needed
+        const labelEl = planSelect.previousElementSibling;
+        if (labelEl && labelEl.tagName === 'LABEL') {
+            labelEl.textContent = placeholderLabel;
+        }
+      };
+
+      renderPlanOptions(serviceTypeSelect.value);
+
+      serviceTypeSelect.addEventListener("change", () => {
+        renderPlanOptions(serviceTypeSelect.value);
+      });
     })();
   </script>
 @endsection

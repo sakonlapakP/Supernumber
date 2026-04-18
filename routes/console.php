@@ -9,6 +9,7 @@ Artisan::command('inspire', function () {
 })->purpose('Display an inspiring quote');
 
 Schedule::command('lottery:fetch-latest')
-    ->everyTenMinutes()
+    ->everyFiveMinutes()
+    ->between('15:45', '16:20')
     ->timezone('Asia/Bangkok')
     ->withoutOverlapping();

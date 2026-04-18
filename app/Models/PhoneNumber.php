@@ -19,6 +19,17 @@ class PhoneNumber extends Model
     public const STATUS_ACTIVE = 'active';
     public const STATUS_HOLD = 'hold';
     public const STATUS_SOLD = 'sold';
+    public const TOPIC_ICON_MAP = [
+        'การสื่อสาร' => '💬',
+        'ความรัก/เสน่ห์' => '💖',
+        'การงาน/ความก้าวหน้า' => '💼',
+        'การเงิน/โชคลาภ' => '💰',
+        'ภาวะผู้นำ/อำนาจ' => '👑',
+        'ความคิดสร้างสรรค์/ไอเดีย' => '💡',
+        'สติปัญญา/การเรียนรู้' => '🧠',
+        'สุขภาพ/ความเครียด' => '🌿',
+        'ศาสตร์เร้นลับ/ลางสังหรณ์' => '✨',
+    ];
 
     protected $fillable = [
         'phone_number',
@@ -138,6 +149,30 @@ class PhoneNumber extends Model
         return number_format($price) . ' บาท / เดือน';
     }
 
+    public function getInitialPaymentLabelAttribute(): string
+    {
+        $price = self::packagePrice($this->sale_price);
+
+        if ($price === null || $this->is_prepaid) {
+            return '-';
+        }
+
+        return number_format($price) . ' บาท เดือนละ ' . number_format($price) . '/เดือน';
+    }
+
+    public function getInitialPaymentHtmlAttribute(): string
+    {
+        $price = self::packagePrice($this->sale_price);
+
+        if ($price === null || $this->is_prepaid) {
+            return '-';
+        }
+
+        $priceText = number_format($price);
+
+        return $priceText . ' บาท <strong class="card-meta-price-strong">เดือนละ ' . $priceText . '/เดือน</strong>';
+    }
+
     public function getNormalizedPackagePriceAttribute(): ?int
     {
         if (! $this->is_postpaid) {
@@ -235,6 +270,131 @@ class PhoneNumber extends Model
             ->reject(fn (string $label) => $label === '-')
             ->values()
             ->all();
+    }
+
+    public function getSupportedTopicIconsAttribute(): array
+    {
+        return self::buildSupportedTopicIcons($this->phone_number);
+    }
+
+    public static function buildSupportedTopicIcons(?string $phoneNumber): array
+    {
+        $digits = self::digitsOnly($phoneNumber);
+        if (strlen($digits) < 7) {
+            return [];
+        }
+
+        $lastSeven = substr($digits, -7);
+        $pairs = [];
+        for ($index = 0; $index < 6; $index++) {
+            $pairs[] = substr($lastSeven, $index, 2);
+        }
+
+        $lastPairIndex = count($pairs) - 1;
+        $weightedPairs = [];
+        foreach ($pairs as $index => $pair) {
+            $weightedPairs[] = [
+                'variants' => self::buildPairVariants($pair),
+                'weight' => $index === $lastPairIndex ? 2 : 1,
+            ];
+        }
+
+        $supportedTopics = [];
+        foreach (self::topicPairMap() as $topic => $topicPairs) {
+            $goodWeight = 0.0;
+            $conditionalWeight = 0.0;
+            $badWeight = 0.0;
+
+            foreach ($weightedPairs as $weightedPair) {
+                $variants = $weightedPair['variants'];
+                $weight = $weightedPair['weight'];
+
+                if (count(array_intersect($variants, $topicPairs['good'])) > 0) {
+                    $goodWeight += $weight;
+                    continue;
+                }
+
+                if (count(array_intersect($variants, $topicPairs['conditional'])) > 0) {
+                    $conditionalWeight += $weight;
+                    continue;
+                }
+
+                if (count(array_intersect($variants, $topicPairs['bad'])) > 0) {
+                    $badWeight += $weight;
+                }
+            }
+
+            if (($goodWeight + ($conditionalWeight * 0.5)) <= $badWeight) {
+                continue;
+            }
+
+            $supportedTopics[] = [
+                'topic' => $topic,
+                'icon' => self::TOPIC_ICON_MAP[$topic] ?? '•',
+            ];
+        }
+
+        return $supportedTopics;
+    }
+
+    protected static function buildPairVariants(string $pair): array
+    {
+        $chars = str_split($pair);
+        sort($chars);
+        $normalized = implode('', $chars);
+
+        return array_values(array_unique([$pair, strrev($pair), $normalized]));
+    }
+
+    protected static function topicPairMap(): array
+    {
+        return [
+            'การสื่อสาร' => [
+                'good' => ['14', '22', '23', '24', '32', '41', '42', '44', '45', '46', '49', '54', '64'],
+                'bad' => ['03', '04', '05', '06', '12', '13', '18', '21', '27', '30', '31', '34', '40', '43', '48', '50', '57', '60', '72', '75', '81', '84'],
+                'conditional' => ['33', '47', '74'],
+            ],
+            'ความรัก/เสน่ห์' => [
+                'good' => ['22', '23', '24', '26', '28', '29', '32', '35', '36', '41', '42', '44', '46', '62', '63', '64', '66', '69'],
+                'bad' => ['00', '02', '06', '08', '12', '20', '21', '25', '27', '34', '37', '38', '43', '52', '57', '58', '60', '67', '68', '72', '73', '75', '76', '80', '83', '85', '86', '88'],
+                'conditional' => ['33'],
+            ],
+            'การงาน/ความก้าวหน้า' => [
+                'good' => ['14', '15', '16', '19', '23', '24', '26', '28', '29', '32', '35', '36', '39', '41', '42', '44', '45', '46', '49', '51', '53', '54', '55', '56', '59', '61', '62', '63', '64', '65'],
+                'bad' => ['00', '01', '02', '03', '04', '07', '08', '09', '10', '11', '12', '13', '17', '18', '20', '21', '25', '27', '30', '31', '34', '37', '38', '40', '43', '48', '52', '57', '58', '67', '68', '70', '71', '72', '73', '75', '76', '77', '80', '81', '83', '84', '85', '86', '88', '90'],
+                'conditional' => ['33', '47', '74'],
+            ],
+            'การเงิน/โชคลาภ' => [
+                'good' => ['28', '78', '82', '87'],
+                'bad' => ['01', '02', '04', '06', '10', '12', '18', '20', '21', '25', '27', '34', '37', '40', '43', '52', '58', '60', '67', '68', '72', '73', '76', '81', '85', '86', '88'],
+                'conditional' => ['47', '74'],
+            ],
+            'ภาวะผู้นำ/อำนาจ' => [
+                'good' => ['35', '53', '39', '93', '28', '82', '78', '87', '89', '98'],
+                'bad' => ['08', '80', '88'],
+                'conditional' => ['47', '74'],
+            ],
+            'ความคิดสร้างสรรค์/ไอเดีย' => [
+                'good' => ['19', '29', '69', '91', '92', '96'],
+                'bad' => [],
+                'conditional' => [],
+            ],
+            'สติปัญญา/การเรียนรู้' => [
+                'good' => ['14', '15', '41', '44', '45', '49', '51', '54', '55'],
+                'bad' => [],
+                'conditional' => [],
+            ],
+            'สุขภาพ/ความเครียด' => [
+                'good' => ['15', '24', '29', '42', '45', '51', '54', '59', '69', '92', '95', '99'],
+                'bad' => ['00', '01', '02', '03', '04', '05', '06', '07', '09', '10', '11', '12', '13', '17', '20', '21', '25', '27', '30', '31', '34', '37', '40', '43', '48', '50', '52', '57', '58', '60', '70', '71', '72', '73', '75', '77', '84', '85', '90'],
+                'conditional' => ['47', '74'],
+            ],
+            'ศาสตร์เร้นลับ/ลางสังหรณ์' => [
+                'good' => ['49', '59', '79', '89', '94', '95', '97', '98', '99'],
+                'bad' => ['00', '09', '90'],
+                'conditional' => [],
+            ],
+        ];
     }
 
     /**

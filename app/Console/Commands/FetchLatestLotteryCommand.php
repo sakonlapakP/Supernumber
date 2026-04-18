@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Article;
+use App\Models\LineNotificationLog;
 use App\Models\LotteryResult;
 use App\Services\LineLotteryNotifier;
 use Carbon\Carbon;
@@ -70,6 +71,7 @@ class FetchLatestLotteryCommand extends Command
 
             $result = $this->touchResultWithoutPrizes($targetDate, $existing, $now);
             $this->syncLotteryArticleCover($result, $now);
+            $this->notifyLineWhenRetryWindowClosesWithoutData($result, $targetDate, $now);
 
             return self::SUCCESS;
         }
@@ -79,6 +81,7 @@ class FetchLatestLotteryCommand extends Command
 
             $result = $this->touchResultWithoutPrizes($targetDate, $existing, $now);
             $this->syncLotteryArticleCover($result, $now);
+            $this->notifyLineWhenRetryWindowClosesWithoutData($result, $targetDate, $now);
 
             return self::SUCCESS;
         }
@@ -90,6 +93,7 @@ class FetchLatestLotteryCommand extends Command
 
             $result = $this->touchResultWithoutPrizes($targetDate, $existing, $now);
             $this->syncLotteryArticleCover($result, $now);
+            $this->notifyLineWhenRetryWindowClosesWithoutData($result, $targetDate, $now);
 
             return self::SUCCESS;
         }
@@ -139,6 +143,7 @@ class FetchLatestLotteryCommand extends Command
             $savedResult->load('prizes');
             $this->syncLotteryArticleCover($savedResult, $now);
             $this->notifyLineWhenCompleted($savedResult, $wasAlreadyComplete);
+            $this->notifyLineWhenRetryWindowClosesWithoutData($savedResult, $targetDate, $now);
         }
 
         $this->info(sprintf(
@@ -156,7 +161,7 @@ class FetchLatestLotteryCommand extends Command
         $drawDateOption = trim((string) $this->option('draw-date'));
 
         if ($drawDateOption === '') {
-            return $now->copy()->startOfDay();
+            return $this->resolveScheduledTargetDate($now);
         }
 
         try {
@@ -166,13 +171,63 @@ class FetchLatestLotteryCommand extends Command
         }
     }
 
+    private function resolveScheduledTargetDate(Carbon $now): Carbon
+    {
+        $today = $now->copy()->startOfDay();
+
+        if (in_array($now->day, [2, 17], true)) {
+            $previousDrawDate = $today->copy()->subDay();
+
+            if ($this->shouldRetryOnNextDay($previousDrawDate)) {
+                return $previousDrawDate;
+            }
+        }
+
+        return $today;
+    }
+
     private function isInScheduleWindow(Carbon $now): bool
     {
-        if (! in_array($now->day, [1, 16], true)) {
+        if (! $this->isEligibleScheduleDate($now)) {
             return false;
         }
 
-        return $now->hour >= 16;
+        $windowStart = $now->copy()->setTime(15, 45);
+        $windowEnd = $now->copy()->setTime(16, 20);
+
+        return $now->greaterThanOrEqualTo($windowStart)
+            && $now->lessThanOrEqualTo($windowEnd);
+    }
+
+    private function isEligibleScheduleDate(Carbon $now): bool
+    {
+        if (in_array($now->day, [1, 16], true)) {
+            return true;
+        }
+
+        if (! in_array($now->day, [2, 17], true)) {
+            return false;
+        }
+
+        return $this->shouldRetryOnNextDay($now->copy()->subDay()->startOfDay());
+    }
+
+    private function shouldRetryOnNextDay(Carbon $previousDrawDate): bool
+    {
+        $previousResult = LotteryResult::query()
+            ->withCount('prizes')
+            ->whereDate('draw_date', $previousDrawDate->toDateString())
+            ->first();
+
+        if ($previousResult === null) {
+            return true;
+        }
+
+        if ($previousResult->is_complete) {
+            return false;
+        }
+
+        return (int) ($previousResult->prizes_count ?? 0) === 0;
     }
 
     private function touchResultWithoutPrizes(Carbon $targetDate, ?LotteryResult $existing, Carbon $now): LotteryResult
@@ -187,6 +242,47 @@ class FetchLatestLotteryCommand extends Command
                 'source_payload' => $existing?->source_payload,
             ]
         );
+    }
+
+    private function notifyLineWhenRetryWindowClosesWithoutData(LotteryResult $result, Carbon $targetDate, Carbon $now): void
+    {
+        if ($this->option('force') || ! $this->isRetryWindowClosing($targetDate, $now)) {
+            return;
+        }
+
+        if (! $result->relationLoaded('prizes')) {
+            $result->load('prizes');
+        }
+
+        if ($result->prizes->isNotEmpty() || $this->hasSentUnavailableAfterRetryNotification($result)) {
+            return;
+        }
+
+        try {
+            app(LineLotteryNotifier::class)->sendUnavailableAfterRetryWindow($result, $targetDate, $now);
+        } catch (\Throwable $exception) {
+            Log::warning('Lottery unavailable-after-retry LINE notification failed.', [
+                'lottery_result_id' => $result->id,
+                'target_draw_date' => $targetDate->toDateString(),
+                'error' => $exception->getMessage(),
+            ]);
+        }
+    }
+
+    private function isRetryWindowClosing(Carbon $targetDate, Carbon $now): bool
+    {
+        return $now->format('H:i') === '16:20'
+            && $targetDate->toDateString() === $now->copy()->subDay()->toDateString();
+    }
+
+    private function hasSentUnavailableAfterRetryNotification(LotteryResult $result): bool
+    {
+        return LineNotificationLog::query()
+            ->where('event_type', 'lottery_unavailable_after_retry')
+            ->where('status', LineNotificationLog::STATUS_SENT)
+            ->where('notifiable_type', $result->getMorphClass())
+            ->where('notifiable_id', $result->getKey())
+            ->exists();
     }
 
     private function notifyLineWhenCompleted(LotteryResult $result, bool $wasAlreadyComplete): void

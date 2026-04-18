@@ -11,10 +11,12 @@
     <div class="admin-page-actions" style="margin-left: 0; margin-right: auto;">
       <a href="{{ route('admin.orders') }}" class="admin-button admin-button--muted admin-button--compact">กลับ</a>
       <a href="{{ route('admin.orders.edit', $order) }}" class="admin-button admin-button--compact">แก้ไข</a>
-      <form action="{{ route('admin.orders.line-test', $order) }}" method="post" style="margin: 0;">
-        @csrf
-        <button type="submit" class="admin-button admin-button--secondary admin-button--compact">ทดสอบส่ง LINE</button>
-      </form>
+      @if ($canTestLineNotification)
+        <form action="{{ route('admin.orders.line-test', $order) }}" method="post" style="margin: 0;">
+          @csrf
+          <button type="submit" class="admin-button admin-button--secondary admin-button--compact">ทดสอบส่ง LINE</button>
+        </form>
+      @endif
     </div>
   </div>
 

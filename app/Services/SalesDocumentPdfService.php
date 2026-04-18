@@ -4,7 +4,6 @@ namespace App\Services;
 
 use App\Models\SalesDocument;
 use Illuminate\Support\Carbon;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\View;
 use RuntimeException;
 
@@ -77,29 +76,11 @@ class SalesDocumentPdfService
         return [
             'document' => $document,
             'payload' => $document->payload ?? [],
-            'logoDataUri' => $this->toDataUri(public_path('images/supernumber-document-logo.png')),
+            'logoUrl' => asset('images/supernumber-document-logo.png'),
             'showPrintToolbar' => (bool) ($options['showPrintToolbar'] ?? false),
             'autoPrint' => (bool) ($options['autoPrint'] ?? false),
             'printButtonLabel' => trim((string) ($options['printButtonLabel'] ?? 'บันทึก PDF')),
         ];
-    }
-
-    protected function toDataUri(string $path): ?string
-    {
-        if (! File::exists($path)) {
-            return null;
-        }
-
-        $contents = File::get($path);
-        $extension = strtolower(pathinfo($path, PATHINFO_EXTENSION));
-        $mimeType = match ($extension) {
-            'jpg', 'jpeg' => 'image/jpeg',
-            'gif' => 'image/gif',
-            'svg' => 'image/svg+xml',
-            default => 'image/png',
-        };
-
-        return 'data:' . $mimeType . ';base64,' . base64_encode($contents);
     }
 
     protected function resolveDateValue(mixed $value): ?Carbon

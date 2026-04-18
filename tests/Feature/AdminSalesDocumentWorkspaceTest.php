@@ -36,6 +36,10 @@ class AdminSalesDocumentWorkspaceTest extends TestCase
         $response->assertSee('บันทึกและเปิด PDF');
         $response->assertSee('บันทึกร่าง');
         $response->assertSee('บริษัท เลือกจากรายการ จำกัด');
+        $response->assertSee('ลูกค้ารับผิดชอบภาษีหัก ณ ที่จ่าย');
+        $response->assertSee('เรารับผิดชอบภาษีหัก ณ ที่จ่าย');
+        $response->assertSee('ลูกค้ารับผิดชอบภาษีมูลค่าเพิ่ม');
+        $response->assertSee('เรารับผิดชอบภาษีมูลค่าเพิ่ม');
         $response->assertDontSee('<<<<<<<');
         $response->assertDontSee('>>>>>>>');
     }

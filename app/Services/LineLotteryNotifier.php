@@ -11,6 +11,7 @@ class LineLotteryNotifier
 {
     public function __construct(
         private readonly LineNotifier $lineNotifier,
+        private readonly LineLotteryImageService $lineLotteryImageService,
     ) {
     }
 
@@ -20,15 +21,47 @@ class LineLotteryNotifier
             $result->load('prizes');
         }
 
-        return $this->lineNotifier->queueText(
+        return $this->lineNotifier->queueMessages(
             eventType: 'lottery_completed',
-            message: $this->buildMessage($result),
+            messages: $this->buildMessages($result),
             notifiable: $result,
             destinationKey: 'lottery',
         );
     }
 
-    private function buildMessage(LotteryResult $result): string
+    public function sendUnavailableAfterRetryWindow(LotteryResult $result, Carbon $scheduledDrawDate, Carbon $checkedAt): ?LineNotificationLog
+    {
+        return $this->lineNotifier->queueText(
+            eventType: 'lottery_unavailable_after_retry',
+            message: $this->buildUnavailableAfterRetryMessage($scheduledDrawDate, $checkedAt),
+            notifiable: $result,
+            destinationKey: 'lottery',
+        );
+    }
+
+    private function buildMessages(LotteryResult $result): array
+    {
+        $messages = [
+            [
+                'type' => 'text',
+                'text' => $this->buildTextMessage($result),
+            ],
+        ];
+
+        $imageUrl = $this->lineLotteryImageService->buildLineImageUrl($result);
+
+        if ($imageUrl !== null) {
+            $messages[] = [
+                'type' => 'image',
+                'originalContentUrl' => $imageUrl,
+                'previewImageUrl' => $imageUrl,
+            ];
+        }
+
+        return $messages;
+    }
+
+    private function buildTextMessage(LotteryResult $result): string
     {
         /** @var Collection<int, mixed> $prizes */
         $prizes = $result->prizes;
@@ -51,6 +84,16 @@ class LineLotteryNotifier
             'เลขท้าย 2 ตัว: ' . $lastTwo,
             $nearFirst !== '' ? 'ข้างเคียงรางวัลที่ 1: ' . $nearFirst : null,
         ]));
+    }
+
+    private function buildUnavailableAfterRetryMessage(Carbon $scheduledDrawDate, Carbon $checkedAt): string
+    {
+        return implode("\n", [
+            'ยังไม่พบข้อมูลผลสลากกินแบ่งรัฐบาล',
+            'งวดวันที่: ' . $scheduledDrawDate->copy()->timezone('Asia/Bangkok')->format('d/m/Y'),
+            'ตรวจสอบล่าสุด: ' . $checkedAt->copy()->timezone('Asia/Bangkok')->format('d/m/Y H:i') . ' น.',
+            'ระบบติดตามถึงสิ้นสุดรอบวันถัดไปแล้ว แต่ยังไม่มีข้อมูลผลรางวัลจากต้นทาง',
+        ]);
     }
 
     private function pickFirstPrizeNumber(Collection $prizes, string $nameNeedle, string $fallback): string

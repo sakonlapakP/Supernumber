@@ -152,9 +152,9 @@ class FetchLatestLotteryCommandTest extends TestCase
         Http::assertNothingSent();
     }
 
-    public function test_it_keeps_polling_after_1630_until_a_draw_is_complete(): void
+    public function test_it_keeps_polling_through_1620_until_a_draw_is_complete(): void
     {
-        Carbon::setTestNow(Carbon::create(2026, 4, 1, 16, 40, 0, 'Asia/Bangkok'));
+        Carbon::setTestNow(Carbon::create(2026, 4, 1, 16, 20, 0, 'Asia/Bangkok'));
 
         Http::fake([
             'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([
@@ -170,6 +170,104 @@ class FetchLatestLotteryCommandTest extends TestCase
         $this->assertDatabaseHas('lottery_results', [
             'draw_date' => '2026-04-01',
             'is_complete' => 1,
+        ]);
+    }
+
+    public function test_it_stops_polling_after_1620(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 4, 1, 16, 25, 0, 'Asia/Bangkok'));
+
+        Http::fake([
+            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([
+                'date' => '01/04/2026',
+                'data' => $this->completePrizePayload(),
+            ], 200),
+        ]);
+
+        $this->artisan('lottery:fetch-latest')
+            ->assertExitCode(0);
+
+        Http::assertNothingSent();
+        $this->assertDatabaseMissing('lottery_results', [
+            'draw_date' => '2026-04-01',
+        ]);
+    }
+
+    public function test_it_retries_automatically_on_the_next_day_when_previous_draw_has_no_data(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 4, 2, 15, 45, 0, 'Asia/Bangkok'));
+
+        Http::fake([
+            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([
+                'date' => '02/04/2026',
+                'data' => $this->completePrizePayload(),
+            ], 200),
+        ]);
+
+        $this->artisan('lottery:fetch-latest')
+            ->assertExitCode(0);
+
+        Http::assertSentCount(1);
+        $this->assertDatabaseHas('lottery_results', [
+            'draw_date' => '2026-04-02',
+            'source_draw_date' => '2026-04-02',
+            'is_complete' => 1,
+        ]);
+    }
+
+    public function test_retry_day_without_any_payload_still_tracks_the_previous_draw_date(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 4, 17, 15, 45, 0, 'Asia/Bangkok'));
+
+        Http::fake([
+            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([], 200),
+        ]);
+
+        $this->artisan('lottery:fetch-latest')
+            ->assertExitCode(0);
+
+        Http::assertSentCount(1);
+        $this->assertDatabaseHas('lottery_results', [
+            'draw_date' => '2026-04-16',
+            'is_complete' => 0,
+        ]);
+        $this->assertDatabaseMissing('lottery_results', [
+            'draw_date' => '2026-04-17',
+        ]);
+    }
+
+    public function test_it_does_not_retry_automatically_on_the_next_day_when_previous_draw_has_partial_data(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 4, 2, 15, 45, 0, 'Asia/Bangkok'));
+
+        $result = LotteryResult::query()->create([
+            'draw_date' => '2026-04-01',
+            'source_draw_date' => '2026-04-01',
+            'source_draw_date_text' => '01/04/2026',
+            'is_complete' => false,
+            'fetched_at' => now(),
+            'source_payload' => [],
+        ]);
+
+        $result->prizes()->create([
+            'position' => 0,
+            'prize_name' => 'รางวัลที่ 1',
+            'prize_number' => '123456',
+        ]);
+
+        Http::fake([
+            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([
+                'date' => '02/04/2026',
+                'data' => $this->completePrizePayload(),
+            ], 200),
+        ]);
+
+        $this->artisan('lottery:fetch-latest')
+            ->assertExitCode(0);
+
+        Http::assertNothingSent();
+        $this->assertDatabaseMissing('lottery_results', [
+            'draw_date' => '2026-04-02',
         ]);
     }
 

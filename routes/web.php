@@ -17,6 +17,7 @@ use App\Services\EnvironmentEditor;
 use App\Services\AdminLogViewer;
 use App\Services\Ga4AnalyticsService;
 use App\Services\LineEstimateLeadNotifier;
+use App\Services\LineLotteryImageService;
 use App\Services\LineOrderNotifier;
 use App\Services\SalesDocumentPdfService;
 use App\Services\TurnstileVerifier;
@@ -36,6 +37,7 @@ use Illuminate\Support\Str;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
+use App\Http\Controllers\PublicController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/__ops/migrate', function (Request $request) {
@@ -636,372 +638,34 @@ $syncPhoneNumberStatusFromOrder = function (CustomerOrder $order, ?int $userId =
     $logPhoneNumberStatusChange($phoneNumber, $fromStatus, $userId);
 };
 
-Route::get('/', function () {
-    $homeNumbersLimitPerType = 48;
-
-    $baseQuery = PhoneNumber::query()
-        ->available()
-        ->where('network_code', 'true_dtac');
-
-    $prepaidNumbers = (clone $baseQuery)
-        ->where('service_type', PhoneNumber::SERVICE_TYPE_PREPAID)
-        ->inRandomOrder()
-        ->limit($homeNumbersLimitPerType)
-        ->get()
-        ->values();
-
-    $postpaidNumbers = (clone $baseQuery)
-        ->where('service_type', PhoneNumber::SERVICE_TYPE_POSTPAID)
-        ->inRandomOrder()
-        ->limit($homeNumbersLimitPerType)
-        ->get()
-        ->values();
-
-    return view('index', compact('prepaidNumbers', 'postpaidNumbers'));
-})->name('home');
+Route::get('/', [PublicController::class, 'index'])->name('home');
 Route::view('/under-construction', 'under-construction')->name('under-construction');
 Route::redirect('/underconsturter', '/under-construction');
 
-Route::get('/numbers', function () {
-    $search = trim((string) request('q', ''));
-    $searchDigits = preg_replace('/[^0-9]/', '', $search);
-    $selectedPlan = trim((string) request('plan', ''));
-    $selectedServiceType = trim((string) request('service_type', ''));
-    $positionPattern = PhoneNumber::buildSearchPattern(request()->query());
+Route::get('/numbers', [PublicController::class, 'numbers'])->name('numbers.index');
 
-    if (! in_array($selectedServiceType, [PhoneNumber::SERVICE_TYPE_POSTPAID, PhoneNumber::SERVICE_TYPE_PREPAID], true)) {
-        $selectedServiceType = '';
-    }
+Route::get('/articles', [PublicController::class, 'articles'])->name('articles.index');
 
-    $baseQuery = PhoneNumber::query()
-        ->available()
-        ->where('network_code', 'true_dtac')
-        ->when($selectedServiceType !== '', function ($query) use ($selectedServiceType) {
-            $query->where('service_type', $selectedServiceType);
-        });
+Route::get('/articles/{slug}', [PublicController::class, 'showArticle'])->name('articles.show');
 
-    $buildPlanOptions = static fn (array $labels): array => collect($labels)
-        ->map(static fn (string $label): array => [
-            'value' => $label,
-            'label' => $label,
-        ])
-        ->values()
-        ->all();
+Route::post('/articles/{slug}/comments', [PublicController::class, 'storeArticleComment'])->name('articles.comments.store');
 
-    $planOptionsByServiceType = [
-        'all' => $buildPlanOptions(PhoneNumber::packageLabelsForQuery(
-            PhoneNumber::query()
-                ->available()
-                ->where('network_code', 'true_dtac')
-        )),
-        PhoneNumber::SERVICE_TYPE_POSTPAID => $buildPlanOptions(PhoneNumber::packageLabelsForQuery(
-            PhoneNumber::query()
-                ->available()
-                ->where('network_code', 'true_dtac')
-                ->where('service_type', PhoneNumber::SERVICE_TYPE_POSTPAID)
-        )),
-        PhoneNumber::SERVICE_TYPE_PREPAID => PhoneNumber::prepaidPriceRangeOptions(),
-    ];
+Route::get('/evaluate', [PublicController::class, 'evaluate'])->name('evaluate');
 
-    $planOptionKey = $selectedServiceType !== '' ? $selectedServiceType : 'all';
-    $plans = collect($planOptionsByServiceType[$planOptionKey] ?? []);
-    $allowedPlanValues = $plans->pluck('value')->all();
+Route::get('/evaluateBadNumber', [PublicController::class, 'evaluateBad'])->name('evaluate.bad');
 
-    if ($selectedPlan !== '' && ! in_array($selectedPlan, $allowedPlanValues, true)) {
-        $selectedPlan = '';
-    }
-
-    $selectedPrepaidPriceRange = $selectedServiceType === PhoneNumber::SERVICE_TYPE_PREPAID
-        ? PhoneNumber::resolvePrepaidPriceRange($selectedPlan)
-        : null;
-    [$selectedPlanName, $selectedPlanPrice] = $selectedServiceType === PhoneNumber::SERVICE_TYPE_PREPAID
-        ? [null, null]
-        : PhoneNumber::parsePackageLabel($selectedPlan);
-
-    $applyCatalogFilters = static function ($query) use ($searchDigits, $positionPattern, $selectedPlan, $selectedServiceType, $selectedPrepaidPriceRange, $selectedPlanName, $selectedPlanPrice) {
-        return $query
-            ->when($searchDigits !== '', function ($builder) use ($searchDigits) {
-                $builder->where('phone_number', 'like', '%' . $searchDigits . '%');
-            })
-            ->matchingPattern($positionPattern)
-            ->when($selectedPlan !== '', function ($builder) use ($selectedServiceType, $selectedPrepaidPriceRange, $selectedPlanName, $selectedPlanPrice) {
-                if ($selectedServiceType === PhoneNumber::SERVICE_TYPE_PREPAID && $selectedPrepaidPriceRange !== null) {
-                    $min = $selectedPrepaidPriceRange['min'];
-                    $max = $selectedPrepaidPriceRange['max'];
-
-                    if ($min === null && $max !== null) {
-                        $builder->where('sale_price', '<', $max);
-                        return;
-                    }
-
-                    if ($min !== null && $max === null) {
-                        $builder->where('sale_price', '>', $min);
-                        return;
-                    }
-
-                    if ($min !== null && $max !== null) {
-                        $builder->where('sale_price', '>=', $min)
-                            ->where('sale_price', '<', $max);
-                    }
-
-                    return;
-                }
-
-                if ($selectedPlanName !== null) {
-                    $builder->where('plan_name', $selectedPlanName);
-                }
-
-                if ($selectedPlanPrice !== null) {
-                    $builder->where('sale_price', $selectedPlanPrice);
-                }
-            })
-            ->orderBy('sale_price')
-            ->orderBy('phone_number');
-    };
-
-    $isDefaultSplitLayout = $searchDigits === ''
-        && $selectedPlan === ''
-        && $selectedServiceType === ''
-        && $positionPattern === null;
-
-    $defaultPrepaidNumbers = collect();
-    $defaultPostpaidNumbers = collect();
-
-    if ($isDefaultSplitLayout) {
-        $perPage = 24;
-        $perColumn = (int) ceil($perPage / 2);
-        $currentPage = Paginator::resolveCurrentPage('page');
-        $columnOffset = max(0, ($currentPage - 1) * $perColumn);
-
-        $prepaidQuery = $applyCatalogFilters(
-            (clone $baseQuery)->where('service_type', PhoneNumber::SERVICE_TYPE_PREPAID)
-        );
-        $postpaidQuery = $applyCatalogFilters(
-            (clone $baseQuery)->where('service_type', PhoneNumber::SERVICE_TYPE_POSTPAID)
-        );
-
-        $prepaidTotal = (clone $prepaidQuery)->count();
-        $postpaidTotal = (clone $postpaidQuery)->count();
-
-        $prepaidNumbers = (clone $prepaidQuery)
-            ->offset($columnOffset)
-            ->limit($perColumn)
-            ->get();
-
-        $postpaidNumbers = (clone $postpaidQuery)
-            ->offset($columnOffset)
-            ->limit($perColumn)
-            ->get();
-
-        $defaultPrepaidNumbers = $prepaidNumbers->values();
-        $defaultPostpaidNumbers = $postpaidNumbers->values();
-
-        $overflowNumbers = collect();
-        $remainingSlots = $perPage - ($prepaidNumbers->count() + $postpaidNumbers->count());
-
-        if ($remainingSlots > 0) {
-            if ($prepaidNumbers->count() < $perColumn) {
-                $overflowNumbers = $overflowNumbers->concat(
-                    (clone $postpaidQuery)
-                        ->offset($columnOffset + $postpaidNumbers->count())
-                        ->limit($remainingSlots)
-                        ->get()
-                );
-            } elseif ($postpaidNumbers->count() < $perColumn) {
-                $overflowNumbers = $overflowNumbers->concat(
-                    (clone $prepaidQuery)
-                        ->offset($columnOffset + $prepaidNumbers->count())
-                        ->limit($remainingSlots)
-                        ->get()
-                );
-            }
-        }
-
-        $rows = max($prepaidNumbers->count(), $postpaidNumbers->count());
-        $interleavedNumbers = collect();
-
-        for ($index = 0; $index < $rows; $index += 1) {
-            if ($prepaidNumbers->has($index)) {
-                $interleavedNumbers->push($prepaidNumbers->get($index));
-            }
-
-            if ($postpaidNumbers->has($index)) {
-                $interleavedNumbers->push($postpaidNumbers->get($index));
-            }
-        }
-
-        $numbers = new LengthAwarePaginator(
-            $interleavedNumbers->concat($overflowNumbers)->values(),
-            $prepaidTotal + $postpaidTotal,
-            $perPage,
-            $currentPage,
-            [
-                'path' => request()->url(),
-                'query' => request()->query(),
-            ]
-        );
-    } else {
-        $numbers = $applyCatalogFilters(clone $baseQuery)
-            ->paginate(24)
-            ->withQueryString();
-    }
-
-    return view('numbers', compact('numbers', 'plans', 'planOptionsByServiceType', 'search', 'selectedPlan', 'selectedServiceType', 'positionPattern', 'isDefaultSplitLayout', 'defaultPrepaidNumbers', 'defaultPostpaidNumbers'));
-})->name('numbers.index');
-
-Route::get('/articles', function () {
-    $articles = Article::query()
-        ->published()
-        ->latest('published_at')
-        ->latest('id')
-        ->paginate(9);
-
-    return view('articles.index', compact('articles'));
-})->name('articles.index');
-
-Route::get('/articles/{slug}', function (string $slug) use ($resolveLotteryResultForArticle) {
-    $article = Article::query()
-        ->published()
-        ->with([
-            'approvedComments' => fn ($query) => $query->latest('id'),
-        ])
-        ->where('slug', $slug)
-        ->firstOrFail();
-
-    $lotteryResult = $resolveLotteryResultForArticle($article);
-
-    return view('articles.show', compact('article', 'lotteryResult'));
-})->name('articles.show');
-
-Route::post('/articles/{slug}/comments', function (Request $request, string $slug) {
-    $article = Article::query()
-        ->published()
-        ->where('slug', $slug)
-        ->firstOrFail();
-
-    $data = $request->validate([
-        'commenter_name' => ['required', 'string', 'max:120'],
-        'content' => ['required', 'string', 'max:2000'],
-    ]);
-
-    ArticleComment::query()->create([
-        'article_id' => $article->id,
-        'commenter_name' => trim($data['commenter_name']),
-        'content' => trim($data['content']),
-        'status' => ArticleComment::STATUS_PENDING,
-    ]);
-
-    return redirect()
-        ->route('articles.show', $article->slug)
-        ->with('comment_status_message', 'ส่งคอมเมนต์แล้ว รอแอดมินอนุมัติก่อนแสดงบนหน้าเว็บ');
-})->name('articles.comments.store');
-
-Route::get('/evaluate', function (Request $request) use ($resolveAnalysisPhone) {
-    [$redirect, $phone] = $resolveAnalysisPhone($request);
-
-    if ($redirect !== null) {
-        return $redirect;
-    }
-
-    return view('evaluate', compact('phone'));
-})->name('evaluate');
-
-Route::get('/evaluateBadNumber', function (Request $request) use ($resolveAnalysisPhone) {
-    [$redirect, $phone] = $resolveAnalysisPhone($request);
-
-    if ($redirect !== null) {
-        return $redirect;
-    }
-
-    return view('evaluate-bad-number', compact('phone'));
-})->name('evaluate.bad');
-
-Route::get('/tiers', function () {
-    return view('tiers');
-})->name('tiers');
+Route::get('/tiers', [PublicController::class, 'tiers'])->name('tiers');
 
 Route::get('/estimate', function () {
-    return view('estimate');
+    return view('under-construction');
 })->name('estimate');
 
 Route::get('/sales-documents', function () {
     return redirect()->route('admin.sales-documents');
 })->name('sales-documents');
 
-Route::get('/contact-us', function () {
-    return view('contact');
-})->name('contact');
-
-Route::post('/contact-us', function (Request $request, TurnstileVerifier $turnstileVerifier, ContactSpamFilter $spamFilter) {
-    if (trim((string) $request->input('website', '')) !== '') {
-        Log::info('Blocked contact form submission via honeypot.', [
-            'ip_address' => $request->ip(),
-        ]);
-
-        return redirect()
-            ->route('contact')
-            ->with('contact_status_message', 'ส่งข้อความเรียบร้อยแล้ว ทีมงานจะติดต่อกลับตามข้อมูลที่แจ้งไว้');
-    }
-
-    $rules = [
-        'name' => ['required', 'string', 'max:120'],
-        'phone' => ['required', 'string', 'max:20'],
-        'message' => ['required', 'string', 'max:2000'],
-    ];
-
-    if ($turnstileVerifier->isEnabled()) {
-        $rules['cf-turnstile-response'] = ['required', 'string'];
-    }
-
-    $data = $request->validate($rules, [
-        'cf-turnstile-response.required' => 'กรุณายืนยันว่าไม่ใช่บอทก่อนส่งข้อความ',
-    ]);
-
-    if ($turnstileVerifier->isEnabled() && ! $turnstileVerifier->verify((string) $request->input('cf-turnstile-response', ''), $request->ip())) {
-        return redirect()
-            ->route('contact')
-            ->withInput($request->except('_token', 'cf-turnstile-response', 'website'))
-            ->withErrors(['cf-turnstile-response' => 'ยืนยันความปลอดภัยไม่สำเร็จ กรุณาลองอีกครั้ง']);
-    }
-
-    $phone = preg_replace('/\D+/', '', (string) $data['phone']) ?? '';
-    $name = trim((string) $data['name']);
-    $message = trim((string) $data['message']);
-
-    if ($phone === '' || strlen($phone) !== PhoneNumber::PHONE_NUMBER_LENGTH) {
-        return redirect()
-            ->route('contact')
-            ->withInput($request->except('_token', 'cf-turnstile-response', 'website'))
-            ->withErrors(['phone' => 'กรุณากรอกเบอร์ติดต่อให้ครบ 10 หลัก']);
-    }
-
-    $spamInspection = $spamFilter->inspect($name, $phone, $message);
-
-    if ($spamInspection['blocked']) {
-        Log::info('Blocked contact form spam submission.', [
-            'ip_address' => $request->ip(),
-            'reasons' => $spamInspection['reasons'],
-            'score' => $spamInspection['score'],
-        ]);
-
-        return redirect()
-            ->route('contact')
-            ->with('contact_status_message', 'ส่งข้อความเรียบร้อยแล้ว ทีมงานจะติดต่อกลับตามข้อมูลที่แจ้งไว้');
-    }
-
-    ContactMessage::query()->create([
-        'name' => $name,
-        'phone' => $phone,
-        'message' => $message,
-        'ip_address' => $request->ip(),
-        'user_agent' => substr((string) $request->userAgent(), 0, 65535),
-        'submitted_at' => Carbon::now(),
-    ]);
-
-    return redirect()
-        ->route('contact')
-        ->with('contact_status_message', 'ส่งข้อความเรียบร้อยแล้ว ทีมงานจะติดต่อกลับตามข้อมูลที่แจ้งไว้');
-})->middleware('throttle:contact-messages')->name('contact.store');
+Route::get('/contact-us', [PublicController::class, 'contact'])->name('contact');
+Route::post('/contact-us', [PublicController::class, 'storeContact'])->middleware('throttle:contact-messages')->name('contact.store');
 
 Route::post('/estimate', function (Request $request) use ($safelyRunLineNotification) {
     $data = $request->validate([
@@ -1430,6 +1094,14 @@ Route::get('/line/payment-slips/{order}', function (Request $request, CustomerOr
 
     return response()->file($paymentSlip['absolute_path'], $headers);
 })->name('line.payment-slip');
+
+Route::get('/line/lottery-results/{lotteryResult}/image', function (Request $request, LotteryResult $lotteryResult) {
+    if (! $request->hasValidSignature(false)) {
+        abort(403);
+    }
+
+    return app(LineLotteryImageService::class)->toResponse($lotteryResult->loadMissing('prizes'));
+})->name('line.lottery-result-image');
 
 Route::prefix('admin')->name('admin.')->group(function () use (
     $currentAdmin,
@@ -2041,7 +1713,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->with('status_message', 'อัปเดตข้อมูลลูกค้าเรียบร้อยแล้ว');
     })->name('customers.update');
 
-    Route::get('/orders/{order}', function (CustomerOrder $order) use ($ensureAdmin, $resolveOrderPaymentSlip) {
+    Route::get('/orders/{order}', function (CustomerOrder $order) use ($ensureAdmin, $resolveOrderPaymentSlip, $currentAdmin) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
@@ -2055,8 +1727,9 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
 
         $paymentSlip = $resolveOrderPaymentSlip($order);
+        $canTestLineNotification = $currentAdmin()?->role === User::ROLE_MANAGER;
 
-        return view('admin.orders-show', compact('order', 'paymentSlip'));
+        return view('admin.orders-show', compact('order', 'paymentSlip', 'canTestLineNotification'));
     })->name('orders.show');
 
     Route::get('/orders/{order}/payment-slip', function (CustomerOrder $order) use ($ensureAdmin, $resolveOrderPaymentSlip) {
@@ -2190,9 +1863,13 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->with('status_message', 'อัปเดตคำสั่งซื้อเรียบร้อยแล้ว');
     })->name('orders.update');
 
-    Route::post('/orders/{order}/line-test', function (CustomerOrder $order) use ($ensureAdmin, $safelyRunLineNotification) {
+    Route::post('/orders/{order}/line-test', function (CustomerOrder $order) use ($ensureAdmin, $safelyRunLineNotification, $currentAdmin) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
+        }
+
+        if ($currentAdmin()?->role !== User::ROLE_MANAGER) {
+            abort(403);
         }
 
         $lineNotifier = app(\App\Services\LineNotifier::class);

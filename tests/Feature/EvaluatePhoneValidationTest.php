@@ -25,6 +25,10 @@ class EvaluatePhoneValidationTest extends TestCase
         $response->assertOk();
         $response->assertViewHas('phone', '0812345678');
         $response->assertSee('0812345678');
+        $response->assertSee('ภาพรวมหมวดที่เบอร์นี้ส่งเสริม');
+        $response->assertSee('การสื่อสาร');
+        $response->assertSee('ศาสตร์เร้นลับ/ลางสังหรณ์');
+        $response->assertDontSee('10/10');
     }
 
     public function test_evaluate_bad_number_requires_a_10_digit_phone(): void

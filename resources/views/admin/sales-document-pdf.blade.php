@@ -34,7 +34,7 @@
       <header class="document-header">
         <div class="document-header__brand">
           <div class="document-header__brand-mark">
-            <img src="{{ $logoDataUri ?: asset('images/supernumber-document-logo.png') }}" alt="Supernumber">
+            <img src="{{ $logoUrl ?? asset('images/supernumber-document-logo.png') }}" alt="Supernumber">
           </div>
 
           <div class="document-header__company">

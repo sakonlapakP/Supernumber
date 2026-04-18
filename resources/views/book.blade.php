@@ -8,6 +8,7 @@
     $serviceType = trim((string) ($serviceType ?? $currentNumber?->service_type ?? \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID));
     $isPrepaid = $serviceType === \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID;
     $packagePlanName = trim((string) ($packagePlanName ?? \App\Models\PhoneNumber::PACKAGE_NAME));
+    $minimumFirstPayment = 999;
     if ($isPrepaid) {
         $basePackage = (int) ($currentNumber?->sale_price ?? request('package', 0));
         $basePackage = $basePackage > 0 ? $basePackage : 0;
@@ -55,6 +56,7 @@
         }
         $selectedPackageLabel = \App\Models\PhoneNumber::buildPackageLabel($packagePlanName, $selectedPackage);
     }
+    $initialPaymentAmount = $isPrepaid ? $selectedPackage : max($selectedPackage, $minimumFirstPayment);
   @endphp
 
   <section class="book-page">
@@ -218,8 +220,8 @@
         </div>
 
         <div class="book-card book-card-step is-hidden" data-step-panel="2">
-          <h3 id="pay-card-title">ขั้นตอนที่ 2. ชำระเงิน {{ number_format($selectedPackage) }} บาท</h3>
-          <p class="book-note" id="pay-card-note">โอนเงินจำนวน {{ number_format($selectedPackage) }} บาท แล้วแนบสลิปด้านล่าง</p>
+          <h3 id="pay-card-title">ขั้นตอนที่ 2. ชำระเงิน {{ number_format($initialPaymentAmount) }} บาท</h3>
+          <p class="book-note" id="pay-card-note">โอนเงินจำนวน {{ number_format($initialPaymentAmount) }} บาท แล้วแนบสลิปด้านล่าง</p>
           <div class="step2-layout">
             <div class="step2-upload">
               <div class="bank-account-box" aria-label="ข้อมูลบัญชีสำหรับโอนเงิน">
@@ -248,7 +250,7 @@
               <h4>สรุปข้อมูลที่สั่งซื้อ</h4>
               <div class="step2-summary__grid">
                 <p><span>เบอร์ที่สั่งซื้อ</span><strong id="summary-ordered-number">-</strong></p>
-                <p><span>{{ $isPrepaid ? 'ยอดชำระ' : 'แพคเกจ' }}</span><strong id="summary-package">-</strong></p>
+                <p><span>{{ $isPrepaid ? 'ยอดชำระ' : 'ยอดชำระครั้งแรก' }}</span><strong id="summary-package">-</strong></p>
                 <p><span>ชื่อผู้สั่งซื้อ</span><strong id="summary-full-name">-</strong></p>
                 <p><span>เบอร์มือถือปัจจุบัน</span><strong id="summary-phone">-</strong></p>
                 <p><span>อีเมลล์</span><strong id="summary-email">-</strong></p>
@@ -338,6 +340,7 @@
   <script>
     (function () {
       const isPrepaid = @json($isPrepaid);
+      const minimumFirstPayment = @json($minimumFirstPayment);
       const form = document.getElementById("book-form");
       const packageSelect = document.getElementById("selected_package");
       const previewBox = document.getElementById("package-preview");
@@ -421,7 +424,10 @@
       const updatePreview = () => {
         const opt = packageSelect.options[packageSelect.selectedIndex];
         if (!opt) return;
-        const priceText = Number(opt.value).toLocaleString("th-TH");
+        const packageAmount = Number(opt.value);
+        const priceText = packageAmount.toLocaleString("th-TH");
+        const initialPaymentAmount = isPrepaid ? packageAmount : Math.max(packageAmount, minimumFirstPayment);
+        const initialPaymentText = initialPaymentAmount.toLocaleString("th-TH");
         if (isPrepaid) {
           if (nameEl) nameEl.textContent = "ประเภท: เบอร์เติมเงิน";
           title.textContent = `ราคาขาย ${priceText} บาท`;
@@ -434,10 +440,10 @@
         voiceEl.textContent = opt.dataset.voice || "-";
         entEl.textContent = opt.dataset.ent || "-";
         if (step2Title) step2Title.textContent = "การชำระเงิน";
-        if (payCardTitle) payCardTitle.textContent = `ขั้นตอนที่ 2. ชำระเงิน ${priceText} บาท`;
-        if (payCardNote) payCardNote.textContent = `โอนเงินจำนวน ${priceText} บาท แล้วแนบสลิปด้านล่าง`;
-        if (summaryPackage) summaryPackage.textContent = isPrepaid ? `${priceText} บาท` : `${priceText} บาท / เดือน`;
-        if (finalSummaryPackage) finalSummaryPackage.textContent = isPrepaid ? `${priceText} บาท` : `${priceText} บาท / เดือน`;
+        if (payCardTitle) payCardTitle.textContent = `ขั้นตอนที่ 2. ชำระเงิน ${initialPaymentText} บาท`;
+        if (payCardNote) payCardNote.textContent = `โอนเงินจำนวน ${initialPaymentText} บาท แล้วแนบสลิปด้านล่าง`;
+        if (summaryPackage) summaryPackage.textContent = `${initialPaymentText} บาท`;
+        if (finalSummaryPackage) finalSummaryPackage.textContent = `${initialPaymentText} บาท`;
       };
 
       const clean = (value) => (value || "").toString().trim();
