@@ -3,95 +3,112 @@
 @section('title', 'ความยินยอมในการให้ข้อมูลส่วนบุคคล - Supernumber')
 
 @section('content')
-<div class="privacy-page container py-16">
-    <div class="max-w-4xl mx-auto">
-        <div class="privacy-card bg-white rounded-[40px] shadow-2xl overflow-hidden border border-gold-100">
-            <div class="privacy-card__header bg-brown-900 p-12 text-center relative">
-                <div class="absolute inset-0 opacity-10 bg-[url('/images/pattern.png')]"></div>
-                <div class="privacy-icon w-20 h-20 bg-gold-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl relative z-10">
-                    <svg class="w-10 h-10 text-brown-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+<div class="paper-page-container py-16 bg-[#f5f5f5] min-h-screen">
+    <div class="max-w-[900px] mx-auto">
+        <!-- Paper Document -->
+        <div class="paper-document bg-white shadow-2xl p-12 md:p-20 relative overflow-hidden">
+            <!-- Document Header -->
+            <div class="text-center mb-16">
+                <div class="mb-6">
+                    <img src="{{ asset('images/logo.png') }}" alt="Supernumber Logo" class="h-12 mx-auto grayscale-0">
                 </div>
-                <h1 class="text-3xl font-extrabold text-white relative z-10">1. ความยินยอมในการให้ข้อมูลส่วนบุคคล</h1>
-                <p class="text-gold-200 mt-4 max-w-xl mx-auto relative z-10 opacity-90">ข้อมูลของคุณคือสิ่งสำคัญ เรามุ่งมั่นปกป้องและรักษาความเป็นส่วนตัวอย่างมืออาชีพ</p>
+                <h1 class="text-2xl font-bold text-black mb-2">นโยบายการรักษาความมั่นคงปลอดภัยข้อมูลส่วนบุคคล</h1>
+                <h2 class="text-xl font-bold text-black mb-4">และความเป็นส่วนตัวสำหรับลูกค้า (Privacy Policy)</h2>
+                <div class="w-24 h-0.5 bg-black mx-auto mb-6"></div>
+                <p class="font-bold text-gray-800">บริษัท ซุปเปอร์นัมเบอร์ จำกัด</p>
+                <p class="text-sm text-gray-500 mt-8 text-right">ฉบับวันที่ {{ \Carbon\Carbon::now()->format('j F 2568') }}</p>
             </div>
 
-            <div class="p-10 md:p-16">
-                <div class="prose prose-lg prose-brown max-w-none">
-                    <h2 class="text-2xl font-bold text-brown-800 mb-6 flex items-center gap-3">
-                        <span class="w-2 h-8 bg-gold-500 rounded-full"></span>
-                        วัตถุประสงค์ของการจัดเก็บข้อมูล
-                    </h2>
-                    <p class="leading-relaxed text-brown-600 mb-8">
-                        บริษัท ซุปเปอร์นัมเบอร์ จำกัด ("บริษัทฯ") มีความจำเป็นต้องเก็บรวบรวมข้อมูลส่วนบุคคลของท่าน เพื่อใช้ในการดำเนินงานตามวัตถุประสงค์ดังต่อไปนี้:
-                    </p>
+            <!-- Document Content -->
+            <div class="document-body text-[#333] leading-relaxed text-base">
+                <h3 class="font-bold text-lg mb-4 text-[#2a5d34] border-l-4 border-[#2a5d34] pl-4">ความยินยอมการให้ข้อมูลส่วนบุคคล</h3>
+                
+                <p class="mb-6">
+                    บริษัท ซุปเปอร์นัมเบอร์ จำกัด (ซึ่งต่อไปนี้จะเรียกว่า "บริษัทฯ") ในฐานะ "ผู้ควบคุมข้อมูลส่วนบุคคล" เคารพสิทธิความเป็นส่วนตัวและให้ความสำคัญกับการคุ้มครองข้อมูลส่วนบุคคลของท่าน บริษัทฯ จึงได้จัดทำหนังสือแสดงความยินยอมฉบับนี้ขึ้น เพื่อแจ้งให้ท่านทราบถึงวัตถุประสงค์และรายละเอียดการเก็บรวบรวม ใช้ หรือเปิดเผยข้อมูลส่วนบุคคล ดังต่อไปนี้:
+                </p>
 
-                    <div class="grid gap-4 mb-12">
-                        <div class="flex gap-5 items-start p-6 rounded-3xl bg-brown-50 border border-brown-100">
-                            <div class="w-10 h-10 rounded-full bg-gold-100 flex items-center justify-center flex-shrink-0 text-gold-600 font-bold">✓</div>
-                            <p class="text-brown-700">เพื่อใช้ในการยืนยันตัวตนขณะลงชื่อเข้าใช้งานเว็บไซต์ และจัดทำฐานข้อมูลสมาชิก</p>
-                        </div>
-                        <div class="flex gap-5 items-start p-6 rounded-3xl bg-brown-50 border border-brown-100">
-                            <div class="w-10 h-10 rounded-full bg-gold-100 flex items-center justify-center flex-shrink-0 text-gold-600 font-bold">✓</div>
-                            <p class="text-brown-700">เพื่อใช้ในการจัดทำเอกสารสำคัญ เช่น ใบสั่งซื้อ สัญญาการใช้งานเบอร์มือถือ หรือใบกำกับภาษี</p>
-                        </div>
-                        <div class="flex gap-5 items-start p-6 rounded-3xl bg-brown-50 border border-brown-100">
-                            <div class="w-10 h-10 rounded-full bg-gold-100 flex items-center justify-center flex-shrink-0 text-gold-600 font-bold">✓</div>
-                            <p class="text-brown-700">เพื่อใช้ในการติดต่อประสานงาน และจัดส่งหมายเลขโทรศัพท์ (เบอร์มงคล) ถึงมือคุณอย่างรวดเร็วและถูกต้อง</p>
-                        </div>
-                    </div>
+                <div class="space-y-10">
+                    <section>
+                        <h4 class="font-bold text-black mb-3">1. ข้อมูลส่วนบุคคลที่เราจัดเก็บ</h4>
+                        <p class="mb-2">เพื่อให้บริษัทฯ สามารถดำเนินกิจกรรมตามวัตถุประสงค์ในการให้บริการจัดหาเบอร์มงคลและจัดทำเอกสารสำคัญ บริษัทฯ มีความจำเป็นต้องเก็บรวบรวมข้อมูล ดังนี้:</p>
+                        <ul class="list-disc pl-6 space-y-1 italic">
+                            <li><strong>ข้อมูลระบุตัวตน:</strong> ชื่อ-นามสกุลจริง, เพศ, วันเดือนปีเกิด</li>
+                            <li><strong>ข้อมูลการติดต่อ:</strong> หมายเลขโทรศัพท์ที่ใช้งานปัจจุบัน, อีเมลสำหรับการรับเอกสาร</li>
+                            <li><strong>ข้อมูลการจัดส่ง:</strong> ที่อยู่ตามหน้าบัตรหรือที่อยู่ที่ระบุไว้เพื่อการจัดส่งหมายเลขโทรศัพท์และเอกสารสัญญา</li>
+                            <li><strong>ข้อมูลทางเทคนิค:</strong> หมายเลขไอพี (IP Address) และประวัติการเข้าใช้งานเบื้องต้น</li>
+                        </ul>
+                    </section>
 
-                    <h2 class="text-2xl font-bold text-brown-800 mb-6 flex items-center gap-3">
-                        <span class="w-2 h-8 bg-gold-500 rounded-full"></span>
-                        ข้อมูลที่เราจัดเก็บ
-                    </h2>
-                    <p class="text-brown-600 mb-6">เพื่อให้เราสามารถให้บริการคุณได้อย่างสมบูรณ์แบบ เราจะจัดเก็บข้อมูลดังนี้:</p>
-                    <ul class="space-y-3 mb-12">
-                        <li class="flex items-center gap-3 text-brown-700"><span class="w-1.5 h-1.5 rounded-full bg-gold-400"></span> ชื่อจริง - นามสกุล</li>
-                        <li class="flex items-center gap-3 text-brown-700"><span class="w-1.5 h-1.5 rounded-full bg-gold-400"></span> หมายเลขโทรพศัพท์ที่ติดต่อได้</li>
-                        <li class="flex items-center gap-3 text-brown-700"><span class="w-1.5 h-1.5 rounded-full bg-gold-400"></span> ที่อยู่สำหรับการจัดส่งเอกสารและหมายเลขโทรศัพท์</li>
-                        <li class="flex items-center gap-3 text-brown-700"><span class="w-1.5 h-1.5 rounded-full bg-gold-400"></span> ข้อมูลทางเทคนิค (IP Address) เพื่อความปลอดภัยของระบบ</li>
-                    </ul>
+                    <section>
+                        <h4 class="font-bold text-black mb-3 text-[#2a5d34]">2. วัตถุประสงค์ของการประมวลผลข้อมูล (Data Processing Purpose)</h4>
+                        <p class="mb-4">บริษัทฯ จะนำข้อมูลดังกล่าวไปใช้ภายใต้ความยินยอมของท่านเพื่อวัตถุประสงค์ดังต่อไปนี้เท่านั้น:</p>
+                        <div class="pl-4 border-l-2 border-gray-100 space-y-4 text-sm md:text-base">
+                            <p><strong>2.1 เพื่อการยืนยันตัวตนและสมาชิก:</strong> ใช้ระบุตัวตนของท่านในการเข้าถึงระบบสมาชิกและการรับสิทธิพิเศษเฉพาะรายบุคคล</p>
+                            <p><strong>2.2 เพื่อการดำเนินงานตามสัญญา:</strong> ใช้ในการจัดทำใบสั่งซื้อ, สัญญาการจองหมายเลขโทรศัพท์ (เบอร์มงคล), หนังสือมอบอำนาจ หรือเอกสารทางภาษีที่เกี่ยวข้อง</p>
+                            <p><strong>2.3 เพื่อการจัดส่งและประสานงาน:</strong> ใช้ข้อมูลที่อยู่ให้เจ้าหน้าที่ขนส่งดำเนินการนำส่งซิมการ์ดและเอกสารสัญญาให้ถึงมือท่านอย่างถูกต้องและรัดกุม</p>
+                        </div>
+                    </section>
 
-                    <div class="bg-gold-50 p-8 rounded-[30px] border border-gold-200">
-                        <p class="text-brown-800 text-sm italic">
-                            *บริษัทฯ ขอรับรองว่าจะไม่มีการนำข้อมูลของคุณไปเผยแพร่หรือจำหน่ายให้แก่บุคคลภายนอก หากไม่ได้รับความยินยอมจากคุณ ยกเว้นในกรณีที่กฎหมายกำหนด
-                        </p>
-                    </div>
+                    <section>
+                        <h4 class="font-bold text-black mb-3">3. มาตรการรักษาความปลอดภัยของข้อมูล</h4>
+                        <p>บริษัทฯ ได้จัดให้มีมาตรการรักษาความมั่นคงปลอดภัยของข้อมูลส่วนบุคคลที่เหมาะสม เพื่อป้องกันการสูญหาย การเข้าถึง การใช้ การเปลี่ยนแปลง การแก้ไข หรือการเปิดเผยข้อมูลส่วนบุคคลโดยไม่ได้รับอนุญาตหรือโดยมิชอบ โดยใช้ระบบจัดเก็บข้อมูลที่มีการเข้ารหัสความปลอดภัยระดับมาตรฐานสากล</p>
+                    </section>
+
+                    <section>
+                        <h4 class="font-bold text-black mb-3">4. สิทธิของเจ้าของข้อมูล (Data Subject Rights)</h4>
+                        <p class="mb-2">ท่านในฐานะเจ้าของข้อมูลส่วนบุคคล มีสิทธิตามกฎหมาย PDPA ดังนี้:</p>
+                        <ul class="grid md:grid-cols-2 gap-x-8 gap-y-2 list-none p-0">
+                            <li class="flex items-center gap-2"><span class="text-[#2a5d34]">●</span> สิทธิในการขอเข้าถึงและรับสำเนาข้อมูล</li>
+                            <li class="flex items-center gap-2"><span class="text-[#2a5d34]">●</span> สิทธิในการขอแก้ไขข้อมูลให้เป็นปัจจุบัน</li>
+                            <li class="flex items-center gap-2"><span class="text-[#2a5d34]">●</span> สิทธิในการขอระงับการใช้หรือขอลบข้อมูล</li>
+                            <li class="flex items-center gap-2"><span class="text-[#2a5d34]">●</span> สิทธิในการเพิกถอนความยินยอม</li>
+                        </ul>
+                    </section>
+                </div>
+
+                <div class="mt-16 p-8 bg-gray-50 border border-gray-200 rounded-none italic text-sm text-gray-600">
+                    <p>หมายเหตุ: ข้อมูลส่วนบุคคลที่จัดเก็บในหน้านี้ จะถูกนำไปใช้เพื่อการดำเนินงานพื้นฐานในการให้บริการของ บริษัท ซุปเปอร์นัมเบอร์ จำกัด เท่านั้น โดยท่านสามารถศึกษารายละเอียดเพิ่มเติมได้จากนโยบายความเป็นส่วนตัวฉบับเต็มของทางบริษัทฯ</p>
                 </div>
             </div>
+
+            <!-- Fake Paper Texture Overlay -->
+            <div class="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]"></div>
         </div>
 
-        <div class="text-center mt-12 content-nav flex flex-wrap justify-center gap-4">
-            <a href="{{ route('home') }}" class="px-8 py-3 bg-brown-800 text-white rounded-full font-bold hover:bg-brown-900 transition-all shadow-lg">หน้าหลัก</a>
-            <a href="{{ route('privacy.development') }}" class="px-8 py-3 border-2 border-gold-500 text-gold-700 rounded-full font-bold hover:bg-gold-50 transition-all">ถัดไป: พัฒนาสินค้า &rarr;</a>
+        <!-- Navigation Buttons -->
+        <div class="mt-12 flex justify-between items-center px-4">
+            <a href="{{ route('home') }}" class="text-gray-500 hover:text-black transition-all flex items-center gap-2">
+                &larr; กลับหน้าหลัก
+            </a>
+            <div class="flex gap-4">
+                <a href="{{ route('privacy.development') }}" class="px-8 py-3 bg-[#2a5d34] text-white font-bold hover:bg-[#1e4a26] transition-all shadow-md">
+                    ฉบับที่ 2: พัฒนาสินค้า &rarr;
+                </a>
+            </div>
         </div>
     </div>
 </div>
 
 <style>
-    .privacy-page { font-family: 'Sarabun', sans-serif; line-height: 1.7; color: #3b2f27; }
-    .privacy-card { overflow: hidden; border: 1px solid #eee5d8; }
-    .privacy-card__header { padding: 60px 40px; background: #2a2321; }
-    .privacy-icon { 
-        width: 80px; 
-        height: 80px; 
-        background: linear-gradient(135deg, #f3ca7a 0%, #d8a34a 100%);
-        border-radius: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 24px;
-        box-shadow: 0 10px 25px rgba(216, 163, 74, 0.3);
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,700;1,400&display=swap');
+    
+    .paper-page-container {
+        font-family: 'Sarabun', sans-serif;
     }
-    .privacy-icon svg { width: 40px; height: 40px; color: #2a2321; }
-    .bg-brown-50 { background-color: #fbf9f6; }
-    .bg-gold-50 { background-color: #fefcf5; }
-    .text-gold-200 { color: #f3ca7a; }
-    .text-gold-400 { color: #d8a34a; }
-    .text-gold-600 { color: #d8a34a; }
-    .text-gold-700 { color: #b78a3c; }
-    .border-gold-100 { border-color: #eee5d8; }
-    .border-gold-200 { border-color: #f1dfaf; }
-    .border-brown-100 { border-color: #f0e8db; }
+    .paper-document {
+        min-height: 1000px;
+        border: 1px solid #ddd;
+    }
+    .document-body h3 {
+        color: #2a5d34;
+    }
+    .document-body ul li {
+        margin-bottom: 8px;
+    }
+    @media print {
+        .bg-[#f5f5f5] { background: white; }
+        .paper-document { box-shadow: none; border: none; p: 0; }
+        .content-nav { display: none; }
+    }
 </style>
 @endsection

@@ -1,103 +1,91 @@
 @extends('layouts.app')
 
-@section('title', 'ความยินยอมเพื่อพัฒนาสินค้าหรือบริการ - Supernumber')
+@section('title', 'ความยินยอมเพื่อพัฒนาสินค้าและบริการ - Supernumber')
 
 @section('content')
-<div class="privacy-page container py-16">
-    <div class="max-w-4xl mx-auto">
-        <div class="privacy-card bg-white rounded-[40px] shadow-2xl overflow-hidden border border-gold-100">
-            <div class="privacy-card__header bg-brown-900 p-12 text-center relative">
-                <div class="absolute inset-0 opacity-10 bg-[url('/images/pattern.png')]"></div>
-                <div class="privacy-icon w-20 h-20 bg-gold-500 rounded-3xl flex items-center justify-center mx-auto mb-6 shadow-xl relative z-10">
-                    <svg class="w-10 h-10 text-brown-900" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+<div class="paper-page-container py-16 bg-[#f5f5f5] min-h-screen">
+    <div class="max-w-[900px] mx-auto">
+        <!-- Paper Document -->
+        <div class="paper-document bg-white shadow-2xl p-12 md:p-20 relative overflow-hidden">
+            <!-- Document Header -->
+            <div class="text-center mb-16">
+                <div class="mb-6">
+                    <img src="{{ asset('images/logo.png') }}" alt="Supernumber Logo" class="h-12 mx-auto grayscale-100 opacity-80">
                 </div>
-                <h1 class="text-3xl font-extrabold text-white relative z-10">2. การพัฒนาสินค้าหรือบริการให้ดียิ่งขึ้น</h1>
-                <p class="text-gold-200 mt-4 max-w-xl mx-auto relative z-10 opacity-90">ข้อมูลของคุณช่วยให้เราสร้างสรรค์บริการที่แม่นยำและถูกใจคุณมากยิ่งขึ้นในอนาคต</p>
+                <h1 class="text-2xl font-bold text-black mb-2">นโยบายการประมวลผลข้อมูลเพื่อวัตถุประสงค์ทางสถิติและการพัฒนา</h1>
+                <h2 class="text-xl font-bold text-black mb-4">(Product and Service Development Privacy Policy)</h2>
+                <div class="w-24 h-0.5 bg-black mx-auto mb-6"></div>
+                <p class="font-bold text-gray-800">บริษัท ซุปเปอร์นัมเบอร์ จำกัด</p>
+                <p class="text-sm text-gray-500 mt-8 text-right">ฉบับวันที่ {{ \Carbon\Carbon::now()->format('j F 2568') }}</p>
             </div>
 
-            <div class="p-10 md:p-16">
-                <div class="prose prose-lg prose-brown max-w-none">
-                    <h2 class="text-2xl font-bold text-brown-800 mb-6 flex items-center gap-3">
-                        <span class="w-2 h-8 bg-gold-400 rounded-full"></span>
-                        ทำไมเราจึงต้องพัฒนา?
-                    </h2>
-                    <p class="leading-relaxed text-brown-600 mb-8">
-                        บริษัท ซุปเปอร์นัมเบอร์ จำกัด ("บริษัทฯ") มีความมุ่งมั่นที่จะไม่หยุดนิ่งในการคัดสรรและวิเคราะห์เบอร์มงคล การที่คุณยินยอมให้นำข้อมูลบางส่วนไปใช้ในการวิเคราะห์จะช่วยให้:
-                    </p>
+            <!-- Document Content -->
+            <div class="document-body text-[#333] leading-relaxed text-base">
+                <h3 class="font-bold text-lg mb-4 text-[#2a5d34] border-l-4 border-[#2a5d34] pl-4">2. ความยินยอมเพื่อพัฒนาสินค้าหรือบริการให้ดียิ่งขึ้น</h3>
+                
+                <p class="mb-6">
+                    เพื่อให้การเข้าถึงบริการจัดหาเบอร์มงคลของท่านได้รับความพึงพอใจสูงสุด บริษัท ซุปเปอร์นัมเบอร์ จำกัด (บริษัทฯ) มีความประสงค์จะขอความยินยอมจากท่านในการนำข้อมูลไปวิเคราะห์และประมวลผลเพื่อการพัฒนา โดยมีรายละเอียดดังต่อไปนี้:
+                </p>
 
-                    <div class="grid md:grid-cols-2 gap-6 mb-12">
-                        <div class="p-8 rounded-3xl bg-brown-50 border border-brown-100 text-center hover:shadow-lg transition-all">
-                            <div class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center mx-auto mb-4 shadow-sm text-gold-600">📊</div>
-                            <h4 class="font-bold text-brown-800 mb-2">วิเคราะห์ความต้องการ</h4>
-                            <p class="text-sm text-brown-600">ช่วยระบุว่าเบอร์มงคลกลุ่มไหนที่เป็นที่ต้องการ และจัดหาเบอร์ใหม่ๆ มาให้คุณได้ไวกว่าเดิม</p>
+                <div class="space-y-10">
+                    <section>
+                        <h4 class="font-bold text-black mb-3">1. ลักษณะของข้อมูลที่นำไปประมวลผล</h4>
+                        <p class="mb-2">บริษัทฯ จะนำข้อมูลในรูปแบบสถิติหรือข้อมูลที่ไม่สามารถระบุตัวบุคคลได้โดยตรง (Pseudo-anonymized Data) มาดำเนินการ ดังนี้:</p>
+                        <ul class="list-disc pl-6 space-y-1">
+                            <li>พฤติกรรมการค้นหาและรูปแบบการเลือกหมวดหมู่เบอร์มงคล</li>
+                            <li>ระยะเวลาการใช้งานในแต่ละส่วนของเว็บไซต์ และอัตราการโต้ตอบกับระบบ AI แนะนำเบอร์</li>
+                            <li>อุปกรณ์และช่องทางที่ใช้เข้าถึงบริการ เพื่อเพิ่มประสิทธิภาพการแสดงผล</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h4 class="font-bold text-black mb-3 text-[#2a5d34]">2. วัตถุประสงค์ในการวิเคราะห์ (Analysis Purposes)</h4>
+                        <p class="mb-4">ข้อมูลของท่านจะมีส่วนช่วยในการสร้างสรรค์ระบบที่แม่นยำยิ่งขึ้น ดังนี้:</p>
+                        <div class="pl-4 border-l-2 border-gray-100 space-y-4">
+                            <p><strong>2.1 การพัฒนาระบบ AI พยากรณ์:</strong> เพื่อประมวลผลว่าศาสตร์พยากรณ์รวมถึงกลุ่มตัวเลขใดที่มีอิทธิพลต่อความต้องการของผู้ใช้ เพื่อปรับปรุงอัลกอริทึมการแนะนำเบอร์ให้ตรงจุด</p>
+                            <p><strong>2.2 การเพิ่มประสิทธิภาพความปลอดภัย:</strong> วิเคราะห์รูปแบบการเข้าถึงเพื่อป้องกันการโจมตีทางเทคนิค และเสริมความแข็งแกร่งของระบบปกป้องข้อมูลสมาชิก</p>
+                            <p><strong>2.3 การปรับแต่งประสบการณ์ส่วนบุคคล:</strong> พัฒนาระบบแสดงผลเพื่อให้ท่านสามารถค้นหาเบอร์ที่เหมาะสมกับอาชีพและดวงชะตาได้ง่ายและรวดเร็วที่สุด</p>
                         </div>
-                        <div class="p-8 rounded-3xl bg-brown-50 border border-brown-100 text-center hover:shadow-lg transition-all">
-                            <div class="w-12 h-12 rounded-2xl bg-white flex items-center justify-center mx-auto mb-4 shadow-sm text-gold-600">🖥️</div>
-                            <h4 class="font-bold text-brown-800 mb-2">ปรับปรุงการใช้งาน</h4>
-                            <p class="text-sm text-brown-600">วิเคราะห์พฤติกรรมการใช้งานในเว็บ เพื่อปรับหน้าตาเว็บไซต์ให้ใช้ง่ายขึ้น รวดเร็วขึ้น และปลอดภัยขึ้น</p>
-                        </div>
-                    </div>
+                    </section>
 
-                    <h2 class="text-2xl font-bold text-brown-800 mb-6 flex items-center gap-3">
-                        <span class="w-2 h-8 bg-gold-400 rounded-full"></span>
-                        ข้อมูลที่ใช้ในการวิเคราะห์
-                    </h2>
-                    <p class="text-brown-600 mb-6">ข้อมูลเหล่านี้จะถูกจัดเก็บในรูปแบบที่ไม่สามารถระบุตัวตนรายบุคคล (Anonymized) เพื่อใช้ในการสถิติจนถึงระดับสูงสุดของความปลอดภัย:</p>
-                    <ul class="space-y-4 mb-12">
-                        <li class="flex items-start gap-4 p-4 rounded-2xl bg-gold-50">
-                            <div class="text-gold-600 font-bold">01</div>
-                            <p class="text-sm text-brown-700">สถิติการคลิกดูเบอร์ในแต่ละหมวดหมู่ หรืออาชีพที่คุณสนใจ</p>
-                        </li>
-                        <li class="flex items-start gap-4 p-4 rounded-2xl bg-gold-50">
-                            <div class="text-gold-600 font-bold">02</div>
-                            <p class="text-sm text-brown-700">ข้อมูลการค้นหาเบอร์ เพื่อให้ระบบ AI แนะนำเบอร์มงคลได้แม่นยำยิ่งขึ้น</p>
-                        </li>
-                        <li class="flex items-start gap-4 p-4 rounded-2xl bg-gold-50">
-                            <div class="text-gold-600 font-bold">03</div>
-                            <p class="text-sm text-brown-700">การวัดประสิทธิภาพของแคมเปญต่างๆ เพื่อมอบส่วนลดได้ตรงใจคุณในอนาคต</p>
-                        </li>
-                    </ul>
+                    <section>
+                        <h4 class="font-bold text-black mb-3">3. การคุ้มครองข้อมูลในระหว่างการพัฒนา</h4>
+                        <p>บริษัทฯ ขอยืนยันว่าการประมวลผลข้อมูลเพื่อการพัฒนาจะกระทำผ่านระบบปิด (Dedicated Environment) โดยจำกัดสิทธิการเข้าถึงข้อมูลเฉพาะเจ้าหน้าที่วิจัยและพัฒนาที่ได้รับมอบหมายเท่านั้น และข้อมูลจะถูกทำลายทันทีเมื่อบรรลุวัตถุประสงค์ในการจัดทำสถิติ</p>
+                    </section>
 
-                    <div class="p-8 bg-brown-900 rounded-[30px] text-white flex gap-6 items-center">
-                        <div class="flex-shrink-0 text-3xl">💡</div>
-                        <p class="text-sm opacity-90 leading-relaxed">
-                            ความยินยอมของคุณคือแรงผลักดันสำคัญที่ทำให้เราสามารถวิจัยและพัฒนาวิชาพยากรณ์รวมถึงเทคโนโลยีการคัดเบอร์มงคลให้ดียิ่งขึ้นในทุกๆ วัน
-                        </p>
-                    </div>
+                    <section>
+                        <h4 class="font-bold text-black mb-3">4. การเพิกถอนความยินยอม</h4>
+                        <p>ท่านสามารถใช้สิทธิในการระงับการให้ข้อมูลเพื่อการพัฒนาได้ทุกเวลา โดยจะไม่มีผลกระทบต่อการรับบริการพื้นฐานในการสั่งซื้อเบอร์มงคลตามปกติของท่าน</p>
+                    </section>
+                </div>
+
+                <div class="mt-16 p-8 bg-gray-50 border border-gray-200 rounded-none italic text-sm text-gray-600">
+                    <p>เอกสารฉบับนี้จัดทำขึ้นภายใต้มาตรฐาน PDPA เพื่อความเป็นส่วนตัวสูงสุดของลูกค้าซุปเปอร์นัมเบอร์</p>
                 </div>
             </div>
+
+            <!-- Page Texture Overlay -->
+            <div class="absolute inset-0 pointer-events-none opacity-[0.03] bg-[url('https://www.transparenttextures.com/patterns/paper-fibers.png')]"></div>
         </div>
 
-        <div class="text-center mt-12 content-nav flex flex-wrap justify-center gap-4">
-            <a href="{{ route('privacy.personal') }}" class="px-8 py-3 border-2 border-brown-200 text-brown-600 rounded-full font-bold hover:bg-brown-50 transition-all">&larr; กลับหน้าจัดเก็บข้อมูล</a>
-            <a href="{{ route('privacy.marketing') }}" class="px-8 py-3 bg-brown-800 text-white rounded-full font-bold hover:bg-brown-900 transition-all shadow-lg">ถัดไป: โปรโมชั่น &rarr;</a>
+        <!-- Navigation Buttons -->
+        <div class="mt-12 flex justify-between items-center px-4">
+            <a href="{{ route('privacy.personal') }}" class="text-gray-500 hover:text-black transition-all flex items-center gap-2">
+                &larr; กลับหน้าที่ 1
+            </a>
+            <div class="flex gap-4">
+                <a href="{{ route('privacy.marketing') }}" class="px-8 py-3 bg-[#2a5d34] text-white font-bold hover:bg-[#1e4a26] transition-all shadow-md">
+                    ฉบับที่ 3: โปรโมชั่น &rarr;
+                </a>
+            </div>
         </div>
     </div>
 </div>
 
 <style>
-    .privacy-page { font-family: 'Sarabun', sans-serif; line-height: 1.7; color: #3b2f27; }
-    .privacy-card { overflow: hidden; border: 1px solid #eee5d8; }
-    .privacy-card__header { padding: 60px 40px; background: #2a2321; }
-    .privacy-icon { 
-        width: 80px; 
-        height: 80px; 
-        background: linear-gradient(135deg, #f3ca7a 0%, #d8a34a 100%);
-        border-radius: 24px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin: 0 auto 24px;
-        box-shadow: 0 10px 25px rgba(216, 163, 74, 0.3);
-    }
-    .privacy-icon svg { width: 40px; height: 40px; color: #2a2321; }
-    .bg-brown-50 { background-color: #fbf9f6; }
-    .bg-gold-50 { background-color: #fefcf5; }
-    .text-gold-200 { color: #f3ca7a; }
-    .text-gold-400 { color: #d8a34a; }
-    .text-gold-600 { color: #d8a34a; }
-    .text-gold-700 { color: #b78a3c; }
-    .border-gold-100 { border-color: #eee5d8; }
-    .border-brown-100 { border-color: #f0e8db; }
+    @import url('https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,700;1,400&display=swap');
+    .paper-page-container { font-family: 'Sarabun', sans-serif; }
+    .paper-document { min-height: 1000px; border: 1px solid #ddd; }
+    .document-body h3 { color: #2a5d34; }
 </style>
 @endsection
