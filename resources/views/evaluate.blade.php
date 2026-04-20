@@ -14,22 +14,27 @@
     .theme-overview__grid,
     .pair-grid {
       display: grid !important;
-      grid-template-columns: repeat(2, 1fr) !important;
-      gap: 15px !important;
+      grid-template-columns: repeat(3, 1fr) !important;
+      gap: 20px !important;
     }
 
     .pair-card {
       grid-template-columns: 1fr !important;
       gap: 12px !important;
       text-align: center !important;
-      padding: 20px !important;
+      padding: 24px !important;
+      height: 100% !important;
+      display: flex !important;
+      flex-direction: column !important;
     }
+
     .pair-score-container {
       display: flex !important;
       justify-content: center !important;
       gap: 10px !important;
-      margin-bottom: 16px !important;
+      margin-bottom: 20px !important;
     }
+
     .pair-score-item {
       width: 55px !important;
       height: 55px !important;
@@ -42,10 +47,11 @@
       background: #10b981 !important;
       color: #fff !important;
     }
+
     .pair-card h4 {
       text-align: center !important;
-      margin-bottom: 10px !important;
-      font-size: 16px !important;
+      margin-bottom: 12px !important;
+      font-size: 18px !important;
       font-weight: 700 !important;
     }
     .pair-card p {
