@@ -24,11 +24,16 @@
       text-align: center !important;
       padding: 20px !important;
     }
-    .pair-score {
-      margin: 0 auto 16px !important;
-      width: 80px !important;
-      height: 50px !important;
-      font-size: 18px !important;
+    .pair-score-container {
+      display: flex !important;
+      justify-content: center !important;
+      gap: 10px !important;
+      margin-bottom: 16px !important;
+    }
+    .pair-score-item {
+      width: 55px !important;
+      height: 55px !important;
+      font-size: 20px !important;
       font-weight: 800 !important;
       display: flex !important;
       align-items: center !important;
@@ -344,15 +349,20 @@
     $hasBadPair = false;
     $warningThemePairs = ['33', '47', '74'];
     $hasWarningPair = count(array_intersect($pairs, $warningThemePairs)) > 0;
-    foreach ($pairs as $index => $pair) {
-        $meaning = $pairMeaningMap->get($pair)
-            ?? $pairMeaningMap->get(strrev($pair));
+    foreach ($groupedPairs as $group) {
+        $label = $group['key'];
+        if (strlen($label) === 2 && $label[0] !== $label[1]) {
+            $label = $label . ' ' . strrev($label);
+        }
+        $meaning = $pairMeaningMap->get($group['primary_pair'])
+            ?? $pairMeaningMap->get($group['key'])
+            ?? $pairMeaningMap->get(strrev($group['key']));
         $status = $meaning?->status ?? 'neutral';
         if ($status === 'bad') {
             $hasBadPair = true;
         }
         $pairCards[] = [
-            'pair' => $pair,
+            'pair' => $label,
             'status' => $status,
             'label' => $statusLabelMap[$status] ?? 'เลขทั่วไป',
             'heading' => $pairHeadingMap[$status] ?? 'คู่เลขดีกับคู่เลขเสีย',
@@ -495,7 +505,13 @@
       <div class="pair-grid">
         @foreach ($pairCards as $card)
           <article class="pair-card {{ $card['class'] }}">
-            <div class="pair-score">{{ $card['pair'] }}</div>
+            <div class="pair-score-container">
+              @foreach(explode(' ', $card['pair']) as $p)
+                @if(trim($p) !== '')
+                  <div class="pair-score-item">{{ $p }}</div>
+                @endif
+              @endforeach
+            </div>
             <h4>{{ $card['heading'] }}</h4>
             <p>{{ $card['desc'] }}</p>
           </article>
