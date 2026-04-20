@@ -17,6 +17,25 @@
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
       gap: 15px !important;
     }
+    @media (max-width: 480px) {
+      .theme-overview__grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+      }
+      
+      /* New Mobile Organization for Pairs */
+      .pair-card {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+        text-align: center !important;
+      }
+      .pair-card__badge {
+        margin: 0 auto !important;
+      }
+      .pair-card__text h3 {
+        justify-content: center !important;
+      }
+    }
   </style>
   @php
     $rawPhone = $phone ?? request('phone');
@@ -431,7 +450,6 @@
       <section class="theme-overview" aria-labelledby="theme-overview-title">
         <div class="theme-overview__heading">
           <h2 id="theme-overview-title">ภาพรวมหมวดที่เบอร์นี้ส่งเสริม</h2>
-          <p>แสดงผลจากหมวดวิเคราะห์ของระบบแบบภาพรวม เพื่อให้ดูออกทันทีว่าด้านไหนของเบอร์นี้เด่นมากหรือน้อย</p>
         </div>
         <div class="theme-overview__grid">
           @foreach ($topicOverviewCards as $topicCard)
