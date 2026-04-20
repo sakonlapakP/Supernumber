@@ -667,6 +667,8 @@ Route::get('/sales-documents', function () {
 Route::get('/contact-us', [PublicController::class, 'contact'])->name('contact');
 Route::post('/contact-us', [PublicController::class, 'storeContact'])->middleware('throttle:contact-messages')->name('contact.store');
 
+Route::get('/privacy-policy', [PublicController::class, 'privacy'])->name('privacy');
+
 Route::post('/estimate', function (Request $request) use ($safelyRunLineNotification) {
     $data = $request->validate([
         'first_name' => ['required', 'string', 'max:120'],

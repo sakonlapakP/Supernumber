@@ -80,7 +80,7 @@
           <div class="privacy-option-card">
             <div class="privacy-option-card__head">
               <h3>1. ความยินยอมในการให้ข้อมูลส่วนบุคคล</h3>
-              <p>ความยินยอมในการเก็บรวบรวม ใช้ หรือเปิดเผยข้อมูลส่วนบุคคล เพื่อการลงชื่อเข้าใช้ และรับบริการต่างๆ รวมถึงการจัดทำเอกสารหรือสัญญา ตามวัตถุประสงค์ของลูกค้า <a href="#">ดูเพิ่มเติม</a></p>
+              <p>ความยินยอมในการเก็บรวบรวม ใช้ หรือเปิดเผยข้อมูลส่วนบุคคล เพื่อการลงชื่อเข้าใช้ และรับบริการต่างๆ รวมถึงการจัดทำเอกสารหรือสัญญา ตามวัตถุประสงค์ของลูกค้า <a href="{{ route('privacy') }}" target="_blank">ดูเพิ่มเติม</a></p>
             </div>
             <div class="privacy-option-card__controls">
               <label class="privacy-radio">
@@ -97,7 +97,7 @@
           <div class="privacy-option-card">
             <div class="privacy-option-card__head">
               <h3>2. ความยินยอมในการนำข้อมูลไปใช้เพื่อพัฒนาสินค้าหรือบริการให้ดียิ่งขึ้น</h3>
-              <p>เพื่อให้ท่านได้รับความพึงพอใจต่อบริการของเราอย่างต่อเนื่อง ทางบริษัทจะปรับปรุงและพัฒนาสินค้าและบริการให้ดียิ่งขึ้น <a href="#">ดูเพิ่มเติม</a></p>
+              <p>เพื่อให้ท่านได้รับความพึงพอใจต่อบริการของเราอย่างต่อเนื่อง ทางบริษัทจะปรับปรุงและพัฒนาสินค้าและบริการให้ดียิ่งขึ้น <a href="{{ route('privacy') }}" target="_blank">ดูเพิ่มเติม</a></p>
             </div>
             <div class="privacy-option-card__controls">
               <label class="privacy-radio">
@@ -114,7 +114,7 @@
           <div class="privacy-option-card">
             <div class="privacy-option-card__head">
               <h3>3. ความยินยอมให้บริษัทนำเสนอผลิตภัณฑ์ บริการ หรือโปรโมชั่นพิเศษ</h3>
-              <p>เพื่อให้ท่านไม่พลาดข้อเสนอพิเศษของผลิตภัณฑ์หรือบริการ ทางเราขอเรียนเชิญให้ท่านเข้าร่วมกิจกรรมต่างๆ <a href="#">ดูเพิ่มเติม</a></p>
+              <p>เพื่อให้ท่านไม่พลาดข้อเสนอพิเศษของผลิตภัณฑ์หรือบริการ ทางเราขอเรียนเชิญให้ท่านเข้าร่วมกิจกรรมต่างๆ <a href="{{ route('privacy') }}" target="_blank">ดูเพิ่มเติม</a></p>
             </div>
             <div class="privacy-option-card__controls">
               <label class="privacy-radio">
@@ -129,7 +129,7 @@
           </div>
 
           <p style="margin: 0; font-size: 13px; color: #7a6c62;">
-            คุณสามารถอ่านรายละเอียดเพิ่มเติมได้ที่: <a href="#" style="color: #d8a34a; font-weight: 600; text-decoration: underline;">คลิก</a>
+            คุณสามารถอ่านรายละเอียดเพิ่มเติมได้ที่: <a href="{{ route('privacy') }}" target="_blank" style="color: #d8a34a; font-weight: 600; text-decoration: underline;">คลิก</a>
           </p>
         </div>
 

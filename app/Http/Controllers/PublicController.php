@@ -449,6 +449,14 @@ class PublicController extends Controller
     }
 
     /**
+     * Privacy policy page
+     */
+    public function privacy()
+    {
+        return view('privacy');
+    }
+
+    /**
      * Helper to resolve lottery result
      */
     protected function resolveLotteryResultForArticle(Article $article): ?LotteryResult
