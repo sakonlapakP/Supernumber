@@ -15,27 +15,25 @@
     .pair-grid {
       display: grid !important;
       grid-template-columns: repeat(2, 1fr) !important;
-      gap: 15px !important;
+      gap: 12px !important;
     }
 
     .pair-card {
       grid-template-columns: 1fr !important;
-      gap: 12px !important;
+      gap: 10px !important;
       text-align: center !important;
-      padding: 20px !important;
+      padding: 15px !important;
     }
     .pair-badge {
       margin: 0 auto !important;
     }
     .pair-card__text h3 {
       justify-content: center !important;
+      font-size: 16px !important;
     }
-
-    @media (max-width: 580px) {
-      .theme-overview__grid,
-      .pair-grid {
-        grid-template-columns: 1fr !important;
-      }
+    .pair-card__text p {
+      font-size: 14px !important;
+      line-height: 1.4 !important;
     }
   </style>
   @php
