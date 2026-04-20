@@ -9,9 +9,6 @@
         <article class="paper-document">
             <!-- Document Header -->
             <header class="doc-header">
-                <div class="doc-logo-area">
-                    <img src="{{ asset('images/supernumber-document-logo.png') }}" alt="Supernumber Logo" style="filter: grayscale(100%); opacity: 0.8;">
-                </div>
                 <h1 class="doc-title-main">นโยบายความเป็นส่วนตัวด้านกิจกรรมทางการตลาดและการแจ้งข่าวสาร</h1>
                 <h2 class="doc-title-sub">(Marketing and Communications Privacy Policy)</h2>
                 <div class="doc-hr"></div>
