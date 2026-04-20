@@ -560,7 +560,7 @@ a[href^="tel"] {
 }
 
 .brand-mark {
-  font-family: "Kanit", sans-serif;
+  font-family: "Playfair Display", serif;
   font-size: 30px;
   font-weight: 600;
   width: 42px;
@@ -582,7 +582,7 @@ a[href^="tel"] {
 }
 
 .brand-title {
-  font-family: "Kanit", sans-serif;
+  font-family: "Playfair Display", serif;
   font-size: 16px;
   font-weight: 600;
   letter-spacing: 0.08em;
