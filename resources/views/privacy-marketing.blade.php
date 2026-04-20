@@ -20,48 +20,45 @@
             </div>
 
             <!-- Document Content -->
-            <div class="document-body text-[#333] leading-relaxed text-base">
-                <h3 class="font-bold text-lg mb-4 text-[#2a5d34] border-l-4 border-[#2a5d34] pl-4">3. การตลาดและโปรโมชั่นพิเศษ</h3>
+            <div class="document-body text-[#333] leading-relaxed text-base text-justify">
+                <h3 class="font-bold text-lg mb-6 text-[#2a5d34] border-l-4 border-[#2a5d34] pl-4 uppercase">นโยบายความเป็นส่วนตัวด้านกิจกรรมทางการตลาดและการแจ้งข่าวสาร</h3>
                 
                 <p class="mb-6">
-                    บริษัท ซุปเปอร์นัมเบอร์ จำกัด (บริษัทฯ) มีความมุ่งมั่นที่จะนำเสนอสิ่งที่ดีที่สุดให้แก่สมาชิกคนสำคัญ เพื่อให้ท่านไม่พลาดสิทธิประโยชน์และข้อมูลมงคลฉบับพิเศษ บริษัทฯ จึงใคร่ขอความยินยอมจากท่านในการสื่อสารข้อมูลทางการตลาด ดังต่อไปนี้:
+                    บริษัท ซุปเปอร์นัมเบอร์ จำกัด (บริษัทฯ) ตระหนักถึงความสําคัญของการสื่อสารที่มีคุณภาพและเป็นประโยชน์ต่อท่าน บริษัทฯ จึงใคร่ขอความยินยอมเพื่อส่งข้อมูลข่าวสารเกี่ยวกับผลิตภัณฑ์เบอร์มงคล การส่งเสริมการขาย และสิทธิพิเศษที่คัดสรรมาโดยเฉพาะ ดังนี้:
                 </p>
 
                 <div class="space-y-10">
                     <section>
-                        <h4 class="font-bold text-black mb-3">1. ประเภทของข้อมูลและข่าวสารที่จะได้รับ</h4>
-                        <p class="mb-2">หากท่านให้ความยินยอม ท่านจะได้รับสิทธิพิเศษที่คัดสรรมาเพื่อท่านโดยเฉพาะ ได้แก่:</p>
-                        <ul class="list-disc pl-6 space-y-1">
-                            <li><strong>รายการเบอร์มาใหม่ (New Arrivals):</strong> การแจ้งเตือนเมื่อมีกลุ่มเบอร์มงคลระดับพรีเมียมหรือเบอร์หายากเข้าสู่คลังก่อนใคร</li>
-                            <li><strong>ข้อเสนอส่งเสริมการขาย:</strong> โค้ดส่วนลดพิเศษ, แคมเปญจองเบอร์ราคาพิเศษ และสิทธิพิเศษในวันสำคัญต่างๆ</li>
-                            <li><strong>คอนเทนต์เสริมดวง:</strong> บทวิเคราะห์วิชาพยากรณ์รวมถึงเคล็ดลับการใช้ตัวเลขมงคลรายสัปดาห์</li>
+                        <h4 class="font-bold text-black mb-3 text-lg underline decoration-[#2a5d34] underline-offset-8">1. ประเภทข้อมูลและสิทธิประโยชน์ที่จะได้รับ</h4>
+                        <p class="mb-4">หากท่านให้ความยินยอม บริษัทฯ จะแจ้งข่าวสารที่เป็นประโยชน์ต่อท่าน ได้แก่:</p>
+                        <ul class="list-none pl-4 space-y-4 text-gray-700">
+                            <li><span class="font-bold text-black">● การแจ้งเตือนเบอร์เข้าใหม่ (Priority Notification):</span> สิทธิการเข้าถึงหมายเลขพรีเมียมมาใหม่ก่อนเปิดตัวต่อสาธารณะ</li>
+                            <li><span class="font-bold text-black">● ข้อเสนอเชิงพาณิชย์:</span> โค้ดส่วนลดและสิทธิการร่วมแคมเปญชำระเงินในราคาพิเศษสำหรับสมาชิก</li>
+                            <li><span class="font-bold text-black">● ข้อมูลวิชาพยากรณ์:</span> ข้อมูลความมูลาเตลูและดวงชะตาที่เกี่ยวข้องกับตัวเลขในชีวิตประจำวัน</li>
                         </ul>
                     </section>
 
                     <section>
-                        <h4 class="font-bold text-black mb-3 text-[#2a5d34]">2. ช่องทางการสื่อสาร (Communication Channels)</h4>
-                        <p class="mb-4">บริษัทฯ จะใช้ช่องทางที่เป็นทางการในการติดต่อท่าน ดังนี้:</p>
-                        <div class="grid grid-cols-2 gap-4">
-                            <div class="p-4 bg-gray-50 border border-gray-100 rounded-none text-center">จดหมายอิเล็กทรอนิกส์ (Email)</div>
-                            <div class="p-4 bg-gray-50 border border-gray-100 rounded-none text-center">ข้อความสั้น (SMS)</div>
-                            <div class="p-4 bg-gray-50 border border-gray-100 rounded-none text-center">แอปพลิเคชัน LINE Official</div>
-                            <div class="p-4 bg-gray-50 border border-gray-100 rounded-none text-center">การติดต่อผ่านโทรศัพท์ (Direct Call)</div>
+                        <h4 class="font-bold text-black mb-3 text-lg underline decoration-[#2a5d34] underline-offset-8">2. ช่องทางและการรักษาจรรยาบรรณในการสื่อสาร</h4>
+                        <p class="mb-4">บริษัทฯ จะใช้ช่องทางการสื่อสารที่ท่านได้เปิดเผยไว้ ดังนี้:</p>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                            <div class="p-3 bg-gray-50 border border-gray-100 text-center text-xs font-bold">อีเมล (Email)</div>
+                            <div class="p-3 bg-gray-50 border border-gray-100 text-center text-xs font-bold">เอสเอ็มเอส (SMS)</div>
+                            <div class="p-3 bg-gray-50 border border-gray-100 text-center text-xs font-bold">แอปพลิเคชัน LINE</div>
+                            <div class="p-3 bg-gray-50 border border-gray-100 text-center text-xs font-bold">แอปฯ สื่อสังคมออนไลน์</div>
                         </div>
+                        <p class="italic text-sm text-gray-600">บริษัทฯ จะดำเนินการสื่อสารภายใต้จรรยาบรรณการตลาด ไม่ส่งข้อมูลที่เป็นการรบกวน (Spam) และจะไม่นำข้อมูลของท่านไปขายต่อให้แก่บุคคลภายนอกโดยเด็ดขาด</p>
                     </section>
 
                     <section>
-                        <h4 class="font-bold text-black mb-3">3. มาตรฐานการปกป้องความเป็นส่วนตัวในการสื่อสาร</h4>
-                        <p>บริษัทฯ จะไม่ทำการสื่อสารข้อมูลในลักษณะที่ก่อให้เกิดความรำคาญ (Spam) โดยจะเลือกส่งข้อมูลที่คาดว่าจะเป็นประโยชน์ต่อท่านตามประวัติการใช้งานและดวงชะตาที่ท่านสนใจเป็นสำคัญ และจะไม่มีการเปิดเผยช่องทางการติดต่อของท่านให้แก่บริษัทโฆษณาภายนอกโดยเด็ดขาด</p>
-                    </section>
-
-                    <section>
-                        <h4 class="font-bold text-black mb-3">4. สิทธิในการยกเลิก (Opt-out Rights)</h4>
-                        <p>ท่านสามารถเพิกถอนความยินยอมในการรับข้อมูลทางการตลาดได้ทุกเมื่อผ่านลิงก์ยกเลิกรับข่าวสารในอีเมล หรือแจ้งความประสงค์ผ่านเจ้าหน้าที่ฝ่ายบริการลูกค้าของเรา โดยการยกเลิกนี้จะไม่มีค่าธรรมเนียมใดๆ ทั้งสิ้น</p>
+                        <h4 class="font-bold text-black mb-3 text-lg underline decoration-[#2a5d34] underline-offset-8">3. สิทธิในการเพิกถอนความยินยอม</h4>
+                        <p>ท่านมีสิทธิในการขอยกเลิกการรับข้อมูลข่าวสารทางการตลาดได้ทุกเวลา (Opt-out) โดยไม่มีเงื่อนไขและไม่มีค่าใช้จ่าย ผ่านช่องทางลิงก์ที่แนบไปในท้ายจดหมายข่าว หรือติดต่อเจ้าหน้าที่ลูกค้าสัมพันธ์ของเราโดยตรง</p>
                     </section>
                 </div>
 
-                <div class="mt-16 p-8 bg-gray-50 border border-gray-200 rounded-none italic text-sm text-gray-600">
-                    <p>สิทธิประโยชน์ของคุณคือหน้าที่ของเรา ขอบคุณที่ไว้วางใจให้ซุปเปอร์นัมเบอร์ดูแลความมงคลของคุณ</p>
+                <div class="mt-16 p-10 bg-[#f9fafb] border-2 border-dashed border-gray-200 text-sm text-gray-600">
+                    <p class="font-bold text-black mb-2 text-center text-base">ความยินยอมรับข่าวสารทางการตลาด</p>
+                    <p>ข้าพเจ้ายินยอมให้ บริษัท ซุปเปอร์นัมเบอร์ จำกัด วิเคราะห์ข้อมูลเบื้องต้นและจัดส่งข่าวสารสิทธิประโยชน์ รวมถึงโปรโมชั่นต่างๆ ตามช่องทางที่ข้าพเจ้าได้ระบุไว้ เพื่อประโยชน์สูงสุดในการรับบริการจากซุปเปอร์นัมเบอร์</p>
                 </div>
             </div>
 
