@@ -76,11 +76,23 @@
 </div>
 
 <style>
-    .privacy-page { font-family: 'Sarabun', sans-serif; }
-    .bg-brown-900 { background-color: #2a2321; }
+    .privacy-page { font-family: 'Sarabun', sans-serif; line-height: 1.7; color: #3b2f27; }
+    .privacy-card { overflow: hidden; border: 1px solid #eee5d8; }
+    .privacy-card__header { padding: 60px 40px; background: #2a2321; }
+    .privacy-icon { 
+        width: 80px; 
+        height: 80px; 
+        background: linear-gradient(135deg, #f3ca7a 0%, #d8a34a 100%);
+        border-radius: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 24px;
+        box-shadow: 0 10px 25px rgba(216, 163, 74, 0.3);
+    }
+    .privacy-icon svg { width: 40px; height: 40px; color: #2a2321; }
     .bg-brown-50 { background-color: #fbf9f6; }
     .bg-gold-50 { background-color: #fefcf5; }
-    .bg-gold-500 { background: linear-gradient(135deg, #f3ca7a 0%, #d8a34a 100%); }
     .text-gold-200 { color: #f3ca7a; }
     .text-gold-400 { color: #d8a34a; }
     .text-gold-600 { color: #d8a34a; }
