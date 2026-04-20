@@ -40,7 +40,7 @@
       </p>
       <p>อีเมล: <a href="mailto:contact@supernumber.co.th">contact@supernumber.co.th</a></p>
       <p>เวลาทำการ: จันทร์ - ศุกร์ (09:00 - 18:00 น.)</p>
-      <p>ที่อยู่: 99/9 ถนนตัวอย่าง แขวงตัวอย่าง เขตตัวอย่าง กรุงเทพมหานคร</p>
+      <p>ที่อยู่: 1414 ถนนพระราม 4 แขวงคลองเตย เขตคลองเตย กรุงเทพมหานคร</p>
       <p class="footer-copy">www.supernumber.co.th All rights reserved.</p>
     </div>
     <div class="footer-social">
