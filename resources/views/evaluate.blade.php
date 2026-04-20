@@ -14,15 +14,8 @@
     /* Two-column layout for topic overview */
     .theme-overview__grid {
       display: grid !important;
-      grid-template-columns: repeat(2, 1fr) !important;
-      gap: 20px !important;
-    }
-
-    @media (max-width: 768px) {
-      .theme-overview__grid {
-        grid-template-columns: 1fr !important;
-        gap: 12px !important;
-      }
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+      gap: 15px !important;
     }
   </style>
   @php
