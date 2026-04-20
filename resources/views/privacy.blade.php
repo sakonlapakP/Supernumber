@@ -30,7 +30,7 @@
         <!-- Paper Document Area -->
         <div class="paper-content-area">
             
-            <!-- SECTION 1: PERSONAL -->
+            <!-- SECTION 1: PERSONAL (FULL CONTENT RESTORED) -->
             <article class="paper-document doc-section-content active" id="personal">
                 <header class="doc-header">
                     <h1 class="doc-title-main">นโยบายการรักษาความมั่นคงปลอดภัยข้อมูลส่วนบุคคล</h1>
@@ -91,9 +91,45 @@
                         </section>
 
                         <section class="doc-inner-section">
-                            <h4 class="sub-section-title">3. สิทธิเกี่ยวกับข้อมูลส่วนบุคคลของท่าน</h4>
+                            <h4 class="sub-section-title">4. การขอความยินยอมและผลกระทับจากการถอนความยินยอม</h4>
+                            <p class="section-desc">ในกรณีที่เราประมวลผลข้อมูลโดยอาศัยความยินยอม ท่านมีสิทธิถอนความยินยอมได้ทุกเมื่อ โดยไม่กระทบต่อการประมวลผลที่เกิดขึ้นก่อนหน้า:</p>
+                            <ul class="bullet-list">
+                                <li>หากท่านถอนความยินยอมหรือปฏิเสธไม่ให้ข้อมูลบางส่วน อาจส่งผลให้บริษัทฯ ไม่สามารถให้บริการวิเคราะห์พยากรณ์เบอร์มงคล หรือดำเนินการตามคำสั่งซื้อให้บรรลุวัตถุประสงค์ได้</li>
+                                <li><strong>กรณีผู้เยาว์:</strong> หากท่านอายุไม่ครบ 20 ปีบริบูรณ์ หรือเป็นผู้ไร้ความสามารถ/เสมือนไร้ความสามารถ โปรดแจ้งรายละเอียด "ผู้ใช้อำนาจปกครองหรือผู้แทนโดยชอบธรรม" ให้เราทราบเพื่อดำเนินการขอความยินยอมอย่างถูกต้องตามกฎหมาย</li>
+                            </ul>
+                        </section>
+
+                        <section class="doc-inner-section">
+                            <h4 class="sub-section-title">5. ระยะเวลาในการเก็บรักษาข้อมูลส่วนบุคคล</h4>
+                            <p class="section-desc">บริษัทฯ จะเก็บรักษาข้อมูลของท่านในระยะเวลาที่จำเป็นตามวัตถุประสงค์:</p>
+                            <ul class="bullet-list">
+                                <li>เราจะเก็บข้อมูลไว้ตามระยะเวลาที่คาดหมายได้ตามมาตรฐานการให้บริการ หรือตามที่กฎหมายกำหนด (เช่น กฎหมายภาษีอากร กฎหมายคอมพิวเตอร์)</li>
+                                <li>บริษัทฯ มีระบบตรวจสอบเพื่อลบหรือทำลายข้อมูลเมื่อพ้นกำหนดระยะเวลา หรือเมื่อข้อมูลนั้นไม่มีความจำเป็นอีกต่อไป</li>
+                                <li>กรณีท่านยกเลิกความยินยอม เราจะเก็บข้อมูลไว้เพียงเท่าที่จำเป็นสำหรับบันทึกประวัติ (Log) เพื่ออ้างอิงการใช้สิทธิในอนาคตเท่านั้น</li>
+                            </ul>
+                        </section>
+
+                        <section class="doc-inner-section">
+                            <h4 class="sub-section-title">6. การเปิดเผยข้อมูลส่วนบุคคลให้บุคคลอื่น</h4>
+                            <p class="section-desc">เพื่อบรรลุวัตถุประสงค์ข้างต้น เราอาจแบ่งปันข้อมูลของท่านให้แก่บุคคลภายนอก ดังนี้:</p>
+                            <ul class="bullet-list">
+                                <li><strong>กลุ่มพันธมิตรและนิติบุคคลอื่น:</strong> เช่น ผู้แทนจำหน่าย, ผู้ให้บริการขนส่ง (ไปรษณีย์/Kerry/Flash), ผู้ให้บริการทางการเงินและธนาคารเพื่อการชำระเงิน</li>
+                                <li><strong>ผู้ให้บริการทางด้านเทคโนโลยี:</strong> ระบบคลาวด์ (Cloud Computing), บริการส่ง SMS มงคล, บริการวิเคราะห์ข้อมูลสถิติ (Data Analytics), และที่ปรึกษาด้านระบบไอที</li>
+                                <li><strong>หน่วยงานของรัฐ:</strong> กรมสรรพากร, สำนักงานตำรวจแห่งชาติ หรือหน่วยงานอื่นๆ ที่มีอำนาจตามกฎหมาย</li>
+                            </ul>
+                        </section>
+
+                        <section class="doc-inner-section">
+                            <h4 class="sub-section-title">7. การส่งหรือโอนข้อมูลไปต่างประเทศ</h4>
+                            <p class="section-desc">บริษัทฯ อาจเก็บข้อมูลของท่านบนระบบคลาวด์หรือใช้ซอฟต์แวร์ในรูปแบบ SaaS/PaaS จากผู้ให้บริการต่างประเทศที่มีชื่อเสียงระดับสากล โดยเราจะกำหนดให้มีมาตรการคุ้มครองความปลอดภัยที่เหมาะสม และไม่อนุญาตให้บุคคลที่ไม่เกี่ยวข้องเข้าถึงข้อมูลได้โดยเด็ดขาด</p>
+                        </section>
+
+                        <section class="doc-inner-section">
+                            <h4 class="sub-section-title">8. มาตรการความปลอดภัยและสิทธิของท่าน</h4>
+                            <p class="section-desc">ความปลอดภัยของท่านคือสิ่งสำคัญที่สุด เรานำมาตรฐานความปลอดภัยทางเทคนิค (Technical Measures) และการบริหารจัดการ (Organizational Measures) มาใช้เพื่อป้องกันการสูญหาย การเข้าถึง หรือการใช้ข้อมูลโดยมิชอบ:</p>
+                            
                             <div class="rights-area">
-                                <p style="font-weight: 700; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 15px;">สิทธิ 8 ประการตามกฎหมาย PDPA:</p>
+                                <p style="font-weight: 700; border-bottom: 1px solid #ddd; padding-bottom: 10px; margin-bottom: 15px;">สิทธิเกี่ยวกับข้อมูลส่วนบุคคลของท่าน (8 ประการ):</p>
                                 <div class="rights-grid">
                                     <span><strong>1. การเข้าถึง:</strong> ขอสำเนาข้อมูลส่วนบุคคล</span>
                                     <span><strong>2. การแก้ไข:</strong> ปรับปรุงข้อมูลให้ถูกต้อง</span>
@@ -105,12 +141,13 @@
                                     <span><strong>8. การร้องเรียน:</strong> ร้องเรียนต่อหน่สยงานรัฐ</span>
                                 </div>
                             </div>
+                            <p style="font-size: 12px; color: #666; margin-top: 15px;">* บริษัทฯ จะพิจารณาและแจ้งผลคำร้องขอใช้สิทธิของท่านภายใน 30 วันนับแต่วันที่ได้รับคำร้อง</p>
                         </section>
                     </div>
                 </div>
             </article>
 
-            <!-- SECTION 2: DEVELOPMENT -->
+            <!-- SECTION 2: DEVELOPMENT (FULL CONTENT RESTORED) -->
             <article class="paper-document doc-section-content" id="development">
                 <header class="doc-header">
                     <h1 class="doc-title-main">นโยบายการคุ้มครองข้อมูลส่วนบุคคลเพื่อการวิจัยและพัฒนา</h1>
@@ -128,28 +165,42 @@
 
                     <div class="doc-sections">
                         <section class="doc-inner-section">
-                            <h4 class="sub-section-title">1. วัตถุประสงค์และประโยชน์ที่ท่านจะได้รับ</h4>
+                            <h4 class="sub-section-title">1. ประเภทข้อมูลและเทคนิคการประมวลผล</h4>
+                            <p class="section-desc">เพื่อให้เป็นไปตามหลักการลดการใช้ข้อมูล (Data Minimization) บริษัทฯ จะใช้วิธีการดังต่อไปนี้:</p>
+                            <ul class="bullet-list">
+                                <li><span class="label">(ก) การทำให้ข้อมูลเป็นนามแฝง (Pseudonymization):</span> การนำข้อมูลพฤติกรรมการค้นหาเบอร์มาแปลงรหัสเพื่อให้ไม่สามารถระบุถึงตัวบุคคลได้ในระหว่างขั้นตอนการวิจัย</li>
+                                <li><span class="label">(ข) ข้อมูลทางสถิติการใช้งาน:</span> สถิติการเข้าถึงหมวดหมู่เบอร์มงคลต่างๆ ความนิยมของกลุ่มตัวเลขแยกตามกลุ่มความต้องการ</li>
+                            </ul>
+                        </section>
+                        
+                        <section class="doc-inner-section">
+                            <h4 class="sub-section-title">2. วัตถุประสงค์และประโยชน์ที่ท่านจะได้รับ</h4>
                             <div class="feature-box">
                                 <div class="feature-item">
                                     <p class="feature-title">การพัฒนาความแม่นยำของระบบพยากรณ์ (AI Accuracy)</p>
                                     <p class="feature-desc">วิเคราะห์รูปแบบตัวเลขเพื่อปรับปรุงอัลกอริทึมการแนะนำเบอร์มงคลให้สอดคล้องกับความต้องการของท่านมากขึ้น</p>
                                 </div>
                                 <div class="feature-item">
-                                    <p class="feature-title">การเพิ่มประสิทธิภาพความมั่นคงปลอดภัย</p>
+                                    <p class="feature-title">การเพิ่มประสิทธิภาพความมั่นคงปลอดภัยไซเบอร์</p>
                                     <p class="feature-desc">วิเคราะห์พฤติกรรมผิดปกติเพื่อป้องกันการรั่วไหลของข้อมูลและเสริมสร้างเกราะคุ้มกันความเป็นส่วนตัว</p>
                                 </div>
                             </div>
                         </section>
 
                         <section class="doc-inner-section">
-                            <h4 class="sub-section-title">2. มาตรการจำกัดสิทธิและการเก็บรักษา</h4>
-                            <p class="section-desc">ข้อมูลเพื่อการวิจัยจะถูกแยกเก็บไว้ในระบบฐานข้อมูลที่แยกอิสระ (Sandbox) และจำกัดสิทธิการเข้าถึงเฉพาะเจ้าหน้าที่ทีมเทคนิคที่เกี่ยวข้องเท่านั้น</p>
+                            <h4 class="sub-section-title">3. มาตรการจำกัดสิทธิการเข้าถึงข้อมูลเพื่อการวิจัย</h4>
+                            <p class="section-desc">ข้อมูลเพื่อการวิจัยและพัฒนาจะถูกแยกเก็บไว้ในระบบฐานข้อมูลที่แยกอิสระ (Sandbox Environment) โดยผู้ที่มีสิทธิเข้าถึงข้อมูลจะเป็นเพียงเจ้าหน้าที่เฉพาะกลุ่ม (Data Science & Engineer Team) ซึ่งผ่านการตรวจสอบประวัติและลงนามในสัญญาปกปิดความลับเท่านั้น</p>
+                        </section>
+                        
+                        <section class="doc-inner-section">
+                            <h4 class="sub-section-title">4. สิทธิในการคัดค้าน</h4>
+                            <p class="section-desc">ท่านมีสิทธิในการปฏิเสธการให้ข้อมูลเพื่อการวิจัยและพัฒนาได้ตลอดเวลา โดยการเพิกถอนความยินยอมนี้จะไม่ส่งผลกระทบต่อสิทธิในการเลือกซื้อหรือใช้บริการหลักของบริษัทฯ</p>
                         </section>
                     </div>
                 </div>
             </article>
 
-            <!-- SECTION 3: MARKETING -->
+            <!-- SECTION 3: MARKETING (FULL CONTENT RESTORED) -->
             <article class="paper-document doc-section-content" id="marketing">
                 <header class="doc-header">
                     <h1 class="doc-title-main">นโยบายความเป็นส่วนตัวด้านกิจกรรมทางการตลาด</h1>
@@ -160,9 +211,9 @@
                 </header>
 
                 <div class="doc-content">
-                    <h3 class="section-title">นโยบายกิจกรรมทางการตลาดและการแจ้งข่าวสาร</h3>
+                    <h3 class="section-title">นโยบายผลิตภัณฑ์และข่าวสาร</h3>
                     <p class="intro-text">
-                        บริษัทฯ ใคร่ขอความยินยอมเพื่อส่งข้อมูลข่าวสารเกี่ยวกับผลิตภัณฑ์เบอร์มงคล การส่งเสริมการขาย และสิทธิพิเศษที่คัดสรรมาโดยเฉพาะ เพื่อให้ท่านไม่พลาดโอกาสสำคัญ:
+                        บริษัทฯ ใคร่ขอความยินยอมเพื่อส่งข้อมูลข่าวสารเกี่ยวกับผลิตภัณฑ์เบอร์มงคล การส่งเสริมการขาย และสิทธิพิเศษที่คัดสรรมาโดยเฉพาะ เพื่อให้ท่านไม่พลาดโอกาสสำคัญ ดังนี้:
                     </p>
 
                     <div class="doc-sections">
@@ -176,8 +227,19 @@
                         </section>
 
                         <section class="doc-inner-section">
-                            <h4 class="sub-section-title">2. การเพิกถอนความยินยอม</h4>
-                            <p class="section-desc">ท่านมีสิทธิยกเลิกการรับข้อมูลข่าวสารทางการตลาด (Opt-out) ได้ทุกเวลา โดยไม่มีเงื่อนไขและไม่มีค่าใช้จ่าย ผ่านช่องทางที่ระบุไว้ในท้ายจดหมายข่าว</p>
+                            <h4 class="sub-section-title">2. ช่องทางและการรักษาจรรยาบรรณทางการสื่อสาร</h4>
+                            <div class="channels-grid">
+                                <span>อีเมล</span>
+                                <span>เอสเอ็มเอส (SMS)</span>
+                                <span>LINE Official</span>
+                                <span>โซเชียลมีเดีย</span>
+                            </div>
+                            <p class="section-desc" style="font-style: italic; font-size: 14px; margin-top: 15px;">บริษัทฯ จะดำเนินการสื่อสารภายใต้จรรยาบรรณการตลาด และจะไม่นำข้อมูลของท่านไปขายต่อให้แก่บุคคลภายนอกโดยเด็ดขาด</p>
+                        </section>
+
+                        <section class="doc-inner-section">
+                            <h4 class="sub-section-title">3. สิทธิในการเพิกถอนความยินยอม</h4>
+                            <p class="section-desc">ท่านมีสิทธิยกเลิกการรับข้อมูลข่าวสารทางการตลาด (Opt-out) ได้ทุกเวลา โดยไม่มีเงื่อนไขและไม่มีค่าใช้จ่าย ผ่านช่องทางที่ระบุไว้ในท้ายจดหมายข่าว หรือติดต่อเจ้าหน้าที่ของเราโดยตรง</p>
                         </section>
                     </div>
                 </div>
@@ -237,7 +299,7 @@
     @import url('https://fonts.googleapis.com/css2?family=Sarabun:ital,wght@0,300;0,400;0,700;1,400&display=swap');
     
     .paper-page-wrapper {
-        background-color: #f8f6f2; /* Warm subtle grey */
+        background-color: #f8f6f2;
         padding: 50px 20px;
         min-height: 100vh;
         font-family: 'Sarabun', sans-serif;
@@ -253,7 +315,7 @@
         align-items: start;
     }
     
-    /* Sidebar Styles - PREMIUM DARK/GOLD */
+    /* Sidebar Styles */
     .doc-sidebar {
         display: flex;
         flex-direction: column;
@@ -277,6 +339,7 @@
         cursor: pointer;
         border-radius: 4px;
         outline: none;
+        width: 100%;
     }
     
     .sidebar-item:hover {
@@ -287,8 +350,8 @@
     }
     
     .sidebar-item.active {
-        background-color: #2a2321; /* Brand Dark */
-        color: #d8a34a; /* Brand Gold */
+        background-color: #2a2321;
+        color: #d8a34a;
         border-color: #2a2321;
         box-shadow: 0 15px 30px rgba(42, 35, 33, 0.25);
     }
@@ -418,7 +481,7 @@
         margin-top: 20px;
     }
     
-    .data-list li {
+    .data-list li, .bullet-list li {
         margin-bottom: 15px;
         line-height: 1.7;
     }
@@ -489,10 +552,20 @@
         font-size: 16px;
     }
     
-    .feature-desc {
-        font-size: 14px;
-        color: #666;
-        line-height: 1.6;
+    .channels-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 10px;
+        margin-top: 15px;
+    }
+    
+    .channels-grid span {
+        padding: 15px;
+        background: #f9f7f4;
+        border: 1px solid #eee;
+        text-align: center;
+        font-size: 13px;
+        font-weight: 700;
     }
     
     .nav-back-button {
@@ -507,30 +580,23 @@
         box-shadow: 0 10px 20px rgba(0,0,0,0.1);
     }
     
-    .nav-back-button:hover {
-        background-color: #000;
-        transform: translateY(-2px);
-    }
-    
     @media (max-width: 1024px) {
         .paper-page-container {
             grid-template-columns: 1fr;
-            gap: 30px;
         }
         .doc-sidebar {
             position: static;
             flex-direction: row;
             overflow-x: auto;
             padding-bottom: 15px;
-            top: 0;
         }
         .sidebar-item {
             min-width: 300px;
         }
         .paper-document {
-            padding: 60px 30px;
+            padding: 60px 25px;
         }
-        .feature-box, .rights-grid {
+        .feature-box, .rights-grid, .channels-grid {
             grid-template-columns: 1fr;
         }
     }
