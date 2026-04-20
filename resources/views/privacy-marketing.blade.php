@@ -1,65 +1,88 @@
 @extends('layouts.app')
 
-@section('title', 'ความยินยอมเพื่อการตลาดและโปรโมชั่น - Supernumber')
+@section('title', 'นโยบายการตลาดและข่าวสาร - Supernumber')
 
 @section('content')
 <div class="paper-page-wrapper">
     <div class="paper-page-container">
-        <!-- Paper Document -->
-        <article class="paper-document">
-            <!-- Document Header -->
-            <header class="doc-header">
-                <h1 class="doc-title-main">นโยบายความเป็นส่วนตัวด้านกิจกรรมทางการตลาดและการแจ้งข่าวสาร</h1>
-                <h2 class="doc-title-sub">(Marketing and Communications Privacy Policy)</h2>
-                <div class="doc-hr"></div>
-                <p class="doc-company-name">บริษัท ซุปเปอร์นัมเบอร์ จำกัด</p>
-                <div class="doc-date">ฉบับวันที่ {{ \Carbon\Carbon::now()->format('j F 2568') }}</div>
-            </header>
-
-            <!-- Document Content -->
-            <div class="doc-content">
-                <h3 class="section-title">นโยบายความเป็นส่วนตัวด้านกิจกรรมทางการตลาดและการแจ้งข่าวสาร</h3>
-                
-                <p class="intro-text">
-                    บริษัท ซุปเปอร์นัมเบอร์ จำกัด (บริษัทฯ) ตระหนักถึงความสําคัญของการสื่อสารที่มีคุณภาพและเป็นประโยชน์ต่อท่าน บริษัทฯ จึงใคร่ขอความยินยอมเพื่อส่งข้อมูลข่าวสารเกี่ยวกับผลิตภัณฑ์เบอร์มงคล การส่งเสริมการขาย และสิทธิพิเศษที่คัดสรรมาโดยเฉพาะ ดังนี้:
-                </p>
-
-                <div class="doc-sections">
-                    <section class="doc-section">
-                        <h4 class="sub-section-title">1. ประเภทข้อมูลและสิทธิประโยชน์ที่จะได้รับ</h4>
-                        <p class="section-desc">หากท่านให้ความยินยอม บริษัทฯ จะแจ้งข่าวสารที่เป็นประโยชน์ต่อท่าน ได้แก่:</p>
-                        <ul class="data-list">
-                            <li><span class="label">● การแจ้งเตือนเบอร์เข้าใหม่ (Priority Notification):</span> สิทธิการเข้าถึงหมายเลขพรีเมียมมาใหม่ก่อนเปิดตัวต่อสาธารณะ</li>
-                            <li><span class="label">● ข้อเสนอเชิงพาณิชย์:</span> โค้ดส่วนลดและสิทธิการร่วมแคมเปญชำระเงินในราคาพิเศษสำหรับสมาชิก</li>
-                            <li><span class="label">● ข้อมูลวิชาพยากรณ์:</span> ข้อมูลความมูลาเตลูและดวงชะตาที่เกี่ยวข้องกับตัวเลขในชีวิตประจำวัน</li>
-                        </ul>
-                    </section>
-
-                    <section class="doc-section">
-                        <h4 class="sub-section-title">2. ช่องทางและการรักษาจรรยาบรรณในการสื่อสาร</h4>
-                        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0;">
-                            <div style="padding: 15px; background: #f9f9f9; border: 1px solid #eee; text-align: center; font-size: 12px; font-weight: 700;">อีเมล</div>
-                            <div style="padding: 15px; background: #f9f9f9; border: 1px solid #eee; text-align: center; font-size: 12px; font-weight: 700;">เอสเอ็มเอส</div>
-                            <div style="padding: 15px; background: #f9f9f9; border: 1px solid #eee; text-align: center; font-size: 12px; font-weight: 700;">LINE App</div>
-                            <div style="padding: 15px; background: #f9f9f9; border: 1px solid #eee; text-align: center; font-size: 12px; font-weight: 700;">Social Media</div>
-                        </div>
-                        <p style="font-style: italic; font-size: 14px; color: #666;">บริษัทฯ จะดำเนินการสื่อสารภายใต้จรรยาบรรณการตลาด ไม่ส่งข้อมูลที่เป็นการรบกวน (Spam) และจะไม่นำข้อมูลของท่านไปขายต่อให้แก่บุคคลภายนอกโดยเด็ดขาด</p>
-                    </section>
-
-                    <section class="doc-section">
-                        <h4 class="sub-section-title">3. สิทธิในการเพิกถอนความยินยอม</h4>
-                        <p class="section-desc">ท่านมีสิทธิในการขอยกเลิกการรับข้อมูลข่าวสารทางการตลาดได้ทุกเวลา (Opt-out) โดยไม่มีเงื่อนไขและไม่มีค่าใช้จ่าย ผ่านช่องทางลิงก์ที่แนบไปในท้ายจดหมายข่าว หรือติดต่อเจ้าหน้าที่ลูกค้าสัมพันธ์ของเราโดยตรง</p>
-                    </section>
+        <!-- Sidebar Menu (Comseven Style) -->
+        <aside class="doc-sidebar">
+            <a href="{{ route('privacy.personal') }}" class="sidebar-item">
+                <div class="sidebar-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
                 </div>
+                <span class="sidebar-text">นโยบายความเป็นส่วนตัวสำหรับลูกค้า</span>
+            </a>
+            <a href="{{ route('privacy.development') }}" class="sidebar-item">
+                <div class="sidebar-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v4m0 12v4M4.93 4.93l2.83 2.83m8.48 8.48l2.83 2.83M2 12h4m12 0h4M4.93 19.07l2.83-2.83m8.48-8.48l2.83-2.83"></path></svg>
+                </div>
+                <span class="sidebar-text">นโยบายเพื่อการวิจัยและพัฒนาสินค้า</span>
+            </a>
+            <a href="{{ route('privacy.marketing') }}" class="sidebar-item active">
+                <div class="sidebar-icon">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 5L6 9H2v6h4l5 4V5zM15.54 8.46a5 5 0 0 1 0 7.07"></path></svg>
+                </div>
+                <span class="sidebar-text">นโยบายความเป็นส่วนตัวด้านการตลาด</span>
+            </a>
+        </aside>
 
-            </div>
-        </article>
+        <!-- Paper Document Area -->
+        <div class="paper-content-area">
+            <article class="paper-document">
+                <!-- Document Header -->
+                <header class="doc-header">
+                    <h1 class="doc-title-main">นโยบายความเป็นส่วนตัวด้านกิจกรรมทางการตลาดและการแจ้งข่าวสาร</h1>
+                    <h2 class="doc-title-sub">(Marketing and Communications Privacy Policy)</h2>
+                    <div class="doc-hr"></div>
+                    <p class="doc-company-name">บริษัท ซุปเปอร์นัมเบอร์ จำกัด</p>
+                    <div class="doc-date">ฉบับวันที่ {{ \Carbon\Carbon::now()->format('j F 2568') }}</div>
+                </header>
 
-        <!-- Footer Nav -->
-        <nav class="doc-footer-nav">
-            <a href="{{ route('privacy.development') }}" class="nav-back">&larr; กลับหน้าที่ 2</a>
-            <a href="{{ route('home') }}" class="nav-next" style="background-color: #000;">กลับหน้าหลัก</a>
-        </nav>
+                <!-- Document Content -->
+                <div class="doc-content">
+                    <h3 class="section-title">นโยบายความเป็นส่วนตัวด้านกิจกรรมทางการตลาดและการแจ้งข่าวสาร</h3>
+                    
+                    <p class="intro-text">
+                        บริษัท ซุปเปอร์นัมเบอร์ จำกัด (บริษัทฯ) ตระหนักถึงความสําคัญของการสื่อสารที่มีคุณภาพและเป็นประโยชน์ต่อท่าน บริษัทฯ จึงใคร่ขอความยินยอมเพื่อส่งข้อมูลข่าวสารเกี่ยวกับผลิตภัณฑ์เบอร์มงคล การส่งเสริมการขาย และสิทธิพิเศษที่คัดสรรมาโดยเฉพาะ ดังนี้:
+                    </p>
+
+                    <div class="doc-sections">
+                        <section class="doc-section">
+                            <h4 class="sub-section-title">1. ประเภทข้อมูลและสิทธิประโยชน์ที่จะได้รับ</h4>
+                            <p class="section-desc">หากท่านให้ความยินยอม บริษัทฯ จะแจ้งข่าวสารที่เป็นประโยชน์ต่อท่าน ได้แก่:</p>
+                            <ul class="data-list">
+                                <li><span class="label">● การแจ้งเตือนเบอร์เข้าใหม่ (Priority Notification):</span> สิทธิการเข้าถึงหมายเลขพรีเมียมมาใหม่ก่อนเปิดตัวต่อสาธารณะ</li>
+                                <li><span class="label">● ข้อเสนอเชิงพาณิชย์:</span> โค้ดส่วนลดและสิทธิการร่วมแคมเปญชำระเงินในราคาพิเศษสำหรับสมาชิก</li>
+                                <li><span class="label">● ข้อมูลวิชาพยากรณ์:</span> ข้อมูลความมูลาเตลูและดวงชะตาที่เกี่ยวข้องกับตัวเลขในชีวิตประจำวัน</li>
+                            </ul>
+                        </section>
+
+                        <section class="doc-section">
+                            <h4 class="sub-section-title">2. ช่องทางและการรักษาจรรยาบรรณในการสื่อสาร</h4>
+                            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin: 20px 0;">
+                                <div style="padding: 15px; background: #f9f9f9; border: 1px solid #eee; text-align: center; font-size: 12px; font-weight: 700;">อีเมล</div>
+                                <div style="padding: 15px; background: #f9f9f9; border: 1px solid #eee; text-align: center; font-size: 12px; font-weight: 700;">เอสเอ็มเอส</div>
+                                <div style="padding: 15px; background: #f9f9f9; border: 1px solid #eee; text-align: center; font-size: 12px; font-weight: 700;">LINE App</div>
+                                <div style="padding: 15px; background: #f9f9f9; border: 1px solid #eee; text-align: center; font-size: 12px; font-weight: 700;">Social Media</div>
+                            </div>
+                            <p style="font-style: italic; font-size: 14px; color: #666;">บริษัทฯ จะดำเนินการสื่อสารภายใต้จรรยาบรรณการตลาด ไม่ส่งข้อมูลที่เป็นการรบกวน (Spam) และจะไม่นำข้อมูลของท่านไปขายต่อให้แก่บุคคลภายนอกโดยเด็ดขาด</p>
+                        </section>
+
+                        <section class="doc-section">
+                            <h4 class="sub-section-title">3. สิทธิในการเพิกถอนความยินยอม</h4>
+                            <p class="section-desc">ท่านมีสิทธิในการขอยกเลิกการรับข้อมูลข่าวสารทางการตลาดได้ทุกเวลา (Opt-out) โดยไม่มีเงื่อนไขและไม่มีค่าใช้จ่าย ผ่านช่องทางลิงก์ที่แนบไปในท้ายจดหมายข่าว หรือติดต่อเจ้าหน้าที่ลูกค้าสัมพันธ์ของเราโดยตรง</p>
+                        </section>
+                    </div>
+                </div>
+            </article>
+
+            <!-- Footer Nav -->
+            <nav class="doc-footer-nav">
+                <a href="{{ route('privacy.development') }}" class="nav-back">&larr; ย้อนกลับ: นโยบายวิจัยฯ</a>
+                <a href="{{ route('home') }}" class="nav-next" style="background-color: #000;">กลับหน้าหลัก</a>
+            </nav>
+        </div>
     </div>
 </div>
 
@@ -75,10 +98,70 @@
     }
     
     .paper-page-container {
-        max-width: 900px;
+        max-width: 1200px;
         margin: 0 auto;
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 40px;
+        align-items: start;
     }
     
+    /* Sidebar Styles */
+    .doc-sidebar {
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        position: sticky;
+        top: 40px;
+    }
+    
+    .sidebar-item {
+        background-color: #fff;
+        padding: 20px;
+        border: 1px solid #ddd;
+        text-decoration: none;
+        color: #333;
+        display: flex;
+        gap: 15px;
+        align-items: center;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+    }
+    
+    .sidebar-item:hover {
+        transform: translateX(5px);
+        border-color: #2a5d34;
+        color: #2a5d34;
+    }
+    
+    .sidebar-item.active {
+        background-color: #2a5d34;
+        color: #fff;
+        border-color: #2a5d34;
+        box-shadow: 0 8px 20px rgba(42, 93, 52, 0.2);
+    }
+    
+    .sidebar-icon {
+        flex-shrink: 0;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .sidebar-icon svg {
+        width: 20px;
+        height: 20px;
+    }
+    
+    .sidebar-text {
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.4;
+    }
+    
+    /* Paper Document Area */
     .paper-document {
         background-color: #fff;
         box-shadow: 0 10px 40px rgba(0,0,0,0.1);
@@ -90,11 +173,6 @@
     .doc-header {
         text-align: center;
         margin-bottom: 60px;
-    }
-    
-    .doc-logo-area img {
-        height: 50px;
-        margin-bottom: 25px;
     }
     
     .doc-title-main {
@@ -160,36 +238,19 @@
         gap: 40px;
     }
     
-    .data-list {
+    .data-list, .bullet-list {
         list-style: none;
         padding-left: 20px;
         margin-top: 15px;
     }
     
-    .data-list li {
+    .data-list li, .bullet-list li {
         margin-bottom: 10px;
     }
     
     .data-list .label {
         font-weight: 700;
         color: #000;
-    }
-    
-    .consent-box {
-        margin-top: 60px;
-        padding: 40px;
-        background-color: #f9fafb;
-        border: 2px dashed #ddd;
-        text-align: center;
-        font-size: 14px;
-        color: #555;
-    }
-    
-    .consent-title {
-        font-weight: 700;
-        color: #000;
-        font-size: 16px;
-        margin-bottom: 10px;
     }
     
     .doc-footer-nav {
@@ -210,6 +271,21 @@
         text-decoration: none;
         font-weight: 700;
         box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+    
+    @media (max-width: 1024px) {
+        .paper-page-container {
+            grid-template-columns: 1fr;
+        }
+        .doc-sidebar {
+            position: static;
+            flex-direction: row;
+            overflow-x: auto;
+            padding-bottom: 10px;
+        }
+        .sidebar-item {
+            min-width: 280px;
+        }
     }
     
     @media (max-width: 768px) {
