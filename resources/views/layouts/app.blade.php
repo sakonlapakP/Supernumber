@@ -55,7 +55,7 @@
           <h3 class="cookie-consent__title">ความยินยอมข้อมูลส่วนบุคคล</h3>
           <p class="cookie-consent__text">
             บริษัท ซุปเปอร์นัมเบอร์ จำกัด ใช้คุกกี้เพื่อมอบประสบการณ์การใช้งานเว็บไซต์ที่ดีที่สุดให้กับคุณ 
-            <a href="#" class="cookie-consent__link">ดูรายละเอียดนโยบายความเป็นส่วนตัว</a>
+            <a href="{{ route('privacy') }}" class="cookie-consent__link">ดูรายละเอียดนโยบายความเป็นส่วนตัว</a>
           </p>
         </div>
         <div class="cookie-consent__actions">
@@ -276,7 +276,7 @@
         const banner = document.querySelector("[data-cookie-consent]");
         const modal = document.getElementById("privacy-modal");
         
-        const trigger = document.querySelector("[data-privacy-settings-trigger]");
+        const trigger = document.querySelectorAll("[data-privacy-settings-trigger]");
         const acceptAllBtn = document.querySelector("[data-cookie-accept-all]");
         
         const closeModalBtn = document.querySelector("[data-privacy-modal-close]");
@@ -308,8 +308,10 @@
         }
 
         // Action: Open Settings
-        if (trigger) {
-          trigger.addEventListener("click", openModal);
+        if (trigger.length > 0) {
+          trigger.forEach(btn => {
+            btn.addEventListener("click", openModal);
+          });
         }
 
         // Action: Close Modal
