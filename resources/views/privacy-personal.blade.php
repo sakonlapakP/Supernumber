@@ -10,7 +10,7 @@
             <!-- Document Header -->
             <header class="doc-header">
                 <div class="doc-logo-area">
-                    <img src="{{ asset('images/logo.png') }}" alt="Supernumber Logo">
+                    <img src="{{ asset('images/supernumber-document-logo.png') }}" alt="Supernumber Logo" style="filter: grayscale(100%); opacity: 0.8;">
                 </div>
                 <h1 class="doc-title-main">นโยบายการรักษาความมั่นคงปลอดภัยข้อมูลส่วนบุคคล</h1>
                 <h2 class="doc-title-sub">และความเป็นส่วนตัวสำหรับลูกค้า (Privacy Policy)</h2>
