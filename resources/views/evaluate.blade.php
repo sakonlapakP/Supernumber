@@ -344,20 +344,15 @@
     $hasBadPair = false;
     $warningThemePairs = ['33', '47', '74'];
     $hasWarningPair = count(array_intersect($pairs, $warningThemePairs)) > 0;
-    foreach ($groupedPairs as $group) {
-        $label = $group['key'];
-        if (strlen($label) === 2 && $label[0] !== $label[1]) {
-            $label = $label . ' ' . strrev($label);
-        }
-        $meaning = $pairMeaningMap->get($group['primary_pair'])
-            ?? $pairMeaningMap->get($group['key'])
-            ?? $pairMeaningMap->get(strrev($group['key']));
+    foreach ($pairs as $index => $pair) {
+        $meaning = $pairMeaningMap->get($pair)
+            ?? $pairMeaningMap->get(strrev($pair));
         $status = $meaning?->status ?? 'neutral';
         if ($status === 'bad') {
             $hasBadPair = true;
         }
         $pairCards[] = [
-            'pair' => $label,
+            'pair' => $pair,
             'status' => $status,
             'label' => $statusLabelMap[$status] ?? 'เลขทั่วไป',
             'heading' => $pairHeadingMap[$status] ?? 'คู่เลขดีกับคู่เลขเสีย',
