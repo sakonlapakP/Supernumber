@@ -7513,6 +7513,10 @@ body.under-construction-page main {
   }
 }
 
+.privacy-modal[hidden] {
+  display: none !important;
+}
+
 .privacy-modal {
   position: fixed;
   inset: 0;
