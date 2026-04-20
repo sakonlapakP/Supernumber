@@ -49,9 +49,9 @@
     <div class="cookie-consent" data-cookie-consent hidden>
       <div class="cookie-consent__inner">
         <div class="cookie-consent__copy">
-          <h3 class="cookie-consent__title">The personal information consent</h3>
+          <h3 class="cookie-consent__title">ความยินยอมข้อมูลส่วนบุคคล</h3>
           <p class="cookie-consent__text">
-            Supernumber และบริษัทในเครือ ใช้คุกกี้เพื่อมอบประสบการณ์การใช้งานเว็บไซต์ที่ดีที่สุดให้กับคุณ 
+            บริษัท ซุปเปอร์นัมเบอร์ จำกัด ใช้คุกกี้เพื่อมอบประสบการณ์การใช้งานเว็บไซต์ที่ดีที่สุดให้กับคุณ 
             <a href="#" class="cookie-consent__link">ดูรายละเอียดนโยบายความเป็นส่วนตัว</a>
           </p>
         </div>
@@ -67,19 +67,20 @@
       <div class="privacy-modal__overlay"></div>
       <div class="privacy-modal__content">
         <div class="privacy-modal__header">
-          <h2>ความยินยอมข้อมูลส่วนบุคคลของคุณ</h2>
+          <h2>ความยินยอมข้อมูลส่วนบุคคล</h2>
           <button type="button" class="privacy-modal__close" data-privacy-modal-close aria-label="ปิด">&times;</button>
         </div>
         
         <div class="privacy-modal__body">
-          <p class="privacy-modal__intro">
-            Supernumber ให้ความสำคัญต่อความเป็นส่วนตัวของลูกค้า เราจะทำงานอย่างดีที่สุดเพื่อรักษาความลับ และควบคุมข้อมูลส่วนบุคคลของคุณให้ปลอดภัย
-          </p>
+          <div class="privacy-modal__intro">
+            <span style="color: #d8a34a; font-weight: 800;">บริษัท ซุปเปอร์นัมเบอร์ จำกัด</span> 
+            ให้ความสำคัญต่อความเป็นส่วนตัวของลูกค้า เราจะทำงานอย่างดีที่สุดเพื่อรักษาความลับ และควบคุมข้อมูลส่วนบุคคลของคุณให้ปลอดภัย อย่างไรก็ตาม ลูกค้าสามารถเลือกที่จะให้หรือไม่ให้ความยินยอมก็ได้ โดยความยินยอมและการจัดการข้อมูลส่วนบุคคลจะถูกแบ่งเป็นสามหัวข้อเพื่อให้สิทธิอย่างเต็มที่
+          </div>
 
           <div class="privacy-option-card">
             <div class="privacy-option-card__head">
-              <h3>ความยินยอมในการให้ข้อมูลส่วนบุคคล</h3>
-              <p>ข้อมูลส่วนบุคคลของลูกค้าทุกท่านเป็นสิ่งสำคัญต่อเรา เราขอรับรองว่าข้อมูลของท่านจะได้รับการปกป้องและรักษาเป็นอย่างดี <a href="#">ดูเพิ่มเติม</a></p>
+              <h3>1. ความยินยอมในการให้ข้อมูลส่วนบุคคล</h3>
+              <p>ความยินยอมในการเก็บรวบรวม ใช้ หรือเปิดเผยข้อมูลส่วนบุคคล เพื่อการลงชื่อเข้าใช้ และรับบริการต่างๆ รวมถึงการจัดทำเอกสารหรือสัญญา ตามวัตถุประสงค์ของลูกค้า <a href="#">ดูเพิ่มเติม</a></p>
             </div>
             <div class="privacy-option-card__controls">
               <label class="privacy-radio">
@@ -95,7 +96,7 @@
 
           <div class="privacy-option-card">
             <div class="privacy-option-card__head">
-              <h3>ความยินยอมให้นำข้อมูลไปใช้พัฒนาสินค้าหรือบริการให้ดียิ่งขึ้น</h3>
+              <h3>2. ความยินยอมในการนำข้อมูลไปใช้เพื่อพัฒนาสินค้าหรือบริการให้ดียิ่งขึ้น</h3>
               <p>เพื่อให้ท่านได้รับความพึงพอใจต่อบริการของเราอย่างต่อเนื่อง ทางบริษัทจะปรับปรุงและพัฒนาสินค้าและบริการให้ดียิ่งขึ้น <a href="#">ดูเพิ่มเติม</a></p>
             </div>
             <div class="privacy-option-card__controls">
@@ -112,7 +113,7 @@
 
           <div class="privacy-option-card">
             <div class="privacy-option-card__head">
-              <h3>ความยินยอมให้บริษัทนำเสนอผลิตภัณฑ์ บริการ หรือโปรโมชั่นพิเศษ</h3>
+              <h3>3. ความยินยอมให้บริษัทนำเสนอผลิตภัณฑ์ บริการ หรือโปรโมชั่นพิเศษ</h3>
               <p>เพื่อให้ท่านไม่พลาดข้อเสนอพิเศษของผลิตภัณฑ์หรือบริการ ทางเราขอเรียนเชิญให้ท่านเข้าร่วมกิจกรรมต่างๆ <a href="#">ดูเพิ่มเติม</a></p>
             </div>
             <div class="privacy-option-card__controls">
@@ -126,6 +127,10 @@
               </label>
             </div>
           </div>
+
+          <p style="margin: 0; font-size: 13px; color: #7a6c62;">
+            คุณสามารถอ่านรายละเอียดเพิ่มเติมได้ที่: <a href="#" style="color: #d8a34a; font-weight: 600; text-decoration: underline;">คลิก</a>
+          </p>
         </div>
 
         <div class="privacy-modal__footer">
