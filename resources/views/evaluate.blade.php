@@ -26,27 +26,27 @@
     }
     .pair-score {
       margin: 0 auto 16px !important;
-      width: 90px !important;
-      height: 60px !important;
-      font-size: 24px !important;
+      width: 80px !important;
+      height: 50px !important;
+      font-size: 18px !important;
       font-weight: 800 !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
       border-radius: 12px !important;
-      background: #10b981 !important; /* Ensuring the green is visible if needed */
+      background: #10b981 !important;
       color: #fff !important;
     }
     .pair-card h4 {
       text-align: center !important;
-      margin-bottom: 12px !important;
-      font-size: 20px !important;
+      margin-bottom: 10px !important;
+      font-size: 16px !important;
       font-weight: 700 !important;
     }
     .pair-card p {
       text-align: center !important;
       line-height: 1.6 !important;
-      font-size: 16px !important;
+      font-size: 14px !important;
     }
 
     @media (max-width: 580px) {
