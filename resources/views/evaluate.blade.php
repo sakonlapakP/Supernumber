@@ -15,25 +15,45 @@
     .pair-grid {
       display: grid !important;
       grid-template-columns: repeat(2, 1fr) !important;
-      gap: 12px !important;
+      gap: 15px !important;
     }
 
     .pair-card {
       grid-template-columns: 1fr !important;
-      gap: 10px !important;
+      gap: 12px !important;
       text-align: center !important;
-      padding: 15px !important;
+      padding: 20px !important;
     }
-    .pair-badge {
-      margin: 0 auto !important;
-    }
-    .pair-card__text h3 {
+    .pair-score {
+      margin: 0 auto 16px !important;
+      width: 90px !important;
+      height: 60px !important;
+      font-size: 24px !important;
+      font-weight: 800 !important;
+      display: flex !important;
+      align-items: center !important;
       justify-content: center !important;
+      border-radius: 12px !important;
+      background: #10b981 !important; /* Ensuring the green is visible if needed */
+      color: #fff !important;
+    }
+    .pair-card h4 {
+      text-align: center !important;
+      margin-bottom: 12px !important;
+      font-size: 20px !important;
+      font-weight: 700 !important;
+    }
+    .pair-card p {
+      text-align: center !important;
+      line-height: 1.6 !important;
       font-size: 16px !important;
     }
-    .pair-card__text p {
-      font-size: 14px !important;
-      line-height: 1.4 !important;
+
+    @media (max-width: 580px) {
+      .theme-overview__grid,
+      .pair-grid {
+        grid-template-columns: 1fr !important;
+      }
     }
   </style>
   @php
