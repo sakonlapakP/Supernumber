@@ -11,29 +11,30 @@
 
 @section('content')
   <style>
-    /* Two-column layout for topic overview */
-    .theme-overview__grid {
+    .theme-overview__grid,
+    .pair-grid {
       display: grid !important;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
+      grid-template-columns: repeat(2, 1fr) !important;
       gap: 15px !important;
     }
-    @media (max-width: 768px) {
-      .theme-overview__grid {
+
+    .pair-card {
+      grid-template-columns: 1fr !important;
+      gap: 12px !important;
+      text-align: center !important;
+      padding: 20px !important;
+    }
+    .pair-badge {
+      margin: 0 auto !important;
+    }
+    .pair-card__text h3 {
+      justify-content: center !important;
+    }
+
+    @media (max-width: 580px) {
+      .theme-overview__grid,
+      .pair-grid {
         grid-template-columns: 1fr !important;
-        gap: 12px !important;
-      }
-      
-      /* New Mobile Organization for Pairs */
-      .pair-card {
-        grid-template-columns: 1fr !important;
-        gap: 12px !important;
-        text-align: center !important;
-      }
-      .pair-card__badge {
-        margin: 0 auto !important;
-      }
-      .pair-card__text h3 {
-        justify-content: center !important;
       }
     }
   </style>
