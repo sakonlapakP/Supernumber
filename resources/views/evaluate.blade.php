@@ -17,7 +17,7 @@
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)) !important;
       gap: 15px !important;
     }
-    @media (max-width: 480px) {
+    @media (max-width: 768px) {
       .theme-overview__grid {
         grid-template-columns: 1fr !important;
         gap: 12px !important;
