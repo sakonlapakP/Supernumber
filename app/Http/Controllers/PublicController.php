@@ -456,21 +456,6 @@ class PublicController extends Controller
         return view('privacy');
     }
 
-    public function privacyPersonal()
-    {
-        return view('privacy-personal');
-    }
-
-    public function privacyDevelopment()
-    {
-        return view('privacy-dev');
-    }
-
-    public function privacyMarketing()
-    {
-        return view('privacy-marketing');
-    }
-
     /**
      * Helper to resolve lottery result
      */
