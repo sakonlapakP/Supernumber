@@ -244,23 +244,53 @@
 
     @media (max-width: 768px) {
       .home-search {
-        margin-top: -30px;
-        padding-bottom: 40px;
+        margin-top: -20px;
+        padding-bottom: 30px;
       }
       .home-filter {
-        padding: 24px 20px;
-        border-radius: 30px;
+        padding: 20px 15px;
+        border-radius: 25px;
       }
       .home-filter__header h2 {
-        font-size: 26px;
+        font-size: 24px;
+      }
+      .home-filter__header p {
+        font-size: 14px;
       }
       .home-filter__footer-controls {
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: 12px;
       }
       .home-filter__submit {
-        margin-top: 8px;
+        margin-top: 10px;
         width: 100%;
+        height: 50px;
+      }
+      .home-filter__position-row {
+        gap: 6px;
+      }
+      .home-filter__pos-prefix {
+        width: 60px;
+        font-size: 14px;
+      }
+      .home-filter__pos-input {
+        height: 50px;
+        font-size: 16px;
+      }
+      
+      /* Optimize Numbers Grid for Mobile */
+      .home-card-grid {
+        gap: 10px !important;
+        padding: 0 5px !important;
+      }
+      .home-card-item {
+        padding: 12px !important;
+      }
+      .home-number-display {
+        font-size: 18px !important;
+      }
+      .home-card-price {
+        font-size: 13px !important;
       }
     }
 

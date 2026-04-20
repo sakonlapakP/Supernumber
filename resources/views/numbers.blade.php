@@ -222,16 +222,44 @@
 
     @media (max-width: 768px) {
       .home-filter {
-        padding: 24px 20px;
-        border-radius: 30px;
+        padding: 20px 15px;
+        border-radius: 25px;
+        margin-bottom: 30px;
       }
       .home-filter__footer-controls {
         grid-template-columns: 1fr;
-        gap: 16px;
+        gap: 12px;
       }
       .home-filter__submit {
-        margin-top: 8px;
+        margin-top: 10px;
         width: 100%;
+        height: 50px;
+      }
+      .home-filter__position-row {
+        gap: 6px;
+      }
+      .home-filter__pos-prefix {
+        width: 60px;
+        font-size: 14px;
+      }
+      .home-filter__pos-input {
+        height: 50px;
+        font-size: 16px;
+      }
+      
+      /* Optimize Results Grid for Mobile */
+      .numbers-results-grid[data-view="grid"] {
+        gap: 10px !important;
+        padding: 0 5px !important;
+      }
+      .number-card {
+        padding: 12px !important;
+      }
+      .number-card__phone {
+        font-size: 18px !important;
+      }
+      .number-card__price {
+        font-size: 13px !important;
       }
     }
   </style>
