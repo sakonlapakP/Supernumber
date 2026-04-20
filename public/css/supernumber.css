@@ -10349,7 +10349,13 @@ body.document-studio-page {
   }
 }
 
-/* Consolidated Mobile Layout Fixes for Evaluation Page */
+/* Consolidated Layout Fixes for Evaluation Page */
+.theme-overview__grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+}
+
 @media (max-width: 1024px) {
   .theme-overview__grid, 
   .pair-grid {
