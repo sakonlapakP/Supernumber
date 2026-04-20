@@ -49,12 +49,87 @@
     <div class="cookie-consent" data-cookie-consent hidden>
       <div class="cookie-consent__inner">
         <div class="cookie-consent__copy">
-          <strong>เว็บไซต์นี้ใช้คุกกี้</strong>
-          <p>เราใช้คุกกี้เพื่อช่วยให้เว็บไซต์ทำงานได้ดีขึ้น วิเคราะห์การใช้งาน และปรับปรุงประสบการณ์ของคุณ</p>
+          <h3 class="cookie-consent__title">The personal information consent</h3>
+          <p class="cookie-consent__text">
+            Supernumber และบริษัทในเครือ ใช้คุกกี้เพื่อมอบประสบการณ์การใช้งานเว็บไซต์ที่ดีที่สุดให้กับคุณ 
+            <a href="#" class="cookie-consent__link">ดูรายละเอียดนโยบายความเป็นส่วนตัว</a>
+          </p>
         </div>
         <div class="cookie-consent__actions">
-          <button type="button" class="cookie-consent__button cookie-consent__button--ghost" data-cookie-dismiss>ปิด</button>
-          <button type="button" class="cookie-consent__button cookie-consent__button--accept" data-cookie-accept>ยอมรับ</button>
+          <button type="button" class="cookie-consent__button cookie-consent__button--settings" data-privacy-settings-trigger>ตั้งค่าความเป็นส่วนตัว</button>
+          <button type="button" class="cookie-consent__button cookie-consent__button--accept-all" data-cookie-accept-all>ให้ความยินยอมทั้งหมด</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Privacy Settings Modal -->
+    <div class="privacy-modal" id="privacy-modal" hidden>
+      <div class="privacy-modal__overlay"></div>
+      <div class="privacy-modal__content">
+        <div class="privacy-modal__header">
+          <h2>ความยินยอมข้อมูลส่วนบุคคลของคุณ</h2>
+          <button type="button" class="privacy-modal__close" data-privacy-modal-close aria-label="ปิด">&times;</button>
+        </div>
+        
+        <div class="privacy-modal__body">
+          <p class="privacy-modal__intro">
+            Supernumber ให้ความสำคัญต่อความเป็นส่วนตัวของลูกค้า เราจะทำงานอย่างดีที่สุดเพื่อรักษาความลับ และควบคุมข้อมูลส่วนบุคคลของคุณให้ปลอดภัย
+          </p>
+
+          <div class="privacy-option-card">
+            <div class="privacy-option-card__head">
+              <h3>ความยินยอมในการให้ข้อมูลส่วนบุคคล</h3>
+              <p>ข้อมูลส่วนบุคคลของลูกค้าทุกท่านเป็นสิ่งสำคัญต่อเรา เราขอรับรองว่าข้อมูลของท่านจะได้รับการปกป้องและรักษาเป็นอย่างดี <a href="#">ดูเพิ่มเติม</a></p>
+            </div>
+            <div class="privacy-option-card__controls">
+              <label class="privacy-radio">
+                <input type="radio" name="consent_personal" value="1" checked>
+                <span class="privacy-radio__label">ยินยอม</span>
+              </label>
+              <label class="privacy-radio">
+                <input type="radio" name="consent_personal" value="0">
+                <span class="privacy-radio__label">ไม่ยินยอม</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="privacy-option-card">
+            <div class="privacy-option-card__head">
+              <h3>ความยินยอมให้นำข้อมูลไปใช้พัฒนาสินค้าหรือบริการให้ดียิ่งขึ้น</h3>
+              <p>เพื่อให้ท่านได้รับความพึงพอใจต่อบริการของเราอย่างต่อเนื่อง ทางบริษัทจะปรับปรุงและพัฒนาสินค้าและบริการให้ดียิ่งขึ้น <a href="#">ดูเพิ่มเติม</a></p>
+            </div>
+            <div class="privacy-option-card__controls">
+              <label class="privacy-radio">
+                <input type="radio" name="consent_dev" value="1" checked>
+                <span class="privacy-radio__label">ยินยอม</span>
+              </label>
+              <label class="privacy-radio">
+                <input type="radio" name="consent_dev" value="0">
+                <span class="privacy-radio__label">ไม่ยินยอม</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="privacy-option-card">
+            <div class="privacy-option-card__head">
+              <h3>ความยินยอมให้บริษัทนำเสนอผลิตภัณฑ์ บริการ หรือโปรโมชั่นพิเศษ</h3>
+              <p>เพื่อให้ท่านไม่พลาดข้อเสนอพิเศษของผลิตภัณฑ์หรือบริการ ทางเราขอเรียนเชิญให้ท่านเข้าร่วมกิจกรรมต่างๆ <a href="#">ดูเพิ่มเติม</a></p>
+            </div>
+            <div class="privacy-option-card__controls">
+              <label class="privacy-radio">
+                <input type="radio" name="consent_marketing" value="1" checked>
+                <span class="privacy-radio__label">ยินยอม</span>
+              </label>
+              <label class="privacy-radio">
+                <input type="radio" name="consent_marketing" value="0">
+                <span class="privacy-radio__label">ไม่ยินยอม</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div class="privacy-modal__footer">
+          <button type="button" class="privacy-modal__submit" data-privacy-save>ยืนยัน</button>
         </div>
       </div>
     </div>
@@ -189,35 +264,71 @@
       })();
 
       (() => {
-        const storageKey = "supernumber_cookie_consent";
+        const storageKey = "supernumber_privacy_consent";
         const banner = document.querySelector("[data-cookie-consent]");
-        const acceptButton = document.querySelector("[data-cookie-accept]");
-        const dismissButton = document.querySelector("[data-cookie-dismiss]");
+        const modal = document.getElementById("privacy-modal");
+        
+        const trigger = document.querySelector("[data-privacy-settings-trigger]");
+        const acceptAllBtn = document.querySelector("[data-cookie-accept-all]");
+        
+        const closeModalBtn = document.querySelector("[data-privacy-modal-close]");
+        const saveSettingsBtn = document.querySelector("[data-privacy-save]");
 
-        if (!banner || !acceptButton || !dismissButton) return;
+        if (!banner) return;
 
-        const hideBanner = () => {
-          banner.hidden = true;
-        };
+        const hideBanner = () => { banner.hidden = true; };
+        const showBanner = () => { banner.hidden = false; };
+        const openModal = () => { modal.hidden = false; document.body.style.overflow = "hidden"; };
+        const closeModal = () => { modal.hidden = true; document.body.style.overflow = ""; };
 
-        const showBanner = () => {
-          banner.hidden = false;
-        };
-
-        if (window.localStorage.getItem(storageKey) === "accepted") {
+        // Load saved state
+        const savedConsent = window.localStorage.getItem(storageKey);
+        if (savedConsent) {
           hideBanner();
-          return;
+        } else {
+          showBanner();
         }
 
-        showBanner();
+        // Action: Accept All
+        if (acceptAllBtn) {
+          acceptAllBtn.addEventListener("click", () => {
+            const consent = { personal: true, dev: true, marketing: true, timestamp: Date.now() };
+            window.localStorage.setItem(storageKey, JSON.stringify(consent));
+            window.dispatchEvent(new CustomEvent("supernumber:analytics-consent-granted"));
+            hideBanner();
+          });
+        }
 
-        acceptButton.addEventListener("click", () => {
-          window.localStorage.setItem(storageKey, "accepted");
-          window.dispatchEvent(new CustomEvent("supernumber:analytics-consent-granted"));
-          hideBanner();
-        });
+        // Action: Open Settings
+        if (trigger) {
+          trigger.addEventListener("click", openModal);
+        }
 
-        dismissButton.addEventListener("click", hideBanner);
+        // Action: Close Modal
+        if (closeModalBtn) {
+          closeModalBtn.addEventListener("click", closeModal);
+        }
+
+        // Action: Save Settings
+        if (saveSettingsBtn) {
+          saveSettingsBtn.addEventListener("click", () => {
+            const getVal = (name) => document.querySelector(`input[name="${name}"]:checked`).value === "1";
+            const consent = {
+              personal: getVal("consent_personal"),
+              dev: getVal("consent_dev"),
+              marketing: getVal("consent_marketing"),
+              timestamp: Date.now()
+            };
+            window.localStorage.setItem(storageKey, JSON.stringify(consent));
+            
+            if (consent.personal || consent.dev) {
+                window.dispatchEvent(new CustomEvent("supernumber:analytics-consent-granted"));
+            }
+            
+            closeModal();
+            hideBanner();
+          });
+        }
       })();
     </script>
     @stack('scripts')
