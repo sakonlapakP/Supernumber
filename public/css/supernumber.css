@@ -561,7 +561,7 @@ a[href^="tel"] {
 
 .brand-mark {
   font-family: "Playfair Display", serif;
-  font-size: 30px;
+  font-size: 28px;
   font-weight: 600;
   width: 42px;
   height: 42px;
@@ -584,8 +584,8 @@ a[href^="tel"] {
 .brand-title {
   font-family: "Playfair Display", serif;
   font-size: 16px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
+  font-weight: 700;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
   text-decoration: none !important;
   border-bottom: 0 !important;
@@ -2772,7 +2772,7 @@ body.under-construction-page main {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 6px;
+  gap: 10px;
   margin-top: 6px;
 }
 
@@ -7435,10 +7435,16 @@ body.under-construction-page main {
   color: rgba(255, 255, 255, 0.85);
 }
 
-.cookie-consent__link {
+.cookie-consent__link,
+.cookie-consent__link:link,
+.cookie-consent__link:visited {
   color: #d8a34a !important;
   text-decoration: underline;
   font-weight: 700;
+}
+
+.cookie-consent__link:hover {
+  color: #f3ca7a !important;
 }
 
 .cookie-consent__actions {
