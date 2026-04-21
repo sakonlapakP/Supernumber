@@ -22,10 +22,10 @@
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="theme-color" content="@yield('theme_color', '#2a2321')" />
     <link rel="shortcut icon" type="image/x-icon" href="{{ $staticPath('favicon-v2.ico') }}" />
-    <link rel="icon" type="image/svg+xml" sizes="any" href="{{ $staticPath('favicon.svg') }}" />
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ $staticPath('favicon-32x32.png') }}" />
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ $staticPath('favicon-16x16.png') }}" />
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ $staticPath('apple-touch-icon.png') }}" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="{{ asset('favicon.svg') }}" />
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}" />
     @hasSection('preload_image')
       <link rel="preload" as="image" href="@yield('preload_image')" />
     @endif
@@ -49,13 +49,13 @@
       @include('partials.footer')
     @endif
 
-    <div class="cookie-consent" data-cookie-consent hidden>
+    <div id="sn-cookie-consent" class="cookie-consent" data-cookie-consent hidden>
       <div class="cookie-consent__inner">
         <div class="cookie-consent__copy">
           <h3 class="cookie-consent__title">ความยินยอมข้อมูลส่วนบุคคล</h3>
           <p class="cookie-consent__text">
             บริษัท ซุปเปอร์นัมเบอร์ จำกัด ใช้คุกกี้เพื่อมอบประสบการณ์การใช้งานเว็บไซต์ที่ดีที่สุดให้กับคุณ 
-            <a href="{{ route('privacy') }}" class="cookie-consent__link" style="color: #d8a34a !important; text-decoration: underline !important;">ดูรายละเอียดนโยบายความเป็นส่วนตัว</a>
+             <a href="{{ route('privacy') }}" class="cookie-consent__link" style="color: #d8a34a !important; text-decoration: underline !important; font-weight: 700 !important; display: inline !important; opacity: 1 !important;">ดูรายละเอียดนโยบายความเป็นส่วนตัว</a>
           </p>
         </div>
         <div class="cookie-consent__actions">

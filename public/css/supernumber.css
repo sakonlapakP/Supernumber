@@ -7441,16 +7441,23 @@ body.under-construction-page main {
   color: rgba(255, 255, 255, 0.85);
 }
 
+#sn-cookie-consent .cookie-consent__link,
+#sn-cookie-consent .cookie-consent__link:link,
+#sn-cookie-consent .cookie-consent__link:visited,
 .cookie-consent__link,
 .cookie-consent__link:link,
 .cookie-consent__link:visited {
   color: #d8a34a !important;
-  text-decoration: underline;
-  font-weight: 700;
+  text-decoration: underline !important;
+  font-weight: 700 !important;
+  opacity: 1 !important;
+  display: inline !important;
 }
 
+#sn-cookie-consent .cookie-consent__link:hover,
 .cookie-consent__link:hover {
   color: #f3ca7a !important;
+  text-decoration: underline !important;
 }
 
 .cookie-consent__actions {
