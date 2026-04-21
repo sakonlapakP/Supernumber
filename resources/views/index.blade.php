@@ -411,11 +411,11 @@
 
             <div class="home-filter__orb" aria-hidden="true"><span>หรือ</span></div>
 
-            <!-- Position Search -->
             <div class="home-filter__group">
-              <label class="home-filter__label">ค้นหาตามตำแหน่ง</label>
+              <label class="home-filter__label" for="home-pos-prefix">ค้นหาตามตำแหน่ง</label>
               <div class="home-filter__position-row">
                 <input
+                  id="home-pos-prefix"
                   class="home-filter__pos-prefix"
                   type="text"
                   name="prefix"

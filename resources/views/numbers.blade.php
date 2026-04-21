@@ -307,7 +307,7 @@
 
               <!-- Position Search -->
               <div class="home-filter__group">
-                <label class="home-filter__label">ค้นหาตามตำแหน่ง</label>
+                <label class="home-filter__label" for="numbers-prefix">ค้นหาตามตำแหน่ง</label>
                 <div class="home-filter__position-row">
                   <input
                     id="numbers-prefix"
