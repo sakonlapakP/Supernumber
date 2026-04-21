@@ -55,7 +55,7 @@
           <h3 class="cookie-consent__title">ความยินยอมข้อมูลส่วนบุคคล</h3>
           <p class="cookie-consent__text">
             บริษัท ซุปเปอร์นัมเบอร์ จำกัด ใช้คุกกี้เพื่อมอบประสบการณ์การใช้งานเว็บไซต์ที่ดีที่สุดให้กับคุณ 
-            <a href="{{ route('privacy') }}" class="cookie-consent__link">ดูรายละเอียดนโยบายความเป็นส่วนตัว</a>
+            <a href="{{ route('privacy') }}" class="cookie-consent__link" style="color: #d8a34a !important; text-decoration: underline !important;">ดูรายละเอียดนโยบายความเป็นส่วนตัว</a>
           </p>
         </div>
         <div class="cookie-consent__actions">
