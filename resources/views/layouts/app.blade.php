@@ -36,11 +36,13 @@
     <style>
         /* Precision Branding Overrides */
         .brand-mark {
+            font-family: "Playfair Display", Georgia, "Times New Roman", serif !important;
             -webkit-font-smoothing: antialiased !important;
             -moz-osx-font-smoothing: grayscale !important;
             text-rendering: optimizeLegibility !important;
         }
         .brand-title {
+            font-family: "Playfair Display", Georgia, "Times New Roman", serif !important;
             -webkit-font-smoothing: antialiased !important;
             -moz-osx-font-smoothing: grayscale !important;
             font-weight: 800 !important;
@@ -79,7 +81,7 @@
           </p>
         </div>
         <div class="cookie-consent__actions">
-          <button type="button" class="cookie-consent__button cookie-consent__button--settings" data-privacy-settings-trigger>ตั้งค่าความเป็นส่วนตัว</button>
+          <button type="button" class="cookie-consent__button cookie-consent__button--settings" onclick="document.getElementById('privacy-modal').hidden = false; document.body.style.overflow = 'hidden';">ตั้งค่าความเป็นส่วนตัว</button>
           <button type="button" class="cookie-consent__button cookie-consent__button--accept-all" data-cookie-accept-all>ให้ความยินยอมทั้งหมด</button>
         </div>
       </div>
@@ -91,7 +93,7 @@
       <div class="privacy-modal__content">
         <div class="privacy-modal__header">
           <h2>ความยินยอมข้อมูลส่วนบุคคล</h2>
-          <button type="button" class="privacy-modal__close" data-privacy-modal-close aria-label="ปิด">&times;</button>
+          <button type="button" class="privacy-modal__close" onclick="document.getElementById('privacy-modal').hidden = true; document.body.style.overflow = '';" aria-label="ปิด">&times;</button>
         </div>
         
         <div class="privacy-modal__body">
