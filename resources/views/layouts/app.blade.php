@@ -3,7 +3,7 @@
   <head>
     @php
       $staticPath = static fn (string $path): string => '/' . ltrim($path, '/');
-      $cssVersion = @filemtime(public_path('css/supernumber.css')) ?: time();
+      $cssHash = substr(md5_file(public_path('css/supernumber.css')), 0, 8);
       $gaMeasurementId = trim((string) config('services.ga4.measurement_id', ''));
     @endphp
     <meta charset="UTF-8" />
@@ -32,7 +32,27 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ $staticPath('css/supernumber.css') }}?v={{ $cssVersion }}" />
+    <link rel="stylesheet" href="{{ $staticPath('css/supernumber.css') }}?v={{ $cssHash }}" />
+    <style>
+        /* Precision Branding Overrides */
+        .brand-mark {
+            -webkit-font-smoothing: antialiased !important;
+            -moz-osx-font-smoothing: grayscale !important;
+            text-rendering: optimizeLegibility !important;
+        }
+        .brand-title {
+            -webkit-font-smoothing: antialiased !important;
+            -moz-osx-font-smoothing: grayscale !important;
+            font-weight: 800 !important;
+        }
+        /* Unbreakable Link Color */
+        #sn-cookie-consent .cookie-consent__link,
+        .cookie-consent__link {
+            color: #d8a34a !important;
+            text-decoration: underline !important;
+            opacity: 1 !important;
+        }
+    </style>
   </head>
   <body class="@yield('body_class')">
     @hasSection('hide_header')
