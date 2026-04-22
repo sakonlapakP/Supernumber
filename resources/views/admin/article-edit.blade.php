@@ -344,7 +344,7 @@
           const previewImg = zone.parentElement.querySelector("[data-preview-img]");
           const previewInfo = zone.parentElement.querySelector("[data-preview-info]");
 
-          const MAX_SIZE = 20 * 1024 * 1024; // 20MB
+          const MAX_SIZE = 10 * 1024 * 1024; // 10MB Limit
 
           const validateAndPreview = (file) => {
             if (!file) return;
@@ -388,7 +388,7 @@
             if (e.dataTransfer.files.length > 0) {
               const file = e.dataTransfer.files[0];
               if (file.size > MAX_SIZE) {
-                alert(`🚨 ไฟล์ใหญ่เกินไป! \n\nรูป "${file.name}" มีขนาด ${(file.size / 1024 / 1024).toFixed(2)} MB \nระบบรองรับได้ไม่เกิน 20 MB ครับ`);
+                alert(`🚨 ไฟล์ใหญ่เกินไปครับพี่! \n\nรูป "${file.name}" มีขนาด ${(file.size / 1024 / 1024).toFixed(2)} MB \n\nเซิร์ฟเวอร์ระบบรองรับได้ไม่เกิน 10 MB เพื่อความรวดเร็วของเว็บครับ \nรบกวนพี่ช่วย "ย่อรูป" ก่อนอัพโหลดอีกรอบนะครับ 🙏`);
                 return;
               }
               input.files = e.dataTransfer.files;
