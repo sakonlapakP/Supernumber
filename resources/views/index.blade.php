@@ -60,7 +60,7 @@
     .home-search {
       margin-top: -40px; 
       position: relative;
-      z-index: 100;
+      z-index: 10;
       padding-bottom: 40px;
     }
 
