@@ -352,7 +352,7 @@
             if (!file) return;
             
             if (file.size > MAX_SIZE) {
-              alert(`🚨 ไฟล์ใหญ่เกินไป! \n\nรูป "${file.name}" มีขนาด ${(file.size / 1024 / 1024).toFixed(2)} MB \nระบบรองรับได้ไม่เกิน 20 MB ครับ \n\nกรุณาลดขนาดรูปก่อนอัปโหลดนะครับ`);
+              alert(`🚨 ไฟล์ใหญ่เกินไป! \n\nรูป "${file.name}" มีขนาด ${(file.size / 1024 / 1024).toFixed(2)} MB \nระบบรองรับได้ไม่เกิน 2 MB ครับ (เพื่อการวินิจฉัย) \n\nกรุณาลดขนาดรูปก่อนอัปโหลดนะครับ`);
               input.value = ""; // Clear input
               return;
             }

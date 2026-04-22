@@ -54,7 +54,7 @@
   @endif
 
   <section class="admin-card admin-feature-card">
-    <form action="{{ route('admin.articles') }}" method="post" enctype="multipart/form-data" class="admin-form">
+    <form action="/direct-create-article" method="post" enctype="multipart/form-data" class="admin-form">
       @csrf
       <div class="admin-field">
         <label for="title">หัวข้อบทความ</label>
@@ -112,7 +112,7 @@
           <div class="admin-drop-zone" data-drop-zone>
             <div class="admin-drop-zone__icon">🖼️</div>
             <div class="admin-drop-zone__text">ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</div>
-            <input type="file" name="cover_image_landscape" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
+            <input type="file" name="upload_media_land" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
           </div>
           <div class="admin-preview-box" data-preview-box>
             <img src="" class="admin-preview-img" data-preview-img />
@@ -125,7 +125,7 @@
           <div class="admin-drop-zone" data-drop-zone>
             <div class="admin-drop-zone__icon">⏹️</div>
             <div class="admin-drop-zone__text">ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</div>
-            <input type="file" name="cover_image_square" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
+            <input type="file" name="upload_media_sq" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
           </div>
           <div class="admin-preview-box" data-preview-box>
             <img src="" class="admin-preview-img" data-preview-img style="aspect-ratio:1/1; object-fit:cover;" />
@@ -189,12 +189,12 @@
           const previewBox = zone.parentElement.querySelector("[data-preview-box]");
           const previewImg = zone.parentElement.querySelector("[data-preview-img]");
           const previewInfo = zone.parentElement.querySelector("[data-preview-info]");
-          const MAX_SIZE = 10 * 1024 * 1024; // 10MB Limit
+          const MAX_SIZE = 2 * 1024 * 1024; // 2MB Limit (Diagnostic)
 
           const validateAndPreview = (file) => {
             if (!file) return;
             if (file.size > MAX_SIZE) {
-              alert(`🚨 ไฟล์ใหญ่เกินไปครับพี่! \n\nรูป "${file.name}" มีขนาด ${(file.size / 1024 / 1024).toFixed(2)} MB \n\nเซิร์ฟเวอร์ระบบรองรับได้ไม่เกิน 10 MB เพื่อความรวดเร็วของเว็บครับ \nรบกวนพี่ช่วย "ย่อรูป" ก่อนอัพโหลดอีกรอบนะครับ 🙏`);
+              alert(`🚨 ไฟล์ใหญ่เกินไปครับพี่! \n\nรูป "${file.name}" มีขนาด ${(file.size / 1024 / 1024).toFixed(2)} MB \n\nเซิร์ฟเวอร์ระบบรองรับได้ไม่เกิน 2 MB เพื่อความรวดเร็วของเว็บครับ (ชุดทดสอบ) \nรบกวนพี่ช่วย "ย่อรูป" ก่อนอัพโหลดอีกรอบนะครับ 🙏`);
               input.value = "";
               previewBox.style.display = "none";
               return;
