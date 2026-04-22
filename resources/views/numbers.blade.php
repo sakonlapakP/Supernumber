@@ -13,13 +13,13 @@
 @section('seo_schema')
 <script type="application/ld+json">
 {
-  "@context": "https://schema.org",
-  "@type": "ItemList",
+  "@@context": "https://schema.org",
+  "@@type": "ItemList",
   "itemListElement": [
     @if(isset($numbers))
     @foreach($numbers->take(10) as $index => $number)
     {
-      "@type": "ListItem",
+      "@@type": "ListItem",
       "position": {{ $index + 1 }},
       "url": "{{ url('/numbers') }}",
       "name": "เบอร์มงคล {{ $number->phone }}"

@@ -18,13 +18,13 @@
 @section('seo_schema')
 <script type="application/ld+json">
 {
-  "@context": "https://schema.org",
-  "@type": "Organization",
+  "@@context": "https://schema.org",
+  "@@type": "Organization",
   "name": "Supernumber",
   "url": "{{ url('/') }}",
   "logo": "{{ asset('images/logo.png') }}",
   "contactPoint": {
-    "@type": "ContactPoint",
+    "@@type": "ContactPoint",
     "telephone": "+66-96-323-2656",
     "contactType": "customer service"
   }
@@ -32,11 +32,11 @@
 </script>
 <script type="application/ld+json">
 {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
+  "@@context": "https://schema.org",
+  "@@type": "WebSite",
   "url": "{{ url('/') }}",
   "potentialAction": {
-    "@type": "SearchAction",
+    "@@type": "SearchAction",
     "target": "{{ url('/numbers') }}?q={search_term_string}",
     "query-input": "required name=search_term_string"
   }
