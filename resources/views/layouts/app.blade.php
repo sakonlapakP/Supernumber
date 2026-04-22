@@ -55,6 +55,15 @@
             opacity: 1 !important;
         }
 
+        /* Card Icon Spacing Fix */
+        .card-topic-icons {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 14px !important;
+            margin-top: 6px;
+        }
+
         /* Default state of modal (Hidden) */
         .privacy-modal {
             display: none !important;
