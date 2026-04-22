@@ -46,7 +46,7 @@
 
 @section('content')
   <style>
-    @media (min-width: 1200px) {
+    @media (min-width: 992px) {
       body.home-scale-soft .home-card-grid[data-view="grid"],
       body.home-scale-soft #home-prepaid-grid[data-view="grid"],
       body.home-scale-soft #home-postpaid-grid[data-view="grid"] {
