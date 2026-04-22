@@ -174,10 +174,6 @@
           <textarea id="content" name="content" class="admin-input" style="display: none;">{{ old('content') }}</textarea>
         </div>
 
-        <div class="admin-field">
-          <label for="meta_description">คำอธิบายเมตา</label>
-          <input type="text" id="meta_description" name="meta_description" class="admin-input" value="{{ old('meta_description') }}" maxlength="255" />
-        </div>
 
         <div class="admin-field">
           <label>รูปหน้ารวมบทความ (แนวนอน 16:9 / 4:3)</label>
