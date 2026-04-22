@@ -2344,7 +2344,6 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'keywords' => ['nullable', 'string'],
             'lsi_keywords' => ['nullable', 'string'],
             'published_at' => ['nullable', 'date'],
-            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
             'cover_image_landscape' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
             'cover_image_square' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
             'is_published' => ['nullable', 'boolean'],
@@ -2372,21 +2371,6 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $coverImageSquarePath = null;
 
         try {
-            if ($request->hasFile('cover_image')) {
-                $file = $request->file('cover_image');
-                $path = $imageMeta['square_path'];
-                $dir = dirname($path);
-                $name = "main_" . basename($path);
-                $fullPath = $dir . '/' . $name;
-                
-                if (!Storage::disk('public')->exists($dir)) {
-                    Storage::disk('public')->makeDirectory($dir);
-                }
-                
-                Storage::disk('public')->putFileAs($dir, $file, $name);
-                $coverImagePath = $fullPath;
-            }
-
             if ($request->hasFile('cover_image_landscape')) {
                 $file = $request->file('cover_image_landscape');
                 $path = $imageMeta['cover_path'];
@@ -2415,10 +2399,6 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 
                 Storage::disk('public')->putFileAs($dir, $file, $name);
                 $coverImageSquarePath = $fullPath;
-            }
-
-            if ($coverImagePath === null) {
-                $coverImagePath = $coverImageLandscapePath ?: $coverImageSquarePath;
             }
 
             Article::query()->create([
@@ -2624,10 +2604,6 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 
                 Storage::disk('public')->putFileAs($dir, $file, $name);
                 $coverImageSquarePath = $fullPath;
-            }
-
-            if ($coverImagePath === null) {
-                $coverImagePath = $coverImageLandscapePath ?: $coverImageSquarePath;
             }
 
             $article->update([
