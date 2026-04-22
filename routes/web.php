@@ -2320,10 +2320,12 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'excerpt' => ['nullable', 'string'],
             'content' => ['required', 'string'],
             'meta_description' => ['nullable', 'string', 'max:500'],
+            'keywords' => ['nullable', 'string'],
+            'lsi_keywords' => ['nullable', 'string'],
             'published_at' => ['nullable', 'date'],
-            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
-            'cover_image_landscape' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
-            'cover_image_square' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
+            'cover_image_landscape' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
+            'cover_image_square' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
             'is_published' => ['nullable', 'boolean'],
         ]);
 
@@ -2387,6 +2389,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'excerpt' => trim((string) ($data['excerpt'] ?? '')) ?: null,
                 'content' => trim($data['content']),
                 'meta_description' => trim((string) ($data['meta_description'] ?? '')) ?: null,
+                'keywords' => trim((string) ($data['keywords'] ?? '')) ?: null,
+                'lsi_keywords' => trim((string) ($data['lsi_keywords'] ?? '')) ?: null,
                 'is_published' => $isPublished,
                 'published_at' => $isPublished ? $publishedAt : null,
                 'cover_image_path' => $coverImagePath,
@@ -2493,11 +2497,13 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ],
             'excerpt' => ['nullable', 'string'],
             'content' => ['required', 'string'],
-            'meta_description' => ['nullable', 'string', 'max:255'],
+            'meta_description' => ['nullable', 'string', 'max:500'],
+            'keywords' => ['nullable', 'string'],
+            'lsi_keywords' => ['nullable', 'string'],
             'published_at' => ['nullable', 'date'],
-            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
-            'cover_image_landscape' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
-            'cover_image_square' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
+            'cover_image_landscape' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
+            'cover_image_square' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
             'is_published' => ['nullable', 'boolean'],
         ]);
 
@@ -2527,42 +2533,39 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $coverImageSquarePath = $article->cover_image_square_path;
 
         if ($request->hasFile('cover_image')) {
+            $file = $request->file('cover_image');
             $targetPath = $imageMeta['square_path'];
             if ($coverImagePath && $coverImagePath !== $targetPath) {
                 Storage::disk('public')->delete($coverImagePath);
             }
-
-            $contents = file_get_contents((string) $request->file('cover_image')->getRealPath());
-            if ($contents !== false) {
-                Storage::disk('public')->put($targetPath, $contents);
-                $coverImagePath = $targetPath;
-                $coverImageSquarePath = $targetPath;
-            }
+            $dir = dirname($targetPath);
+            $name = basename($targetPath);
+            Storage::disk('public')->putFileAs($dir, $file, $name);
+            $coverImagePath = $targetPath;
+            $coverImageSquarePath = $targetPath;
         }
         if ($request->hasFile('cover_image_landscape')) {
+            $file = $request->file('cover_image_landscape');
             $targetPath = $imageMeta['cover_path'];
             if ($coverImageLandscapePath && $coverImageLandscapePath !== $targetPath) {
                 Storage::disk('public')->delete($coverImageLandscapePath);
             }
-
-            $contents = file_get_contents((string) $request->file('cover_image_landscape')->getRealPath());
-            if ($contents !== false) {
-                Storage::disk('public')->put($targetPath, $contents);
-                $coverImageLandscapePath = $targetPath;
-            }
+            $dir = dirname($targetPath);
+            $name = basename($targetPath);
+            Storage::disk('public')->putFileAs($dir, $file, $name);
+            $coverImageLandscapePath = $targetPath;
         }
         if ($request->hasFile('cover_image_square')) {
+            $file = $request->file('cover_image_square');
             $targetPath = $imageMeta['square_path'];
             if ($coverImageSquarePath && $coverImageSquarePath !== $targetPath) {
                 Storage::disk('public')->delete($coverImageSquarePath);
             }
-
-            $contents = file_get_contents((string) $request->file('cover_image_square')->getRealPath());
-            if ($contents !== false) {
-                Storage::disk('public')->put($targetPath, $contents);
-                $coverImageSquarePath = $targetPath;
-                $coverImagePath = $targetPath;
-            }
+            $dir = dirname($targetPath);
+            $name = basename($targetPath);
+            Storage::disk('public')->putFileAs($dir, $file, $name);
+            $coverImageSquarePath = $targetPath;
+            $coverImagePath = $targetPath;
         }
 
         try {
@@ -2572,6 +2575,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'excerpt' => trim((string) ($data['excerpt'] ?? '')) ?: null,
                 'content' => trim($data['content']),
                 'meta_description' => trim((string) ($data['meta_description'] ?? '')) ?: null,
+                'keywords' => trim((string) ($data['keywords'] ?? '')) ?: null,
+                'lsi_keywords' => trim((string) ($data['lsi_keywords'] ?? '')) ?: null,
                 'is_published' => $isPublished,
                 'published_at' => $isPublished ? $publishedAt : null,
                 'cover_image_path' => $coverImagePath,

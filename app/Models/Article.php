@@ -18,6 +18,8 @@ class Article extends Model
         'cover_image_landscape_path',
         'cover_image_square_path',
         'meta_description',
+        'keywords',
+        'lsi_keywords',
         'is_published',
         'published_at',
         'author_user_id',

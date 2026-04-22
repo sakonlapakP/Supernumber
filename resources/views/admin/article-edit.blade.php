@@ -124,8 +124,20 @@
       </div>
 
       <div class="admin-field">
-        <label for="meta_description">คำอธิบายเมตา</label>
-        <input type="text" id="meta_description" name="meta_description" class="admin-input" value="{{ old('meta_description', $article->meta_description) }}" maxlength="255" />
+        <label>คำอธิบายเมตา (Meta Description)</label>
+        <input type="text" name="meta_description" class="admin-input" value="{{ old('meta_description', $article->meta_description) }}" placeholder="คำโปรยสำหรับ Google (ไม่เกิน 500 ตัวอักษร)" />
+      </div>
+
+      <div class="admin-field">
+        <label>5 Keywords หลัก (SEO)</label>
+        <input type="text" name="keywords" class="admin-input" value="{{ old('keywords', $article->keywords) }}" placeholder="เช่น: เบอร์มงคล, เสริมดวง, ประวัติจิ้มมี่" />
+        <p class="admin-subtitle" style="margin: 0;">เน้นคำสำคัญที่เป็นหัวใจของบทความ</p>
+      </div>
+
+      <div class="admin-field">
+        <label>10 Keywords รอง (LSI Keywords)</label>
+        <input type="text" name="lsi_keywords" class="admin-input" value="{{ old('lsi_keywords', $article->lsi_keywords) }}" placeholder="คำใกล้เคียง เช่น: เลขศาสตร์, เปลี่ยนเบอร์มือถือ, คัดเบอร์พิเศษ" />
+        <p class="admin-subtitle" style="margin: 0;">ช่วยให้ Google ค้นพบง่ายขึ้นจากระยะค้นหาที่กว้างขึ้น</p>
       </div>
 
       <div class="admin-field">
@@ -319,8 +331,18 @@
           const previewImg = zone.parentElement.querySelector("[data-preview-img]");
           const previewInfo = zone.parentElement.querySelector("[data-preview-info]");
 
-          const updatePreview = (file) => {
-            if (!file || !file.type.startsWith("image/")) return;
+          const MAX_SIZE = 20 * 1024 * 1024; // 20MB
+
+          const validateAndPreview = (file) => {
+            if (!file) return;
+            
+            if (file.size > MAX_SIZE) {
+              alert(`🚨 ไฟล์ใหญ่เกินไป! \n\nรูป "${file.name}" มีขนาด ${(file.size / 1024 / 1024).toFixed(2)} MB \nระบบรองรับได้ไม่เกิน 20 MB ครับ \n\nกรุณาลดขนาดรูปก่อนอัปโหลดนะครับ`);
+              input.value = ""; // Clear input
+              return;
+            }
+
+            if (!file.type.startsWith("image/")) return;
             
             const reader = new FileReader();
             reader.onload = (e) => {
@@ -332,7 +354,7 @@
           };
 
           input.addEventListener("change", () => {
-            if (input.files.length > 0) updatePreview(input.files[0]);
+            if (input.files.length > 0) validateAndPreview(input.files[0]);
           });
 
           ["dragover", "dragenter"].forEach((type) => {
@@ -351,8 +373,13 @@
           zone.addEventListener("drop", (e) => {
             e.preventDefault();
             if (e.dataTransfer.files.length > 0) {
+              const file = e.dataTransfer.files[0];
+              if (file.size > MAX_SIZE) {
+                alert(`🚨 ไฟล์ใหญ่เกินไป! \n\nรูป "${file.name}" มีขนาด ${(file.size / 1024 / 1024).toFixed(2)} MB \nระบบรองรับได้ไม่เกิน 20 MB ครับ`);
+                return;
+              }
               input.files = e.dataTransfer.files;
-              updatePreview(e.dataTransfer.files[0]);
+              validateAndPreview(file);
             }
           });
         });
