@@ -2380,19 +2380,23 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             $coverImagePath = $coverImageSquarePath;
         }
 
-        Article::query()->create([
-            'title' => trim($data['title']),
-            'slug' => $slug,
-            'excerpt' => trim((string) ($data['excerpt'] ?? '')) ?: null,
-            'content' => trim($data['content']),
-            'meta_description' => trim((string) ($data['meta_description'] ?? '')) ?: null,
-            'is_published' => $isPublished,
-            'published_at' => $isPublished ? $publishedAt : null,
-            'cover_image_path' => $coverImagePath,
-            'cover_image_landscape_path' => $coverImageLandscapePath,
-            'cover_image_square_path' => $coverImageSquarePath,
-            'author_user_id' => is_numeric(session('admin_user_id')) ? (int) session('admin_user_id') : null,
-        ]);
+        try {
+            Article::query()->create([
+                'title' => trim($data['title']),
+                'slug' => $slug,
+                'excerpt' => trim((string) ($data['excerpt'] ?? '')) ?: null,
+                'content' => trim($data['content']),
+                'meta_description' => trim((string) ($data['meta_description'] ?? '')) ?: null,
+                'is_published' => $isPublished,
+                'published_at' => $isPublished ? $publishedAt : null,
+                'cover_image_path' => $coverImagePath,
+                'cover_image_landscape_path' => $coverImageLandscapePath,
+                'cover_image_square_path' => $coverImageSquarePath,
+                'author_user_id' => is_numeric(session('admin_user_id')) ? (int) session('admin_user_id') : null,
+            ]);
+        } catch (\Throwable $e) {
+            return back()->withInput()->withErrors(['save_error' => 'ไม่สามารถบันทึกบทความได้: ' . $e->getMessage()]);
+        }
 
         return redirect()
             ->route('admin.articles')
@@ -2561,18 +2565,22 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             }
         }
 
-        $article->update([
-            'title' => trim($data['title']),
-            'slug' => $slug,
-            'excerpt' => trim((string) ($data['excerpt'] ?? '')) ?: null,
-            'content' => trim($data['content']),
-            'meta_description' => trim((string) ($data['meta_description'] ?? '')) ?: null,
-            'is_published' => $isPublished,
-            'published_at' => $isPublished ? $publishedAt : null,
-            'cover_image_path' => $coverImagePath,
-            'cover_image_landscape_path' => $coverImageLandscapePath,
-            'cover_image_square_path' => $coverImageSquarePath,
-        ]);
+        try {
+            $article->update([
+                'title' => trim($data['title']),
+                'slug' => $slug,
+                'excerpt' => trim((string) ($data['excerpt'] ?? '')) ?: null,
+                'content' => trim($data['content']),
+                'meta_description' => trim((string) ($data['meta_description'] ?? '')) ?: null,
+                'is_published' => $isPublished,
+                'published_at' => $isPublished ? $publishedAt : null,
+                'cover_image_path' => $coverImagePath,
+                'cover_image_landscape_path' => $coverImageLandscapePath,
+                'cover_image_square_path' => $coverImageSquarePath,
+            ]);
+        } catch (\Throwable $e) {
+            return back()->withInput()->withErrors(['save_error' => 'ไม่สามารถอัปเดตบทความได้: ' . $e->getMessage()]);
+        }
 
         return redirect()
             ->route('admin.articles')
