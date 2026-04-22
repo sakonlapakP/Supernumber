@@ -99,7 +99,6 @@
       data-has-cover="{{ ($article->cover_image_path || $article->cover_image_landscape_path || $article->cover_image_square_path) ? '1' : '0' }}"
     >
       @csrf
-      @method('PUT')
 
       <div class="admin-field">
         <label for="title">หัวข้อบทความ</label>
