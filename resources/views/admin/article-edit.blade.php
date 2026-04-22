@@ -18,7 +18,7 @@
       align-items: center;
       justify-content: center;
       gap: 10px;
-      min-height: 140px;
+      min-height: 100px;
     }
     .admin-drop-zone:hover, .admin-drop-zone.is-dragover {
       border-color: #1d4f9f;
@@ -45,7 +45,7 @@
       position: relative;
     }
     .admin-preview-img {
-      max-width: 240px;
+      max-width: 180px;
       border-radius: 10px;
       border: 1px solid #d8e0ec;
       display: block;
