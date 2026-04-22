@@ -639,6 +639,7 @@ $syncPhoneNumberStatusFromOrder = function (CustomerOrder $order, ?int $userId =
 };
 
 Route::get('/', [PublicController::class, 'index'])->name('home');
+Route::get('/sitemap.xml', [PublicController::class, 'sitemap'])->name('sitemap');
 Route::view('/under-construction', 'under-construction')->name('under-construction');
 Route::redirect('/underconsturter', '/under-construction');
 
