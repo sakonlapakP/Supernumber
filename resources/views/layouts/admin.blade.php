@@ -1127,15 +1127,6 @@
       (() => {
         const toggle = document.getElementById("admin-menu-toggle");
         const menu = document.getElementById("admin-mobile-nav");
-        const logoutForms = document.querySelectorAll(".admin-logout-confirm");
-
-        logoutForms.forEach((form) => {
-          form.addEventListener("submit", (event) => {
-            if (!window.confirm("ยืนยันออกจากระบบ?")) {
-              event.preventDefault();
-            }
-          });
-        });
 
         if (!toggle || !menu) return;
 

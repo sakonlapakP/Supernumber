@@ -1172,7 +1172,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return redirect()->route('admin.numbers');
     })->name('login.attempt');
 
-    Route::post('/logout', function (Request $request) {
+    Route::match(['get', 'post'], '/logout', function (Request $request) {
         $request->session()->forget([
             'admin_authenticated',
             'admin_user_id',
