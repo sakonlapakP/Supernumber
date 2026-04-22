@@ -2417,6 +2417,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 $coverImageSquarePath = $fullPath;
             }
 
+            if ($coverImagePath === null) {
+                $coverImagePath = $coverImageLandscapePath ?: $coverImageSquarePath;
+            }
+
             Article::query()->create([
                 'title' => trim($data['title']),
                 'slug' => $slug,
@@ -2620,6 +2624,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 
                 Storage::disk('public')->putFileAs($dir, $file, $name);
                 $coverImageSquarePath = $fullPath;
+            }
+
+            if ($coverImagePath === null) {
+                $coverImagePath = $coverImageLandscapePath ?: $coverImageSquarePath;
             }
 
             $article->update([

@@ -106,19 +106,6 @@
         <textarea id="content" name="content" class="admin-input" style="display: none;">{{ old('content') }}</textarea>
       </div>
 
-      <div class="admin-field" style="margin-bottom: 24px;">
-        <label>รูปปกหลัก (Primary Cover - แนะนำ 1200x630)</label>
-        <div class="admin-drop-zone" data-drop-zone>
-          <div class="admin-drop-zone__icon">📸</div>
-          <div class="admin-drop-zone__text">ลากรูปปกหลักมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</div>
-          <input type="file" name="cover_image" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
-        </div>
-        <div class="admin-preview-box" data-preview-box>
-          <img src="" class="admin-preview-img" data-preview-img style="max-width: 300px;" />
-          <div class="admin-preview-info" data-preview-info></div>
-        </div>
-      </div>
-
       <div class="admin-image-grid">
         <div class="admin-field">
           <label>รูปหน้ารวมบทความ (แนวนอน 16:9 / 4:3)</label>
