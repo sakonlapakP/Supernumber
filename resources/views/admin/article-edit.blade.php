@@ -120,7 +120,7 @@
           </div>
           <div class="admin-rte__editor" contenteditable="true" data-rte-editor data-placeholder="พิมพ์เนื้อหาบทความที่นี่..."></div>
         </div>
-        <textarea id="content" name="content" class="admin-input" style="display: none;" required>{{ old('content', $article->content) }}</textarea>
+        <textarea id="content" name="content" class="admin-input" style="display: none;">{{ old('content', $article->content) }}</textarea>
       </div>
 
       <div class="admin-field">
