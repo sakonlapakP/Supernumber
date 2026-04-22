@@ -1,0 +1,1 @@
+<html><body><form action='test_upload.php' method='POST' enctype='multipart/form-data'><input type='file' name='testfile'><button type='submit'>Test Upload Raw PHP</button></form><pre><?php print_r($_FILES); ?></pre></body></html>
