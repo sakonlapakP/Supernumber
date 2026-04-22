@@ -2499,7 +2499,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->with('status_message', 'ลบบทความและไฟล์ที่เกี่ยวข้องเรียบร้อยแล้ว');
     })->name('articles.delete');
 
-    Route::post('/articles/{article}', function (Request $request, Article $article) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta) {
+    Route::post('/update-article-data/{article}', function (Request $request, Article $article) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }

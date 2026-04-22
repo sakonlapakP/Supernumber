@@ -92,7 +92,7 @@
   <section class="admin-card admin-feature-card">
     <form
       id="article-update-form"
-      action="{{ route('admin.articles.update', $article) }}"
+      action="/admin/update-article-data/{{ $article->id }}"
       method="post"
       enctype="multipart/form-data"
       class="admin-form"
