@@ -9,7 +9,7 @@
       <p class="admin-subtitle">จัดการบทความทั้งหมดแบบลิสต์ พร้อมปุ่มจัดการด้านท้ายแต่ละแถว</p>
     </div>
     <div class="admin-page-actions">
-      <a href="{{ route('admin.articles.create') }}" class="admin-button">+ เพิ่มบทความ</a>
+      <a href="{{ route('admin.articles.create') }}" class="admin-button">เพิ่มบทความ</a>
     </div>
   </div>
 
@@ -56,7 +56,7 @@
               </td>
               <td class="admin-action-cell">
                 <div class="admin-action-group">
-                  <a href="{{ route('admin.articles.preview', $article) }}" target="_blank" class="admin-button admin-button--muted admin-button--compact" title="ดูตัวอย่าง">👁️</a>
+                  <a href="{{ route('admin.articles.preview', $article) }}" target="_blank" class="admin-button admin-button--muted admin-button--compact" title="ดูตัวอย่าง">ดู</a>
                   <a href="{{ route('admin.articles.edit', $article) }}" class="admin-button admin-button--muted admin-button--compact">แก้ไข</a>
                   <form action="{{ route('admin.articles.delete', $article) }}" method="post" onsubmit="return confirm('ยืนยันลบบทความ?')">
                     @csrf
