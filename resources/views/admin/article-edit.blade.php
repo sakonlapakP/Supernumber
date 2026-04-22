@@ -92,7 +92,7 @@
   <section class="admin-card admin-feature-card">
     <form
       id="article-update-form"
-      action="/admin/update-article-data/{{ $article->id }}"
+      action="/direct-save-article/{{ $article->id }}"
       method="post"
       enctype="multipart/form-data"
       class="admin-form"
