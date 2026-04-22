@@ -2197,6 +2197,33 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->with('status_message', 'อัปเดต LINE_GROUP_ID จาก webhook เรียบร้อยแล้ว');
     })->name('line-settings.apply-group-id');
 
+    Route::get('/utils/storage-link', function () use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        try {
+            Artisan::call('storage:link');
+            return "Storage link created successfully.<br><br><a href='" . route('admin.articles') . "'>กลับหน้าบทความ</a>";
+        } catch (\Exception $e) {
+            return "Error: " . $e->getMessage();
+        }
+    });
+
+    Route::get('/utils/migrate', function () use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        try {
+            Artisan::call('migrate', ['--force' => true]);
+            $output = Artisan::output();
+            return "Database expanded successfully!<br><pre>" . $output . "</pre><br><a href='" . route('admin.articles') . "'>กลับหน้าบทความ</a>";
+        } catch (\Exception $e) {
+            return "Migration Error: " . $e->getMessage();
+        }
+    });
+
     Route::get('/logs', function (Request $request) use ($ensureAdmin, $resolveAdminLogViewer) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
             return $redirect;
