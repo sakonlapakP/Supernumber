@@ -228,7 +228,7 @@
           return;
         }
 
-        const storageKey = "supernumber_cookie_consent";
+        const storageKey = "supernumber_analytics_consent";
         let enabled = false;
         let scriptRequested = false;
 
@@ -310,7 +310,7 @@
           isEnabled: () => enabled,
         };
 
-        if (window.localStorage.getItem(storageKey) === "accepted") {
+        if (window.localStorage.getItem(storageKey)) {
           enable();
         }
 
@@ -343,7 +343,7 @@
       })();
 
       (() => {
-        const storageKey = "supernumber_privacy_consent";
+        const storageKey = "supernumber_analytics_consent";
         const banner = document.querySelector("[data-cookie-consent]");
         const modal = document.getElementById("privacy-modal");
         
