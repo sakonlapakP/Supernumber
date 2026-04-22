@@ -2371,39 +2371,54 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $coverImageLandscapePath = null;
         $coverImageSquarePath = null;
 
-        if ($request->hasFile('cover_image')) {
-            $file = $request->file('cover_image');
-            $path = $imageMeta['square_path'];
-            $dir = dirname($path);
-            $name = basename($path);
-            Storage::disk('public')->putFileAs($dir, $file, $name);
-            $coverImagePath = $path;
-            $coverImageSquarePath = $path;
-        }
-
-        if ($request->hasFile('cover_image_landscape')) {
-            $file = $request->file('cover_image_landscape');
-            $path = $imageMeta['cover_path'];
-            $dir = dirname($path);
-            $name = basename($path);
-            Storage::disk('public')->putFileAs($dir, $file, $name);
-            $coverImageLandscapePath = $path;
-        }
-
-        if ($request->hasFile('cover_image_square')) {
-            $file = $request->file('cover_image_square');
-            $path = $imageMeta['square_path'];
-            $dir = dirname($path);
-            $name = basename($path);
-            Storage::disk('public')->putFileAs($dir, $file, $name);
-            $coverImageSquarePath = $path;
-        }
-
-        if ($coverImagePath === null && $coverImageSquarePath !== null) {
-            $coverImagePath = $coverImageSquarePath;
-        }
-
         try {
+            if ($request->hasFile('cover_image')) {
+                $file = $request->file('cover_image');
+                $path = $imageMeta['square_path'];
+                $dir = dirname($path);
+                $name = basename($path);
+                
+                if (!Storage::disk('public')->exists($dir)) {
+                    Storage::disk('public')->makeDirectory($dir);
+                }
+                
+                Storage::disk('public')->putFileAs($dir, $file, $name);
+                $coverImagePath = $path;
+                $coverImageSquarePath = $path;
+            }
+
+            if ($request->hasFile('cover_image_landscape')) {
+                $file = $request->file('cover_image_landscape');
+                $path = $imageMeta['cover_path'];
+                $dir = dirname($path);
+                $name = basename($path);
+                
+                if (!Storage::disk('public')->exists($dir)) {
+                    Storage::disk('public')->makeDirectory($dir);
+                }
+                
+                Storage::disk('public')->putFileAs($dir, $file, $name);
+                $coverImageLandscapePath = $path;
+            }
+
+            if ($request->hasFile('cover_image_square')) {
+                $file = $request->file('cover_image_square');
+                $path = $imageMeta['square_path'];
+                $dir = dirname($path);
+                $name = basename($path);
+                
+                if (!Storage::disk('public')->exists($dir)) {
+                    Storage::disk('public')->makeDirectory($dir);
+                }
+                
+                Storage::disk('public')->putFileAs($dir, $file, $name);
+                $coverImageSquarePath = $path;
+            }
+
+            if ($coverImagePath === null && $coverImageSquarePath !== null) {
+                $coverImagePath = $coverImageSquarePath;
+            }
+
             Article::query()->create([
                 'title' => trim($data['title']),
                 'slug' => $slug,
@@ -2420,7 +2435,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'author_user_id' => is_numeric(session('admin_user_id')) ? (int) session('admin_user_id') : null,
             ]);
         } catch (\Throwable $e) {
-            return back()->withInput()->withErrors(['save_error' => 'ไม่สามารถบันทึกบทความได้: ' . $e->getMessage()]);
+            return back()->withInput()->withErrors(['save_error' => 'ไม่สามารถบันทึกบทความหรืออัปโหลดรูปภาพได้: ' . $e->getMessage()]);
         }
 
         return redirect()
@@ -2553,43 +2568,58 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $coverImageLandscapePath = $article->cover_image_landscape_path;
         $coverImageSquarePath = $article->cover_image_square_path;
 
-        if ($request->hasFile('cover_image')) {
-            $file = $request->file('cover_image');
-            $targetPath = $imageMeta['square_path'];
-            if ($coverImagePath && $coverImagePath !== $targetPath) {
-                Storage::disk('public')->delete($coverImagePath);
-            }
-            $dir = dirname($targetPath);
-            $name = basename($targetPath);
-            Storage::disk('public')->putFileAs($dir, $file, $name);
-            $coverImagePath = $targetPath;
-            $coverImageSquarePath = $targetPath;
-        }
-        if ($request->hasFile('cover_image_landscape')) {
-            $file = $request->file('cover_image_landscape');
-            $targetPath = $imageMeta['cover_path'];
-            if ($coverImageLandscapePath && $coverImageLandscapePath !== $targetPath) {
-                Storage::disk('public')->delete($coverImageLandscapePath);
-            }
-            $dir = dirname($targetPath);
-            $name = basename($targetPath);
-            Storage::disk('public')->putFileAs($dir, $file, $name);
-            $coverImageLandscapePath = $targetPath;
-        }
-        if ($request->hasFile('cover_image_square')) {
-            $file = $request->file('cover_image_square');
-            $targetPath = $imageMeta['square_path'];
-            if ($coverImageSquarePath && $coverImageSquarePath !== $targetPath) {
-                Storage::disk('public')->delete($coverImageSquarePath);
-            }
-            $dir = dirname($targetPath);
-            $name = basename($targetPath);
-            Storage::disk('public')->putFileAs($dir, $file, $name);
-            $coverImageSquarePath = $targetPath;
-            $coverImagePath = $targetPath;
-        }
-
         try {
+            if ($request->hasFile('cover_image')) {
+                $file = $request->file('cover_image');
+                $targetPath = $imageMeta['square_path'];
+                if ($coverImagePath && $coverImagePath !== $targetPath) {
+                    Storage::disk('public')->delete($coverImagePath);
+                }
+                $dir = dirname($targetPath);
+                $name = basename($targetPath);
+                
+                if (!Storage::disk('public')->exists($dir)) {
+                    Storage::disk('public')->makeDirectory($dir);
+                }
+                
+                Storage::disk('public')->putFileAs($dir, $file, $name);
+                $coverImagePath = $targetPath;
+                $coverImageSquarePath = $targetPath;
+            }
+            if ($request->hasFile('cover_image_landscape')) {
+                $file = $request->file('cover_image_landscape');
+                $targetPath = $imageMeta['cover_path'];
+                if ($coverImageLandscapePath && $coverImageLandscapePath !== $targetPath) {
+                    Storage::disk('public')->delete($coverImageLandscapePath);
+                }
+                $dir = dirname($targetPath);
+                $name = basename($targetPath);
+                
+                if (!Storage::disk('public')->exists($dir)) {
+                    Storage::disk('public')->makeDirectory($dir);
+                }
+                
+                Storage::disk('public')->putFileAs($dir, $file, $name);
+                $coverImageLandscapePath = $targetPath;
+            }
+            if ($request->hasFile('cover_image_square')) {
+                $file = $request->file('cover_image_square');
+                $targetPath = $imageMeta['square_path'];
+                if ($coverImageSquarePath && $coverImageSquarePath !== $targetPath) {
+                    Storage::disk('public')->delete($coverImageSquarePath);
+                }
+                $dir = dirname($targetPath);
+                $name = basename($targetPath);
+                
+                if (!Storage::disk('public')->exists($dir)) {
+                    Storage::disk('public')->makeDirectory($dir);
+                }
+                
+                Storage::disk('public')->putFileAs($dir, $file, $name);
+                $coverImageSquarePath = $targetPath;
+                $coverImagePath = $targetPath;
+            }
+
             $article->update([
                 'title' => trim($data['title']),
                 'slug' => $slug,
@@ -2605,7 +2635,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'cover_image_square_path' => $coverImageSquarePath,
             ]);
         } catch (\Throwable $e) {
-            return back()->withInput()->withErrors(['save_error' => 'ไม่สามารถอัปเดตบทความได้: ' . $e->getMessage()]);
+            return back()->withInput()->withErrors(['save_error' => 'ไม่สามารถอัปเดตบทความหรืออัปโหลดรูปภาพได้: ' . $e->getMessage()]);
         }
 
         return redirect()
