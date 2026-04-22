@@ -173,6 +173,13 @@
                 <div class="admin-action-group">
                   <a href="{{ route('admin.articles.preview', $article) }}" target="_blank" rel="noopener noreferrer" class="admin-button admin-button--compact" style="background:#1d4f9f;">ดู</a>
                   <a href="{{ route('admin.articles.edit', $article) }}" class="admin-button admin-button--compact">แก้ไข</a>
+                  @if (session('admin_user_role') === \App\Models\User::ROLE_MANAGER)
+                    <form action="{{ route('admin.articles.delete', $article) }}" method="POST" onsubmit="return confirm('ยืนยันลบบทความและรูปภาพทั้งหมดถาวร? ไม่สามารถกู้คืนได้');" style="display:inline;">
+                      @csrf
+                      @method('DELETE')
+                      <button type="submit" class="admin-button admin-button--compact" style="background:#dc3545;">ลบ</button>
+                    </form>
+                  @endif
                 </div>
               </td>
             </tr>

@@ -2407,6 +2407,53 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('articles.show', compact('article', 'lotteryResult'));
     })->name('articles.preview');
 
+    Route::delete('/articles/{article}', function (Article $article) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        if (session('admin_user_role') !== User::ROLE_MANAGER) {
+            abort(403);
+        }
+
+        // 1. ลบรูปหน้าปกทั้งหมด
+        $coverPaths = array_values(array_unique(array_filter([
+            $article->cover_image_path,
+            $article->cover_image_landscape_path,
+            $article->cover_image_square_path,
+        ])));
+
+        foreach ($coverPaths as $path) {
+            if (Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
+            }
+        }
+
+        // 2. สแกนหาและลบรูปภาพในเนื้อหา (Content Images)
+        $content = (string) $article->content;
+        preg_match_all('/<img[^>]+src="([^">]+)"/i', $content, $matches);
+        $imageUrls = $matches[1] ?? [];
+
+        foreach ($imageUrls as $url) {
+            $storagePath = preg_replace('/^.*\/storage\//i', '', $url);
+            if ($storagePath !== $url) {
+                if (Storage::disk('public')->exists($storagePath)) {
+                    Storage::disk('public')->delete($storagePath);
+                }
+            }
+        }
+
+        // 3. ลบคอมเมนต์ที่เกี่ยวข้อง
+        $article->comments()->delete();
+
+        // 4. ลบบทความ
+        $article->delete();
+
+        return redirect()
+            ->route('admin.articles')
+            ->with('status_message', 'ลบบทความและไฟล์ที่เกี่ยวข้องเรียบร้อยแล้ว');
+    })->name('articles.delete');
+
     Route::put('/articles/{article}', function (Request $request, Article $article) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;

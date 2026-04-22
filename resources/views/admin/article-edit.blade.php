@@ -123,8 +123,15 @@
       </label>
       <p class="admin-subtitle" style="margin: 0;">สถานะปัจจุบัน: <strong>{{ $article->is_published ? 'เผยแพร่แล้ว' : 'ฉบับร่าง' }}</strong></p>
 
-      <div style="display:flex; gap:10px; flex-wrap:wrap;">
+      <div style="display:flex; gap:10px; flex-wrap:wrap; align-items: center;">
         <button type="submit" class="admin-button">บันทึกการเปลี่ยนแปลง</button>
+        @if (session('admin_user_role') === \App\Models\User::ROLE_MANAGER)
+          <form action="{{ route('admin.articles.delete', $article) }}" method="POST" onsubmit="return confirm('ยืนยันลบบทความและรูปภาพทั้งหมดถาวร? ไม่สามารถกู้คืนได้');" style="margin: 0;">
+            @csrf
+            @method('DELETE')
+            <button type="submit" class="admin-button" style="background:#dc3545;">ลบบทความ</button>
+          </form>
+        @endif
       </div>
     </form>
     <div
