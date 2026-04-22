@@ -69,6 +69,7 @@
         <div class="admin-kpi__value"><span id="article-visible-count">{{ number_format($articles->count()) }}</span></div>
         <div class="admin-summary">จาก {{ number_format($articles->total()) }} บทความ</div>
       </div>
+      <button type="button" id="article-add-toggle" class="admin-button admin-button--compact" style="margin-left: 10px;">เพิ่มบทความ</button>
     </div>
   </div>
 
@@ -87,24 +88,6 @@
   @endif
 
   <div class="admin-panel-stack">
-    <section class="admin-card admin-feature-card admin-feature-card--compact">
-      <div class="admin-feature-card__head">
-        <div>
-          <h2 class="admin-feature-card__title">ค้นหาแบบทันที</h2>
-          <p class="admin-feature-card__hint">ค้นหาบทความจากหัวข้อหรือ slug ได้ทันที</p>
-        </div>
-        <div class="admin-feature-card__actions">
-          <button type="button" id="article-add-toggle" class="admin-button admin-button--compact">เพิ่ม</button>
-        </div>
-      </div>
-
-      <div class="admin-search-shell">
-        <div class="admin-field">
-          <label for="article-search">ค้นหา</label>
-          <input id="article-search" class="admin-input" type="text" placeholder="ค้นหาหัวข้อ หรือ slug" />
-        </div>
-      </div>
-    </section>
 
     <section id="article-add-panel" class="admin-card admin-feature-card" hidden>
       <div class="admin-feature-card__head">
@@ -315,27 +298,6 @@
         addToggle.addEventListener("click", () => {
           const isHidden = addPanel.hidden;
           addPanel.hidden = !isHidden;
-        });
-      }
-
-      if (searchInput && rows.length > 0 && visibleCount) {
-        searchInput.addEventListener("input", () => {
-          const term = searchInput.value.trim().toLowerCase();
-          let matched = 0;
-
-          rows.forEach((row) => {
-            const title = row.dataset.title || "";
-            const slug = row.dataset.slug || "";
-            const visible = term === "" || title.includes(term) || slug.includes(term);
-            row.hidden = !visible;
-            if (visible) matched += 1;
-          });
-
-          if (emptyRow) {
-            emptyRow.hidden = matched !== 0;
-          }
-
-          visibleCount.textContent = matched.toLocaleString("en-US");
         });
       }
 
