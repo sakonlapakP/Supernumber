@@ -2283,6 +2283,19 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->with('status_message', 'ล้างไฟล์ log เรียบร้อยแล้ว');
     })->name('logs.clear');
 
+    Route::get('/utils/storage-link', function () use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        try {
+            Artisan::call('storage:link');
+            return "OK: Storage symlink has been created successfully. Your images should now be visible!";
+        } catch (\Throwable $e) {
+            return "Error: " . $e->getMessage();
+        }
+    })->name('utils.storage-link');
+
     Route::get('/articles', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
