@@ -56,6 +56,17 @@
       color: #94a3b8;
       margin-top: 6px;
     }
+    .admin-image-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 768px) {
+      .admin-image-grid {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
 
   <div class="admin-page-head">
@@ -175,29 +186,31 @@
         </div>
 
 
-        <div class="admin-field">
-          <label>รูปหน้ารวมบทความ (แนวนอน 16:9 / 4:3)</label>
-          <div class="admin-drop-zone" data-drop-zone>
-            <div class="admin-drop-zone__icon">🖼️</div>
-            <div class="admin-drop-zone__text">ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</div>
-            <input type="file" name="cover_image_landscape" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
+        <div class="admin-image-grid">
+          <div class="admin-field">
+            <label>รูปหน้ารวมบทความ (แนวนอน 16:9 / 4:3)</label>
+            <div class="admin-drop-zone" data-drop-zone>
+              <div class="admin-drop-zone__icon">🖼️</div>
+              <div class="admin-drop-zone__text">ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</div>
+              <input type="file" name="cover_image_landscape" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
+            </div>
+            <div class="admin-preview-box" data-preview-box>
+              <img src="" class="admin-preview-img" data-preview-img />
+              <div class="admin-preview-info" data-preview-info></div>
+            </div>
           </div>
-          <div class="admin-preview-box" data-preview-box>
-            <img src="" class="admin-preview-img" data-preview-img />
-            <div class="admin-preview-info" data-preview-info></div>
-          </div>
-        </div>
 
-        <div class="admin-field">
-          <label>รูปหน้ารายละเอียดบทความ (สี่เหลี่ยมจัตุรัส 1:1)</label>
-          <div class="admin-drop-zone" data-drop-zone>
-            <div class="admin-drop-zone__icon">⏹️</div>
-            <div class="admin-drop-zone__text">ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</div>
-            <input type="file" name="cover_image_square" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
-          </div>
-          <div class="admin-preview-box" data-preview-box>
-            <img src="" class="admin-preview-img" data-preview-img style="aspect-ratio:1/1; object-fit:cover;" />
-            <div class="admin-preview-info" data-preview-info></div>
+          <div class="admin-field">
+            <label>รูปหน้ารายละเอียดบทความ (สี่เหลี่ยมจัตุรัส 1:1)</label>
+            <div class="admin-drop-zone" data-drop-zone>
+              <div class="admin-drop-zone__icon">⏹️</div>
+              <div class="admin-drop-zone__text">ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</div>
+              <input type="file" name="cover_image_square" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
+            </div>
+            <div class="admin-preview-box" data-preview-box>
+              <img src="" class="admin-preview-img" data-preview-img style="aspect-ratio:1/1; object-fit:cover;" />
+              <div class="admin-preview-info" data-preview-info></div>
+            </div>
           </div>
         </div>
 
