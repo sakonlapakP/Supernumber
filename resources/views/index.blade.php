@@ -58,7 +58,7 @@
 
     /* Redesigned Home Search Section - In-lined for Instant Load */
     .home-search {
-      margin-top: -40px; 
+      margin-top: 40px; 
       position: relative;
       z-index: 100;
       padding-bottom: 40px;
@@ -361,55 +361,7 @@
     }
   </style>
 
-  <section class="hero" aria-labelledby="hero-title">
-    <div class="hero-media" aria-hidden="true">
-      <img
-        class="hero-media__image"
-        src="{{ $homeBannerUrl }}"
-        alt="เบอร์มงคล Supernumber - เปลี่ยนเบอร์เปลี่ยนชีวิต"
-        fetchpriority="high"
-        decoding="async"
-      />
-    </div>
-    <div class="hero-overlay"></div>
-    <div class="container hero-content">
-      <div class="hero-left">
-        <p class="hero-kicker">แค่เปลี่ยนเบอร์ชีวิตคุณก็เปลี่ยน</p>
-        <h1 class="hero-title" id="hero-title">
-          เบอร์มงคลไม่ต้องซื้อ ใคร ๆ ก็เป็นเจ้าของได้ที่นี่...ที่เดียว
-        </h1>
-        <p class="hero-subtitle">
-          ดูดวงเบอร์มือถือฟรี วิเคราะห์เสริมพลัง ดึงดูดโอกาส และปลดล็อกเส้นทางสำเร็จ
-        </p>
-        <form class="hero-form" action="{{ route('evaluate') }}" method="get">
-          <label class="hero-label" for="phone">กรอกเบอร์มือถือ</label>
-          <div class="hero-input">
-            <input
-              id="phone"
-              name="phone"
-              type="tel"
-              inputmode="numeric"
-              autocomplete="tel-national"
-              placeholder="0xx123456"
-              pattern="[0-9]{10}"
-              minlength="10"
-              maxlength="10"
-              value="{{ old('phone') }}"
-              aria-describedby="phone-help{{ $errors->has('phone') ? ' phone-error' : '' }}"
-              @error('phone') aria-invalid="true" @enderror
-              required
-            />
-            <button type="submit">วิเคราะห์</button>
-          </div>
-
-          @error('phone')
-            <p class="hero-error" id="phone-error">{{ $message }}</p>
-          @enderror
-        </form>
-      </div>
-    </div>
-  </section>
-
+  <!-- Search Section -->
   <section class="home-search" aria-labelledby="home-search-title">
     <div class="container container--narrow">
       <div class="home-filter">
@@ -508,6 +460,56 @@
               <button class="home-filter__submit" type="submit">ค้นหาเบอร์</button>
             </div>
           </div>
+        </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Hero Section -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-media" aria-hidden="true">
+      <img
+        class="hero-media__image"
+        src="{{ $homeBannerUrl }}"
+        alt="เบอร์มงคล Supernumber - เปลี่ยนเบอร์เปลี่ยนชีวิต"
+        fetchpriority="high"
+        decoding="async"
+      />
+    </div>
+    <div class="hero-overlay"></div>
+    <div class="container hero-content">
+      <div class="hero-left">
+        <p class="hero-kicker">แค่เปลี่ยนเบอร์ชีวิตคุณก็เปลี่ยน</p>
+        <h1 class="hero-title" id="hero-title">
+          เบอร์มงคลไม่ต้องซื้อ ใคร ๆ ก็เป็นเจ้าของได้ที่นี่...ที่เดียว
+        </h1>
+        <p class="hero-subtitle">
+          ดูดวงเบอร์มือถือฟรี วิเคราะห์เสริมพลัง ดึงดูดโอกาส และปลดล็อกเส้นทางสำเร็จ
+        </p>
+        <form class="hero-form" action="{{ route('evaluate') }}" method="get">
+          <label class="hero-label" for="phone">กรอกเบอร์มือถือ</label>
+          <div class="hero-input">
+            <input
+              id="phone"
+              name="phone"
+              type="tel"
+              inputmode="numeric"
+              autocomplete="tel-national"
+              placeholder="0xx123456"
+              pattern="[0-9]{10}"
+              minlength="10"
+              maxlength="10"
+              value="{{ old('phone') }}"
+              aria-describedby="phone-help{{ $errors->has('phone') ? ' phone-error' : '' }}"
+              @error('phone') aria-invalid="true" @enderror
+              required
+            />
+            <button type="submit">วิเคราะห์</button>
+          </div>
+
+          @error('phone')
+            <p class="hero-error" id="phone-error">{{ $message }}</p>
+          @enderror
         </form>
       </div>
     </div>
