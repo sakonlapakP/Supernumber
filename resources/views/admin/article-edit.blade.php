@@ -209,15 +209,18 @@
 
       <div style="display:flex; gap:10px; flex-wrap:wrap; align-items: center;">
         <button type="submit" class="admin-button">บันทึกการเปลี่ยนแปลง</button>
-        @if (session('admin_user_role') === \App\Models\User::ROLE_MANAGER)
-          <form action="{{ route('admin.articles.delete', $article) }}" method="POST" onsubmit="return confirm('ยืนยันลบบทความและรูปภาพทั้งหมดถาวร? ไม่สามารถกู้คืนได้');" style="margin: 0;">
-            @csrf
-            @method('DELETE')
-            <button type="submit" class="admin-button" style="background:#dc3545;">ลบบทความ</button>
-          </form>
-        @endif
       </div>
     </form>
+
+    @if (session('admin_user_role') === \App\Models\User::ROLE_MANAGER)
+      <div style="margin-top: 10px;">
+        <form action="{{ route('admin.articles.delete', $article) }}" method="POST" onsubmit="return confirm('ยืนยันลบบทความและรูปภาพทั้งหมดถาวร? ไม่สามารถกู้คืนได้');" style="margin: 0;">
+          @csrf
+          @method('DELETE')
+          <button type="submit" class="admin-button" style="background:#dc3545;">ลบบทความ</button>
+        </form>
+      </div>
+    @endif
     <div
       id="article-cover-confirm-modal"
       style="position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); z-index: 9999; display: none; place-items: center; padding: 20px;"
