@@ -2376,47 +2376,45 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 $file = $request->file('cover_image');
                 $path = $imageMeta['square_path'];
                 $dir = dirname($path);
-                $name = basename($path);
+                $name = "main_" . basename($path);
+                $fullPath = $dir . '/' . $name;
                 
                 if (!Storage::disk('public')->exists($dir)) {
                     Storage::disk('public')->makeDirectory($dir);
                 }
                 
                 Storage::disk('public')->putFileAs($dir, $file, $name);
-                $coverImagePath = $path;
-                $coverImageSquarePath = $path;
+                $coverImagePath = $fullPath;
             }
 
             if ($request->hasFile('cover_image_landscape')) {
                 $file = $request->file('cover_image_landscape');
                 $path = $imageMeta['cover_path'];
                 $dir = dirname($path);
-                $name = basename($path);
+                $name = "land_" . basename($path);
+                $fullPath = $dir . '/' . $name;
                 
                 if (!Storage::disk('public')->exists($dir)) {
                     Storage::disk('public')->makeDirectory($dir);
                 }
                 
                 Storage::disk('public')->putFileAs($dir, $file, $name);
-                $coverImageLandscapePath = $path;
+                $coverImageLandscapePath = $fullPath;
             }
 
             if ($request->hasFile('cover_image_square')) {
                 $file = $request->file('cover_image_square');
                 $path = $imageMeta['square_path'];
                 $dir = dirname($path);
-                $name = basename($path);
+                $name = "sq_" . basename($path);
+                $fullPath = $dir . '/' . $name;
                 
                 if (!Storage::disk('public')->exists($dir)) {
                     Storage::disk('public')->makeDirectory($dir);
                 }
                 
                 Storage::disk('public')->putFileAs($dir, $file, $name);
-                $coverImageSquarePath = $path;
-            }
-
-            if ($coverImagePath === null && $coverImageSquarePath !== null) {
-                $coverImagePath = $coverImageSquarePath;
+                $coverImageSquarePath = $fullPath;
             }
 
             Article::query()->create([
@@ -2572,52 +2570,56 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             if ($request->hasFile('cover_image')) {
                 $file = $request->file('cover_image');
                 $targetPath = $imageMeta['square_path'];
-                if ($coverImagePath && $coverImagePath !== $targetPath) {
+                $dir = dirname($targetPath);
+                $name = "main_" . basename($targetPath);
+                $fullPath = $dir . '/' . $name;
+                
+                if ($coverImagePath && $coverImagePath !== $fullPath) {
                     Storage::disk('public')->delete($coverImagePath);
                 }
-                $dir = dirname($targetPath);
-                $name = basename($targetPath);
                 
                 if (!Storage::disk('public')->exists($dir)) {
                     Storage::disk('public')->makeDirectory($dir);
                 }
                 
                 Storage::disk('public')->putFileAs($dir, $file, $name);
-                $coverImagePath = $targetPath;
-                $coverImageSquarePath = $targetPath;
+                $coverImagePath = $fullPath;
             }
             if ($request->hasFile('cover_image_landscape')) {
                 $file = $request->file('cover_image_landscape');
                 $targetPath = $imageMeta['cover_path'];
-                if ($coverImageLandscapePath && $coverImageLandscapePath !== $targetPath) {
+                $dir = dirname($targetPath);
+                $name = "land_" . basename($targetPath);
+                $fullPath = $dir . '/' . $name;
+                
+                if ($coverImageLandscapePath && $coverImageLandscapePath !== $fullPath) {
                     Storage::disk('public')->delete($coverImageLandscapePath);
                 }
-                $dir = dirname($targetPath);
-                $name = basename($targetPath);
                 
                 if (!Storage::disk('public')->exists($dir)) {
                     Storage::disk('public')->makeDirectory($dir);
                 }
                 
                 Storage::disk('public')->putFileAs($dir, $file, $name);
-                $coverImageLandscapePath = $targetPath;
+                $coverImageLandscapePath = $fullPath;
             }
             if ($request->hasFile('cover_image_square')) {
                 $file = $request->file('cover_image_square');
                 $targetPath = $imageMeta['square_path'];
-                if ($coverImageSquarePath && $coverImageSquarePath !== $targetPath) {
+                $dir = dirname($targetPath);
+                $name = "sq_" . basename($targetPath);
+                $fullPath = $dir . '/' . $name;
+                
+                if ($coverImageSquarePath && $coverImageSquarePath !== $fullPath) {
                     Storage::disk('public')->delete($coverImageSquarePath);
                 }
-                $dir = dirname($targetPath);
-                $name = basename($targetPath);
                 
                 if (!Storage::disk('public')->exists($dir)) {
                     Storage::disk('public')->makeDirectory($dir);
                 }
                 
                 Storage::disk('public')->putFileAs($dir, $file, $name);
-                $coverImageSquarePath = $targetPath;
-                $coverImagePath = $targetPath;
+                $coverImageSquarePath = $fullPath;
             }
 
             $article->update([

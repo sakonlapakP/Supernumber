@@ -11,10 +11,7 @@
   $detailCoverPath = null;
 
   if ($detailCoverCandidate) {
-      $normalizedCoverPath = ltrim((string) $detailCoverCandidate, '/');
-      if (\Illuminate\Support\Facades\Storage::disk('public')->exists($normalizedCoverPath)) {
-          $detailCoverPath = $normalizedCoverPath;
-      }
+      $detailCoverPath = ltrim((string) $detailCoverCandidate, '/');
   }
 @endphp
 @if ($detailCoverPath)

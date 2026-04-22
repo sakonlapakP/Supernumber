@@ -32,7 +32,8 @@
       <table class="admin-table admin-table--articles">
         <thead>
           <tr>
-            <th>หัวข้อ</th>
+            <th style="width: 80px;">รูปปก</th>
+          <th>หัวข้อ</th>
             <th>สถานะ</th>
             <th>เวลาเผยแพร่</th>
             <th>จัดการ</th>
@@ -41,9 +42,20 @@
         <tbody id="articles-table-body">
           @forelse ($articles as $article)
             <tr class="article-row" data-title="{{ strtolower($article->title) }}" data-slug="{{ strtolower($article->slug) }}">
-              <td>
-                <span class="admin-article-title" title="{{ $article->title }}">{{ $article->title }}</span>
-              </td>
+            <td style="padding: 12px;">
+              @php
+                $adminThumb = $article->cover_image_path ?: ($article->cover_image_square_path ?: $article->cover_image_landscape_path);
+              @endphp
+              @if ($adminThumb)
+                <img src="{{ asset('storage/' . $adminThumb) }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; display: block;" alt="" />
+              @else
+                <div style="width: 50px; height: 50px; background: #f1f5f9; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 20px;">🖼️</div>
+              @endif
+            </td>
+            <td>
+              <div style="font-weight: 500; color: #1e293b;">{{ $article->title }}</div>
+              <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">{{ $article->slug }}</div>
+            </td>
               <td>
                 @if ($article->is_published)
                   <span class="admin-status-pill admin-status-pill--active">เผยแพร่แล้ว</span>
@@ -68,11 +80,11 @@
             </tr>
           @empty
             <tr>
-              <td colspan="4" class="admin-muted" style="text-align: center; padding: 40px;">ไม่พบรายการบทความ</td>
+              <td colspan="5" class="admin-muted" style="text-align: center; padding: 40px;">ไม่พบรายการบทความ</td>
             </tr>
           @endforelse
           <tr id="articles-empty-row" style="display: none;">
-            <td colspan="4" class="admin-muted" style="text-align: center; padding: 40px;">ไม่พบผลลัพธ์การค้นหา</td>
+            <td colspan="5" class="admin-muted" style="text-align: center; padding: 40px;">ไม่พบผลลัพธ์การค้นหา</td>
           </tr>
         </tbody>
       </table>
