@@ -3,6 +3,61 @@
 @section('title', 'Supernumber Admin | บทความ')
 
 @section('content')
+  <style>
+    .admin-drop-zone {
+      position: relative;
+      border: 2px dashed #d8e0ec;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      background: #f8fbff;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 140px;
+    }
+    .admin-drop-zone:hover, .admin-drop-zone.is-dragover {
+      border-color: #1d4f9f;
+      background: #f0f7ff;
+    }
+    .admin-drop-zone__icon {
+      font-size: 24px;
+      color: #94a3b8;
+    }
+    .admin-drop-zone__text {
+      font-size: 14px;
+      color: #64748b;
+    }
+    .admin-drop-zone__input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .admin-preview-box {
+      margin-top: 12px;
+      display: none;
+      position: relative;
+    }
+    .admin-preview-img {
+      max-width: 240px;
+      border-radius: 10px;
+      border: 1px solid #d8e0ec;
+      display: block;
+    }
+    .admin-preview-info {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 6px;
+    }
+  </style>
+
   <div class="admin-page-head">
     <div>
       <h1>บทความ</h1>
@@ -18,7 +73,13 @@
   </div>
 
   @if ($errors->any())
-    <div class="admin-alert admin-alert--error">{{ $errors->first() }}</div>
+    <div class="admin-alert admin-alert--error">
+      <ul style="margin: 0; padding-left: 18px;">
+        @foreach ($errors->all() as $error)
+          <li>{{ $error }}</li>
+        @endforeach
+      </ul>
+    </div>
   @endif
 
   @if (session('status_message'))
@@ -112,15 +173,29 @@
         </div>
 
         <div class="admin-field">
-          <label for="cover_image_landscape">รูปหน้ารวมบทความ (แนวนอน)</label>
-          <input type="file" id="cover_image_landscape" name="cover_image_landscape" class="admin-input" accept="image/*" />
-          <p class="admin-subtitle" style="margin: 0;">ใช้ในหน้า <code>/articles</code> (แนะนำอัตราส่วน 16:9 หรือ 4:3)</p>
+          <label>รูปหน้ารวมบทความ (แนวนอน 16:9 / 4:3)</label>
+          <div class="admin-drop-zone" data-drop-zone>
+            <div class="admin-drop-zone__icon">🖼️</div>
+            <div class="admin-drop-zone__text">ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</div>
+            <input type="file" name="cover_image_landscape" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
+          </div>
+          <div class="admin-preview-box" data-preview-box>
+            <img src="" class="admin-preview-img" data-preview-img />
+            <div class="admin-preview-info" data-preview-info></div>
+          </div>
         </div>
 
         <div class="admin-field">
-          <label for="cover_image_square">รูปหน้ารายละเอียดบทความ (สี่เหลี่ยมจัตุรัส)</label>
-          <input type="file" id="cover_image_square" name="cover_image_square" class="admin-input" accept="image/*" />
-          <p class="admin-subtitle" style="margin: 0;">ใช้ในหน้า <code>/articles/{slug}</code> (แนะนำอัตราส่วน 1:1)</p>
+          <label>รูปหน้ารายละเอียดบทความ (สี่เหลี่ยมจัตุรัส 1:1)</label>
+          <div class="admin-drop-zone" data-drop-zone>
+            <div class="admin-drop-zone__icon">⏹️</div>
+            <div class="admin-drop-zone__text">ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</div>
+            <input type="file" name="cover_image_square" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
+          </div>
+          <div class="admin-preview-box" data-preview-box>
+            <img src="" class="admin-preview-img" data-preview-img style="aspect-ratio:1/1; object-fit:cover;" />
+            <div class="admin-preview-info" data-preview-info></div>
+          </div>
         </div>
 
         <div class="admin-field">
@@ -296,6 +371,51 @@
       };
 
       document.querySelectorAll("[data-rte-shell]").forEach(initRichText);
+
+      // Drag & Drop Handling
+      document.querySelectorAll("[data-drop-zone]").forEach((zone) => {
+        const input = zone.querySelector("[data-drop-zone-input]");
+        const previewBox = zone.parentElement.querySelector("[data-preview-box]");
+        const previewImg = zone.parentElement.querySelector("[data-preview-img]");
+        const previewInfo = zone.parentElement.querySelector("[data-preview-info]");
+
+        const updatePreview = (file) => {
+          if (!file || !file.type.startsWith("image/")) return;
+          
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            previewImg.src = e.target.result;
+            previewBox.style.display = "block";
+            previewInfo.textContent = `ไฟล์: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+          };
+          reader.readAsDataURL(file);
+        };
+
+        input.addEventListener("change", () => {
+          if (input.files.length > 0) updatePreview(input.files[0]);
+        });
+
+        ["dragover", "dragenter"].forEach((type) => {
+          zone.addEventListener(type, (e) => {
+            e.preventDefault();
+            zone.classList.add("is-dragover");
+          });
+        });
+
+        ["dragleave", "dragend", "drop"].forEach((type) => {
+          zone.addEventListener(type, () => {
+            zone.classList.remove("is-dragover");
+          });
+        });
+
+        zone.addEventListener("drop", (e) => {
+          e.preventDefault();
+          if (e.dataTransfer.files.length > 0) {
+            input.files = e.dataTransfer.files;
+            updatePreview(e.dataTransfer.files[0]);
+          }
+        });
+      });
     })();
   </script>
 @endpush

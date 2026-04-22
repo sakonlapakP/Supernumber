@@ -3,6 +3,60 @@
 @section('title', 'Supernumber Admin | แก้ไขบทความ')
 
 @section('content')
+  <style>
+    .admin-drop-zone {
+      position: relative;
+      border: 2px dashed #d8e0ec;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      background: #f8fbff;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 140px;
+    }
+    .admin-drop-zone:hover, .admin-drop-zone.is-dragover {
+      border-color: #1d4f9f;
+      background: #f0f7ff;
+    }
+    .admin-drop-zone__icon {
+      font-size: 24px;
+      color: #94a3b8;
+    }
+    .admin-drop-zone__text {
+      font-size: 14px;
+      color: #64748b;
+    }
+    .admin-drop-zone__input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .admin-preview-box {
+      margin-top: 12px;
+      position: relative;
+    }
+    .admin-preview-img {
+      max-width: 240px;
+      border-radius: 10px;
+      border: 1px solid #d8e0ec;
+      display: block;
+    }
+    .admin-preview-info {
+      font-size: 12px;
+      color: #94a3b8;
+      margin-top: 6px;
+    }
+  </style>
+
   <div class="admin-page-head">
     <div>
       <h1>แก้ไขบทความ</h1>
@@ -11,7 +65,13 @@
   </div>
 
   @if ($errors->any())
-    <div class="admin-alert admin-alert--error">{{ $errors->first() }}</div>
+    <div class="admin-alert admin-alert--error">
+      <ul style="margin: 0; padding-left: 18px;">
+        @foreach ($errors->all() as $error)
+          <li>{{ $error }}</li>
+        @endforeach
+      </ul>
+    </div>
   @endif
 
   @if (session('status_message'))
@@ -84,37 +144,37 @@
       </div>
 
       <div class="admin-field">
-        <label for="cover_image_landscape">รูปหน้ารวมบทความ (แนวนอน)</label>
-        <input type="file" id="cover_image_landscape" name="cover_image_landscape" class="admin-input" accept="image/*" data-cover-input data-cover-path-id="cover-selected-path-landscape" />
-        @if ($article->cover_image_landscape_path)
-          <p class="admin-subtitle" style="margin: 0;">ไฟล์ปัจจุบัน: <code>{{ $article->cover_image_landscape_path }}</code></p>
-        @elseif ($article->cover_image_path)
-          <p class="admin-subtitle" style="margin: 0;">ไฟล์สำรองที่ใช้งานได้: <code>{{ $article->cover_image_path }}</code></p>
-        @endif
-        <p id="cover-selected-path-landscape" class="admin-subtitle" style="margin: 0; display: none;"></p>
-        @if ($article->cover_image_landscape_path || $article->cover_image_path)
-          @php
-            $landscapePreview = $article->cover_image_landscape_path ?: $article->cover_image_path;
-          @endphp
-          <img src="{{ asset('storage/' . $landscapePreview) }}" alt="{{ $article->title }} - Landscape" style="width: 240px; border-radius: 12px; border:1px solid #d8e0ec; display:block;" />
-        @endif
+        <label>รูปหน้ารวมบทความ (แนวนอน 16:9 / 4:3)</label>
+        <div class="admin-drop-zone" data-drop-zone>
+          <div class="admin-drop-zone__icon">🖼️</div>
+          <div class="admin-drop-zone__text">ลากรูปใหม่มาวางที่นี่เพื่อเปลี่ยนรูป หรือคลิกเลือกไฟล์</div>
+          <input type="file" name="cover_image_landscape" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
+        </div>
+        <div class="admin-preview-box" data-preview-box>
+          <img src="{{ $article->cover_image_landscape_path ? asset('storage/' . $article->cover_image_landscape_path) : ( $article->cover_image_path ? asset('storage/' . $article->cover_image_path) : '' ) }}" class="admin-preview-img" data-preview-img />
+          <div class="admin-preview-info" data-preview-info>
+            @if ($article->cover_image_landscape_path || $article->cover_image_path)
+              รูปปัจจุบัน: {{ $article->cover_image_landscape_path ?: $article->cover_image_path }}
+            @endif
+          </div>
+        </div>
       </div>
 
       <div class="admin-field">
-        <label for="cover_image_square">รูปหน้ารายละเอียดบทความ (สี่เหลี่ยมจัตุรัส)</label>
-        <input type="file" id="cover_image_square" name="cover_image_square" class="admin-input" accept="image/*" data-cover-input data-cover-path-id="cover-selected-path-square" />
-        @if ($article->cover_image_square_path)
-          <p class="admin-subtitle" style="margin: 0;">ไฟล์ปัจจุบัน: <code>{{ $article->cover_image_square_path }}</code></p>
-        @elseif ($article->cover_image_path)
-          <p class="admin-subtitle" style="margin: 0;">ไฟล์สำรองที่ใช้งานได้: <code>{{ $article->cover_image_path }}</code></p>
-        @endif
-        <p id="cover-selected-path-square" class="admin-subtitle" style="margin: 0; display: none;"></p>
-        @if ($article->cover_image_square_path || $article->cover_image_path)
-          @php
-            $squarePreview = $article->cover_image_square_path ?: $article->cover_image_path;
-          @endphp
-          <img src="{{ asset('storage/' . $squarePreview) }}" alt="{{ $article->title }} - Square" style="width: 220px; aspect-ratio:1/1; object-fit:cover; border-radius: 12px; border:1px solid #d8e0ec; display:block;" />
-        @endif
+        <label>รูปหน้ารายละเอียดบทความ (สี่เหลี่ยมจัตุรัส 1:1)</label>
+        <div class="admin-drop-zone" data-drop-zone>
+          <div class="admin-drop-zone__icon">⏹️</div>
+          <div class="admin-drop-zone__text">ลากรูปใหม่มาวางที่นี่เพื่อเปลี่ยนรูป หรือคลิกเลือกไฟล์</div>
+          <input type="file" name="cover_image_square" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
+        </div>
+        <div class="admin-preview-box" data-preview-box>
+          <img src="{{ $article->cover_image_square_path ? asset('storage/' . $article->cover_image_square_path) : ( $article->cover_image_path ? asset('storage/' . $article->cover_image_path) : '' ) }}" class="admin-preview-img" data-preview-img style="aspect-ratio:1/1; object-fit:cover;" />
+          <div class="admin-preview-info" data-preview-info>
+            @if ($article->cover_image_square_path || $article->cover_image_path)
+              รูปปัจจุบัน: {{ $article->cover_image_square_path ?: $article->cover_image_path }}
+            @endif
+          </div>
+        </div>
       </div>
 
       <label class="admin-field" style="grid-template-columns: auto 1fr; align-items: center; gap: 10px; display: grid;">
@@ -252,24 +312,54 @@
       document.querySelectorAll("[data-rte-shell]").forEach(initRichText);
 
       if (updateForm && modal && continueBtn && closeBtn) {
-        coverInputs.forEach((input) => {
-          input.addEventListener("change", () => {
-            const targetId = input.dataset.coverPathId || "";
-            const selectedPathEl = targetId ? document.getElementById(targetId) : null;
-            if (!selectedPathEl) return;
+        // Drag & Drop Handling
+        document.querySelectorAll("[data-drop-zone]").forEach((zone) => {
+          const input = zone.querySelector("[data-drop-zone-input]");
+          const previewBox = zone.parentElement.querySelector("[data-preview-box]");
+          const previewImg = zone.parentElement.querySelector("[data-preview-img]");
+          const previewInfo = zone.parentElement.querySelector("[data-preview-info]");
 
-            if (input.files && input.files.length > 0) {
-              selectedPathEl.style.display = "block";
-              selectedPathEl.innerHTML = "ไฟล์ที่เลือก: <code>" + input.files[0].name + "</code>";
-            } else {
-              selectedPathEl.style.display = "none";
-              selectedPathEl.textContent = "";
+          const updatePreview = (file) => {
+            if (!file || !file.type.startsWith("image/")) return;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+              previewImg.src = e.target.result;
+              previewBox.style.display = "block";
+              previewInfo.innerHTML = `🌟 ไฟล์ใหม่ที่เลือก: <code>${file.name}</code> (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            };
+            reader.readAsDataURL(file);
+          };
+
+          input.addEventListener("change", () => {
+            if (input.files.length > 0) updatePreview(input.files[0]);
+          });
+
+          ["dragover", "dragenter"].forEach((type) => {
+            zone.addEventListener(type, (e) => {
+              e.preventDefault();
+              zone.classList.add("is-dragover");
+            });
+          });
+
+          ["dragleave", "dragend", "drop"].forEach((type) => {
+            zone.addEventListener(type, () => {
+              zone.classList.remove("is-dragover");
+            });
+          });
+
+          zone.addEventListener("drop", (e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files.length > 0) {
+              input.files = e.dataTransfer.files;
+              updatePreview(e.dataTransfer.files[0]);
             }
           });
         });
 
         updateForm.addEventListener("submit", (event) => {
           const hasCover = updateForm.dataset.hasCover === "1";
+          const coverInputs = Array.from(document.querySelectorAll("[data-drop-zone-input]"));
           const hasNewFile = coverInputs.some((input) => input.files && input.files.length > 0);
 
           if (bypassCoverConfirm || !hasCover || hasNewFile) {
