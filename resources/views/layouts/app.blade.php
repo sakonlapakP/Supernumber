@@ -64,9 +64,15 @@
             margin-top: 6px;
         }
 
-        /* Default state of modal (Hidden) */
+        /* Modal Fix */
         .privacy-modal {
             display: none !important;
+        }
+
+        /* Force Header to be on top of everything */
+        header, .header, #header, nav, .nav-container, .topbar {
+            z-index: 10000 !important;
+            position: relative; /* ensure z-index works */
         }
 
         /* CSS-Only Modal Trigger Logic */
