@@ -2317,7 +2317,6 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
 
         $articles = Article::query()
-            ->with('author')
             ->latest('created_at')
             ->paginate(20);
 
