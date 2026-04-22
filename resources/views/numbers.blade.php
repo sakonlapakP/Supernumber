@@ -10,6 +10,27 @@
 @section('preload_image', asset('images/home_banner.jpg'))
 @section('body_class', 'numbers-scale-soft')
 
+@section('seo_schema')
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "ItemList",
+  "itemListElement": [
+    @if(isset($numbers))
+    @foreach($numbers->take(10) as $index => $number)
+    {
+      "@type": "ListItem",
+      "position": {{ $index + 1 }},
+      "url": "{{ url('/numbers') }}",
+      "name": "เบอร์มงคล {{ $number->phone }}"
+    }{{ !$loop->last ? ',' : '' }}
+    @endforeach
+    @endif
+  ]
+}
+</script>
+@endsection
+
 @section('content')
   <style>
     /* Redesigned Search Section Styling */
@@ -271,7 +292,7 @@
     <div class="container numbers-hero__content">
       <div class="numbers-hero__text">
         <p class="hero-kicker">ค้นหาเบอร์มงคล</p>
-        <h1 id="numbers-hero-title">เบอร์ทั้งหมดที่พร้อมขาย</h1>
+        <h1 id="numbers-hero-title">รวมเบอร์มงคลทั้งหมดที่พร้อมขาย</h1>
         <p>เลือกเบอร์ที่ตรงใจจากคลังเบอร์คุณภาพ พร้อมตัวกรองที่ช่วยค้นหาได้ไวขึ้น</p>
       </div>
     </div>

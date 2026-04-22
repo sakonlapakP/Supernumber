@@ -15,6 +15,35 @@
 @section('preload_image', $homeBannerUrl)
 @section('body_class', 'home-scale-soft')
 
+@section('seo_schema')
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "Supernumber",
+  "url": "{{ url('/') }}",
+  "logo": "{{ asset('images/logo.png') }}",
+  "contactPoint": {
+    "@type": "ContactPoint",
+    "telephone": "+66-96-323-2656",
+    "contactType": "customer service"
+  }
+}
+</script>
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  "url": "{{ url('/') }}",
+  "potentialAction": {
+    "@type": "SearchAction",
+    "target": "{{ url('/numbers') }}?q={search_term_string}",
+    "query-input": "required name=search_term_string"
+  }
+}
+</script>
+@endsection
+
 @section('content')
   <style>
     @media (min-width: 1200px) {
@@ -337,7 +366,7 @@
       <img
         class="hero-media__image"
         src="{{ $homeBannerUrl }}"
-        alt=""
+        alt="เบอร์มงคล Supernumber - เปลี่ยนเบอร์เปลี่ยนชีวิต"
         fetchpriority="high"
         decoding="async"
       />

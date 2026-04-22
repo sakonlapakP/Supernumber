@@ -94,6 +94,7 @@
             border-color: #d8a34a !important;
         }
     </style>
+    @yield('seo_schema')
   </head>
   <body class="@yield('body_class')">
     @hasSection('hide_header')
