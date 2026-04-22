@@ -54,6 +54,36 @@
             text-decoration: underline !important;
             opacity: 1 !important;
         }
+
+        /* Default state of modal (Hidden) */
+        .privacy-modal {
+            display: none !important;
+        }
+
+        /* CSS-Only Modal Trigger Logic */
+        #sn-privacy-toggle:checked ~ #privacy-modal {
+            display: flex !important;
+            opacity: 1 !important;
+            visibility: visible !important;
+        }
+        #sn-privacy-toggle:checked ~ body {
+            overflow: hidden !important;
+        }
+        
+        .cookie-consent__button--settings {
+            background: rgba(255, 255, 255, 0.05) !important;
+            border: 1px solid rgba(216, 163, 74, 0.5) !important;
+            color: #d8a34a !important;
+            cursor: pointer !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-decoration: none !important;
+        }
+        .cookie-consent__button--settings:hover {
+            background: rgba(216, 163, 74, 0.1) !important;
+            border-color: #d8a34a !important;
+        }
     </style>
   </head>
   <body class="@yield('body_class')">
@@ -71,6 +101,9 @@
       @include('partials.footer')
     @endif
 
+    <!-- Hidden Checkbox for CSS-Only Modal Trigger (CSP Proof) -->
+    <input type="checkbox" id="sn-privacy-toggle" style="display: none !important;">
+
     <div id="sn-cookie-consent" class="cookie-consent" data-cookie-consent hidden>
       <div class="cookie-consent__inner">
         <div class="cookie-consent__copy">
@@ -81,19 +114,19 @@
           </p>
         </div>
         <div class="cookie-consent__actions">
-          <button type="button" class="cookie-consent__button cookie-consent__button--settings" onclick="document.getElementById('privacy-modal').hidden = false; document.body.style.overflow = 'hidden';">ตั้งค่าความเป็นส่วนตัว</button>
+          <label for="sn-privacy-toggle" class="cookie-consent__button cookie-consent__button--settings">ตั้งค่าความเป็นส่วนตัว</label>
           <button type="button" class="cookie-consent__button cookie-consent__button--accept-all" data-cookie-accept-all>ให้ความยินยอมทั้งหมด</button>
         </div>
       </div>
     </div>
 
     <!-- Privacy Settings Modal -->
-    <div class="privacy-modal" id="privacy-modal" hidden>
+    <div class="privacy-modal" id="privacy-modal">
       <div class="privacy-modal__overlay"></div>
       <div class="privacy-modal__content">
         <div class="privacy-modal__header">
           <h2>ความยินยอมข้อมูลส่วนบุคคล</h2>
-          <button type="button" class="privacy-modal__close" onclick="document.getElementById('privacy-modal').hidden = true; document.body.style.overflow = '';" aria-label="ปิด">&times;</button>
+          <label for="sn-privacy-toggle" class="privacy-modal__close" aria-label="ปิด">&times;</label>
         </div>
         
         <div class="privacy-modal__body">
