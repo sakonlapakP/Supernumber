@@ -2336,6 +2336,13 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.articles', compact('articles'));
     })->name('articles');
 
+    Route::get('/articles/create', function () use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+        return view('admin.article-create');
+    })->name('articles.create');
+
     Route::post('/articles', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
