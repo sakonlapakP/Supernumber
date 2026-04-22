@@ -2204,7 +2204,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         try {
             Artisan::call('storage:link');
-            return "Storage link created successfully.<br><br><a href='" . route('admin.articles') . "'>กลับหน้าบทความ</a>";
+            return "Storage link created successfully.<br><br><a href='" . route('admin.line-settings') . "'>กลับหน้าตั้งค่าระบบ</a>";
         } catch (\Exception $e) {
             return "Error: " . $e->getMessage();
         }
@@ -2218,7 +2218,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         try {
             Artisan::call('migrate', ['--force' => true]);
             $output = Artisan::output();
-            return "Database expanded successfully!<br><pre>" . $output . "</pre><br><a href='" . route('admin.articles') . "'>กลับหน้าบทความ</a>";
+            return "Database expanded successfully!<br><pre>" . $output . "</pre><br><a href='" . route('admin.line-settings') . "'>กลับหน้าตั้งค่าระบบ</a>";
         } catch (\Exception $e) {
             return "Migration Error: " . $e->getMessage();
         }

@@ -75,19 +75,7 @@
       <p class="admin-subtitle">จัดการบทความทั้งหมดแบบลิสต์ พร้อมปุ่มจัดการด้านท้ายแต่ละแถว</p>
     </div>
     <div class="admin-page-actions">
-      @if(session('admin_user_role') === \App\Models\User::ROLE_MANAGER)
-        <div style="display: flex; gap: 8px; margin-right: 15px; padding-right: 15px; border-right: 1px solid var(--admin-border);">
-          <a href="/admin/utils/storage-link" class="admin-button admin-button--compact" style="background: var(--admin-warning); color: #000;" onclick="return confirm('ยืนยันหน้าการเชื่อมต่อรูปภาพใช่หรือไม่?')">🔧 ซ่อมรูปแตก</a>
-          <a href="/admin/utils/migrate" class="admin-button admin-button--compact" style="background: var(--admin-danger); color: #fff;" onclick="return confirm('⚠️ คำเตือน: คุณกำลังจะอัปเดตโครงสร้างฐานข้อมูล ยืนยันใช่หรือไม่?')">🚀 อัปเกรดฐานข้อมูล</a>
-        </div>
-      @endif
-      
-      <div class="admin-kpi">
-        <div class="admin-kpi__label">บทความที่แสดงอยู่</div>
-        <div class="admin-kpi__value"><span id="article-visible-count">{{ number_format($articles->count()) }}</span></div>
-        <div class="admin-summary">จาก {{ number_format($articles->total()) }} บทความ</div>
-      </div>
-      <button type="button" id="article-add-toggle" class="admin-button admin-button--compact" style="margin-left: 10px;">เพิ่มบทความ</button>
+      <!-- Layout cleaned up as requested -->
     </div>
   </div>
 
@@ -107,7 +95,7 @@
 
   <div class="admin-panel-stack">
 
-    <section id="article-add-panel" class="admin-card admin-feature-card" hidden>
+    <section id="article-add-panel" class="admin-card admin-feature-card">
       <div class="admin-feature-card__head">
         <div>
           <h2 class="admin-feature-card__title">เพิ่มบทความใหม่</h2>
@@ -327,12 +315,6 @@
       const emptyRow = document.getElementById("articles-empty-row");
       const visibleCount = document.getElementById("article-visible-count");
 
-      if (addToggle && addPanel) {
-        addToggle.addEventListener("click", () => {
-          const isHidden = addPanel.hidden;
-          addPanel.hidden = !isHidden;
-        });
-      }
 
       const initRichText = (shell) => {
         const editor = shell.querySelector("[data-rte-editor]");
