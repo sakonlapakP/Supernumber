@@ -2197,18 +2197,6 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->with('status_message', 'อัปเดต LINE_GROUP_ID จาก webhook เรียบร้อยแล้ว');
     })->name('line-settings.apply-group-id');
 
-    Route::get('/utils/storage-link', function () use ($ensureAdmin) {
-        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
-            return $redirect;
-        }
-
-        try {
-            Artisan::call('storage:link');
-            return "Storage link created successfully.<br><br><a href='" . route('admin.line-settings') . "'>กลับหน้าตั้งค่าระบบ</a>";
-        } catch (\Exception $e) {
-            return "Error: " . $e->getMessage();
-        }
-    });
 
     Route::get('/utils/migrate', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
@@ -2218,7 +2206,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         try {
             Artisan::call('migrate', ['--force' => true]);
             $output = Artisan::output();
-            return "Database expanded successfully!<br><pre>" . $output . "</pre><br><a href='" . route('admin.line-settings') . "'>กลับหน้าตั้งค่าระบบ</a>";
+            return "Database expanded successfully!<br><pre>" . $output . "</pre><br><a href='" . route('admin.articles') . "'>กลับหน้าบทความ</a>";
         } catch (\Exception $e) {
             return "Migration Error: " . $e->getMessage();
         }
@@ -2716,26 +2704,6 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->with('status_message', 'Unarchive คอมเมนต์เรียบร้อย');
     })->name('articles.comments.unarchive');
 
-    Route::delete('/articles/{article}', function (Article $article) use ($ensureAdmin) {
-        if ($redirect = $ensureAdmin()) {
-            return $redirect;
-        }
-
-        $paths = array_values(array_unique(array_filter([
-            $article->cover_image_path,
-            $article->cover_image_landscape_path,
-            $article->cover_image_square_path,
-        ])));
-        foreach ($paths as $path) {
-            Storage::disk('public')->delete($path);
-        }
-
-        $article->delete();
-
-        return redirect()
-            ->route('admin.articles')
-            ->with('status_message', 'ลบบทความเรียบร้อย');
-    })->name('articles.delete');
 
     Route::get('/comments', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {
