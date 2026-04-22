@@ -2344,8 +2344,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'keywords' => ['nullable', 'string'],
             'lsi_keywords' => ['nullable', 'string'],
             'published_at' => ['nullable', 'date'],
-            'cover_image_landscape' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
-            'cover_image_square' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
+            'upload_media_land' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
+            'upload_media_sq' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
             'is_published' => ['nullable', 'boolean'],
         ]);
 
@@ -2371,8 +2371,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $coverImageSquarePath = null;
 
         try {
-            if ($request->hasFile('cover_image_landscape')) {
-                $file = $request->file('cover_image_landscape');
+            if ($request->hasFile('upload_media_land')) {
+                $file = $request->file('upload_media_land');
                 $path = $imageMeta['cover_path'];
                 $dir = dirname($path);
                 $name = "land_" . basename($path);
@@ -2386,8 +2386,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 $coverImageLandscapePath = $fullPath;
             }
 
-            if ($request->hasFile('cover_image_square')) {
-                $file = $request->file('cover_image_square');
+            if ($request->hasFile('upload_media_sq')) {
+                $file = $request->file('upload_media_sq');
                 $path = $imageMeta['square_path'];
                 $dir = dirname($path);
                 $name = "sq_" . basename($path);
@@ -2519,8 +2519,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'keywords' => ['nullable', 'string'],
             'lsi_keywords' => ['nullable', 'string'],
             'published_at' => ['nullable', 'date'],
-            'cover_image_landscape' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
-            'cover_image_square' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
+            'upload_media_land' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
+            'upload_media_sq' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
             'is_published' => ['nullable', 'boolean'],
         ]);
 
@@ -2550,8 +2550,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $coverImageSquarePath = $article->cover_image_square_path;
 
         try {
-            if ($request->hasFile('cover_image_landscape')) {
-                $file = $request->file('cover_image_landscape');
+            if ($request->hasFile('upload_media_land')) {
+                $file = $request->file('upload_media_land');
                 $targetPath = $imageMeta['cover_path'];
                 $dir = dirname($targetPath);
                 $name = "land_" . basename($targetPath);
@@ -2568,8 +2568,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 Storage::disk('public')->putFileAs($dir, $file, $name);
                 $coverImageLandscapePath = $fullPath;
             }
-            if ($request->hasFile('cover_image_square')) {
-                $file = $request->file('cover_image_square');
+            if ($request->hasFile('upload_media_sq')) {
+                $file = $request->file('upload_media_sq');
                 $targetPath = $imageMeta['square_path'];
                 $dir = dirname($targetPath);
                 $name = "sq_" . basename($targetPath);
