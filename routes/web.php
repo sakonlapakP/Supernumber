@@ -2519,7 +2519,6 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'keywords' => ['nullable', 'string'],
             'lsi_keywords' => ['nullable', 'string'],
             'published_at' => ['nullable', 'date'],
-            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
             'cover_image_landscape' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
             'cover_image_square' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
             'is_published' => ['nullable', 'boolean'],
@@ -2551,24 +2550,6 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $coverImageSquarePath = $article->cover_image_square_path;
 
         try {
-            if ($request->hasFile('cover_image')) {
-                $file = $request->file('cover_image');
-                $targetPath = $imageMeta['square_path'];
-                $dir = dirname($targetPath);
-                $name = "main_" . basename($targetPath);
-                $fullPath = $dir . '/' . $name;
-                
-                if ($coverImagePath && $coverImagePath !== $fullPath) {
-                    Storage::disk('public')->delete($coverImagePath);
-                }
-                
-                if (!Storage::disk('public')->exists($dir)) {
-                    Storage::disk('public')->makeDirectory($dir);
-                }
-                
-                Storage::disk('public')->putFileAs($dir, $file, $name);
-                $coverImagePath = $fullPath;
-            }
             if ($request->hasFile('cover_image_landscape')) {
                 $file = $request->file('cover_image_landscape');
                 $targetPath = $imageMeta['cover_path'];
