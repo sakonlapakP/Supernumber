@@ -2306,11 +2306,11 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'slug' => ['nullable', 'string', 'max:190', 'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/'],
             'excerpt' => ['nullable', 'string'],
             'content' => ['required', 'string'],
-            'meta_description' => ['nullable', 'string', 'max:255'],
+            'meta_description' => ['nullable', 'string', 'max:500'],
             'published_at' => ['nullable', 'date'],
-            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
-            'cover_image_landscape' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
-            'cover_image_square' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:5120'],
+            'cover_image' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
+            'cover_image_landscape' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
+            'cover_image_square' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:10240'],
             'is_published' => ['nullable', 'boolean'],
         ]);
 
@@ -2334,27 +2334,33 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $coverImagePath = null;
         $coverImageLandscapePath = null;
         $coverImageSquarePath = null;
+
         if ($request->hasFile('cover_image')) {
-            $contents = file_get_contents((string) $request->file('cover_image')->getRealPath());
-            if ($contents !== false) {
-                $coverImagePath = $imageMeta['square_path'];
-                Storage::disk('public')->put($coverImagePath, $contents);
-                $coverImageSquarePath = $coverImagePath;
-            }
+            $file = $request->file('cover_image');
+            $path = $imageMeta['square_path'];
+            $dir = dirname($path);
+            $name = basename($path);
+            Storage::disk('public')->putFileAs($dir, $file, $name);
+            $coverImagePath = $path;
+            $coverImageSquarePath = $path;
         }
+
         if ($request->hasFile('cover_image_landscape')) {
-            $contents = file_get_contents((string) $request->file('cover_image_landscape')->getRealPath());
-            if ($contents !== false) {
-                $coverImageLandscapePath = $imageMeta['cover_path'];
-                Storage::disk('public')->put($coverImageLandscapePath, $contents);
-            }
+            $file = $request->file('cover_image_landscape');
+            $path = $imageMeta['cover_path'];
+            $dir = dirname($path);
+            $name = basename($path);
+            Storage::disk('public')->putFileAs($dir, $file, $name);
+            $coverImageLandscapePath = $path;
         }
+
         if ($request->hasFile('cover_image_square')) {
-            $contents = file_get_contents((string) $request->file('cover_image_square')->getRealPath());
-            if ($contents !== false) {
-                $coverImageSquarePath = $imageMeta['square_path'];
-                Storage::disk('public')->put($coverImageSquarePath, $contents);
-            }
+            $file = $request->file('cover_image_square');
+            $path = $imageMeta['square_path'];
+            $dir = dirname($path);
+            $name = basename($path);
+            Storage::disk('public')->putFileAs($dir, $file, $name);
+            $coverImageSquarePath = $path;
         }
 
         if ($coverImagePath === null && $coverImageSquarePath !== null) {
