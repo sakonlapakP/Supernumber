@@ -273,19 +273,26 @@
 
   // ---- Drop zone init ----
   const initDropZone = (zone) => {
-    const input     = zone.querySelector('[data-drop-zone-input]');
-    const button    = zone.querySelector('[data-drop-zone-button]');
-    const previewBox  = zone.parentElement.querySelector('[data-preview-box]');
-    const previewImg  = zone.parentElement.querySelector('[data-preview-img]');
-    const previewInfo = zone.parentElement.querySelector('[data-preview-info]');
-    const dropText  = zone.querySelector('.drop-text');
     const pathTargetId = zone.getAttribute('data-path-target');
     const pathInput = pathTargetId ? document.getElementById(pathTargetId) : null;
-    const maxSize = 5 * 1024 * 1024;
+    const input     = zone.querySelector('[data-drop-zone-input]');
+    const button    = zone.querySelector('[data-drop-zone-button]');
+    const dropText  = zone.querySelector('.drop-text');
+    
+    // Find preview elements within the same admin-field parent
+    const parent      = zone.closest('.admin-field');
+    const previewBox  = parent ? parent.querySelector('[data-preview-box]') : null;
+    const previewImg  = parent ? parent.querySelector('[data-preview-img]') : null;
+    const previewInfo = parent ? parent.querySelector('[data-preview-info]') : null;
+
+    if (!input || !pathInput) {
+      console.warn('Missing input or pathInput for zone', zone);
+      return;
+    }
 
     const handleFile = (file) => {
       if (!file || !file.type.startsWith('image/')) return;
-      if (file.size > maxSize) {
+      if (file.size > 5 * 1024 * 1024) {
         alert(`🚨 ไฟล์ใหญ่เกินไป (max 5 MB)`);
         input.value = '';
         return;
@@ -293,9 +300,21 @@
       preUpload(file, pathInput, previewImg, previewBox, previewInfo, dropText);
     };
 
-    input.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
-    if (button) button.addEventListener('click', e => { e.preventDefault(); input.click(); });
+    input.addEventListener('change', e => { 
+      if (e.target.files && e.target.files[0]) {
+        handleFile(e.target.files[0]);
+      }
+    });
 
+    if (button) {
+      button.addEventListener('click', e => { 
+        e.preventDefault(); 
+        e.stopPropagation();
+        input.click(); 
+      });
+    }
+
+    // Drag and drop events
     ['dragover','dragenter'].forEach(t => zone.addEventListener(t, e => {
       e.preventDefault(); e.stopPropagation(); zone.classList.add('is-dragover');
     }));
@@ -304,16 +323,20 @@
     }));
     zone.addEventListener('drop', e => {
       e.preventDefault(); e.stopPropagation();
-      if (e.dataTransfer.files?.[0]) handleFile(e.dataTransfer.files[0]);
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleFile(e.dataTransfer.files[0]);
+      }
     });
   };
 
-  document.querySelectorAll('[data-drop-zone]').forEach(initDropZone);
-  document.addEventListener('dragover', e => e.preventDefault());
-  document.addEventListener('drop',     e => e.preventDefault());
-
   // ---- DOMContentLoaded ----
   document.addEventListener('DOMContentLoaded', () => {
+    // Init all drop zones
+    document.querySelectorAll('[data-drop-zone]').forEach(initDropZone);
+    
+    document.addEventListener('dragover', e => e.preventDefault());
+    document.addEventListener('drop',     e => e.preventDefault());
+
     const editor = document.getElementById('rich-editor');
     const form   = document.getElementById('main-update-form');
     const initialContent = @json(old('content', $article->content));
