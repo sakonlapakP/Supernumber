@@ -115,6 +115,16 @@ $sanitizeArticleContent = function (string $content): string {
     return app(ArticleContentSanitizer::class)->sanitize($content);
 };
 
+$articleColumnExists = function (string $column): bool {
+    static $columns = null;
+
+    if ($columns === null) {
+        $columns = array_flip(Schema::getColumnListing('articles'));
+    }
+
+    return isset($columns[$column]);
+};
+
 $rejectAdminLogin = function (Request $request) {
     return back()
         ->withInput($request->except('password'))
@@ -1127,7 +1137,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     $logPhoneNumberStatusChange,
     $normalizeServiceType,
     $syncPhoneNumberStatusFromOrder,
-    $sanitizeArticleContent
+    $sanitizeArticleContent,
+    $articleColumnExists
 ) {
     Route::get('/login', function (Request $request) use ($currentAdmin) {
         if ($currentAdmin()) {
@@ -2336,7 +2347,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.article-create');
     })->name('articles.create');
 
-    Route::post('/articles', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent) {
+    Route::post('/articles', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
@@ -2409,21 +2420,35 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 $coverImageSquarePath = $fullPath;
             }
 
-            Article::query()->create([
+            $articleData = [
                 'title' => trim($data['title']),
                 'slug' => $slug,
                 'excerpt' => trim((string) ($data['excerpt'] ?? '')) ?: null,
                 'content' => $content,
                 'meta_description' => trim((string) ($data['meta_description'] ?? '')) ?: null,
-                'keywords' => trim((string) ($data['keywords'] ?? '')) ?: null,
-                'lsi_keywords' => trim((string) ($data['lsi_keywords'] ?? '')) ?: null,
                 'is_published' => $isPublished,
                 'published_at' => $isPublished ? $publishedAt : null,
                 'cover_image_path' => $coverImagePath,
-                'cover_image_landscape_path' => $coverImageLandscapePath,
-                'cover_image_square_path' => $coverImageSquarePath,
                 'author_user_id' => is_numeric(session('admin_user_id')) ? (int) session('admin_user_id') : null,
-            ]);
+            ];
+
+            if ($articleColumnExists('keywords')) {
+                $articleData['keywords'] = trim((string) ($data['keywords'] ?? '')) ?: null;
+            }
+
+            if ($articleColumnExists('lsi_keywords')) {
+                $articleData['lsi_keywords'] = trim((string) ($data['lsi_keywords'] ?? '')) ?: null;
+            }
+
+            if ($articleColumnExists('cover_image_landscape_path')) {
+                $articleData['cover_image_landscape_path'] = $coverImageLandscapePath;
+            }
+
+            if ($articleColumnExists('cover_image_square_path')) {
+                $articleData['cover_image_square_path'] = $coverImageSquarePath;
+            }
+
+            Article::query()->create($articleData);
         } catch (\Throwable $e) {
             return back()->withInput()->withErrors(['save_error' => 'ไม่สามารถบันทึกบทความหรืออัปโหลดรูปภาพได้: ' . $e->getMessage()]);
         }
@@ -2446,7 +2471,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.article-edit', compact('article', 'comments'));
     })->name('articles.edit');
 
-    Route::post('/content-media/{article}', function (Request $request, Article $article) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent) {
+    Route::post('/content-media/{article}', function (Request $request, Article $article) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
@@ -2537,20 +2562,34 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 $coverImageSquarePath = $fullPath;
             }
 
-            $article->update([
+            $articleData = [
                 'title' => trim($data['title']),
                 'slug' => $slug,
                 'excerpt' => trim((string) ($data['excerpt'] ?? '')) ?: null,
                 'content' => $content,
                 'meta_description' => trim((string) ($data['meta_description'] ?? '')) ?: null,
-                'keywords' => trim((string) ($data['keywords'] ?? '')) ?: null,
-                'lsi_keywords' => trim((string) ($data['lsi_keywords'] ?? '')) ?: null,
                 'is_published' => $isPublished,
                 'published_at' => $isPublished ? $publishedAt : null,
                 'cover_image_path' => $coverImagePath,
-                'cover_image_landscape_path' => $coverImageLandscapePath,
-                'cover_image_square_path' => $coverImageSquarePath,
-            ]);
+            ];
+
+            if ($articleColumnExists('keywords')) {
+                $articleData['keywords'] = trim((string) ($data['keywords'] ?? '')) ?: null;
+            }
+
+            if ($articleColumnExists('lsi_keywords')) {
+                $articleData['lsi_keywords'] = trim((string) ($data['lsi_keywords'] ?? '')) ?: null;
+            }
+
+            if ($articleColumnExists('cover_image_landscape_path')) {
+                $articleData['cover_image_landscape_path'] = $coverImageLandscapePath;
+            }
+
+            if ($articleColumnExists('cover_image_square_path')) {
+                $articleData['cover_image_square_path'] = $coverImageSquarePath;
+            }
+
+            $article->update($articleData);
         } catch (\Throwable $e) {
             return back()->withInput()->withErrors(['save_error' => 'ไม่สามารถอัปเดตบทความหรืออัปโหลดรูปภาพได้: ' . $e->getMessage()]);
         }
@@ -3025,7 +3064,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
 
 // UPDATE
-Route::post('/direct-save-article/{article}', function (Request $request, Article $article) use ($ensureAdmin, $sanitizeArticleContent) {
+Route::post('/direct-save-article/{article}', function (Request $request, Article $article) use ($ensureAdmin, $sanitizeArticleContent, $articleColumnExists) {
     if ($redirect = $ensureAdmin()) return $redirect;
 
     $data = $request->validate([
@@ -3058,17 +3097,28 @@ Route::post('/direct-save-article/{article}', function (Request $request, Articl
         $sqPath = "{$dir}/{$filename}";
     }
 
-    $article->update([
+    $articleData = [
         'title' => trim($data['title']),
         'excerpt' => trim((string)($data['excerpt'] ?? '')) ?: null,
         'content' => $content,
         'meta_description' => trim((string)($data['meta_description'] ?? '')) ?: null,
-        'keywords' => trim((string)($data['keywords'] ?? '')) ?: null,
-        'lsi_keywords' => trim((string)($data['lsi_keywords'] ?? '')) ?: null,
         'is_published' => $isPublished,
         'published_at' => $publishedAt,
-        'cover_image_square_path' => $sqPath,
-    ]);
+    ];
+
+    if ($articleColumnExists('keywords')) {
+        $articleData['keywords'] = trim((string) ($data['keywords'] ?? '')) ?: null;
+    }
+
+    if ($articleColumnExists('lsi_keywords')) {
+        $articleData['lsi_keywords'] = trim((string) ($data['lsi_keywords'] ?? '')) ?: null;
+    }
+
+    if ($articleColumnExists('cover_image_square_path')) {
+        $articleData['cover_image_square_path'] = $sqPath;
+    }
+
+    $article->update($articleData);
 
     return redirect()->route('admin.articles')->with('status_message', 'อัปเดตบทความเรียบร้อย');
 })->name('articles.update.bypass');
@@ -3077,7 +3127,7 @@ Route::post('/direct-save-article/{article}', function (Request $request, Articl
 // --- SIMPLIFIED FIREWALL BYPASS ROUTES (NO ADMIN PREFIX) ---
 
 // CREATE
-Route::post('/direct-create-article', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $sanitizeArticleContent) {
+Route::post('/direct-create-article', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $sanitizeArticleContent, $articleColumnExists) {
     if ($redirect = $ensureAdmin()) return $redirect;
 
     $data = $request->validate([
@@ -3109,19 +3159,30 @@ Route::post('/direct-create-article', function (Request $request) use ($ensureAd
         $sqPath = "{$dir}/{$filename}";
     }
 
-    Article::create([
+    $articleData = [
         'title' => trim($data['title']),
         'slug' => $slug,
         'excerpt' => trim((string)($data['excerpt'] ?? '')) ?: null,
         'content' => $content,
         'meta_description' => trim((string)($data['meta_description'] ?? '')) ?: null,
-        'keywords' => trim((string)($data['keywords'] ?? '')) ?: null,
-        'lsi_keywords' => trim((string)($data['lsi_keywords'] ?? '')) ?: null,
         'is_published' => $isPublished,
         'published_at' => $publishedAt,
-        'cover_image_square_path' => $sqPath,
         'author_user_id' => session('admin_user_id'),
-    ]);
+    ];
+
+    if ($articleColumnExists('keywords')) {
+        $articleData['keywords'] = trim((string) ($data['keywords'] ?? '')) ?: null;
+    }
+
+    if ($articleColumnExists('lsi_keywords')) {
+        $articleData['lsi_keywords'] = trim((string) ($data['lsi_keywords'] ?? '')) ?: null;
+    }
+
+    if ($articleColumnExists('cover_image_square_path')) {
+        $articleData['cover_image_square_path'] = $sqPath;
+    }
+
+    Article::create($articleData);
 
     return redirect()->route('admin.articles')->with('status_message', 'สร้างบทความเรียบร้อย');
 })->name('articles.store.bypass');

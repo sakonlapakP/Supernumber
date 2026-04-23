@@ -118,7 +118,7 @@
   </section>
 @endsection
 
-@section('scripts')
+@push('scripts')
   <script>
   window.execCmd = (cmd, val = null) => {
     const editor = document.getElementById('rich-editor');
@@ -259,4 +259,4 @@
     });
   });
 </script>
-@endsection
+@endpush
