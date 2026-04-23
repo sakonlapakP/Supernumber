@@ -106,20 +106,26 @@ Route::post('/p/img', function (Request $request) {
     }
 
     try {
-        // Inline storage symlink check
-        $linkPath = public_path('storage');
-        if (! is_link($linkPath) && ! file_exists($linkPath)) {
-            Artisan::call('storage:link');
+        // Save directly into public/storage/articles/tmp/ — no symlink required.
+        // Files placed here are immediately web-accessible as /storage/articles/tmp/...
+        $targetDir = public_path('storage/articles/tmp');
+        if (! is_dir($targetDir)) {
+            mkdir($targetDir, 0755, true);
         }
-        $ext = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
-        $name = 'tmp_' . uniqid('', true) . '.' . $ext;
-        $stored = $file->storeAs('articles/tmp', $name, 'public');
 
-        return response()->json(['ok' => true, 'path' => $stored]);
+        $ext  = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
+        $name = 'img_' . uniqid('', true) . '.' . $ext;
+        $file->move($targetDir, $name);
+
+        // Stored path is relative to the storage root, matching asset('storage/'.$path)
+        $storedPath = 'articles/tmp/' . $name;
+
+        return response()->json(['ok' => true, 'path' => $storedPath]);
     } catch (\Throwable $e) {
         return response()->json(['ok' => false, 'error' => $e->getMessage()], 500);
     }
 })->name('img.store');
+
 
 
 
@@ -2547,12 +2553,12 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
             // Use pre-uploaded path from /p/img endpoint (already saved to storage).
             $landPath = trim((string) ($data['land_path'] ?? ''));
-            if ($landPath !== '' && Storage::disk('public')->exists($landPath)) {
+            if ($landPath !== '' && file_exists(public_path('storage/' . $landPath))) {
                 $coverImageLandscapePath = $landPath;
             }
 
             $sqPath = trim((string) ($data['sq_path'] ?? ''));
-            if ($sqPath !== '' && Storage::disk('public')->exists($sqPath)) {
+            if ($sqPath !== '' && file_exists(public_path('storage/' . $sqPath))) {
                 $coverImageSquarePath = $sqPath;
             }
 
@@ -2668,17 +2674,17 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
             // Use pre-uploaded path from /p/img endpoint (already saved to storage).
             $landPath = trim((string) ($data['land_path'] ?? ''));
-            if ($landPath !== '' && Storage::disk('public')->exists($landPath)) {
+            if ($landPath !== '' && file_exists(public_path('storage/' . $landPath))) {
                 if ($coverImageLandscapePath && $coverImageLandscapePath !== $landPath) {
-                    Storage::disk('public')->delete($coverImageLandscapePath);
+                    @unlink(public_path('storage/' . $coverImageLandscapePath));
                 }
                 $coverImageLandscapePath = $landPath;
             }
 
             $sqPath = trim((string) ($data['sq_path'] ?? ''));
-            if ($sqPath !== '' && Storage::disk('public')->exists($sqPath)) {
+            if ($sqPath !== '' && file_exists(public_path('storage/' . $sqPath))) {
                 if ($coverImageSquarePath && $coverImageSquarePath !== $sqPath) {
-                    Storage::disk('public')->delete($coverImageSquarePath);
+                    @unlink(public_path('storage/' . $coverImageSquarePath));
                 }
                 $coverImageSquarePath = $sqPath;
             }
