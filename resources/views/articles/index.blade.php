@@ -34,7 +34,7 @@
               <h2 class="article-card__title">
                 <a href="{{ route('articles.show', $article->slug) }}">{{ $article->title }}</a>
               </h2>
-              <p class="article-card__excerpt">{{ $article->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($article->content), 170) }}</p>
+              <p class="article-card__excerpt">{{ $article->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($article->sanitizedContent()), 170) }}</p>
               <a href="{{ route('articles.show', $article->slug) }}" class="article-card__link">อ่านต่อ</a>
             </div>
           </article>

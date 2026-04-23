@@ -15,6 +15,7 @@ use App\Models\User;
 use App\Services\ContactSpamFilter;
 use App\Services\EnvironmentEditor;
 use App\Services\AdminLogViewer;
+use App\Services\ArticleContentSanitizer;
 use App\Services\Ga4AnalyticsService;
 use App\Services\LineEstimateLeadNotifier;
 use App\Services\LineLotteryImageService;
@@ -108,6 +109,10 @@ $ensureAdmin = function (?string $requiredRole = null) use ($currentAdmin) {
     }
 
     return null;
+};
+
+$sanitizeArticleContent = function (string $content): string {
+    return app(ArticleContentSanitizer::class)->sanitize($content);
 };
 
 $rejectAdminLogin = function (Request $request) {
@@ -1121,7 +1126,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     $storeOrderPaymentSlip,
     $logPhoneNumberStatusChange,
     $normalizeServiceType,
-    $syncPhoneNumberStatusFromOrder
+    $syncPhoneNumberStatusFromOrder,
+    $sanitizeArticleContent
 ) {
     Route::get('/login', function (Request $request) use ($currentAdmin) {
         if ($currentAdmin()) {
@@ -2330,7 +2336,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.article-create');
     })->name('articles.create');
 
-    Route::post('/articles', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta) {
+    Route::post('/articles', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
@@ -2370,6 +2376,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $coverImageLandscapePath = null;
         $coverImageSquarePath = null;
 
+        $content = $sanitizeArticleContent(trim($data['content']));
+
         try {
             if ($request->hasFile('upload_media_land')) {
                 $file = $request->file('upload_media_land');
@@ -2405,7 +2413,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'title' => trim($data['title']),
                 'slug' => $slug,
                 'excerpt' => trim((string) ($data['excerpt'] ?? '')) ?: null,
-                'content' => trim($data['content']),
+                'content' => $content,
                 'meta_description' => trim((string) ($data['meta_description'] ?? '')) ?: null,
                 'keywords' => trim((string) ($data['keywords'] ?? '')) ?: null,
                 'lsi_keywords' => trim((string) ($data['lsi_keywords'] ?? '')) ?: null,
@@ -2438,7 +2446,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.article-edit', compact('article', 'comments'));
     })->name('articles.edit');
 
-    Route::post('/content-media/{article}', function (Request $request, Article $article) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta) {
+    Route::post('/content-media/{article}', function (Request $request, Article $article) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
@@ -2488,6 +2496,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $coverImageLandscapePath = $article->cover_image_landscape_path;
         $coverImageSquarePath = $article->cover_image_square_path;
 
+        $content = $sanitizeArticleContent(trim($data['content']));
+
         try {
             if ($request->hasFile('upload_media_land')) {
                 $file = $request->file('upload_media_land');
@@ -2531,7 +2541,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'title' => trim($data['title']),
                 'slug' => $slug,
                 'excerpt' => trim((string) ($data['excerpt'] ?? '')) ?: null,
-                'content' => trim($data['content']),
+                'content' => $content,
                 'meta_description' => trim((string) ($data['meta_description'] ?? '')) ?: null,
                 'keywords' => trim((string) ($data['keywords'] ?? '')) ?: null,
                 'lsi_keywords' => trim((string) ($data['lsi_keywords'] ?? '')) ?: null,
@@ -3015,7 +3025,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
 
 // UPDATE
-Route::post('/direct-save-article/{article}', function (Request $request, Article $article) use ($ensureAdmin) {
+Route::post('/direct-save-article/{article}', function (Request $request, Article $article) use ($ensureAdmin, $sanitizeArticleContent) {
     if ($redirect = $ensureAdmin()) return $redirect;
 
     $data = $request->validate([
@@ -3036,6 +3046,7 @@ Route::post('/direct-save-article/{article}', function (Request $request, Articl
     $slug = $article->slug;
 
     $sqPath = $article->cover_image_square_path;
+    $content = $sanitizeArticleContent(trim($data['content']));
     if ($request->hasFile('upload_media_sq')) {
         if ($sqPath) Storage::disk('public')->delete($sqPath);
         $file = $request->file('upload_media_sq');
@@ -3050,7 +3061,7 @@ Route::post('/direct-save-article/{article}', function (Request $request, Articl
     $article->update([
         'title' => trim($data['title']),
         'excerpt' => trim((string)($data['excerpt'] ?? '')) ?: null,
-        'content' => trim($data['content']),
+        'content' => $content,
         'meta_description' => trim((string)($data['meta_description'] ?? '')) ?: null,
         'keywords' => trim((string)($data['keywords'] ?? '')) ?: null,
         'lsi_keywords' => trim((string)($data['lsi_keywords'] ?? '')) ?: null,
@@ -3066,7 +3077,7 @@ Route::post('/direct-save-article/{article}', function (Request $request, Articl
 // --- SIMPLIFIED FIREWALL BYPASS ROUTES (NO ADMIN PREFIX) ---
 
 // CREATE
-Route::post('/direct-create-article', function (Request $request) use ($ensureAdmin, $buildArticleSlug) {
+Route::post('/direct-create-article', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $sanitizeArticleContent) {
     if ($redirect = $ensureAdmin()) return $redirect;
 
     $data = $request->validate([
@@ -3087,6 +3098,7 @@ Route::post('/direct-create-article', function (Request $request) use ($ensureAd
     $year = Carbon::parse($publishedAt ?: now())->year;
 
     $sqPath = null;
+    $content = $sanitizeArticleContent(trim($data['content']));
     if ($request->hasFile('upload_media_sq')) {
         $file = $request->file('upload_media_sq');
         $ext = $file->getClientOriginalExtension();
@@ -3101,7 +3113,7 @@ Route::post('/direct-create-article', function (Request $request) use ($ensureAd
         'title' => trim($data['title']),
         'slug' => $slug,
         'excerpt' => trim((string)($data['excerpt'] ?? '')) ?: null,
-        'content' => trim($data['content']),
+        'content' => $content,
         'meta_description' => trim((string)($data['meta_description'] ?? '')) ?: null,
         'keywords' => trim((string)($data['keywords'] ?? '')) ?: null,
         'lsi_keywords' => trim((string)($data['lsi_keywords'] ?? '')) ?: null,
@@ -3113,4 +3125,3 @@ Route::post('/direct-create-article', function (Request $request) use ($ensureAd
 
     return redirect()->route('admin.articles')->with('status_message', 'สร้างบทความเรียบร้อย');
 })->name('articles.store.bypass');
-

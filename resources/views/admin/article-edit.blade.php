@@ -10,6 +10,10 @@
     .admin-preview-img { max-width: 180px; border-radius: 10px; border: 1px solid #d8e0ec; display: block; }
     .admin-preview-box { margin-top: 12px; }
     .admin-preview-info { font-size: 12px; color: #94a3b8; margin-top: 6px; }
+    .admin-image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; }
+    @media (max-width: 768px) {
+      .admin-image-grid { grid-template-columns: 1fr; }
+    }
   </style>
 
   <div class="admin-page-head">
@@ -32,7 +36,7 @@
   @endif
 
   <section class="admin-card admin-feature-card">
-    <form id="main-update-form" action="/direct-save-article/{{ $article->id }}" method="post" enctype="multipart/form-data" class="admin-form">
+    <form id="main-update-form" action="{{ route('admin.articles.update', $article) }}" method="post" enctype="multipart/form-data" class="admin-form">
       @csrf
 
       <div class="admin-field">
@@ -57,7 +61,7 @@
             <button type="button" class="admin-rte__btn" onclick="addLink()">ลิงก์</button>
             <button type="button" class="admin-rte__btn" onclick="execCmd('removeFormat')">ล้างรูปแบบ</button>
           </div>
-          <div id="rich-editor" class="admin-rte__editor" contenteditable="true" style="min-height: 400px; font-size: 16px; line-height: 1.8;">{!! old('content', $article->content) !!}</div>
+          <div id="rich-editor" class="admin-rte__editor" contenteditable="true" style="min-height: 400px; font-size: 16px; line-height: 1.8;"></div>
         </div>
         <textarea id="hidden-content" name="content" style="display: none;">{{ old('content', $article->content) }}</textarea>
       </div>
@@ -82,15 +86,43 @@
         <input type="datetime-local" name="published_at" class="admin-input" value="{{ old('published_at', optional($article->published_at)->format('Y-m-d\\TH:i')) }}" />
       </div>
 
-      <div class="admin-field" style="margin-top:30px; border-left: 4px solid #10b981; padding-left: 15px;">
-        <label style="font-size: 16px; color: #1e293b; font-weight: bold;">รูปภาพบทความ (จัตุรัส 1:1)</label>
-        <div id="drop-zone" class="admin-drop-zone">
-          <span id="drop-text">🖼️ ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</span>
-          <input type="file" name="upload_media_sq" id="input-sq" class="admin-drop-zone__input" accept="image/*" />
+      <div class="admin-image-grid">
+        <div class="admin-field" style="margin-top:30px; border-left: 4px solid #2563eb; padding-left: 15px;">
+          <label style="font-size: 16px; color: #1e293b; font-weight: bold;">รูปหน้ารวมบทความ (แนวนอน 16:9 / 4:3)</label>
+          <div class="admin-drop-zone" data-drop-zone>
+            <span class="drop-text">🖼️ ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</span>
+            <input type="file" name="upload_media_land" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
+          </div>
+          <div class="admin-preview-box" data-preview-box style="{{ ($article->cover_image_landscape_path || $article->cover_image_path) ? '' : 'display:none;' }}">
+            <img
+              src="{{ $article->cover_image_landscape_path ? asset('storage/' . $article->cover_image_landscape_path) : ($article->cover_image_path ? asset('storage/' . $article->cover_image_path) : '') }}"
+              class="admin-preview-img"
+              data-preview-img
+              style="aspect-ratio:16/9; object-fit:cover; border: 2px solid #2563eb;"
+            />
+            <p class="admin-preview-info" data-preview-info style="color: #2563eb; font-weight: bold;">
+              {{ $article->cover_image_landscape_path ?: ($article->cover_image_path ? 'รูปปัจจุบัน: ' . $article->cover_image_path : '') }}
+            </p>
+          </div>
         </div>
-        <div id="preview-container" class="admin-preview-box" style="{{ $article->cover_image_square_path ? '' : 'display:none;' }}">
-          <img id="img-preview" src="{{ $article->cover_image_square_path ? asset('storage/' . $article->cover_image_square_path) : '' }}" class="admin-preview-img" style="aspect-ratio:1/1; object-fit:cover; border: 2px solid #10b981;" />
-          <p id="img-info" class="admin-preview-info" style="color: #059669; font-weight: bold;">{{ $article->cover_image_square_path ? 'รูปปัจจุบัน: ' . $article->cover_image_square_path : '' }}</p>
+
+        <div class="admin-field" style="margin-top:30px; border-left: 4px solid #10b981; padding-left: 15px;">
+          <label style="font-size: 16px; color: #1e293b; font-weight: bold;">รูปภาพบทความ (จัตุรัส 1:1)</label>
+          <div class="admin-drop-zone" data-drop-zone>
+            <span class="drop-text">🖼️ ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</span>
+            <input type="file" name="upload_media_sq" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
+          </div>
+          <div class="admin-preview-box" data-preview-box style="{{ ($article->cover_image_square_path || $article->cover_image_path) ? '' : 'display:none;' }}">
+            <img
+              src="{{ $article->cover_image_square_path ? asset('storage/' . $article->cover_image_square_path) : ($article->cover_image_path ? asset('storage/' . $article->cover_image_path) : '') }}"
+              class="admin-preview-img"
+              data-preview-img
+              style="aspect-ratio:1/1; object-fit:cover; border: 2px solid #10b981;"
+            />
+            <p class="admin-preview-info" data-preview-info style="color: #059669; font-weight: bold;">
+              {{ $article->cover_image_square_path ?: ($article->cover_image_path ? 'รูปปัจจุบัน: ' . $article->cover_image_path : '') }}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -154,24 +186,88 @@
     if (editor && hiddenContent) hiddenContent.value = editor.innerHTML;
   };
 
+  const initDropZone = (zone) => {
+    const input = zone.querySelector('[data-drop-zone-input]');
+    const previewBox = zone.parentElement.querySelector('[data-preview-box]');
+    const previewImg = zone.parentElement.querySelector('[data-preview-img]');
+    const previewInfo = zone.parentElement.querySelector('[data-preview-info]');
+    const dropText = zone.querySelector('.drop-text');
+    const maxSize = 20 * 1024 * 1024;
+
+    const updatePreview = (file) => {
+      if (!file || !file.type.startsWith('image/')) return;
+
+      if (file.size > maxSize) {
+        alert(`🚨 ไฟล์ใหญ่เกินไป!\n\nรูป "${file.name}" มีขนาด ${(file.size / 1024 / 1024).toFixed(2)} MB\nระบบรองรับได้ไม่เกิน 20 MB ครับ`);
+        input.value = '';
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        previewImg.src = e.target.result;
+        previewBox.style.display = 'block';
+        previewInfo.innerText = `✅ รูปพร้อมอัปโหลด: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+        dropText.innerText = 'เปลี่ยนรูปคลิกที่นี่ หรือลากรูปใหม่มาวาง';
+      };
+      reader.readAsDataURL(file);
+    };
+
+    input.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) {
+        updatePreview(e.target.files[0]);
+      }
+    });
+
+    ['dragover', 'dragenter'].forEach((type) => {
+      zone.addEventListener(type, (e) => {
+        e.preventDefault();
+        zone.classList.add('is-dragover');
+      });
+    });
+
+    ['dragleave', 'dragend', 'drop'].forEach((type) => {
+      zone.addEventListener(type, () => {
+        zone.classList.remove('is-dragover');
+      });
+    });
+
+    zone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        input.files = e.dataTransfer.files;
+        updatePreview(e.dataTransfer.files[0]);
+      }
+    });
+  };
+
+  document.querySelectorAll('[data-drop-zone]').forEach(initDropZone);
+
   window.handleFile = (file) => {
     if (!file || !file.type.startsWith('image/')) return;
     const reader = new FileReader();
     reader.onload = (e) => {
-      document.getElementById('img-preview').src = e.target.result;
-      document.getElementById('preview-container').style.display = 'block';
-      document.getElementById('img-info').innerText = "✅ รูปเปลี่ยนแล้วพร้อมบันทึก: " + file.name;
-      document.getElementById('drop-text').innerText = "เปลี่ยนรูปคลิกที่นี่ หรือลากรูปใหม่มาวาง";
+      const previewImg = document.getElementById('img-preview');
+      const previewBox = document.getElementById('preview-container');
+      const previewInfo = document.getElementById('img-info');
+      const dropText = document.getElementById('drop-text');
+
+      if (previewImg && previewBox && previewInfo && dropText) {
+        previewImg.src = e.target.result;
+        previewBox.style.display = 'block';
+        previewInfo.innerText = "✅ รูปเปลี่ยนแล้วพร้อมบันทึก: " + file.name;
+        dropText.innerText = "เปลี่ยนรูปคลิกที่นี่ หรือลากรูปใหม่มาวาง";
+      }
     };
     reader.readAsDataURL(file);
   };
 
   document.addEventListener('DOMContentLoaded', function() {
     const editor = document.getElementById('rich-editor');
-    const inputSq = document.getElementById('input-sq');
-    const dropZone = document.getElementById('drop-zone');
     const form = document.getElementById('main-update-form');
+    const initialContent = @json(old('content', $article->content));
 
+    editor.innerHTML = initialContent || '';
     // INITIAL SYNC
     window.syncContent();
 
@@ -180,32 +276,6 @@
     editor.addEventListener('blur', window.syncContent);
 
     // INPUT CHANGE
-    inputSq.addEventListener('change', (e) => {
-      if (e.target.files.length > 0) window.handleFile(e.target.files[0]);
-    });
-
-    // DRAG & DROP
-    ['dragover', 'dragenter'].forEach(type => {
-      dropZone.addEventListener(type, (e) => {
-        e.preventDefault();
-        dropZone.classList.add('is-dragover');
-      });
-    });
-
-    ['dragleave', 'dragend', 'drop'].forEach(type => {
-      dropZone.addEventListener(type, () => {
-        dropZone.classList.remove('is-dragover');
-      });
-    });
-
-    dropZone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        inputSq.files = e.dataTransfer.files;
-        window.handleFile(e.dataTransfer.files[0]);
-      }
-    });
-
     // FORM SUBMIT INTERCEPTOR
     form.addEventListener('submit', (e) => {
       window.syncContent();

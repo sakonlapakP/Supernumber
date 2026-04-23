@@ -1,10 +1,10 @@
 @extends('layouts.app')
 
 @section('title', $article->title . ' | Supernumber')
-@section('meta_description', $article->meta_description ?: ($article->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($article->content), 150)))
+@section('meta_description', $article->meta_description ?: ($article->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($article->sanitizedContent()), 150)))
 @section('canonical', route('articles.show', $article->slug))
 @section('og_title', $article->title . ' | Supernumber')
-@section('og_description', $article->meta_description ?: ($article->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($article->content), 160)))
+@section('og_description', $article->meta_description ?: ($article->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($article->sanitizedContent()), 160)))
 @section('og_url', route('articles.show', $article->slug))
 @php
   $detailCoverCandidate = $article->cover_image_square_path ?: $article->cover_image_path;
@@ -21,7 +21,7 @@
 @section('content')
   @php
     $publishedAt = optional($article->published_at)->format('d/m/Y H:i') ?: optional($article->created_at)->format('d/m/Y H:i');
-    $contentRaw = trim((string) $article->content);
+    $contentRaw = trim((string) $article->sanitizedContent());
     $hasHtml = \Illuminate\Support\Str::contains($contentRaw, ['<p', '<div', '<br', '<ul', '<ol', '<li', '<strong', '<em', '<a', '<h1', '<h2', '<h3']);
     $contentForPattern = $contentRaw;
     if ($hasHtml) {
@@ -103,7 +103,7 @@
       @endif
 
       @if ($hasHtml && ! $usePatternBlocks)
-        <div class="article-detail__content article-detail__content--html">{!! $article->content !!}</div>
+        <div class="article-detail__content article-detail__content--html">{!! $contentRaw !!}</div>
       @else
         <div class="article-detail__content">
           @foreach ($paragraphs as $paragraph)
