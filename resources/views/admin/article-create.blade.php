@@ -4,8 +4,8 @@
 
 @section('content')
   <style>
-    .admin-drop-zone { border: 2px dashed #d8e0ec; border-radius: 12px; padding: 24px; text-align: center; background: #f8fbff; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 100px; position: relative; }
-    .admin-drop-zone:hover { border-color: #1d4f9f; background: #f0f7ff; }
+    .admin-drop-zone { border: 2px dashed #d8e0ec; border-radius: 12px; padding: 24px; text-align: center; background: #f8fbff; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 100px; position: relative; transition: all 0.3s; }
+    .admin-drop-zone.is-dragover { border-color: #1d4f9f; background: #f0f7ff; }
     .admin-drop-zone__input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
     .admin-preview-img { max-width: 180px; border-radius: 10px; border: 1px solid #d8e0ec; display: block; }
     .admin-preview-box { margin-top: 12px; }
@@ -15,7 +15,7 @@
   <div class="admin-page-head">
     <div>
       <h1>สร้างบทความใหม่</h1>
-      <p class="admin-subtitle">กรอกข้อมูลบทความแบบครบถ้วน (ระบบ Real-time Sync)</p>
+      <p class="admin-subtitle">กรอกข้อมูลและอัปโหลดรูปภาพ (ระบบ Standard Upload + Drag & Drop)</p>
     </div>
   </div>
 
@@ -75,9 +75,9 @@
 
       <div class="admin-field" style="margin-top:20px;">
         <label>รูปภาพบทความ (จัตุรัส 1:1)</label>
-        <div class="admin-drop-zone">
-          <span>🖼️ ลากรูปมาวางตรงนี้ หรือคลิกเลือกไฟล์</span>
-          <input type="file" name="upload_media_sq" class="admin-drop-zone__input" accept="image/*" onchange="previewImg(this)" />
+        <div id="drop-zone" class="admin-drop-zone">
+          <span id="drop-text">🖼️ ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</span>
+          <input type="file" name="upload_media_sq" id="input-sq" class="admin-drop-zone__input" accept="image/*" />
         </div>
         <div id="preview-container" class="admin-preview-box" style="display:none;">
           <img id="img-preview" src="" class="admin-preview-img" style="aspect-ratio:1/1; object-fit:cover;" />
@@ -99,67 +99,68 @@
 
 @section('scripts')
 <script>
-  const editor = document.getElementById('rich-editor');
-  const hiddenContent = document.getElementById('hidden-content');
-  const form = document.getElementById('main-create-form');
-
-  function execCmd(cmd, val = null) {
+  window.execCmd = (cmd, val = null) => {
+    const editor = document.getElementById('rich-editor');
     editor.focus();
     document.execCommand(cmd, false, val);
-    syncContent();
-  }
+    window.syncContent();
+  };
 
-  function addLink() {
+  window.addLink = () => {
     const url = prompt("ใส่ URL:");
-    if (url) execCmd("createLink", url);
-  }
+    if (url) window.execCmd("createLink", url);
+  };
 
-  function syncContent() {
-    hiddenContent.value = editor.innerHTML;
-  }
+  window.syncContent = () => {
+    const editor = document.getElementById('rich-editor');
+    const hiddenContent = document.getElementById('hidden-content');
+    if (editor && hiddenContent) hiddenContent.value = editor.innerHTML;
+  };
 
-  editor.addEventListener('input', syncContent);
-  editor.addEventListener('blur', syncContent);
+  window.handleFile = (file) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      document.getElementById('img-preview').src = e.target.result;
+      document.getElementById('preview-container').style.display = 'block';
+      document.getElementById('img-info').innerText = "📂 เลือกไฟล์: " + file.name + " (" + (file.size / 1024 / 1024).toFixed(2) + " MB)";
+    };
+    reader.readAsDataURL(file);
+  };
 
-  function previewImg(input) {
-    if (input.files && input.files[0]) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        document.getElementById('img-preview').src = e.target.result;
-        document.getElementById('preview-container').style.display = 'block';
-        document.getElementById('img-info').innerText = "📂 เตรียมอัปโหลดไฟล์: " + input.files[0].name;
-      };
-      reader.readAsDataURL(input.files[0]);
-    }
-  }
+  document.addEventListener('DOMContentLoaded', function() {
+    const editor = document.getElementById('rich-editor');
+    const inputSq = document.getElementById('input-sq');
+    const dropZone = document.getElementById('drop-zone');
+    const form = document.getElementById('main-create-form');
 
-  // DRAG & DROP
-  const dropZone = document.querySelector('.admin-drop-zone');
-  const fileInput = document.querySelector('.admin-drop-zone__input');
+    editor.addEventListener('input', window.syncContent);
+    editor.addEventListener('blur', window.syncContent);
 
-  if (dropZone && fileInput) {
+    inputSq.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) window.handleFile(e.target.files[0]);
+    });
+
     ['dragover', 'dragenter'].forEach(type => {
       dropZone.addEventListener(type, (e) => {
         e.preventDefault();
-        dropZone.style.borderColor = "#1d4f9f";
-        dropZone.style.background = "#f0f7ff";
+        dropZone.classList.add('is-dragover');
       });
     });
     ['dragleave', 'dragend', 'drop'].forEach(type => {
       dropZone.addEventListener(type, () => {
-        dropZone.style.borderColor = "#d8e0ec";
-        dropZone.style.background = "#f8fbff";
+        dropZone.classList.remove('is-dragover');
       });
     });
     dropZone.addEventListener('drop', (e) => {
       e.preventDefault();
       if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        fileInput.files = e.dataTransfer.files;
-        previewImg(fileInput);
+        inputSq.files = e.dataTransfer.files;
+        window.handleFile(e.dataTransfer.files[0]);
       }
     });
-  }
 
-  form.addEventListener('submit', syncContent);
+    form.addEventListener('submit', window.syncContent);
+  });
 </script>
 @endsection

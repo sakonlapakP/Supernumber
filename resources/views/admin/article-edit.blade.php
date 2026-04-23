@@ -4,8 +4,8 @@
 
 @section('content')
   <style>
-    .admin-drop-zone { border: 2px dashed #d8e0ec; border-radius: 12px; padding: 24px; text-align: center; background: #f8fbff; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 100px; position: relative; }
-    .admin-drop-zone:hover { border-color: #1d4f9f; background: #f0f7ff; }
+    .admin-drop-zone { border: 2px dashed #d8e0ec; border-radius: 12px; padding: 24px; text-align: center; background: #f8fbff; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 100px; position: relative; transition: all 0.3s; }
+    .admin-drop-zone.is-dragover { border-color: #1d4f9f; background: #f0f7ff; }
     .admin-drop-zone__input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
     .admin-preview-img { max-width: 180px; border-radius: 10px; border: 1px solid #d8e0ec; display: block; }
     .admin-preview-box { margin-top: 12px; }
@@ -15,7 +15,7 @@
   <div class="admin-page-head">
     <div>
       <h1>แก้ไขบทความ</h1>
-      <p class="admin-subtitle">แก้ไขข้อมูลแบบ Real-time Sync (อัปโหลดรูปปกติ)</p>
+      <p class="admin-subtitle">แก้ไขข้อมูล (ระบบ Standard Upload + Drag & Drop)</p>
     </div>
   </div>
 
@@ -64,12 +64,11 @@
           </div>
           <div id="rich-editor" class="admin-rte__editor" contenteditable="true" style="min-height: 300px;">{!! old('content', $article->content) !!}</div>
         </div>
-        {{-- Hidden textarea for real submission --}}
         <textarea id="hidden-content" name="content" style="display: none;">{{ old('content', $article->content) }}</textarea>
       </div>
 
       <div class="admin-field" style="margin-top:20px;">
-        <label>คำอธิบายเมตา (SEO)</label>
+        <label> SEO Meta Description</label>
         <input type="text" name="meta_description" class="admin-input" value="{{ old('meta_description', $article->meta_description) }}" />
       </div>
 
@@ -85,9 +84,9 @@
 
       <div class="admin-field" style="margin-top:20px;">
         <label>รูปภาพบทความ (จัตุรัส 1:1)</label>
-        <div class="admin-drop-zone">
-          <span>🖼️ ลากรูปมาวางตรงนี้ หรือคลิกเลือกไฟล์</span>
-          <input type="file" name="upload_media_sq" class="admin-drop-zone__input" accept="image/*" onchange="previewImg(this)" />
+        <div id="drop-zone" class="admin-drop-zone">
+          <span id="drop-text">🖼️ ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</span>
+          <input type="file" name="upload_media_sq" id="input-sq" class="admin-drop-zone__input" accept="image/*" />
         </div>
         <div id="preview-container" class="admin-preview-box" style="{{ $article->cover_image_square_path ? '' : 'display:none;' }}">
           <img id="img-preview" src="{{ $article->cover_image_square_path ? asset('storage/' . $article->cover_image_square_path) : '' }}" class="admin-preview-img" style="aspect-ratio:1/1; object-fit:cover;" />
@@ -106,10 +105,9 @@
     </form>
   </section>
 
-  {{-- Comments section kept identical --}}
   <section class="admin-card admin-table-card" style="margin-top: 16px;">
     <div class="admin-feature-card__head" style="padding: 18px 20px 0;">
-      <h2 class="admin-feature-card__title">คอมเมนต์ ({{ $comments->count() }})</h2>
+      <h2 class="admin-feature-card__title">คอมเมนต์</h2>
     </div>
     <div class="admin-table-wrap">
       <table class="admin-table">
@@ -138,76 +136,78 @@
 
 @section('scripts')
 <script>
-  const editor = document.getElementById('rich-editor');
-  const hiddenContent = document.getElementById('hidden-content');
-  const form = document.getElementById('main-update-form');
-
-  // 1. COMMANDS
-  function execCmd(cmd, val = null) {
+  // 1. GLOBAL SCOPE FUNCTIONS
+  window.execCmd = (cmd, val = null) => {
+    const editor = document.getElementById('rich-editor');
     editor.focus();
     document.execCommand(cmd, false, val);
     syncContent();
-  }
+  };
 
-  function addLink() {
-    const url = prompt("ใส่ URL:");
-    if (url) execCmd("createLink", url);
-  }
+  window.addLink = () => {
+    const url = prompt("ใส่ URL เช่น https://supernumber.co.th");
+    if (url) window.execCmd("createLink", url);
+  };
 
-  // 2. SYNC REAL-TIME
-  function syncContent() {
-    hiddenContent.value = editor.innerHTML;
-  }
+  window.syncContent = () => {
+    const editor = document.getElementById('rich-editor');
+    const hiddenContent = document.getElementById('hidden-content');
+    if (editor && hiddenContent) hiddenContent.value = editor.innerHTML;
+  };
 
-  editor.addEventListener('input', syncContent);
-  editor.addEventListener('blur', syncContent);
+  window.handleFile = (file) => {
+    if (!file || !file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      document.getElementById('img-preview').src = e.target.result;
+      document.getElementById('preview-container').style.display = 'block';
+      document.getElementById('img-info').innerText = "📂 เลือกไฟล์ใหม่: " + file.name + " (" + (file.size / 1024 / 1024).toFixed(2) + " MB)";
+    };
+    reader.readAsDataURL(file);
+  };
 
-  // 3. IMAGE PREVIEW
-  function previewImg(input) {
-    if (input.files && input.files[0]) {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        document.getElementById('img-preview').src = e.target.result;
-        document.getElementById('preview-container').style.display = 'block';
-        document.getElementById('img-info').innerText = "📂 เตรียมอัปโหลดไฟล์ใหม่: " + input.files[0].name;
-      };
-      reader.readAsDataURL(input.files[0]);
-    }
-  }
+  document.addEventListener('DOMContentLoaded', function() {
+    const editor = document.getElementById('rich-editor');
+    const inputSq = document.getElementById('input-sq');
+    const dropZone = document.getElementById('drop-zone');
+    const form = document.getElementById('main-update-form');
 
-  // 3. DRAG & DROP
-  const dropZone = document.querySelector('.admin-drop-zone');
-  const fileInput = document.querySelector('.admin-drop-zone__input');
+    // INITIAL SYNC
+    window.syncContent();
 
-  if (dropZone && fileInput) {
+    // RTE LISTENERS
+    editor.addEventListener('input', window.syncContent);
+    editor.addEventListener('blur', window.syncContent);
+
+    // INPUT CHANGE
+    inputSq.addEventListener('change', (e) => {
+      if (e.target.files.length > 0) window.handleFile(e.target.files[0]);
+    });
+
+    // DRAG & DROP
     ['dragover', 'dragenter'].forEach(type => {
       dropZone.addEventListener(type, (e) => {
         e.preventDefault();
-        dropZone.style.borderColor = "#1d4f9f";
-        dropZone.style.background = "#f0f7ff";
+        dropZone.classList.add('is-dragover');
       });
     });
 
     ['dragleave', 'dragend', 'drop'].forEach(type => {
       dropZone.addEventListener(type, () => {
-        dropZone.style.borderColor = "#d8e0ec";
-        dropZone.style.background = "#f8fbff";
+        dropZone.classList.remove('is-dragover');
       });
     });
 
     dropZone.addEventListener('drop', (e) => {
       e.preventDefault();
       if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        fileInput.files = e.dataTransfer.files;
-        previewImg(fileInput);
+        inputSq.files = e.dataTransfer.files;
+        window.handleFile(e.dataTransfer.files[0]);
       }
     });
-  }
 
-  // 4. ENSURE SYNC ON SUBMIT
-  form.addEventListener('submit', (e) => {
-    syncContent();
-    // Do not disable button here, let standard POST handle it
+    // FORM SUBMIT
+    form.addEventListener('submit', window.syncContent);
   });
 </script>
 @endsection
