@@ -185,15 +185,22 @@
       if (json.ok && json.path) {
         pathInput.value = json.path;
         previewInfo.innerText = `✅ อัปโหลดเรียบร้อย: ${file.name} → ${Math.round(blob.size/1024)} KB`;
+        previewInfo.style.color = '#059669';
         dropText.innerText = 'เปลี่ยนรูปคลิกที่นี่';
       } else {
-        previewInfo.innerText = `❌ ${json.error || 'Upload failed'}`;
+        const errMsg = json.error || 'Upload failed';
+        previewInfo.innerText = `❌ ${errMsg}`;
+        previewInfo.style.color = '#ef4444';
         pathInput.value = '';
-        previewBox.style.display = 'none';
+        previewBox.style.display = 'block';
+        alert(`🚨 อัปโหลดไม่สำเร็จ: ${errMsg}`);
       }
     } catch(err) {
       previewInfo.innerText = `❌ เน็ตเวิร์ค: ${err.message}`;
+      previewInfo.style.color = '#ef4444';
+      previewBox.style.display = 'block';
       pathInput.value = '';
+      alert(`🚨 ปัญหาเครือข่าย: ${err.message}`);
     } finally {
       pendingUploads--;
     }

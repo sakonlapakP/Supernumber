@@ -248,16 +248,24 @@
         pathInput.value = json.path;
         const kb = Math.round(blob.size / 1024);
         previewInfo.innerText = `✅ อัปโหลดเรียบร้อย: ${file.name} → ${kb} KB`;
+        previewInfo.style.color = '#059669';
         dropText.innerText = 'เปลี่ยนรูปคลิกที่นี่';
       } else {
-        previewInfo.innerText = `❌ อัปโหลดไม่สำเร็จ: ${json.error || 'unknown error'}`;
+        const errMsg = json.error || 'unknown error';
+        previewInfo.innerText = `❌ อัปโหลดไม่สำเร็จ: ${errMsg}`;
+        previewInfo.style.color = '#ef4444';
         pathInput.value = '';
         previewImg.src = '';
-        previewBox.style.display = 'none';
+        // Don't hide the box so the error is visible
+        previewBox.style.display = 'block';
+        alert(`🚨 อัปโหลดไม่สำเร็จ: ${errMsg}`);
       }
     } catch (err) {
       previewInfo.innerText = `❌ เน็ตเวิร์ค: ${err.message}`;
+      previewInfo.style.color = '#ef4444';
+      previewBox.style.display = 'block';
       pathInput.value = '';
+      alert(`🚨 ปัญหาเครือข่าย: ${err.message}`);
     } finally {
       pendingUploads--;
     }
