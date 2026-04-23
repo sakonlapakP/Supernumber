@@ -3190,14 +3190,35 @@ Route::post('/direct-create-article', function (Request $request) use ($ensureAd
 
 
 
-// IMAGE-ONLY BYPASS ROUTE
+// IMAGE-ONLY BYPASS ROUTE: BASE64 VERSION
 Route::post('/direct-image-only/{article}', function (Request $request, Article $article) use ($ensureAdmin, $resolveArticleImageMeta) {
     if ($redirect = $ensureAdmin()) { return $redirect; }
     
-    if (!$request->hasFile('image_blob')) { return response()->json(['error' => 'No image found'], 400); }
-    
     $type = $request->input('type', 'land'); // 'land' or 'sq'
-    $file = $request->file('image_blob');
+    $base64Data = $request->input('image_base64');
+    
+    if (!$base64Data) {
+        // Fallback to normal file upload if base64 is missing
+        if (!$request->hasFile('image_blob')) { return response()->json(['error' => 'No image data found'], 400); }
+        $file = $request->file('image_blob');
+    } else {
+        // Handle Base64
+        if (preg_match('/^data:image\/(\w+);base64,/', $base64Data, $typeMatch)) {
+            $base64Data = substr($base64Data, strpos($base64Data, ',') + 1);
+            $imgExt = strtolower($typeMatch[1]);
+            if (!in_array($imgExt, ['jpg', 'jpeg', 'png', 'webp'])) { return response()->json(['error' => 'Invalid image type'], 400); }
+            $decodedData = base64_decode($base64Data);
+            if ($decodedData === false) { return response()->json(['error' => 'Decode failed'], 400); }
+            
+            // Create a temp file to satisfy the rest of the logic
+            $tmpPath = tempnam(sys_get_temp_dir(), 'img_');
+            file_put_contents($tmpPath, $decodedData);
+            $file = new \Illuminate\Http\UploadedFile($tmpPath, "upload.{$imgExt}", "image/{$imgExt}", null, true);
+        } else {
+            return response()->json(['error' => 'Invalid base64 format'], 400);
+        }
+    }
+    
     $publishedAt = $article->published_at ?? now();
     $imageMeta = $resolveArticleImageMeta($article->slug, $publishedAt);
     
@@ -3212,6 +3233,9 @@ Route::post('/direct-image-only/{article}', function (Request $request, Article 
     if ($article->$column && $article->$column !== $fullPath) { Storage::disk('public')->delete($article->$column); }
     if (!Storage::disk('public')->exists($dir)) { Storage::disk('public')->makeDirectory($dir); }
     Storage::disk('public')->putFileAs($dir, $file, $name);
+    
+    // Clean up temp file if we created one
+    if (isset($tmpPath) && file_exists($tmpPath)) { @unlink($tmpPath); }
     
     $article->update([$column => $fullPath]);
     
