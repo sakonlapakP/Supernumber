@@ -7,7 +7,7 @@
 @section('og_description', $article->meta_description ?: ($article->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($article->content), 160)))
 @section('og_url', route('articles.show', $article->slug))
 @php
-  $detailCoverCandidate = $article->cover_image_landscape_path ?: ($article->cover_image_square_path ?: $article->cover_image_path);
+  $detailCoverCandidate = $article->cover_image_square_path ?: $article->cover_image_path;
   $detailCoverPath = null;
 
   if ($detailCoverCandidate) {

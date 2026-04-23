@@ -3060,17 +3060,6 @@ Route::post('/direct-save-article/{article}', function (Request $request, Articl
     $coverImageSquarePath = $article->cover_image_square_path;
 
     try {
-        if ($request->hasFile('upload_media_land')) {
-            $file = $request->file('upload_media_land');
-            $targetPath = $imageMeta['cover_path'];
-            $dir = dirname($targetPath);
-            $name = "land_" . basename($targetPath);
-            $fullPath = $dir . '/' . $name;
-            if ($coverImageLandscapePath && $coverImageLandscapePath !== $fullPath) Storage::disk('public')->delete($coverImageLandscapePath);
-            if (!Storage::disk('public')->exists($dir)) Storage::disk('public')->makeDirectory($dir);
-            Storage::disk('public')->putFileAs($dir, $file, $name);
-            $coverImageLandscapePath = $fullPath;
-        }
         if ($request->hasFile('upload_media_sq')) {
             $file = $request->file('upload_media_sq');
             $targetPath = $imageMeta['square_path'];
@@ -3094,7 +3083,6 @@ Route::post('/direct-save-article/{article}', function (Request $request, Articl
             'is_published' => $isPublished,
             'published_at' => $isPublished ? $publishedAt : null,
             'cover_image_path' => $coverImagePath,
-            'cover_image_landscape_path' => $coverImageLandscapePath,
             'cover_image_square_path' => $coverImageSquarePath,
         ]);
     } catch (\Throwable $e) {

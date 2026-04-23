@@ -165,24 +165,7 @@
         @endif
       </div>
 
-      <div class="admin-image-grid">
-        <div class="admin-field">
-          <label>รูปหน้ารวมบทความ (แนวนอน 16:9 / 4:3)</label>
-          <div class="admin-drop-zone" data-drop-zone>
-            <div class="admin-drop-zone__icon">🖼️</div>
-            <div class="admin-drop-zone__text">ลากรูปใหม่มาวางที่นี่เพื่อเปลี่ยนรูป หรือคลิกเลือกไฟล์</div>
-            <input type="file" name="upload_media_land" id="input-land" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
-          </div>
-          <button type="button" class="admin-button" onclick="uploadSeparately('land')" style="margin-top:10px; background:#059669; width:100%;">⚡ คลิกเพื่ออัปโหลดรูปแนวนอน (ทางลัดเลี่ยง 403)</button>
-          <div class="admin-preview-box" data-preview-box style="{{ ($article->cover_image_landscape_path || $article->cover_image_path) ? 'display:block;' : '' }}">
-            <img src="{{ $article->cover_image_landscape_path ? asset('storage/' . $article->cover_image_landscape_path) : ( $article->cover_image_path ? asset('storage/' . $article->cover_image_path) : '' ) }}" class="admin-preview-img" data-preview-img id="preview-land" />
-            <div class="admin-preview-info" data-preview-info id="info-land">
-              @if ($article->cover_image_landscape_path || $article->cover_image_path)
-                รูปปัจจุบัน: {{ $article->cover_image_landscape_path ?: $article->cover_image_path }}
-              @endif
-            </div>
-          </div>
-        </div>
+      <div class="admin-image-grid" style="grid-template-columns: 1fr;">
 
         <div class="admin-field">
           <label>รูปหน้ารายละเอียดบทความ (สี่เหลี่ยมจัตุรัส 1:1)</label>
