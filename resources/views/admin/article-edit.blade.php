@@ -45,13 +45,8 @@
         <input type="text" id="slug" name="slug" class="admin-input" value="{{ old('slug', $article->slug) }}" readonly style="background:#f1f5f9;" />
       </div>
 
-      <div class="admin-field">
-        <label for="excerpt">คำเกริ่นสั้น (Excerpt)</label>
-        <textarea name="excerpt" class="admin-input" style="min-height: 80px; padding-top: 12px;">{{ old('excerpt', $article->excerpt) }}</textarea>
-      </div>
-
-      <div class="admin-field">
-        <label>เนื้อหาบทความ</label>
+      <div class="admin-field" style="margin-top:20px; border-left: 4px solid #3b82f6; padding-left: 15px;">
+        <label style="font-size: 16px; color: #1e293b; font-weight: bold;">เนื้อหาบทความ (สำหรับแสดงบนหน้าเว็บหลัก)</label>
         <div class="admin-rte">
           <div class="admin-rte__toolbar">
             <button type="button" class="admin-rte__btn" onclick="execCmd('bold')">B</button>
@@ -62,50 +57,55 @@
             <button type="button" class="admin-rte__btn" onclick="addLink()">ลิงก์</button>
             <button type="button" class="admin-rte__btn" onclick="execCmd('removeFormat')">ล้างรูปแบบ</button>
           </div>
-          <div id="rich-editor" class="admin-rte__editor" contenteditable="true" style="min-height: 300px;">{!! old('content', $article->content) !!}</div>
+          <div id="rich-editor" class="admin-rte__editor" contenteditable="true" style="min-height: 400px; font-size: 16px; line-height: 1.8;">{!! old('content', $article->content) !!}</div>
         </div>
         <textarea id="hidden-content" name="content" style="display: none;">{{ old('content', $article->content) }}</textarea>
       </div>
 
       <div class="admin-field" style="margin-top:20px;">
-        <label> SEO Meta Description</label>
+        <label for="excerpt">คำเกริ่นสั้น (Excerpt สำหรับแสดงบนการ์ดหน้ารวม)</label>
+        <textarea name="excerpt" class="admin-input" style="min-height: 60px; padding-top: 12px;" placeholder="พิมพ์คำโปรยสั้นๆ... (ไม่บังคับ)">{{ old('excerpt', $article->excerpt) }}</textarea>
+      </div>
+
+      <div class="admin-field" style="margin-top:20px;">
+        <label> SEO Meta Description (สำหรับ Google)</label>
         <input type="text" name="meta_description" class="admin-input" value="{{ old('meta_description', $article->meta_description) }}" />
       </div>
 
       <div class="admin-field">
-        <label>Keywords</label>
+        <label>Keywords (สำหรับ Google)</label>
         <input type="text" name="keywords" class="admin-input" value="{{ old('keywords', $article->keywords) }}" />
       </div>
 
       <div class="admin-field">
-        <label for="published_at">เวลาเผยแพร่</label>
+        <label for="published_at">เวลาเผยแพร่ (เว้นว่างไว้เพื่อเผยแพร่ตอนนี้เลย)</label>
         <input type="datetime-local" name="published_at" class="admin-input" value="{{ old('published_at', optional($article->published_at)->format('Y-m-d\\TH:i')) }}" />
       </div>
 
-      <div class="admin-field" style="margin-top:20px;">
-        <label>รูปภาพบทความ (จัตุรัส 1:1)</label>
+      <div class="admin-field" style="margin-top:30px; border-left: 4px solid #10b981; padding-left: 15px;">
+        <label style="font-size: 16px; color: #1e293b; font-weight: bold;">รูปภาพบทความ (จัตุรัส 1:1)</label>
         <div id="drop-zone" class="admin-drop-zone">
           <span id="drop-text">🖼️ ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</span>
           <input type="file" name="upload_media_sq" id="input-sq" class="admin-drop-zone__input" accept="image/*" />
         </div>
         <div id="preview-container" class="admin-preview-box" style="{{ $article->cover_image_square_path ? '' : 'display:none;' }}">
-          <img id="img-preview" src="{{ $article->cover_image_square_path ? asset('storage/' . $article->cover_image_square_path) : '' }}" class="admin-preview-img" style="aspect-ratio:1/1; object-fit:cover;" />
-          <p id="img-info" class="admin-preview-info">{{ $article->cover_image_square_path ? 'รูปปัจจุบัน: ' . $article->cover_image_square_path : '' }}</p>
+          <img id="img-preview" src="{{ $article->cover_image_square_path ? asset('storage/' . $article->cover_image_square_path) : '' }}" class="admin-preview-img" style="aspect-ratio:1/1; object-fit:cover; border: 2px solid #10b981;" />
+          <p id="img-info" class="admin-preview-info" style="color: #059669; font-weight: bold;">{{ $article->cover_image_square_path ? 'รูปปัจจุบัน: ' . $article->cover_image_square_path : '' }}</p>
         </div>
       </div>
 
-      <label style="display:flex; align-items:center; gap:10px; margin-top:20px;">
-        <input type="checkbox" name="is_published" value="1" @checked(old('is_published', $article->is_published)) /> เผยแพร่บทความ
+      <label style="display:flex; align-items:center; gap:10px; margin-top:30px; font-size: 16px; font-weight: bold;">
+        <input type="checkbox" name="is_published" value="1" @checked(old('is_published', $article->is_published)) style="width: 20px; height: 20px;" /> เผยแพร่บทความ
       </label>
 
       <div class="admin-actions" style="margin-top:30px;">
-        <button type="submit" class="admin-button" id="save-btn">💾 บันทึกการแก้ไขบทความ</button>
-        <a href="{{ route('admin.articles') }}" class="admin-button admin-button--secondary">กลับหน้ารวม</a>
+        <button type="submit" class="admin-button" style="font-size: 16px; padding: 12px 24px;">💾 บันทึกการแก้ไขบทความ</button>
+        <a href="{{ route('admin.articles') }}" class="admin-button admin-button--secondary" style="font-size: 16px; padding: 12px 24px;">กลับหน้ารวม</a>
       </div>
     </form>
   </section>
 
-  <section class="admin-card admin-table-card" style="margin-top: 16px;">
+  <section class="admin-card admin-table-card" style="margin-top: 24px;">
     <div class="admin-feature-card__head" style="padding: 18px 20px 0;">
       <h2 class="admin-feature-card__title">คอมเมนต์</h2>
     </div>
@@ -136,12 +136,11 @@
 
 @section('scripts')
 <script>
-  // 1. GLOBAL SCOPE FUNCTIONS
   window.execCmd = (cmd, val = null) => {
     const editor = document.getElementById('rich-editor');
     editor.focus();
     document.execCommand(cmd, false, val);
-    syncContent();
+    window.syncContent();
   };
 
   window.addLink = () => {
@@ -161,7 +160,8 @@
     reader.onload = (e) => {
       document.getElementById('img-preview').src = e.target.result;
       document.getElementById('preview-container').style.display = 'block';
-      document.getElementById('img-info').innerText = "📂 เลือกไฟล์ใหม่: " + file.name + " (" + (file.size / 1024 / 1024).toFixed(2) + " MB)";
+      document.getElementById('img-info').innerText = "✅ รูปเปลี่ยนแล้วพร้อมบันทึก: " + file.name;
+      document.getElementById('drop-text').innerText = "เปลี่ยนรูปคลิกที่นี่ หรือลากรูปใหม่มาวาง";
     };
     reader.readAsDataURL(file);
   };
@@ -206,8 +206,22 @@
       }
     });
 
-    // FORM SUBMIT
-    form.addEventListener('submit', window.syncContent);
+    // FORM SUBMIT INTERCEPTOR
+    form.addEventListener('submit', (e) => {
+      window.syncContent();
+      const content = document.getElementById('hidden-content').value.trim();
+      if (!content || content.replace(/<[^>]*>?/gm, '').trim() === '') {
+        e.preventDefault();
+        alert('🛑 กรุณากรอก "เนื้อหาบทความ" ด้วยครับพี่! (กล่องพิมพ์ข้อความตรงกลาง)\n\nระบบป้องกันการเซฟเพื่อไม่ให้รูปและข้อมูลอื่นๆ ที่แก้ไขไว้หายไปครับ');
+        editor.focus();
+        editor.style.border = "2px solid #ef4444";
+        setTimeout(() => editor.style.border = "1px solid #d8e0ec", 3000);
+      } else {
+        const btn = form.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.innerText = '⏳ กำลังบันทึกการแก้ไข...';
+      }
+    });
   });
 </script>
 @endsection

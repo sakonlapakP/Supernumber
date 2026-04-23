@@ -36,13 +36,8 @@
         <input type="text" id="title" name="title" class="admin-input" value="{{ old('title') }}" required placeholder="ระบุหัวข้อบทความ..." />
       </div>
 
-      <div class="admin-field">
-        <label for="excerpt">คำเกริ่นสั้น (Excerpt)</label>
-        <textarea name="excerpt" class="admin-input" style="min-height: 80px; padding-top: 12px;">{{ old('excerpt') }}</textarea>
-      </div>
-
-      <div class="admin-field">
-        <label>เนื้อหาบทความ</label>
+      <div class="admin-field" style="margin-top:20px; border-left: 4px solid #3b82f6; padding-left: 15px;">
+        <label style="font-size: 16px; color: #1e293b; font-weight: bold;">เนื้อหาบทความ (สำหรับแสดงบนหน้าเว็บหลัก)</label>
         <div class="admin-rte">
           <div class="admin-rte__toolbar">
             <button type="button" class="admin-rte__btn" onclick="execCmd('bold')">B</button>
@@ -53,45 +48,50 @@
             <button type="button" class="admin-rte__btn" onclick="addLink()">ลิงก์</button>
             <button type="button" class="admin-rte__btn" onclick="execCmd('removeFormat')">ล้างรูปแบบ</button>
           </div>
-          <div id="rich-editor" class="admin-rte__editor" contenteditable="true" style="min-height: 300px;">{!! old('content') !!}</div>
+          <div id="rich-editor" class="admin-rte__editor" contenteditable="true" style="min-height: 400px; font-size: 16px; line-height: 1.8;">{!! old('content') !!}</div>
         </div>
         <textarea id="hidden-content" name="content" style="display: none;">{{ old('content') }}</textarea>
       </div>
 
       <div class="admin-field" style="margin-top:20px;">
-        <label> SEO Meta Description</label>
+        <label for="excerpt">คำเกริ่นสั้น (Excerpt สำหรับแสดงบนการ์ดหน้ารวม)</label>
+        <textarea name="excerpt" class="admin-input" style="min-height: 60px; padding-top: 12px;" placeholder="พิมพ์คำโปรยสั้นๆ... (ไม่บังคับ)">{{ old('excerpt') }}</textarea>
+      </div>
+
+      <div class="admin-field" style="margin-top:20px;">
+        <label> SEO Meta Description (สำหรับ Google)</label>
         <input type="text" name="meta_description" class="admin-input" value="{{ old('meta_description') }}" />
       </div>
 
       <div class="admin-field">
-        <label>Keywords</label>
+        <label>Keywords (สำหรับ Google)</label>
         <input type="text" name="keywords" class="admin-input" value="{{ old('keywords') }}" />
       </div>
 
       <div class="admin-field">
-        <label for="published_at">เวลาเผยแพร่ (ไม่ใส่ = ตอนนี้)</label>
+        <label for="published_at">เวลาเผยแพร่ (เว้นว่างไว้เพื่อเผยแพร่ตอนนี้เลย)</label>
         <input type="datetime-local" name="published_at" class="admin-input" value="{{ old('published_at') }}" />
       </div>
 
-      <div class="admin-field" style="margin-top:20px;">
-        <label>รูปภาพบทความ (จัตุรัส 1:1)</label>
+      <div class="admin-field" style="margin-top:30px; border-left: 4px solid #10b981; padding-left: 15px;">
+        <label style="font-size: 16px; color: #1e293b; font-weight: bold;">รูปภาพบทความ (จัตุรัส 1:1)</label>
         <div id="drop-zone" class="admin-drop-zone">
           <span id="drop-text">🖼️ ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</span>
           <input type="file" name="upload_media_sq" id="input-sq" class="admin-drop-zone__input" accept="image/*" />
         </div>
         <div id="preview-container" class="admin-preview-box" style="display:none;">
-          <img id="img-preview" src="" class="admin-preview-img" style="aspect-ratio:1/1; object-fit:cover;" />
-          <p id="img-info" class="admin-preview-info"></p>
+          <img id="img-preview" src="" class="admin-preview-img" style="aspect-ratio:1/1; object-fit:cover; border: 2px solid #10b981;" />
+          <p id="img-info" class="admin-preview-info" style="color: #059669; font-weight: bold;"></p>
         </div>
       </div>
 
-      <label style="display:flex; align-items:center; gap:10px; margin-top:20px;">
-        <input type="checkbox" name="is_published" value="1" @checked(old('is_published', true)) /> เผยแพร่ทันที
+      <label style="display:flex; align-items:center; gap:10px; margin-top:30px; font-size: 16px; font-weight: bold;">
+        <input type="checkbox" name="is_published" value="1" @checked(old('is_published', true)) style="width: 20px; height: 20px;" /> เผยแพร่ทันที
       </label>
 
       <div class="admin-actions" style="margin-top:30px;">
-        <button type="submit" class="admin-button">🚀 สร้างและอัปโหลดบทความ</button>
-        <a href="{{ route('admin.articles') }}" class="admin-button admin-button--secondary">ยกเลิก</a>
+        <button type="submit" class="admin-button" style="font-size: 16px; padding: 12px 24px;">🚀 สร้างและอัปโหลดบทความ</button>
+        <a href="{{ route('admin.articles') }}" class="admin-button admin-button--secondary" style="font-size: 16px; padding: 12px 24px;">ยกเลิก</a>
       </div>
     </form>
   </section>
@@ -123,7 +123,8 @@
     reader.onload = (e) => {
       document.getElementById('img-preview').src = e.target.result;
       document.getElementById('preview-container').style.display = 'block';
-      document.getElementById('img-info').innerText = "📂 เลือกไฟล์: " + file.name + " (" + (file.size / 1024 / 1024).toFixed(2) + " MB)";
+      document.getElementById('img-info').innerText = "✅ รูปพร้อมอัปโหลด: " + file.name + " (" + (file.size / 1024 / 1024).toFixed(2) + " MB)";
+      document.getElementById('drop-text').innerText = "เปลี่ยนรูปคลิกที่นี่ หรือลากรูปใหม่มาวาง";
     };
     reader.readAsDataURL(file);
   };
@@ -160,7 +161,21 @@
       }
     });
 
-    form.addEventListener('submit', window.syncContent);
+    form.addEventListener('submit', (e) => {
+      window.syncContent();
+      const content = document.getElementById('hidden-content').value.trim();
+      if (!content || content.replace(/<[^>]*>?/gm, '').trim() === '') {
+        e.preventDefault();
+        alert('🛑 กรุณากรอก "เนื้อหาบทความ" ด้วยครับพี่! (กล่องพิมพ์ข้อความตรงกลาง)\n\nระบบป้องกันการเซฟเพื่อไม่ให้ไฟล์ภาพที่เลือกไว้หายไปครับ');
+        editor.focus();
+        editor.style.border = "2px solid #ef4444";
+        setTimeout(() => editor.style.border = "1px solid #d8e0ec", 3000);
+      } else {
+        const btn = form.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.innerText = '⏳ กำลังบันทึกข้อมูล...';
+      }
+    });
   });
 </script>
 @endsection
