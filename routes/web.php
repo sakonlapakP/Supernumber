@@ -106,11 +106,17 @@ Route::post('/p/img', function (Request $request) {
     }
 
     try {
-        // Save directly into public/storage/articles/tmp/ — no symlink required.
-        // Files placed here are immediately web-accessible as /storage/articles/tmp/...
-        $targetDir = public_path('storage/articles/tmp');
+        $docRoot = $_SERVER['DOCUMENT_ROOT'] ?? public_path();
+        $storageDir = rtrim($docRoot, '/') . '/storage';
+
+        // Force a real folder instead of symlink to fix Nginx 404 on DirectAdmin
+        if (is_link($storageDir)) {
+            @unlink($storageDir);
+        }
+
+        $targetDir = $storageDir . '/articles/tmp';
         if (! is_dir($targetDir)) {
-            mkdir($targetDir, 0755, true);
+            @mkdir($targetDir, 0755, true);
         }
 
         $ext  = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
@@ -126,6 +132,19 @@ Route::post('/p/img', function (Request $request) {
     }
 })->name('img.store');
 
+Route::get('/debug-paths-for-waf', function () {
+    return [
+        'public_path' => public_path(),
+        'base_path' => base_path(),
+        'doc_root' => $_SERVER['DOCUMENT_ROOT'] ?? 'null',
+        'storage_is_link' => is_link(public_path('storage')),
+        'storage_exists' => file_exists(public_path('storage')),
+        'storage_is_dir' => is_dir(public_path('storage')),
+        'storage_real' => file_exists(public_path('storage')) ? realpath(public_path('storage')) : 'none',
+        'doc_root_storage_link' => isset($_SERVER['DOCUMENT_ROOT']) ? is_link($_SERVER['DOCUMENT_ROOT'].'/storage') : 'N/A',
+        'doc_root_storage_exists' => isset($_SERVER['DOCUMENT_ROOT']) ? file_exists($_SERVER['DOCUMENT_ROOT'].'/storage') : 'N/A',
+    ];
+});
 
 
 
@@ -2549,16 +2568,17 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $content = $sanitizeArticleContent(trim($data['content']));
 
         try {
-            $ensurePublicStorageLink();
+            $docRoot = $_SERVER['DOCUMENT_ROOT'] ?? public_path();
+            $storageDir = rtrim($docRoot, '/') . '/storage/';
 
             // Use pre-uploaded path from /p/img endpoint (already saved to storage).
             $landPath = trim((string) ($data['land_path'] ?? ''));
-            if ($landPath !== '' && file_exists(public_path('storage/' . $landPath))) {
+            if ($landPath !== '' && file_exists($storageDir . $landPath)) {
                 $coverImageLandscapePath = $landPath;
             }
 
             $sqPath = trim((string) ($data['sq_path'] ?? ''));
-            if ($sqPath !== '' && file_exists(public_path('storage/' . $sqPath))) {
+            if ($sqPath !== '' && file_exists($storageDir . $sqPath)) {
                 $coverImageSquarePath = $sqPath;
             }
 
@@ -2670,21 +2690,22 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $content = $sanitizeArticleContent(trim($data['content']));
 
         try {
-            $ensurePublicStorageLink();
+            $docRoot = $_SERVER['DOCUMENT_ROOT'] ?? public_path();
+            $storageDir = rtrim($docRoot, '/') . '/storage/';
 
             // Use pre-uploaded path from /p/img endpoint (already saved to storage).
             $landPath = trim((string) ($data['land_path'] ?? ''));
-            if ($landPath !== '' && file_exists(public_path('storage/' . $landPath))) {
+            if ($landPath !== '' && file_exists($storageDir . $landPath)) {
                 if ($coverImageLandscapePath && $coverImageLandscapePath !== $landPath) {
-                    @unlink(public_path('storage/' . $coverImageLandscapePath));
+                    @unlink($storageDir . $coverImageLandscapePath);
                 }
                 $coverImageLandscapePath = $landPath;
             }
 
             $sqPath = trim((string) ($data['sq_path'] ?? ''));
-            if ($sqPath !== '' && file_exists(public_path('storage/' . $sqPath))) {
+            if ($sqPath !== '' && file_exists($storageDir . $sqPath)) {
                 if ($coverImageSquarePath && $coverImageSquarePath !== $sqPath) {
-                    @unlink(public_path('storage/' . $coverImageSquarePath));
+                    @unlink($storageDir . $coverImageSquarePath);
                 }
                 $coverImageSquarePath = $sqPath;
             }
