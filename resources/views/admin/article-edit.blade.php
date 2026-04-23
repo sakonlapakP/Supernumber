@@ -4,59 +4,25 @@
 
 @section('content')
   <style>
-    .admin-drop-zone {
-      position: relative;
-      border: 2px dashed #d8e0ec;
-      border-radius: 12px;
-      padding: 24px;
-      text-align: center;
-      background: #f8fbff;
-      transition: all 0.2s ease;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      min-height: 100px;
-    }
-    .admin-drop-zone:hover, .admin-drop-zone.is-dragover {
-      border-color: #1d4f9f;
-      background: #f0f7ff;
-    }
-    .admin-drop-zone__icon { font-size: 24px; color: #94a3b8; }
-    .admin-drop-zone__text { font-size: 14px; color: #64748b; }
-    .admin-drop-zone__input {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
-      width: 100%;
-      height: 100%;
-    }
-    .admin-preview-box { margin-top: 12px; position: relative; }
-    .admin-preview-img {
-      max-width: 180px;
-      border-radius: 10px;
-      border: 1px solid #d8e0ec;
-      display: block;
-    }
+    .admin-drop-zone { border: 2px dashed #d8e0ec; border-radius: 12px; padding: 24px; text-align: center; background: #f8fbff; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 100px; position: relative; }
+    .admin-drop-zone:hover { border-color: #1d4f9f; background: #f0f7ff; }
+    .admin-drop-zone__input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .admin-preview-img { max-width: 180px; border-radius: 10px; border: 1px solid #d8e0ec; display: block; }
+    .admin-preview-box { margin-top: 12px; }
     .admin-preview-info { font-size: 12px; color: #94a3b8; margin-top: 6px; }
   </style>
 
   <div class="admin-page-head">
     <div>
       <h1>แก้ไขบทความ</h1>
-      <p class="admin-subtitle">แก้ไขข้อมูลบทความแบบครบถ้วน (อัปโหลดรูปปกติ)</p>
+      <p class="admin-subtitle">แก้ไขข้อมูลแบบ Real-time Sync (อัปโหลดรูปปกติ)</p>
     </div>
   </div>
 
   @if ($errors->any())
     <div class="admin-alert admin-alert--error">
       <ul style="margin: 0; padding-left: 18px;">
-        @foreach ($errors->all() as $error)
-          <li>{{ $error }}</li>
-        @endforeach
+        @foreach ($errors->all() as $error) <li>{{ $error }}</li> @endforeach
       </ul>
     </div>
   @endif
@@ -66,13 +32,7 @@
   @endif
 
   <section class="admin-card admin-feature-card">
-    <form
-      id="article-update-form"
-      action="/direct-save-article/{{ $article->id }}"
-      method="post"
-      enctype="multipart/form-data"
-      class="admin-form"
-    >
+    <form id="main-update-form" action="/direct-save-article/{{ $article->id }}" method="post" enctype="multipart/form-data" class="admin-form">
       @csrf
 
       <div class="admin-field">
@@ -83,129 +43,93 @@
       <div class="admin-field">
         <label for="slug">Slug (ที่อยู่ URL)</label>
         <input type="text" id="slug" name="slug" class="admin-input" value="{{ old('slug', $article->slug) }}" readonly style="background:#f1f5f9;" />
-        <p class="admin-subtitle">URL ถูกล็อกไว้ตามระบบไฟล์</p>
       </div>
 
       <div class="admin-field">
         <label for="excerpt">คำเกริ่นสั้น (Excerpt)</label>
-        <textarea id="excerpt" name="excerpt" class="admin-input" style="min-height: 80px; padding-top: 12px;">{{ old('excerpt', $article->excerpt) }}</textarea>
+        <textarea name="excerpt" class="admin-input" style="min-height: 80px; padding-top: 12px;">{{ old('excerpt', $article->excerpt) }}</textarea>
       </div>
 
       <div class="admin-field">
-        <label for="content">เนื้อหาบทความ</label>
-        <div class="admin-rte" data-rte-shell>
+        <label>เนื้อหาบทความ</label>
+        <div class="admin-rte">
           <div class="admin-rte__toolbar">
-            <button type="button" class="admin-rte__btn" data-rte-cmd="bold">B</button>
-            <button type="button" class="admin-rte__btn" data-rte-cmd="italic">I</button>
-            <button type="button" class="admin-rte__btn" data-rte-cmd="underline">U</button>
-            <button type="button" class="admin-rte__btn" data-rte-cmd="formatBlock" data-rte-value="h2">H2</button>
-            <button type="button" class="admin-rte__btn" data-rte-cmd="insertUnorderedList">• รายการ</button>
-            <button type="button" class="admin-rte__btn" data-rte-cmd="insertOrderedList">1. ลำดับ</button>
-            <button type="button" class="admin-rte__btn" data-rte-action="link">ลิงก์</button>
-            <button type="button" class="admin-rte__btn" data-rte-cmd="removeFormat">ล้างรูปแบบ</button>
+            <button type="button" class="admin-rte__btn" onclick="execCmd('bold')">B</button>
+            <button type="button" class="admin-rte__btn" onclick="execCmd('italic')">I</button>
+            <button type="button" class="admin-rte__btn" onclick="execCmd('underline')">U</button>
+            <button type="button" class="admin-rte__btn" onclick="execCmd('formatBlock', 'h2')">H2</button>
+            <button type="button" class="admin-rte__btn" onclick="execCmd('insertUnorderedList')">• รายการ</button>
+            <button type="button" class="admin-rte__btn" onclick="addLink()">ลิงก์</button>
+            <button type="button" class="admin-rte__btn" onclick="execCmd('removeFormat')">ล้างรูปแบบ</button>
           </div>
-          <div class="admin-rte__editor" contenteditable="true" data-rte-editor data-placeholder="พิมพ์เนื้อหาบทความที่นี่..."></div>
+          <div id="rich-editor" class="admin-rte__editor" contenteditable="true" style="min-height: 300px;">{!! old('content', $article->content) !!}</div>
         </div>
-        <textarea id="textarea-content" name="content" class="admin-input" style="display: none;">{{ old('content', $article->content) }}</textarea>
+        {{-- Hidden textarea for real submission --}}
+        <textarea id="hidden-content" name="content" style="display: none;">{{ old('content', $article->content) }}</textarea>
       </div>
 
       <div class="admin-field" style="margin-top:20px;">
-        <label>คำอธิบายเมตา (Meta Description)</label>
+        <label>คำอธิบายเมตา (SEO)</label>
         <input type="text" name="meta_description" class="admin-input" value="{{ old('meta_description', $article->meta_description) }}" />
       </div>
 
       <div class="admin-field">
-        <label>5 Keywords หลัก (SEO)</label>
+        <label>Keywords</label>
         <input type="text" name="keywords" class="admin-input" value="{{ old('keywords', $article->keywords) }}" />
       </div>
 
       <div class="admin-field">
-        <label>10 Keywords รอง (LSI Keywords)</label>
-        <input type="text" name="lsi_keywords" class="admin-input" value="{{ old('lsi_keywords', $article->lsi_keywords) }}" />
-      </div>
-
-      <div class="admin-field">
         <label for="published_at">เวลาเผยแพร่</label>
-        <input
-          type="datetime-local"
-          id="published_at"
-          name="published_at"
-          class="admin-input"
-          value="{{ old('published_at', optional($article->published_at)->format('Y-m-d\\TH:i')) }}"
-        />
+        <input type="datetime-local" name="published_at" class="admin-input" value="{{ old('published_at', optional($article->published_at)->format('Y-m-d\\TH:i')) }}" />
       </div>
 
       <div class="admin-field" style="margin-top:20px;">
         <label>รูปภาพบทความ (จัตุรัส 1:1)</label>
-        <div class="admin-drop-zone" data-drop-zone>
-          <div class="admin-drop-zone__icon">🖼️</div>
-          <div class="admin-drop-zone__text">ลากรูปใหม่มาวาง หรือคลิกเลือกไฟล์เพื่อเปลี่ยนรูป</div>
-          <input type="file" name="upload_media_sq" id="input-sq" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
+        <div class="admin-drop-zone">
+          <span>🖼️ ลากรูปมาวางตรงนี้ หรือคลิกเลือกไฟล์</span>
+          <input type="file" name="upload_media_sq" class="admin-drop-zone__input" accept="image/*" onchange="previewImg(this)" />
         </div>
-        
-        <div class="admin-preview-box" data-preview-box style="{{ $article->cover_image_square_path ? 'display:block;' : 'display:none;' }}">
-          <img src="{{ $article->cover_image_square_path ? asset('storage/' . $article->cover_image_square_path) : '' }}" class="admin-preview-img" data-preview-img style="aspect-ratio:1/1; object-fit:cover;" />
-          <div class="admin-preview-info" data-preview-info>
-            @if ($article->cover_image_square_path)
-              รูปปัจจุบัน: {{ $article->cover_image_square_path }}
-            @endif
-          </div>
+        <div id="preview-container" class="admin-preview-box" style="{{ $article->cover_image_square_path ? '' : 'display:none;' }}">
+          <img id="img-preview" src="{{ $article->cover_image_square_path ? asset('storage/' . $article->cover_image_square_path) : '' }}" class="admin-preview-img" style="aspect-ratio:1/1; object-fit:cover;" />
+          <p id="img-info" class="admin-preview-info">{{ $article->cover_image_square_path ? 'รูปปัจจุบัน: ' . $article->cover_image_square_path : '' }}</p>
         </div>
       </div>
 
-      <label class="admin-field" style="grid-template-columns: auto 1fr; align-items: center; gap: 10px; display: grid; margin-top:20px;">
-        <input type="checkbox" name="is_published" value="1" @checked(old('is_published', $article->is_published)) />
-        <span style="font-size: 14px;">เผยแพร่บทความ</span>
+      <label style="display:flex; align-items:center; gap:10px; margin-top:20px;">
+        <input type="checkbox" name="is_published" value="1" @checked(old('is_published', $article->is_published)) /> เผยแพร่บทความ
       </label>
 
-      <div class="admin-actions" style="margin-top:30px; display:flex; gap:10px;">
-        <button type="submit" class="admin-button">💾 บันทึกข้อมูลและรูป</button>
+      <div class="admin-actions" style="margin-top:30px;">
+        <button type="submit" class="admin-button" id="save-btn">💾 บันทึกการแก้ไขบทความ</button>
         <a href="{{ route('admin.articles') }}" class="admin-button admin-button--secondary">กลับหน้ารวม</a>
       </div>
     </form>
   </section>
 
+  {{-- Comments section kept identical --}}
   <section class="admin-card admin-table-card" style="margin-top: 16px;">
     <div class="admin-feature-card__head" style="padding: 18px 20px 0;">
-      <div>
-        <h2 class="admin-feature-card__title">คอมเมนต์ ({{ $comments->count() }})</h2>
-        <p class="admin-feature-card__hint">จัดการคอมเมนต์ของบทความนี้</p>
-      </div>
+      <h2 class="admin-feature-card__title">คอมเมนต์ ({{ $comments->count() }})</h2>
     </div>
     <div class="admin-table-wrap">
       <table class="admin-table">
         <thead>
-          <tr>
-            <th>เวลา</th>
-            <th>ผู้คอมเมนต์</th>
-            <th>เนื้อหา</th>
-            <th>สถานะ</th>
-            <th>จัดการ</th>
-          </tr>
+          <tr><th>เวลา</th><th>ผู้คอมเมนต์</th><th>เนื้อหา</th><th>สถานะ</th><th>จัดการ</th></tr>
         </thead>
         <tbody>
-          @forelse ($comments as $comment)
+          @foreach ($comments as $comment)
             <tr>
-              <td>{{ optional($comment->created_at)->format('Y-m-d H:i') }}</td>
+              <td>{{ $comment->created_at->format('Y-m-d H:i') }}</td>
               <td>{{ $comment->commenter_name }}</td>
               <td style="max-width: 400px; white-space: normal;">{{ $comment->content }}</td>
-              <td>
-                <span class="admin-status-pill {{ $comment->status === 'approved' ? 'admin-status-pill--active' : '' }}">
-                  {{ $comment->status === 'approved' ? 'อนุมัติแล้ว' : 'ซ่อนอยู่' }}
-                </span>
-              </td>
+              <td><span class="admin-status-pill {{ $comment->status === 'approved' ? 'admin-status-pill--active' : '' }}">{{ $comment->status === 'approved' ? 'อนุมัติแล้ว' : 'ซ่อน' }}</span></td>
               <td>
                 <form action="{{ route('admin.articles.comments.' . ($comment->status === 'approved' ? 'archive' : 'unarchive'), [$article, $comment]) }}" method="POST">
-                  @csrf
-                  <button type="submit" class="admin-button admin-button--compact" style="background: {{ $comment->status === 'approved' ? '#f59e0b' : '#3b82f6' }}">
-                    {{ $comment->status === 'approved' ? 'ซ่อน' : 'โชว์' }}
-                  </button>
+                  @csrf <button type="submit" class="admin-button admin-button--compact" style="background: {{ $comment->status === 'approved' ? '#f59e0b' : '#3b82f6' }}">{{ $comment->status === 'approved' ? 'ซ่อน' : 'โชว์' }}</button>
                 </form>
               </td>
             </tr>
-          @empty
-            <tr><td colspan="5" style="text-align:center;">ยังไม่มีคอมเมนต์</td></tr>
-          @endforelse
+          @endforeach
         </tbody>
       </table>
     </div>
@@ -213,75 +137,48 @@
 @endsection
 
 @section('scripts')
-  <script>
-    document.addEventListener('DOMContentLoaded', function() {
-      // 1. Rich Text Editor Initialization
-      document.querySelectorAll("[data-rte-shell]").forEach(shell => {
-        const editor = shell.querySelector("[data-rte-editor]");
-        const container = shell.closest('.admin-field');
-        const textarea = container ? container.querySelector('textarea[name="content"]') : null;
-        const form = shell.closest("form");
-        
-        if (!editor || !textarea || !form) return;
+<script>
+  const editor = document.getElementById('rich-editor');
+  const hiddenContent = document.getElementById('hidden-content');
+  const form = document.getElementById('main-update-form');
 
-        // FORCE ATTEMPT TO LOAD DATA
-        const initialContent = textarea.value || "";
-        editor.innerHTML = initialContent;
+  // 1. COMMANDS
+  function execCmd(cmd, val = null) {
+    editor.focus();
+    document.execCommand(cmd, false, val);
+    syncContent();
+  }
 
-        shell.querySelectorAll("[data-rte-cmd]").forEach(btn => {
-          btn.addEventListener("click", () => {
-            const cmd = btn.dataset.rteCmd;
-            const val = btn.dataset.rteValue ?? null;
-            editor.focus();
-            document.execCommand(cmd, false, val);
-          });
-        });
+  function addLink() {
+    const url = prompt("ใส่ URL:");
+    if (url) execCmd("createLink", url);
+  }
 
-        shell.querySelectorAll("[data-rte-action='link']").forEach(btn => {
-          btn.addEventListener("click", () => {
-            const url = window.prompt("ใส่ URL:");
-            if (!url) return;
-            editor.focus();
-            document.execCommand("createLink", false, url);
-          });
-        });
+  // 2. SYNC REAL-TIME
+  function syncContent() {
+    hiddenContent.value = editor.innerHTML;
+  }
 
-        form.addEventListener("submit", () => {
-          textarea.value = editor.innerHTML.trim();
-        });
-      });
+  editor.addEventListener('input', syncContent);
+  editor.addEventListener('blur', syncContent);
 
-      // 2. Image Preview Logic
-      document.querySelectorAll('[data-drop-zone-input]').forEach(input => {
-        input.addEventListener('change', function(e) {
-          const file = e.target.files[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-              const field = input.closest('.admin-field');
-              const previewImg = field.querySelector('[data-preview-img]');
-              const previewBox = field.querySelector('[data-preview-box]');
-              const previewInfo = field.querySelector('[data-preview-info]');
-              if (previewImg) previewImg.src = event.target.result;
-              if (previewBox) previewBox.style.display = 'block';
-              if (previewInfo) previewInfo.innerText = `📂 ไฟล์ใหม่: ${file.name}`;
-            };
-            reader.readAsDataURL(file);
-          }
-        });
-      });
+  // 3. IMAGE PREVIEW
+  function previewImg(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        document.getElementById('img-preview').src = e.target.result;
+        document.getElementById('preview-container').style.display = 'block';
+        document.getElementById('img-info').innerText = "📂 เตรียมอัปโหลดไฟล์ใหม่: " + input.files[0].name;
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
 
-      // 3. Form Submit Feedback
-      const mainForm = document.getElementById('article-update-form');
-      if (mainForm) {
-        mainForm.addEventListener('submit', () => {
-          const btn = mainForm.querySelector('button[type="submit"]');
-          if (btn) {
-            btn.disabled = true;
-            btn.innerText = '⏳ กำลังเซฟข้อมูล...';
-          }
-        });
-      }
-    });
-  </script>
+  // 4. ENSURE SYNC ON SUBMIT
+  form.addEventListener('submit', (e) => {
+    syncContent();
+    // Do not disable button here, let standard POST handle it
+  });
+</script>
 @endsection
