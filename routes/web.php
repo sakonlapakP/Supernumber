@@ -125,6 +125,16 @@ $articleColumnExists = function (string $column): bool {
     return isset($columns[$column]);
 };
 
+$ensurePublicStorageLink = function (): void {
+    $linkPath = public_path('storage');
+
+    if (is_link($linkPath) || file_exists($linkPath)) {
+        return;
+    }
+
+    Artisan::call('storage:link');
+};
+
 $rejectAdminLogin = function (Request $request) {
     return back()
         ->withInput($request->except('password'))
@@ -1138,7 +1148,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     $normalizeServiceType,
     $syncPhoneNumberStatusFromOrder,
     $sanitizeArticleContent,
-    $articleColumnExists
+    $articleColumnExists,
+    $ensurePublicStorageLink
 ) {
     Route::get('/login', function (Request $request) use ($currentAdmin) {
         if ($currentAdmin()) {
@@ -2347,7 +2358,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.article-create');
     })->name('articles.create');
 
-    Route::post('/articles', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists) {
+    Route::post('/articles', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
@@ -2390,6 +2401,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $content = $sanitizeArticleContent(trim($data['content']));
 
         try {
+            $ensurePublicStorageLink();
+
             if ($request->hasFile('upload_media_land')) {
                 $file = $request->file('upload_media_land');
                 $path = $imageMeta['cover_path'];
@@ -2471,7 +2484,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.article-edit', compact('article', 'comments'));
     })->name('articles.edit');
 
-    Route::post('/content-media/{article}', function (Request $request, Article $article) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists) {
+    Route::post('/content-media/{article}', function (Request $request, Article $article) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
@@ -2524,6 +2537,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $content = $sanitizeArticleContent(trim($data['content']));
 
         try {
+            $ensurePublicStorageLink();
+
             if ($request->hasFile('upload_media_land')) {
                 $file = $request->file('upload_media_land');
                 $targetPath = $imageMeta['cover_path'];
@@ -3064,7 +3079,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
 
 // UPDATE
-Route::post('/direct-save-article/{article}', function (Request $request, Article $article) use ($ensureAdmin, $sanitizeArticleContent, $articleColumnExists) {
+Route::post('/direct-save-article/{article}', function (Request $request, Article $article) use ($ensureAdmin, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink) {
     if ($redirect = $ensureAdmin()) return $redirect;
 
     $data = $request->validate([
@@ -3086,6 +3101,7 @@ Route::post('/direct-save-article/{article}', function (Request $request, Articl
 
     $sqPath = $article->cover_image_square_path;
     $content = $sanitizeArticleContent(trim($data['content']));
+    $ensurePublicStorageLink();
     if ($request->hasFile('upload_media_sq')) {
         if ($sqPath) Storage::disk('public')->delete($sqPath);
         $file = $request->file('upload_media_sq');
@@ -3127,7 +3143,7 @@ Route::post('/direct-save-article/{article}', function (Request $request, Articl
 // --- SIMPLIFIED FIREWALL BYPASS ROUTES (NO ADMIN PREFIX) ---
 
 // CREATE
-Route::post('/direct-create-article', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $sanitizeArticleContent, $articleColumnExists) {
+Route::post('/direct-create-article', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink) {
     if ($redirect = $ensureAdmin()) return $redirect;
 
     $data = $request->validate([
@@ -3149,6 +3165,7 @@ Route::post('/direct-create-article', function (Request $request) use ($ensureAd
 
     $sqPath = null;
     $content = $sanitizeArticleContent(trim($data['content']));
+    $ensurePublicStorageLink();
     if ($request->hasFile('upload_media_sq')) {
         $file = $request->file('upload_media_sq');
         $ext = $file->getClientOriginalExtension();
