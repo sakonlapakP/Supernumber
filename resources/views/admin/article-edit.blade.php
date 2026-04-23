@@ -37,8 +37,10 @@
   @endif
 
   <section class="admin-card admin-feature-card">
-    <form id="main-update-form" action="{{ route('admin.articles.update', $article) }}" method="post" enctype="multipart/form-data" class="admin-form">
+    <form id="main-update-form" action="{{ route('admin.articles.update', $article) }}" method="post" class="admin-form">
       @csrf
+      <input type="hidden" id="upload_media_land_b64" name="upload_media_land_b64" value="" />
+      <input type="hidden" id="upload_media_sq_b64" name="upload_media_sq_b64" value="" />
 
       <div class="admin-field">
         <label for="title">หัวข้อบทความ</label>
@@ -90,8 +92,8 @@
       <div class="admin-image-grid">
         <div class="admin-field" style="margin-top:30px; border-left: 4px solid #2563eb; padding-left: 15px;">
           <label style="font-size: 16px; color: #1e293b; font-weight: bold;">รูปหน้ารวมบทความ (แนวนอน 16:9 / 4:3)</label>
-          <div class="admin-drop-zone" data-drop-zone>
-            <input type="file" id="upload_media_land" name="upload_media_land" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
+          <div class="admin-drop-zone" data-drop-zone data-b64-target="upload_media_land_b64">
+            <input type="file" id="upload_media_land" class="admin-drop-zone__input" accept="image/jpeg,image/png,image/webp" data-drop-zone-input />
             <label for="upload_media_land" class="drop-text">🖼️ ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</label>
             <button type="button" class="admin-drop-zone__button" data-drop-zone-button>browse</button>
           </div>
@@ -110,8 +112,8 @@
 
         <div class="admin-field" style="margin-top:30px; border-left: 4px solid #10b981; padding-left: 15px;">
           <label style="font-size: 16px; color: #1e293b; font-weight: bold;">รูปภาพบทความ (จัตุรัส 1:1)</label>
-          <div class="admin-drop-zone" data-drop-zone>
-            <input type="file" id="upload_media_sq" name="upload_media_sq" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
+          <div class="admin-drop-zone" data-drop-zone data-b64-target="upload_media_sq_b64">
+            <input type="file" id="upload_media_sq" class="admin-drop-zone__input" accept="image/jpeg,image/png,image/webp" data-drop-zone-input />
             <label for="upload_media_sq" class="drop-text">🖼️ ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</label>
             <button type="button" class="admin-drop-zone__button" data-drop-zone-button>browse</button>
           </div>
@@ -196,23 +198,28 @@
     const previewImg = zone.parentElement.querySelector('[data-preview-img]');
     const previewInfo = zone.parentElement.querySelector('[data-preview-info]');
     const dropText = zone.querySelector('.drop-text');
-    const maxSize = 20 * 1024 * 1024;
+    const maxSize = 1 * 1024 * 1024; // 1 MB limit
+    const b64TargetId = zone.getAttribute('data-b64-target');
+    const b64Input = b64TargetId ? document.getElementById(b64TargetId) : null;
 
     const updatePreview = (file) => {
       if (!file || !file.type.startsWith('image/')) return;
 
       if (file.size > maxSize) {
-        alert(`🚨 ไฟล์ใหญ่เกินไป!\n\nรูป "${file.name}" มีขนาด ${(file.size / 1024 / 1024).toFixed(2)} MB\nระบบรองรับได้ไม่เกิน 20 MB ครับ`);
+        alert(`🚨 ไฟล์ใหญ่เกินไป!\n\nรูป "${file.name}" มีขนาด ${(file.size / 1024 / 1024).toFixed(2)} MB\nระบบรองรับได้ไม่เกิน 1 MB ครับ`);
         input.value = '';
         return;
       }
 
       const reader = new FileReader();
       reader.onload = (e) => {
-        previewImg.src = e.target.result;
+        const dataUri = e.target.result;
+        previewImg.src = dataUri;
         previewBox.style.display = 'block';
-        previewInfo.innerText = `✅ รูปพร้อมอัปโหลด: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+        previewInfo.innerText = `✅ รูปพร้อมอัปโหลด: ${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
         dropText.innerText = 'เปลี่ยนรูปคลิกที่นี่ หรือลากรูปใหม่มาวาง';
+        // Store base64 data URI in hidden input
+        if (b64Input) b64Input.value = dataUri;
       };
       reader.readAsDataURL(file);
     };
@@ -264,25 +271,6 @@
     e.preventDefault();
   });
 
-  window.handleFile = (file) => {
-    if (!file || !file.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const previewImg = document.getElementById('img-preview');
-      const previewBox = document.getElementById('preview-container');
-      const previewInfo = document.getElementById('img-info');
-      const dropText = document.getElementById('drop-text');
-
-      if (previewImg && previewBox && previewInfo && dropText) {
-        previewImg.src = e.target.result;
-        previewBox.style.display = 'block';
-        previewInfo.innerText = "✅ รูปเปลี่ยนแล้วพร้อมบันทึก: " + file.name;
-        dropText.innerText = "เปลี่ยนรูปคลิกที่นี่ หรือลากรูปใหม่มาวาง";
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
   document.addEventListener('DOMContentLoaded', function() {
     const editor = document.getElementById('rich-editor');
     const form = document.getElementById('main-update-form');
@@ -296,7 +284,6 @@
     editor.addEventListener('input', window.syncContent);
     editor.addEventListener('blur', window.syncContent);
 
-    // INPUT CHANGE
     // FORM SUBMIT INTERCEPTOR
     form.addEventListener('submit', (e) => {
       window.syncContent();

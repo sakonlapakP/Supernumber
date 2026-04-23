@@ -187,6 +187,47 @@ $ensurePublicStorageLink = function (): void {
     Artisan::call('storage:link');
 };
 
+/**
+ * Decode a Base64 data-URI string into a temporary UploadedFile.
+ * Returns null when the input is empty or invalid.
+ *
+ * Accepted format: "data:image/jpeg;base64,/9j/4AAQ..."
+ */
+$decodeBase64Image = function (?string $base64String): ?UploadedFile {
+    if ($base64String === null || $base64String === '') {
+        return null;
+    }
+
+    // Strip the data-URI prefix: "data:image/png;base64,"
+    if (! preg_match('#^data:image/(jpe?g|png|webp);base64,(.+)$#i', $base64String, $matches)) {
+        return null;
+    }
+
+    $extension = strtolower($matches[1]) === 'jpeg' ? 'jpg' : strtolower($matches[1]);
+    $decoded = base64_decode($matches[2], true);
+
+    if ($decoded === false || strlen($decoded) < 100) {
+        return null;
+    }
+
+    $tmpPath = tempnam(sys_get_temp_dir(), 'b64img_');
+    file_put_contents($tmpPath, $decoded);
+
+    $mimeMap = [
+        'jpg' => 'image/jpeg',
+        'png' => 'image/png',
+        'webp' => 'image/webp',
+    ];
+
+    return new UploadedFile(
+        $tmpPath,
+        'upload.' . $extension,
+        $mimeMap[$extension] ?? 'image/jpeg',
+        null,
+        true // mark as "test" so it skips the is_uploaded_file() check
+    );
+};
+
 $rejectAdminLogin = function (Request $request) {
     return back()
         ->withInput($request->except('password'))
@@ -1201,7 +1242,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     $syncPhoneNumberStatusFromOrder,
     $sanitizeArticleContent,
     $articleColumnExists,
-    $ensurePublicStorageLink
+    $ensurePublicStorageLink,
+    $decodeBase64Image
 ) {
     Route::get('/login', function (Request $request) use ($currentAdmin) {
         if ($currentAdmin()) {
@@ -2410,7 +2452,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.article-create');
     })->name('articles.create');
 
-    Route::post('/articles', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink) {
+    Route::post('/articles', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink, $decodeBase64Image) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
@@ -2424,8 +2466,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'keywords' => ['nullable', 'string'],
             'lsi_keywords' => ['nullable', 'string'],
             'published_at' => ['nullable', 'date'],
-            'upload_media_land' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
-            'upload_media_sq' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
+            'upload_media_land_b64' => ['nullable', 'string'],
+            'upload_media_sq_b64' => ['nullable', 'string'],
             'is_published' => ['nullable', 'boolean'],
         ]);
 
@@ -2455,8 +2497,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         try {
             $ensurePublicStorageLink();
 
-            if ($request->hasFile('upload_media_land')) {
-                $file = $request->file('upload_media_land');
+            $fileLand = $decodeBase64Image($data['upload_media_land_b64'] ?? null);
+            if ($fileLand) {
                 $path = $imageMeta['cover_path'];
                 $dir = dirname($path);
                 $name = "land_" . basename($path);
@@ -2466,12 +2508,12 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                     Storage::disk('public')->makeDirectory($dir);
                 }
                 
-                Storage::disk('public')->putFileAs($dir, $file, $name);
+                Storage::disk('public')->putFileAs($dir, $fileLand, $name);
                 $coverImageLandscapePath = $fullPath;
             }
 
-            if ($request->hasFile('upload_media_sq')) {
-                $file = $request->file('upload_media_sq');
+            $fileSq = $decodeBase64Image($data['upload_media_sq_b64'] ?? null);
+            if ($fileSq) {
                 $path = $imageMeta['square_path'];
                 $dir = dirname($path);
                 $name = "sq_" . basename($path);
@@ -2481,7 +2523,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                     Storage::disk('public')->makeDirectory($dir);
                 }
                 
-                Storage::disk('public')->putFileAs($dir, $file, $name);
+                Storage::disk('public')->putFileAs($dir, $fileSq, $name);
                 $coverImageSquarePath = $fullPath;
             }
 
@@ -2536,7 +2578,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.article-edit', compact('article', 'comments'));
     })->name('articles.edit');
 
-    Route::post('/content-media/{article}', function (Request $request, Article $article) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink) {
+    Route::post('/content-media/{article}', function (Request $request, Article $article) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink, $decodeBase64Image) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
@@ -2556,8 +2598,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'keywords' => ['nullable', 'string'],
             'lsi_keywords' => ['nullable', 'string'],
             'published_at' => ['nullable', 'date'],
-            'upload_media_land' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
-            'upload_media_sq' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
+            'upload_media_land_b64' => ['nullable', 'string'],
+            'upload_media_sq_b64' => ['nullable', 'string'],
             'is_published' => ['nullable', 'boolean'],
         ]);
 
@@ -2591,8 +2633,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         try {
             $ensurePublicStorageLink();
 
-            if ($request->hasFile('upload_media_land')) {
-                $file = $request->file('upload_media_land');
+            $fileLand = $decodeBase64Image($data['upload_media_land_b64'] ?? null);
+            if ($fileLand) {
                 $targetPath = $imageMeta['cover_path'];
                 $dir = dirname($targetPath);
                 $name = 'land_' . basename($targetPath);
@@ -2606,12 +2648,12 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                     Storage::disk('public')->makeDirectory($dir);
                 }
 
-                Storage::disk('public')->putFileAs($dir, $file, $name);
+                Storage::disk('public')->putFileAs($dir, $fileLand, $name);
                 $coverImageLandscapePath = $fullPath;
             }
 
-            if ($request->hasFile('upload_media_sq')) {
-                $file = $request->file('upload_media_sq');
+            $fileSq = $decodeBase64Image($data['upload_media_sq_b64'] ?? null);
+            if ($fileSq) {
                 $targetPath = $imageMeta['square_path'];
                 $dir = dirname($targetPath);
                 $name = 'sq_' . basename($targetPath);
@@ -2625,7 +2667,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                     Storage::disk('public')->makeDirectory($dir);
                 }
 
-                Storage::disk('public')->putFileAs($dir, $file, $name);
+                Storage::disk('public')->putFileAs($dir, $fileSq, $name);
                 $coverImageSquarePath = $fullPath;
             }
 
