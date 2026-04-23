@@ -76,6 +76,58 @@ Route::get('/__ops/migrate', function (Request $request) {
     ]);
 });
 
+Route::match(['GET', 'POST'], '/__debug/article-upload', function (Request $request) {
+    $token = trim((string) env('ARTICLE_UPLOAD_DEBUG_TOKEN', ''));
+
+    abort_if($token === '', 404);
+    abort_unless(hash_equals($token, (string) $request->query('token', $request->input('token', ''))), 403);
+
+    $session = $request->session();
+    $storageLinkPath = public_path('storage');
+    $publicStoragePath = storage_path('app/public');
+    $diagnostics = [
+        'method' => $request->method(),
+        'path' => $request->path(),
+        'full_url' => $request->fullUrl(),
+        'host' => $request->getHost(),
+        'scheme' => $request->getScheme(),
+        'ip' => $request->ip(),
+        'has_cookie_header' => $request->headers->has('cookie'),
+        'cookie_names' => array_keys($request->cookies->all()),
+        'session_id' => $session->getId(),
+        'session_driver' => config('session.driver'),
+        'session_domain' => config('session.domain'),
+        'session_secure' => (bool) config('session.secure'),
+        'session_authenticated' => (bool) session('admin_authenticated'),
+        'session_user_id' => session('admin_user_id'),
+        'session_user_role' => session('admin_user_role'),
+        'public_storage_link_exists' => file_exists($storageLinkPath),
+        'public_storage_link_is_symlink' => is_link($storageLinkPath),
+        'public_storage_link_target' => is_link($storageLinkPath) ? readlink($storageLinkPath) : null,
+        'public_storage_path' => $publicStoragePath,
+        'public_storage_is_writable' => is_writable($publicStoragePath),
+        'article_preview_route' => route('admin.articles.preview', ['article' => 1]),
+        'article_update_route' => route('admin.articles.update', ['article' => 1]),
+    ];
+
+    if ($request->isMethod('post')) {
+        $file = $request->file('debug_image');
+
+        $diagnostics['posted'] = [
+            'has_file' => $request->hasFile('debug_image'),
+            'file_name' => $file?->getClientOriginalName(),
+            'file_size' => $file?->getSize(),
+            'file_mime' => $file?->getClientMimeType(),
+            'tmp_path_exists' => $file ? is_file($file->getRealPath()) : false,
+        ];
+    }
+
+    return response()->view('debug.article-upload', [
+        'token' => $token,
+        'diagnostics' => $diagnostics,
+    ]);
+});
+
 $currentAdmin = function (): ?User {
     $userId = session('admin_user_id');
 
