@@ -47,7 +47,7 @@
   <div class="admin-page-head">
     <div>
       <h1>สร้างบทความใหม่</h1>
-      <p class="admin-subtitle">กรอกข้อมูลและอัปโหลดรูปภาพเพื่อเริ่มเผยแพร่</p>
+      <p class="admin-subtitle">กรอกข้อมูลบทความแบบครบถ้วน เพื่อผลลัพธ์ SEO ที่ดีที่สุด</p>
     </div>
   </div>
 
@@ -77,6 +77,11 @@
       </div>
 
       <div class="admin-field">
+        <label for="excerpt">คำเกริ่นสั้น (Excerpt)</label>
+        <textarea id="excerpt" name="excerpt" class="admin-input" style="min-height: 80px; padding-top: 12px;" placeholder="คำโปรยที่จะโชว์ในหน้ารวมบทความ...">{{ old('excerpt') }}</textarea>
+      </div>
+
+      <div class="admin-field">
         <label for="content">เนื้อหาบทความ</label>
         <div class="admin-rte" data-rte-shell>
           <div class="admin-rte__toolbar">
@@ -92,6 +97,26 @@
           <div class="admin-rte__editor" contenteditable="true" data-rte-editor data-placeholder="เริ่มพิมพ์เนื้อหาที่นี่..."></div>
         </div>
         <textarea id="content" name="content" class="admin-input" style="display: none;">{{ old('content') }}</textarea>
+      </div>
+
+      <div class="admin-field" style="margin-top:20px;">
+        <label>คำอธิบายเมตา (Meta Description)</label>
+        <input type="text" name="meta_description" class="admin-input" value="{{ old('meta_description') }}" placeholder="คำโปรยสั้นๆ สำหรับคนค้นหาใน Google" />
+      </div>
+
+      <div class="admin-field">
+        <label>5 Keywords หลัก (SEO)</label>
+        <input type="text" name="keywords" class="admin-input" value="{{ old('keywords') }}" placeholder="คัดคำสำคัญ 5 คำ" />
+      </div>
+
+      <div class="admin-field">
+        <label>10 Keywords รอง (LSI Keywords)</label>
+        <input type="text" name="lsi_keywords" class="admin-input" value="{{ old('lsi_keywords') }}" placeholder="คำใกล้เคียงเพื่อขยายฐานการค้นหา..." />
+      </div>
+
+      <div class="admin-field">
+        <label for="published_at">เวลาเผยแพร่ (ไม่ใส่ = ตอนนี้)</label>
+        <input type="datetime-local" id="published_at" name="published_at" class="admin-input" value="{{ old('published_at') }}" />
       </div>
 
       <div class="admin-field" style="margin-top:20px;">
@@ -124,13 +149,12 @@
 @section('scripts')
   <script>
     (function() {
-      // 1. Rich Text Editor Initialization
+      // 1. RTE
       document.querySelectorAll("[data-rte-shell]").forEach(shell => {
         const editor = shell.querySelector("[data-rte-editor]");
         const textarea = shell.parentElement.querySelector('textarea[name="content"]');
         const form = shell.closest("form");
         if (!editor || !textarea || !form) return;
-
         shell.querySelectorAll("[data-rte-cmd]").forEach(btn => {
           btn.addEventListener("click", () => {
             const cmd = btn.dataset.rteCmd;
@@ -139,22 +163,18 @@
             document.execCommand(cmd, false, val);
           });
         });
-
         shell.querySelectorAll("[data-rte-action='link']").forEach(btn => {
           btn.addEventListener("click", () => {
-            const url = window.prompt("ใส่ URL เช่น https://supernumber.co.th");
+            const url = window.prompt("ใส่ URL:");
             if (!url) return;
             editor.focus();
             document.execCommand("createLink", false, url);
           });
         });
-
-        form.addEventListener("submit", () => {
-          textarea.value = editor.innerHTML.trim();
-        });
+        form.addEventListener("submit", () => { textarea.value = editor.innerHTML.trim(); });
       });
 
-      // 2. Image Preview
+      // 2. Preview
       document.querySelectorAll('[data-drop-zone-input]').forEach(input => {
         input.addEventListener('change', function(e) {
           const file = e.target.files[0];
@@ -165,17 +185,16 @@
               const previewImg = container.querySelector('[data-preview-img]');
               const previewBox = container.querySelector('[data-preview-box]');
               const previewInfo = container.querySelector('[data-preview-info]');
-              
               if (previewImg) previewImg.src = event.target.result;
               if (previewBox) previewBox.style.display = 'block';
-              if (previewInfo) previewInfo.innerText = `🌟 เลือกไฟล์ใหม่: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+              if (previewInfo) previewInfo.innerText = `🌟 เลือกไฟล์: ${file.name}`;
             };
             reader.readAsDataURL(file);
           }
         });
       });
 
-      // 3. Form Submit Feedback
+      // 3. Feedback
       const form = document.getElementById('article-create-form');
       form.addEventListener('submit', () => {
         const btn = form.querySelector('button[type="submit"]');

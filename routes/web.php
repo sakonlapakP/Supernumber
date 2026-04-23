@@ -3020,7 +3020,11 @@ Route::post('/direct-save-article/{article}', function (Request $request, Articl
 
     $data = $request->validate([
         'title' => ['required', 'string', 'max:190'],
+        'excerpt' => ['nullable', 'string'],
         'content' => ['required', 'string'],
+        'meta_description' => ['nullable', 'string', 'max:500'],
+        'keywords' => ['nullable', 'string'],
+        'lsi_keywords' => ['nullable', 'string'],
         'published_at' => ['nullable', 'date'],
         'is_published' => ['nullable', 'boolean'],
         'upload_media_sq' => ['nullable', 'image', 'max:10240'],
@@ -3045,7 +3049,11 @@ Route::post('/direct-save-article/{article}', function (Request $request, Articl
 
     $article->update([
         'title' => trim($data['title']),
+        'excerpt' => trim((string)($data['excerpt'] ?? '')) ?: null,
         'content' => trim($data['content']),
+        'meta_description' => trim((string)($data['meta_description'] ?? '')) ?: null,
+        'keywords' => trim((string)($data['keywords'] ?? '')) ?: null,
+        'lsi_keywords' => trim((string)($data['lsi_keywords'] ?? '')) ?: null,
         'is_published' => $isPublished,
         'published_at' => $publishedAt,
         'cover_image_square_path' => $sqPath,
@@ -3063,7 +3071,11 @@ Route::post('/direct-create-article', function (Request $request) use ($ensureAd
 
     $data = $request->validate([
         'title' => ['required', 'string', 'max:190'],
+        'excerpt' => ['nullable', 'string'],
         'content' => ['required', 'string'],
+        'meta_description' => ['nullable', 'string', 'max:500'],
+        'keywords' => ['nullable', 'string'],
+        'lsi_keywords' => ['nullable', 'string'],
         'published_at' => ['nullable', 'date'],
         'is_published' => ['nullable', 'boolean'],
         'upload_media_sq' => ['nullable', 'image', 'max:10240'],
@@ -3088,7 +3100,11 @@ Route::post('/direct-create-article', function (Request $request) use ($ensureAd
     Article::create([
         'title' => trim($data['title']),
         'slug' => $slug,
+        'excerpt' => trim((string)($data['excerpt'] ?? '')) ?: null,
         'content' => trim($data['content']),
+        'meta_description' => trim((string)($data['meta_description'] ?? '')) ?: null,
+        'keywords' => trim((string)($data['keywords'] ?? '')) ?: null,
+        'lsi_keywords' => trim((string)($data['lsi_keywords'] ?? '')) ?: null,
         'is_published' => $isPublished,
         'published_at' => $publishedAt,
         'cover_image_square_path' => $sqPath,

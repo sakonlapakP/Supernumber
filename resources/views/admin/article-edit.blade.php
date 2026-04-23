@@ -47,7 +47,7 @@
   <div class="admin-page-head">
     <div>
       <h1>แก้ไขบทความ</h1>
-      <p class="admin-subtitle">แก้ไขข้อมูลบทความและการเผยแพร่ (อัปโหลดรูปปกติ)</p>
+      <p class="admin-subtitle">แก้ไขข้อมูลบทความแบบครบถ้วน (อัปโหลดรูปปกติ)</p>
     </div>
   </div>
 
@@ -82,8 +82,13 @@
 
       <div class="admin-field">
         <label for="slug">Slug (ที่อยู่ URL)</label>
-        <input type="text" id="slug" name="slug" class="admin-input" value="{{ old('slug', $article->slug) }}" readonly style="background:#f1f5f9;" />
-        <p class="admin-subtitle">Slug ถูกล็อกไว้ตามชื่อไฟล์รูปภาพเริ่มต้น</p>
+        <input type="text" id="slug" name="slug" class="admin-input" value="{{ old('slug', $article->slug) }}" disabled style="background:#f1f5f9;" />
+        <p class="admin-subtitle">ชื่อ URL ถูกล็อกตามระบบจัดการไฟล์</p>
+      </div>
+
+      <div class="admin-field">
+        <label for="excerpt">คำเกริ่นสั้น (Excerpt)</label>
+        <textarea id="excerpt" name="excerpt" class="admin-input" style="min-height: 80px; padding-top: 12px;">{{ old('excerpt', $article->excerpt) }}</textarea>
       </div>
 
       <div class="admin-field">
@@ -102,6 +107,32 @@
           <div class="admin-rte__editor" contenteditable="true" data-rte-editor data-placeholder="พิมพ์เนื้อหาบทความที่นี่..."></div>
         </div>
         <textarea id="content" name="content" class="admin-input" style="display: none;">{{ old('content', $article->content) }}</textarea>
+      </div>
+
+      <div class="admin-field" style="margin-top:20px;">
+        <label>คำอธิบายเมตา (Meta Description)</label>
+        <input type="text" name="meta_description" class="admin-input" value="{{ old('meta_description', $article->meta_description) }}" placeholder="คำโปรยสำหรับ Google" />
+      </div>
+
+      <div class="admin-field">
+        <label>5 Keywords หลัก (SEO)</label>
+        <input type="text" name="keywords" class="admin-input" value="{{ old('keywords', $article->keywords) }}" placeholder="เช่น: เบอร์มงคล, เสริมดวง" />
+      </div>
+
+      <div class="admin-field">
+        <label>10 Keywords รอง (LSI Keywords)</label>
+        <input type="text" name="lsi_keywords" class="admin-input" value="{{ old('lsi_keywords', $article->lsi_keywords) }}" placeholder="คำใกล้เคียง..." />
+      </div>
+
+      <div class="admin-field">
+        <label for="published_at">เวลาเผยแพร่</label>
+        <input
+          type="datetime-local"
+          id="published_at"
+          name="published_at"
+          class="admin-input"
+          value="{{ old('published_at', optional($article->published_at)->format('Y-m-d\\TH:i')) }}"
+        />
       </div>
 
       <div class="admin-field" style="margin-top:20px;">
@@ -128,7 +159,7 @@
       </label>
 
       <div class="admin-actions" style="margin-top:30px; display:flex; gap:10px;">
-        <button type="submit" class="admin-button">💾 บันทึกและอัปโหลดรูป</button>
+        <button type="submit" class="admin-button">💾 บันทึกข้อมูลและรูป</button>
         <a href="{{ route('admin.articles') }}" class="admin-button admin-button--secondary">กลับหน้ารวม</a>
       </div>
     </form>
@@ -138,15 +169,13 @@
 @section('scripts')
   <script>
     (function() {
-      // 1. Rich Text Editor Initialization
+      // 1. RTE
       document.querySelectorAll("[data-rte-shell]").forEach(shell => {
         const editor = shell.querySelector("[data-rte-editor]");
         const textarea = shell.parentElement.querySelector('textarea[name="content"]');
         const form = shell.closest("form");
         if (!editor || !textarea || !form) return;
-
         editor.innerHTML = textarea.value || "";
-
         shell.querySelectorAll("[data-rte-cmd]").forEach(btn => {
           btn.addEventListener("click", () => {
             const cmd = btn.dataset.rteCmd;
@@ -155,22 +184,18 @@
             document.execCommand(cmd, false, val);
           });
         });
-
         shell.querySelectorAll("[data-rte-action='link']").forEach(btn => {
           btn.addEventListener("click", () => {
-            const url = window.prompt("ใส่ URL เช่น https://supernumber.co.th");
+            const url = window.prompt("ใส่ URL:");
             if (!url) return;
             editor.focus();
             document.execCommand("createLink", false, url);
           });
         });
-
-        form.addEventListener("submit", () => {
-          textarea.value = editor.innerHTML.trim();
-        });
+        form.addEventListener("submit", () => { textarea.value = editor.innerHTML.trim(); });
       });
 
-      // 2. Image Preview
+      // 2. Preview
       document.querySelectorAll('[data-drop-zone-input]').forEach(input => {
         input.addEventListener('change', function(e) {
           const file = e.target.files[0];
@@ -181,22 +206,21 @@
               const previewImg = container.querySelector('[data-preview-img]');
               const previewBox = container.querySelector('[data-preview-box]');
               const previewInfo = container.querySelector('[data-preview-info]');
-              
               if (previewImg) previewImg.src = event.target.result;
               if (previewBox) previewBox.style.display = 'block';
-              if (previewInfo) previewInfo.innerText = `🌟 เลือกไฟล์ใหม่: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+              if (previewInfo) previewInfo.innerText = `🌟 เลือกไฟล์: ${file.name}`;
             };
             reader.readAsDataURL(file);
           }
         });
       });
 
-      // 3. Form Submit Feedback
+      // 3. Feedback
       const form = document.getElementById('article-update-form');
       form.addEventListener('submit', () => {
         const btn = form.querySelector('button[type="submit"]');
         btn.disabled = true;
-        btn.innerText = '⏳ กำลังอัปโหลดและบันทึก...';
+        btn.innerText = '⏳ กำลังบันทึกข้อมูล...';
       });
     })();
   </script>
