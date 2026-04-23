@@ -3188,3 +3188,32 @@ Route::post('/direct-create-article', function (Request $request) use ($ensureAd
     return redirect()->route('admin.articles')->with('status_message', 'สร้างบทความใหม่เรียบร้อย');
 })->name('articles.store.bypass');
 
+
+
+// IMAGE-ONLY BYPASS ROUTE
+Route::post('/direct-image-only/{article}', function (Request $request, Article $article) use ($ensureAdmin, $resolveArticleImageMeta) {
+    if ($redirect = $ensureAdmin()) { return $redirect; }
+    
+    if (!$request->hasFile('image_blob')) { return response()->json(['error' => 'No image found'], 400); }
+    
+    $type = $request->input('type', 'land'); // 'land' or 'sq'
+    $file = $request->file('image_blob');
+    $publishedAt = $article->published_at ?? now();
+    $imageMeta = $resolveArticleImageMeta($article->slug, $publishedAt);
+    
+    $targetKey = $type === 'sq' ? 'square_path' : 'cover_path';
+    $column = $type === 'sq' ? 'cover_image_square_path' : 'cover_image_landscape_path';
+    
+    $targetPath = $imageMeta[$targetKey];
+    $dir = dirname($targetPath);
+    $name = ($type === 'sq' ? 'sq_' : 'land_') . basename($targetPath);
+    $fullPath = $dir . '/' . $name;
+    
+    if ($article->$column && $article->$column !== $fullPath) { Storage::disk('public')->delete($article->$column); }
+    if (!Storage::disk('public')->exists($dir)) { Storage::disk('public')->makeDirectory($dir); }
+    Storage::disk('public')->putFileAs($dir, $file, $name);
+    
+    $article->update([$column => $fullPath]);
+    
+    return response()->json(['success' => true, 'path' => $fullPath]);
+})->name('articles.image-only.bypass');

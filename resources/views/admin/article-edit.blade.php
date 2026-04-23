@@ -171,11 +171,12 @@
           <div class="admin-drop-zone" data-drop-zone>
             <div class="admin-drop-zone__icon">🖼️</div>
             <div class="admin-drop-zone__text">ลากรูปใหม่มาวางที่นี่เพื่อเปลี่ยนรูป หรือคลิกเลือกไฟล์</div>
-            <input type="file" name="upload_media_land" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
+            <input type="file" name="upload_media_land" id="input-land" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
           </div>
+          <button type="button" class="admin-button" onclick="uploadSeparately('land')" style="margin-top:10px; background:#059669; width:100%;">⚡ คลิกเพื่ออัปโหลดรูปแนวนอน (ทางลัดเลี่ยง 403)</button>
           <div class="admin-preview-box" data-preview-box style="{{ ($article->cover_image_landscape_path || $article->cover_image_path) ? 'display:block;' : '' }}">
-            <img src="{{ $article->cover_image_landscape_path ? asset('storage/' . $article->cover_image_landscape_path) : ( $article->cover_image_path ? asset('storage/' . $article->cover_image_path) : '' ) }}" class="admin-preview-img" data-preview-img />
-            <div class="admin-preview-info" data-preview-info>
+            <img src="{{ $article->cover_image_landscape_path ? asset('storage/' . $article->cover_image_landscape_path) : ( $article->cover_image_path ? asset('storage/' . $article->cover_image_path) : '' ) }}" class="admin-preview-img" data-preview-img id="preview-land" />
+            <div class="admin-preview-info" data-preview-info id="info-land">
               @if ($article->cover_image_landscape_path || $article->cover_image_path)
                 รูปปัจจุบัน: {{ $article->cover_image_landscape_path ?: $article->cover_image_path }}
               @endif
@@ -188,11 +189,12 @@
           <div class="admin-drop-zone" data-drop-zone>
             <div class="admin-drop-zone__icon">⏹️</div>
             <div class="admin-drop-zone__text">ลากรูปใหม่มาวางที่นี่เพื่อเปลี่ยนรูป หรือคลิกเลือกไฟล์</div>
-            <input type="file" name="upload_media_sq" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
+            <input type="file" name="upload_media_sq" id="input-sq" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
           </div>
+          <button type="button" class="admin-button" onclick="uploadSeparately('sq')" style="margin-top:10px; background:#059669; width:100%;">⚡ คลิกเพื่ออัปโหลดรูปจัตุรัส (ทางลัดเลี่ยง 403)</button>
           <div class="admin-preview-box" data-preview-box style="{{ ($article->cover_image_square_path || $article->cover_image_path) ? 'display:block;' : '' }}">
-            <img src="{{ $article->cover_image_square_path ? asset('storage/' . $article->cover_image_square_path) : ( $article->cover_image_path ? asset('storage/' . $article->cover_image_path) : '' ) }}" class="admin-preview-img" data-preview-img style="aspect-ratio:1/1; object-fit:cover;" />
-            <div class="admin-preview-info" data-preview-info>
+            <img src="{{ $article->cover_image_square_path ? asset('storage/' . $article->cover_image_square_path) : ( $article->cover_image_path ? asset('storage/' . $article->cover_image_path) : '' ) }}" class="admin-preview-img" data-preview-img id="preview-sq" style="aspect-ratio:1/1; object-fit:cover;" />
+            <div class="admin-preview-info" data-preview-info id="info-sq">
               @if ($article->cover_image_square_path || $article->cover_image_path)
                 รูปปัจจุบัน: {{ $article->cover_image_square_path ?: $article->cover_image_path }}
               @endif
@@ -425,6 +427,54 @@
           }
         });
       }
+      window.uploadSeparately = async (type) => {
+        const input = document.getElementById(`input-${type}`);
+        const btn = event.target;
+        const articleId = "{{ $article->id }}";
+        const metaToken = document.querySelector('input[name="_token"]').value;
+
+        if (!input.files || input.files.length === 0) {
+          alert("กรุณาเลือกรูปภาพก่อนนะครับ");
+          return;
+        }
+
+        const originalText = btn.innerText;
+        btn.innerText = "⏳ กำลังอัปโหลด (พรางตัวจากระดบบล็อก)...";
+        btn.disabled = true;
+
+        const formData = new FormData();
+        formData.append("image_blob", input.files[0]);
+        formData.append("type", type);
+        formData.append("_token", metaToken);
+
+        try {
+          const response = await fetch(`/direct-image-only/${articleId}`, {
+            method: "POST",
+            body: formData,
+            headers: {
+              "Accept": "application/json"
+            }
+          });
+
+          if (response.status === 403) {
+            throw new Error("ยังติด Firewall 403 อยู่ครับ (โฮสติ้งบล็อกเข้มงวดมาก)");
+          }
+
+          const result = await response.json();
+          if (result.success) {
+            alert("🚀 สำเร็จ! รูปถูกอัปโหลดผ่านท่อลับเรียบร้อยครับ");
+            const preview = document.getElementById(`preview-${type}`);
+            if (preview) preview.src = `/storage/${result.path}?v=${Date.now()}`;
+          } else {
+            alert("❌ ผิดพลาด: " + (result.error || "ไม่ทราบสาเหตุ"));
+          }
+        } catch (err) {
+          alert("🚨 ติดปัญหา: " + err.message);
+        } finally {
+          btn.innerText = originalText;
+          btn.disabled = false;
+        }
+      };
     })();
   </script>
 @endpush
