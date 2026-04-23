@@ -52,45 +52,8 @@
         <input type="text" id="slug" name="slug" class="admin-input" value="{{ old('slug', $article->slug) }}" readonly style="background:#f1f5f9;" />
       </div>
 
-      <div class="admin-field" style="margin-top:20px; border-left: 4px solid #3b82f6; padding-left: 15px;">
-        <label style="font-size: 16px; color: #1e293b; font-weight: bold;">เนื้อหาบทความ (สำหรับแสดงบนหน้าเว็บหลัก)</label>
-        <div class="admin-rte">
-          <div class="admin-rte__toolbar">
-            <button type="button" class="admin-rte__btn" onclick="execCmd('bold')">B</button>
-            <button type="button" class="admin-rte__btn" onclick="execCmd('italic')">I</button>
-            <button type="button" class="admin-rte__btn" onclick="execCmd('underline')">U</button>
-            <button type="button" class="admin-rte__btn" onclick="execCmd('formatBlock', 'h2')">H2</button>
-            <button type="button" class="admin-rte__btn" onclick="execCmd('insertUnorderedList')">• รายการ</button>
-            <button type="button" class="admin-rte__btn" onclick="addLink()">ลิงก์</button>
-            <button type="button" class="admin-rte__btn" onclick="execCmd('removeFormat')">ล้างรูปแบบ</button>
-          </div>
-          <div id="rich-editor" class="admin-rte__editor" contenteditable="true" style="min-height: 400px; font-size: 16px; line-height: 1.8;"></div>
-        </div>
-        <textarea id="hidden-content" name="content" style="display: none;">{{ old('content', $article->content) }}</textarea>
-      </div>
-
-      <div class="admin-field" style="margin-top:20px;">
-        <label for="excerpt">คำเกริ่นสั้น (Excerpt สำหรับแสดงบนการ์ดหน้ารวม)</label>
-        <textarea name="excerpt" class="admin-input" style="min-height: 60px; padding-top: 12px;" placeholder="พิมพ์คำโปรยสั้นๆ... (ไม่บังคับ)">{{ old('excerpt', $article->excerpt) }}</textarea>
-      </div>
-
-      <div class="admin-field" style="margin-top:20px;">
-        <label> SEO Meta Description (สำหรับ Google)</label>
-        <input type="text" name="meta_description" class="admin-input" value="{{ old('meta_description', $article->meta_description) }}" />
-      </div>
-
-      <div class="admin-field">
-        <label>Keywords (สำหรับ Google)</label>
-        <input type="text" name="keywords" class="admin-input" value="{{ old('keywords', $article->keywords) }}" />
-      </div>
-
-      <div class="admin-field">
-        <label for="published_at">เวลาเผยแพร่ (เว้นว่างไว้เพื่อเผยแพร่ตอนนี้เลย)</label>
-        <input type="datetime-local" name="published_at" class="admin-input" value="{{ old('published_at', optional($article->published_at)->format('Y-m-d\\TH:i')) }}" />
-      </div>
-
-      <div class="admin-image-grid">
-        <div class="admin-field" style="margin-top:30px; border-left: 4px solid #2563eb; padding-left: 15px;">
+      <div class="admin-image-grid" style="margin-bottom: 30px;">
+        <div class="admin-field" style="border-left: 4px solid #2563eb; padding-left: 15px;">
           <label style="font-size: 16px; color: #1e293b; font-weight: bold;">ภาพหน้าปก</label>
           <div class="admin-drop-zone" data-drop-zone data-path-target="land_path">
             <input type="file" id="upload_media_land" class="admin-drop-zone__input" accept="image/jpeg,image/png,image/webp" data-drop-zone-input />
@@ -110,7 +73,7 @@
           </div>
         </div>
 
-        <div class="admin-field" style="margin-top:30px; border-left: 4px solid #10b981; padding-left: 15px;">
+        <div class="admin-field" style="border-left: 4px solid #10b981; padding-left: 15px;">
           <label style="font-size: 16px; color: #1e293b; font-weight: bold;">รูปภาพบทความ (จัตุรัส 1:1)</label>
           <div class="admin-drop-zone" data-drop-zone data-path-target="sq_path">
             <input type="file" id="upload_media_sq" class="admin-drop-zone__input" accept="image/jpeg,image/png,image/webp" data-drop-zone-input />
@@ -131,9 +94,56 @@
         </div>
       </div>
 
-      <label style="display:flex; align-items:center; gap:10px; margin-top:30px; font-size: 16px; font-weight: bold;">
-        <input type="checkbox" name="is_published" value="1" @checked(old('is_published', $article->is_published)) style="width: 20px; height: 20px;" /> เผยแพร่บทความ
-      </label>
+      <div class="admin-field" style="border-left: 4px solid #3b82f6; padding-left: 15px;">
+        <label style="font-size: 16px; color: #1e293b; font-weight: bold;">เนื้อหาบทความ (สำหรับแสดงบนหน้าเว็บหลัก)</label>
+        <div class="admin-rte">
+          <div class="admin-rte__toolbar">
+            <button type="button" class="admin-rte__btn" onclick="execCmd('bold')">B</button>
+            <button type="button" class="admin-rte__btn" onclick="execCmd('italic')">I</button>
+            <button type="button" class="admin-rte__btn" onclick="execCmd('underline')">U</button>
+            <button type="button" class="admin-rte__btn" onclick="execCmd('formatBlock', 'h2')">H2</button>
+            <button type="button" class="admin-rte__btn" onclick="execCmd('insertUnorderedList')">• รายการ</button>
+            <button type="button" class="admin-rte__btn" onclick="addLink()">ลิงก์</button>
+            <button type="button" class="admin-rte__btn" onclick="execCmd('removeFormat')">ล้างรูปแบบ</button>
+          </div>
+          <div id="rich-editor" class="admin-rte__editor" contenteditable="true" style="min-height: 400px; font-size: 16px; line-height: 1.8;"></div>
+        </div>
+        <textarea id="hidden-content" name="content" style="display: none;">{{ old('content', $article->content) }}</textarea>
+      </div>
+
+      <div class="admin-field" style="margin-top:30px; padding: 20px; background: #f8fafc; border-radius: 12px; border: 1px solid #e2e8f0;">
+        <h3 style="margin: 0 0 15px; font-size: 18px; color: #334155;">🔍 ข้อมูล SEO และส่วนแสดงผลเพิ่มเติม</h3>
+        
+        <div class="admin-field">
+          <label for="excerpt">คำเกริ่นสั้น (Excerpt สำหรับแสดงบนการ์ดหน้ารวม)</label>
+          <textarea name="excerpt" class="admin-input" style="min-height: 60px; padding-top: 12px;" placeholder="พิมพ์คำโปรยสั้นๆ... (ไม่บังคับ)">{{ old('excerpt', $article->excerpt) }}</textarea>
+        </div>
+
+        <div class="admin-field" style="margin-top:15px;">
+          <label>SEO Meta Description (สำหรับ Google)</label>
+          <input type="text" name="meta_description" class="admin-input" value="{{ old('meta_description', $article->meta_description) }}" placeholder="คำอธิบายสั้นๆ สำหรับผลการค้นหา..." />
+        </div>
+
+        <div class="admin-field" style="margin-top:15px;">
+          <label>Keywords (สำหรับ Google)</label>
+          <input type="text" name="keywords" class="admin-input" value="{{ old('keywords', $article->keywords) }}" placeholder="เช่น เบอร์มงคล, ดูดวง, ตัวเลข..." />
+        </div>
+      </div>
+
+      <div class="admin-field" style="margin-top:30px; padding: 20px; background: #fffbeb; border-radius: 12px; border: 1px solid #fde68a;">
+        <h3 style="margin: 0 0 15px; font-size: 18px; color: #92400e;">📅 ตั้งค่าการเผยแพร่</h3>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; align-items: end;">
+          <div class="admin-field">
+            <label for="published_at">วันเวลาที่ต้องการให้แสดง (เว้นว่างไว้เพื่อลงทันที)</label>
+            <input type="datetime-local" name="published_at" class="admin-input" value="{{ old('published_at', optional($article->published_at)->format('Y-m-d\\TH:i')) }}" />
+          </div>
+
+          <label style="display:flex; align-items:center; gap:10px; margin-bottom: 12px; font-size: 16px; font-weight: bold; cursor: pointer;">
+            <input type="checkbox" name="is_published" value="1" @checked(old('is_published', $article->is_published)) style="width: 22px; height: 22px;" /> เผยแพร่บทความ
+          </label>
+        </div>
+      </div>
 
       <div class="admin-actions" style="margin-top:30px;">
         <button type="submit" class="admin-button" style="font-size: 16px; padding: 12px 24px;">💾 บันทึกการแก้ไขบทความ</button>
