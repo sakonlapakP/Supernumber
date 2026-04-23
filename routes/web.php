@@ -3064,7 +3064,7 @@ Route::post('/direct-save-article/{article}', function (Request $request, Articl
             $file = $request->file('upload_media_sq');
             $targetPath = $imageMeta['square_path'];
             $dir = dirname($targetPath);
-            $name = "sq_" . basename($targetPath);
+            $name = basename($targetPath);
             $fullPath = $dir . '/' . $name;
             if ($coverImageSquarePath && $coverImageSquarePath !== $fullPath) Storage::disk('public')->delete($coverImageSquarePath);
             if (!Storage::disk('public')->exists($dir)) Storage::disk('public')->makeDirectory($dir);
@@ -3137,7 +3137,7 @@ Route::post('/direct-create-article', function (Request $request) use ($ensureAd
             $file = $request->file('upload_media_land');
             $targetPath = $imageMeta['cover_path'];
             $dir = dirname($targetPath);
-            $name = "land_" . basename($targetPath);
+            $name = basename($targetPath);
             $fullPath = $dir . '/' . $name;
             if (!Storage::disk('public')->exists($dir)) Storage::disk('public')->makeDirectory($dir);
             Storage::disk('public')->putFileAs($dir, $file, $name);
@@ -3147,7 +3147,7 @@ Route::post('/direct-create-article', function (Request $request) use ($ensureAd
             $file = $request->file('upload_media_sq');
             $targetPath = $imageMeta['square_path'];
             $dir = dirname($targetPath);
-            $name = "sq_" . basename($targetPath);
+            $name = basename($targetPath);
             $fullPath = $dir . '/' . $name;
             if (!Storage::disk('public')->exists($dir)) Storage::disk('public')->makeDirectory($dir);
             Storage::disk('public')->putFileAs($dir, $file, $name);
@@ -3215,7 +3215,7 @@ Route::post('/direct-image-only/{article}', function (Request $request, Article 
     
     $targetPath = $imageMeta[$targetKey];
     $dir = dirname($targetPath);
-    $name = ($type === 'sq' ? 'sq_' : 'land_') . basename($targetPath);
+    $name = basename($targetPath);
     $fullPath = $dir . '/' . $name;
     
     if ($article->$column && $article->$column !== $fullPath) { Storage::disk('public')->delete($article->$column); }
