@@ -147,30 +147,48 @@
     const previewImg = zone.parentElement.querySelector('[data-preview-img]');
     const previewInfo = zone.parentElement.querySelector('[data-preview-info]');
     const dropText = zone.querySelector('.drop-text');
-    const maxSize = 1 * 1024 * 1024; // 1 MB limit
+    const maxSize = 5 * 1024 * 1024; // 5 MB raw file limit (will be compressed)
     const b64TargetId = zone.getAttribute('data-b64-target');
     const b64Input = b64TargetId ? document.getElementById(b64TargetId) : null;
+
+    // Compress image via Canvas before storing as base64
+    const compressAndStore = (file, onDone) => {
+      const img = new Image();
+      const objectUrl = URL.createObjectURL(file);
+      img.onload = () => {
+        URL.revokeObjectURL(objectUrl);
+        const MAX_DIM = 900;
+        let w = img.width, h = img.height;
+        if (w > MAX_DIM || h > MAX_DIM) {
+          if (w > h) { h = Math.round(h * MAX_DIM / w); w = MAX_DIM; }
+          else       { w = Math.round(w * MAX_DIM / h); h = MAX_DIM; }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        const dataUri = canvas.toDataURL('image/jpeg', 0.82);
+        onDone(dataUri);
+      };
+      img.src = objectUrl;
+    };
 
     const updatePreview = (file) => {
       if (!file || !file.type.startsWith('image/')) return;
 
       if (file.size > maxSize) {
-        alert(`🚨 ไฟล์ใหญ่เกินไป!\n\nรูป "${file.name}" มีขนาด ${(file.size / 1024 / 1024).toFixed(2)} MB\nระบบรองรับได้ไม่เกิน 1 MB ครับ`);
+        alert(`🚨 ไฟล์ใหญ่เกินไป!\n\nรูป "${file.name}" มีขนาด ${(file.size / 1024 / 1024).toFixed(2)} MB\nระบบรองรับได้ไม่เกิน 5 MB ครับ`);
         input.value = '';
         return;
       }
 
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const dataUri = e.target.result;
+      compressAndStore(file, (dataUri) => {
+        const kb = Math.round(dataUri.length * 0.75 / 1024);
         previewImg.src = dataUri;
         previewBox.style.display = 'block';
-        previewInfo.innerText = `✅ รูปพร้อมอัปโหลด: ${file.name} (${(file.size / 1024).toFixed(0)} KB)`;
+        previewInfo.innerText = `✅ รูปพร้อมอัปโหลด: ${file.name} → บีบอัดเหลือ ~${kb} KB`;
         dropText.innerText = 'เปลี่ยนรูปคลิกที่นี่ หรือลากรูปใหม่มาวาง';
-        // Store base64 data URI in hidden input
         if (b64Input) b64Input.value = dataUri;
-      };
-      reader.readAsDataURL(file);
+      });
     };
 
     input.addEventListener('change', (e) => {
