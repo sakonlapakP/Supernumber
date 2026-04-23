@@ -3014,218 +3014,87 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 });
 
 
-// FIREWALL BYPASS ROUTE: UPDATE
-Route::post('/direct-save-article/{article}', function (Request $request, Article $article) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta) {
-    if ($redirect = $ensureAdmin()) {
-        return $redirect;
-    }
+// UPDATE
+Route::post('/direct-save-article/{article}', function (Request $request, Article $article) use ($ensureAdmin) {
+    if ($redirect = $ensureAdmin()) return $redirect;
 
     $data = $request->validate([
         'title' => ['required', 'string', 'max:190'],
-        'slug' => [
-            'nullable',
-            'string',
-            'max:190',
-            'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
-            Rule::unique('articles', 'slug')->ignore($article->id),
-        ],
-        'excerpt' => ['nullable', 'string'],
         'content' => ['required', 'string'],
-        'meta_description' => ['nullable', 'string', 'max:500'],
-        'keywords' => ['nullable', 'string'],
-        'lsi_keywords' => ['nullable', 'string'],
         'published_at' => ['nullable', 'date'],
-        'upload_media_land' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
-        'upload_media_sq' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
         'is_published' => ['nullable', 'boolean'],
+        'upload_media_sq' => ['nullable', 'image', 'max:10240'],
     ]);
 
-    $slugInput = trim((string) ($data['slug'] ?? ''));
-    $slug = $slugInput !== '' ? Str::slug($slugInput) : $buildArticleSlug($data['title'], $article->id);
-    if ($slug === '') $slug = $buildArticleSlug($data['title'], $article->id);
-
-    $isCurrentlyPublished = (bool) $article->is_published;
     $isPublished = $request->boolean('is_published');
-    $publishedAt = $isCurrentlyPublished ? $article->published_at : ($data['published_at'] ?? null);
-    if (!$isPublished) $publishedAt = null;
-    if ($isPublished && $publishedAt === null) $publishedAt = now();
+    $publishedAt = $data['published_at'] ?? ($article->published_at ?: now());
+    $year = Carbon::parse($publishedAt)->year;
+    $slug = $article->slug;
 
-    $imageDate = $publishedAt
-        ? Carbon::parse((string) $publishedAt, 'Asia/Bangkok')
-        : ($article->published_at?->copy() ?? $article->created_at?->copy() ?? Carbon::now('Asia/Bangkok'));
-    $imageMeta = $resolveArticleImageMeta($slug, $imageDate);
-
-    $coverImagePath = $article->cover_image_path;
-    $coverImageLandscapePath = $article->cover_image_landscape_path;
-    $coverImageSquarePath = $article->cover_image_square_path;
-
-    try {
-        if ($request->hasFile('upload_media_sq')) {
-            $file = $request->file('upload_media_sq');
-            $targetPath = $imageMeta['square_path'];
-            $dir = dirname($targetPath);
-            $name = basename($targetPath);
-            $fullPath = $dir . '/' . $name;
-            if ($coverImageSquarePath && $coverImageSquarePath !== $fullPath) Storage::disk('public')->delete($coverImageSquarePath);
-            if (!Storage::disk('public')->exists($dir)) Storage::disk('public')->makeDirectory($dir);
-            Storage::disk('public')->putFileAs($dir, $file, $name);
-            $coverImageSquarePath = $fullPath;
-        }
-
-        $article->update([
-            'title' => trim($data['title']),
-            'slug' => $slug,
-            'excerpt' => trim((string) ($data['excerpt'] ?? '')) ?: null,
-            'content' => trim($data['content']),
-            'meta_description' => trim((string) ($data['meta_description'] ?? '')) ?: null,
-            'keywords' => trim((string) ($data['keywords'] ?? '')) ?: null,
-            'lsi_keywords' => trim((string) ($data['lsi_keywords'] ?? '')) ?: null,
-            'is_published' => $isPublished,
-            'published_at' => $isPublished ? $publishedAt : null,
-            'cover_image_path' => $coverImagePath,
-            'cover_image_square_path' => $coverImageSquarePath,
-        ]);
-    } catch (\Throwable $e) {
-        return back()->withInput()->withErrors(['save_error' => 'ไม่สามารถอัปเดตบทความได้: ' . $e->getMessage()]);
+    $sqPath = $article->cover_image_square_path;
+    if ($request->hasFile('upload_media_sq')) {
+        if ($sqPath) Storage::disk('public')->delete($sqPath);
+        $file = $request->file('upload_media_sq');
+        $ext = $file->getClientOriginalExtension();
+        $filename = "{$slug}.{$ext}";
+        $dir = "{$year}";
+        if (!Storage::disk('public')->exists($dir)) Storage::disk('public')->makeDirectory($dir);
+        Storage::disk('public')->putFileAs($dir, $file, $filename);
+        $sqPath = "{$dir}/{$filename}";
     }
+
+    $article->update([
+        'title' => trim($data['title']),
+        'content' => trim($data['content']),
+        'is_published' => $isPublished,
+        'published_at' => $publishedAt,
+        'cover_image_square_path' => $sqPath,
+    ]);
 
     return redirect()->route('admin.articles')->with('status_message', 'อัปเดตบทความเรียบร้อย');
 })->name('articles.update.bypass');
 
 
-// FIREWALL BYPASS ROUTE: CREATE
-Route::post('/direct-create-article', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta) {
-    if ($redirect = $ensureAdmin()) {
-        return $redirect;
-    }
+// --- SIMPLIFIED FIREWALL BYPASS ROUTES (NO ADMIN PREFIX) ---
+
+// CREATE
+Route::post('/direct-create-article', function (Request $request) use ($ensureAdmin, $buildArticleSlug) {
+    if ($redirect = $ensureAdmin()) return $redirect;
 
     $data = $request->validate([
         'title' => ['required', 'string', 'max:190'],
-        'slug' => [
-            'nullable',
-            'string',
-            'max:190',
-            'regex:/^[a-z0-9]+(?:-[a-z0-9]+)*$/',
-            Rule::unique('articles', 'slug'),
-        ],
-        'excerpt' => ['nullable', 'string'],
         'content' => ['required', 'string'],
-        'meta_description' => ['nullable', 'string', 'max:500'],
-        'keywords' => ['nullable', 'string'],
-        'lsi_keywords' => ['nullable', 'string'],
         'published_at' => ['nullable', 'date'],
-        'upload_media_land' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
-        'upload_media_sq' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:20480'],
         'is_published' => ['nullable', 'boolean'],
+        'upload_media_sq' => ['nullable', 'image', 'max:10240'],
     ]);
 
-    $slugInput = trim((string) ($data['slug'] ?? ''));
-    $slug = $slugInput !== '' ? Str::slug($slugInput) : $buildArticleSlug($data['title'], null);
-
+    $slug = $buildArticleSlug($data['title'], null);
     $isPublished = $request->boolean('is_published');
     $publishedAt = $data['published_at'] ?? ($isPublished ? now() : null);
+    $year = Carbon::parse($publishedAt ?: now())->year;
 
-    $imageDate = $publishedAt ? Carbon::parse((string) $publishedAt, 'Asia/Bangkok') : Carbon::now('Asia/Bangkok');
-    $imageMeta = $resolveArticleImageMeta($slug, $imageDate);
-
-    $coverImagePath = null;
-    $coverImageLandscapePath = null;
-    $coverImageSquarePath = null;
-
-    try {
-        if ($request->hasFile('upload_media_land')) {
-            $file = $request->file('upload_media_land');
-            $targetPath = $imageMeta['cover_path'];
-            $dir = dirname($targetPath);
-            $name = basename($targetPath);
-            $fullPath = $dir . '/' . $name;
-            if (!Storage::disk('public')->exists($dir)) Storage::disk('public')->makeDirectory($dir);
-            Storage::disk('public')->putFileAs($dir, $file, $name);
-            $coverImageLandscapePath = $fullPath;
-        }
-        if ($request->hasFile('upload_media_sq')) {
-            $file = $request->file('upload_media_sq');
-            $targetPath = $imageMeta['square_path'];
-            $dir = dirname($targetPath);
-            $name = basename($targetPath);
-            $fullPath = $dir . '/' . $name;
-            if (!Storage::disk('public')->exists($dir)) Storage::disk('public')->makeDirectory($dir);
-            Storage::disk('public')->putFileAs($dir, $file, $name);
-            $coverImageSquarePath = $fullPath;
-        }
-
-        Article::create([
-            'title' => trim($data['title']),
-            'slug' => $slug,
-            'excerpt' => trim((string) ($data['excerpt'] ?? '')) ?: null,
-            'content' => trim($data['content']),
-            'meta_description' => trim((string) ($data['meta_description'] ?? '')) ?: null,
-            'keywords' => trim((string) ($data['keywords'] ?? '')) ?: null,
-            'lsi_keywords' => trim((string) ($data['lsi_keywords'] ?? '')) ?: null,
-            'is_published' => $isPublished,
-            'published_at' => $isPublished ? $publishedAt : null,
-            'cover_image_path' => $coverImagePath,
-            'cover_image_landscape_path' => $coverImageLandscapePath,
-            'cover_image_square_path' => $coverImageSquarePath,
-            'author_user_id' => is_numeric(session('admin_user_id')) ? (int) session('admin_user_id') : null,
-        ]);
-    } catch (\Throwable $e) {
-        return back()->withInput()->withErrors(['save_error' => 'ไม่สามารถสร้างบทความได้: ' . $e->getMessage()]);
+    $sqPath = null;
+    if ($request->hasFile('upload_media_sq')) {
+        $file = $request->file('upload_media_sq');
+        $ext = $file->getClientOriginalExtension();
+        $filename = "{$slug}.{$ext}";
+        $dir = "{$year}";
+        if (!Storage::disk('public')->exists($dir)) Storage::disk('public')->makeDirectory($dir);
+        Storage::disk('public')->putFileAs($dir, $file, $filename);
+        $sqPath = "{$dir}/{$filename}";
     }
 
-    return redirect()->route('admin.articles')->with('status_message', 'สร้างบทความใหม่เรียบร้อย');
+    Article::create([
+        'title' => trim($data['title']),
+        'slug' => $slug,
+        'content' => trim($data['content']),
+        'is_published' => $isPublished,
+        'published_at' => $publishedAt,
+        'cover_image_square_path' => $sqPath,
+        'author_user_id' => session('admin_user_id'),
+    ]);
+
+    return redirect()->route('admin.articles')->with('status_message', 'สร้างบทความเรียบร้อย');
 })->name('articles.store.bypass');
 
-
-
-// IMAGE-ONLY BYPASS ROUTE: BASE64 VERSION
-Route::post('/direct-image-only/{article}', function (Request $request, Article $article) use ($ensureAdmin, $resolveArticleImageMeta) {
-    if ($redirect = $ensureAdmin()) { return $redirect; }
-    
-    $type = $request->input('type', 'land'); // 'land' or 'sq'
-    $base64Data = $request->input('image_base64');
-    
-    if (!$base64Data) {
-        // Fallback to normal file upload if base64 is missing
-        if (!$request->hasFile('image_blob')) { return response()->json(['error' => 'No image data found'], 400); }
-        $file = $request->file('image_blob');
-    } else {
-        // Handle Base64
-        if (preg_match('/^data:image\/(\w+);base64,/', $base64Data, $typeMatch)) {
-            $base64Data = substr($base64Data, strpos($base64Data, ',') + 1);
-            $imgExt = strtolower($typeMatch[1]);
-            if (!in_array($imgExt, ['jpg', 'jpeg', 'png', 'webp'])) { return response()->json(['error' => 'Invalid image type'], 400); }
-            $decodedData = base64_decode($base64Data);
-            if ($decodedData === false) { return response()->json(['error' => 'Decode failed'], 400); }
-            
-            // Create a temp file to satisfy the rest of the logic
-            $tmpPath = tempnam(sys_get_temp_dir(), 'img_');
-            file_put_contents($tmpPath, $decodedData);
-            $file = new \Illuminate\Http\UploadedFile($tmpPath, "upload.{$imgExt}", "image/{$imgExt}", null, true);
-        } else {
-            return response()->json(['error' => 'Invalid base64 format'], 400);
-        }
-    }
-    
-    $publishedAt = $article->published_at ?? now();
-    $imageMeta = $resolveArticleImageMeta($article->slug, $publishedAt);
-    
-    $targetKey = $type === 'sq' ? 'square_path' : 'cover_path';
-    $column = $type === 'sq' ? 'cover_image_square_path' : 'cover_image_landscape_path';
-    
-    $targetPath = $imageMeta[$targetKey];
-    $dir = dirname($targetPath);
-    $name = basename($targetPath);
-    $fullPath = $dir . '/' . $name;
-    
-    if ($article->$column && $article->$column !== $fullPath) { Storage::disk('public')->delete($article->$column); }
-    if (!Storage::disk('public')->exists($dir)) { Storage::disk('public')->makeDirectory($dir); }
-    Storage::disk('public')->putFileAs($dir, $file, $name);
-    
-    // Clean up temp file if we created one
-    if (isset($tmpPath) && file_exists($tmpPath)) { @unlink($tmpPath); }
-    
-    $article->update([$column => $fullPath]);
-    
-    return response()->json(['success' => true, 'path' => $fullPath]);
-})->name('articles.image-only.bypass');

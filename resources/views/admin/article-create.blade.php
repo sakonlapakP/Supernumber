@@ -1,45 +1,53 @@
 @extends('layouts.admin')
 
-@section('title', 'Supernumber Admin | เพิ่มบทความใหม่')
+@section('title', 'Supernumber Admin | สร้างบทความใหม่')
 
 @section('content')
   <style>
-    .admin-preview-box {
-      margin-top: 12px;
-      display: none;
+    .admin-drop-zone {
       position: relative;
+      border: 2px dashed #d8e0ec;
+      border-radius: 12px;
+      padding: 24px;
+      text-align: center;
+      background: #f8fbff;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      min-height: 100px;
     }
+    .admin-drop-zone:hover, .admin-drop-zone.is-dragover {
+      border-color: #1d4f9f;
+      background: #f0f7ff;
+    }
+    .admin-drop-zone__icon { font-size: 24px; color: #94a3b8; }
+    .admin-drop-zone__text { font-size: 14px; color: #64748b; }
+    .admin-drop-zone__input {
+      position: absolute;
+      inset: 0;
+      opacity: 0;
+      cursor: pointer;
+      width: 100%;
+      height: 100%;
+    }
+    .admin-preview-box { margin-top: 12px; position: relative; }
     .admin-preview-img {
       max-width: 180px;
       border-radius: 10px;
       border: 1px solid #d8e0ec;
       display: block;
     }
-    .admin-preview-info {
-      font-size: 12px;
-      color: #94a3b8;
-      margin-top: 6px;
-    }
-    .admin-image-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      margin-bottom: 20px;
-    }
-    @media (max-width: 768px) {
-      .admin-image-grid {
-        grid-template-columns: 1fr;
-      }
-    }
+    .admin-preview-info { font-size: 12px; color: #94a3b8; margin-top: 6px; }
   </style>
 
   <div class="admin-page-head">
     <div>
-      <h1>เพิ่มบทความใหม่</h1>
-      <p class="admin-subtitle">เขียนเนื้อหาใหม่และตั้งค่า SEO เพื่อเผยแพร่บนเว็บไซต์</p>
-    </div>
-    <div class="admin-page-actions">
-      <a href="{{ route('admin.articles') }}" class="admin-button admin-button--muted">ยกเลิกและกลับ</a>
+      <h1>สร้างบทความใหม่</h1>
+      <p class="admin-subtitle">กรอกข้อมูลและอัปโหลดรูปภาพเพื่อเริ่มเผยแพร่</p>
     </div>
   </div>
 
@@ -54,38 +62,18 @@
   @endif
 
   <section class="admin-card admin-feature-card">
-    <form action="/direct-create-article" method="post" enctype="multipart/form-data" class="admin-form">
+    <form
+      id="article-create-form"
+      action="{{ route('articles.store.bypass') }}"
+      method="post"
+      enctype="multipart/form-data"
+      class="admin-form"
+    >
       @csrf
+
       <div class="admin-field">
         <label for="title">หัวข้อบทความ</label>
-        <input type="text" id="title" name="title" class="admin-input" value="{{ old('title') }}" required />
-      </div>
-
-      <div class="admin-field">
-        <label>คำอธิบายเมตา (Meta Description)</label>
-        <input type="text" name="meta_description" class="admin-input" value="{{ old('meta_description') }}" placeholder="คำโปรยสำหรับ Google (ไม่เกิน 500 ตัวอักษร)" />
-      </div>
-
-      <div class="admin-field">
-        <label>5 Keywords หลัก (SEO)</label>
-        <input type="text" name="keywords" class="admin-input" value="{{ old('keywords') }}" placeholder="เช่น: เบอร์มงคล, เสริมดวง, ประวัติจิ้มมี่" />
-        <p class="admin-subtitle" style="margin: 0;">เน้นคำสำคัญที่เป็นหัวใจของบทความ</p>
-      </div>
-
-      <div class="admin-field">
-        <label>10 Keywords รอง (LSI Keywords)</label>
-        <input type="text" name="lsi_keywords" class="admin-input" value="{{ old('lsi_keywords') }}" placeholder="คำใกล้เคียง เช่น: เลขศาสตร์, เปลี่ยนเบอร์มือถือ, คัดเบอร์พิเศษ" />
-        <p class="admin-subtitle" style="margin: 0;">ช่วยให้ Google ค้นพบง่ายขึ้นจากระยะค้นหาที่กว้างขึ้น</p>
-      </div>
-
-      <div class="admin-field">
-        <label for="slug">Slug (ถ้าไม่ใส่ระบบจะสร้างให้)</label>
-        <input type="text" id="slug" name="slug" class="admin-input" value="{{ old('slug') }}" placeholder="seo-for-lucky-number" />
-      </div>
-
-      <div class="admin-field">
-        <label for="excerpt">คำเกริ่นสั้น</label>
-        <textarea id="excerpt" name="excerpt" class="admin-input" style="min-height: 90px; padding-top: 12px;">{{ old('excerpt') }}</textarea>
+        <input type="text" id="title" name="title" class="admin-input" value="{{ old('title') }}" required placeholder="ระบุหัวข้อบทความ..." />
       </div>
 
       <div class="admin-field">
@@ -101,114 +89,99 @@
             <button type="button" class="admin-rte__btn" data-rte-action="link">ลิงก์</button>
             <button type="button" class="admin-rte__btn" data-rte-cmd="removeFormat">ล้างรูปแบบ</button>
           </div>
-          <div class="admin-rte__editor" contenteditable="true" data-rte-editor data-placeholder="พิมพ์เนื้อหาบทความที่นี่..."></div>
+          <div class="admin-rte__editor" contenteditable="true" data-rte-editor data-placeholder="เริ่มพิมพ์เนื้อหาที่นี่..."></div>
         </div>
         <textarea id="content" name="content" class="admin-input" style="display: none;">{{ old('content') }}</textarea>
       </div>
 
-      <div class="admin-image-grid" style="grid-template-columns: 1fr;">
-        <div class="admin-field">
-          <label>รูปหน้ารายละเอียดบทความ (สี่เหลี่ยมจัตุรัส 1:1)</label>
-          <div class="admin-drop-zone" data-drop-zone>
-            <div class="admin-drop-zone__icon">⏹️</div>
-            <div class="admin-drop-zone__text">ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</div>
-            <input type="file" name="upload_media_sq" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
-          </div>
-          <div class="admin-preview-box" data-preview-box>
-            <img src="" class="admin-preview-img" data-preview-img style="aspect-ratio:1/1; object-fit:cover;" />
-            <div class="admin-preview-info" data-preview-info></div>
-          </div>
+      <div class="admin-field" style="margin-top:20px;">
+        <label>รูปภาพบทความ (จัตุรัส 1:1)</label>
+        <div class="admin-drop-zone" data-drop-zone>
+          <div class="admin-drop-zone__icon">🖼️</div>
+          <div class="admin-drop-zone__text">ลากรูปมาวางตรงนี้ หรือคลิกเพื่อเลือกไฟล์</div>
+          <input type="file" name="upload_media_sq" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
+        </div>
+        
+        <div class="admin-preview-box" data-preview-box style="display:none;">
+          <img src="" class="admin-preview-img" data-preview-img style="aspect-ratio:1/1; object-fit:cover;" />
+          <div class="admin-preview-info" data-preview-info></div>
         </div>
       </div>
 
-      <div class="admin-field">
-        <label for="published_at">เวลาที่ต้องการเผยแพร่ (ไม่ใส่ = ตอนนี้)</label>
-        <input type="datetime-local" id="published_at" name="published_at" class="admin-input" value="{{ old('published_at') }}" />
-      </div>
-
-      <label class="admin-field" style="grid-template-columns: auto 1fr; align-items: center; gap: 10px; display: grid;">
-        <input type="checkbox" name="is_published" value="1" @checked(old('is_published')) />
+      <label class="admin-field" style="grid-template-columns: auto 1fr; align-items: center; gap: 10px; display: grid; margin-top:20px;">
+        <input type="checkbox" name="is_published" value="1" @checked(old('is_published', true)) />
         <span style="font-size: 14px;">เผยแพร่ทันที</span>
       </label>
 
-      <button type="submit" class="admin-button">บันทึกบทความ</button>
+      <div class="admin-actions" style="margin-top:30px; display:flex; gap:10px;">
+        <button type="submit" class="admin-button">🚀 สร้างและอัปโหลดบทความ</button>
+        <a href="{{ route('admin.articles') }}" class="admin-button admin-button--secondary">ยกเลิก</a>
+      </div>
     </form>
   </section>
+@endsection
 
-  @push('scripts')
-    <script>
-      (() => {
-        const initRichText = (shell) => {
-          const editor = shell.querySelector("[data-rte-editor]");
-          const textarea = shell.parentElement.querySelector('textarea[name="content"]');
-          const form = shell.closest("form");
-          if (!editor || !textarea || !form) return;
+@section('scripts')
+  <script>
+    (function() {
+      // 1. Rich Text Editor Initialization
+      document.querySelectorAll("[data-rte-shell]").forEach(shell => {
+        const editor = shell.querySelector("[data-rte-editor]");
+        const textarea = shell.parentElement.querySelector('textarea[name="content"]');
+        const form = shell.closest("form");
+        if (!editor || !textarea || !form) return;
 
-          editor.innerHTML = textarea.value || "";
-
-          shell.querySelectorAll("[data-rte-cmd]").forEach((button) => {
-            button.addEventListener("click", () => {
-              const command = button.dataset.rteCmd;
-              const value = button.dataset.rteValue ?? null;
-              editor.focus();
-              document.execCommand(command, false, value);
-            });
-          });
-
-          shell.querySelectorAll("[data-rte-action='link']").forEach((button) => {
-            button.addEventListener("click", () => {
-              const url = window.prompt("ใส่ URL เช่น https://example.com");
-              if (!url) return;
-              editor.focus();
-              document.execCommand("createLink", false, url);
-            });
-          });
-
-          form.addEventListener("submit", () => {
-            textarea.value = editor.innerHTML.trim();
-          });
-        };
-
-        document.querySelectorAll("[data-rte-shell]").forEach(initRichText);
-
-        document.querySelectorAll("[data-drop-zone]").forEach((zone) => {
-          const input = zone.querySelector("[data-drop-zone-input]");
-          const previewBox = zone.parentElement.querySelector("[data-preview-box]");
-          const previewImg = zone.parentElement.querySelector("[data-preview-img]");
-          const previewInfo = zone.parentElement.querySelector("[data-preview-info]");
-          const MAX_SIZE = 2 * 1024 * 1024; // 2MB Limit (Diagnostic)
-
-          const validateAndPreview = (file) => {
-            if (!file) return;
-            if (file.size > MAX_SIZE) {
-              alert(`🚨 ไฟล์ใหญ่เกินไปครับพี่! \n\nรูป "${file.name}" มีขนาด ${(file.size / 1024 / 1024).toFixed(2)} MB \n\nเซิร์ฟเวอร์ระบบรองรับได้ไม่เกิน 2 MB เพื่อความรวดเร็วของเว็บครับ (ชุดทดสอบ) \nรบกวนพี่ช่วย "ย่อรูป" ก่อนอัพโหลดอีกรอบนะครับ 🙏`);
-              input.value = "";
-              previewBox.style.display = "none";
-              return;
-            }
-            const reader = new FileReader();
-            reader.onload = (e) => {
-              previewImg.src = e.target.result;
-              previewBox.style.display = "block";
-              previewInfo.textContent = `ไฟล์: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
-            };
-            reader.readAsDataURL(file);
-          };
-
-          input.addEventListener("change", () => {
-            if (input.files.length > 0) validateAndPreview(input.files[0]);
-          });
-          ["dragover", "dragenter"].forEach(t => zone.addEventListener(t, e => { e.preventDefault(); zone.classList.add("is-dragover"); }));
-          ["dragleave", "dragend", "drop"].forEach(t => zone.addEventListener(t, () => zone.classList.remove("is-dragover")));
-          zone.addEventListener("drop", e => {
-            e.preventDefault();
-            if (e.dataTransfer.files.length > 0) {
-              input.files = e.dataTransfer.files;
-              validateAndPreview(e.dataTransfer.files[0]);
-            }
+        shell.querySelectorAll("[data-rte-cmd]").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const cmd = btn.dataset.rteCmd;
+            const val = btn.dataset.rteValue ?? null;
+            editor.focus();
+            document.execCommand(cmd, false, val);
           });
         });
-      })();
-    </script>
-  @endpush
+
+        shell.querySelectorAll("[data-rte-action='link']").forEach(btn => {
+          btn.addEventListener("click", () => {
+            const url = window.prompt("ใส่ URL เช่น https://supernumber.co.th");
+            if (!url) return;
+            editor.focus();
+            document.execCommand("createLink", false, url);
+          });
+        });
+
+        form.addEventListener("submit", () => {
+          textarea.value = editor.innerHTML.trim();
+        });
+      });
+
+      // 2. Image Preview
+      document.querySelectorAll('[data-drop-zone-input]').forEach(input => {
+        input.addEventListener('change', function(e) {
+          const file = e.target.files[0];
+          if (file) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+              const container = input.closest('.admin-field');
+              const previewImg = container.querySelector('[data-preview-img]');
+              const previewBox = container.querySelector('[data-preview-box]');
+              const previewInfo = container.querySelector('[data-preview-info]');
+              
+              if (previewImg) previewImg.src = event.target.result;
+              if (previewBox) previewBox.style.display = 'block';
+              if (previewInfo) previewInfo.innerText = `🌟 เลือกไฟล์ใหม่: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`;
+            };
+            reader.readAsDataURL(file);
+          }
+        });
+      });
+
+      // 3. Form Submit Feedback
+      const form = document.getElementById('article-create-form');
+      form.addEventListener('submit', () => {
+        const btn = form.querySelector('button[type="submit"]');
+        btn.disabled = true;
+        btn.innerText = '🚀 กำลังสร้างบทความ...';
+      });
+    })();
+  </script>
 @endsection
