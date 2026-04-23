@@ -82,8 +82,8 @@
 
       <div class="admin-field">
         <label for="slug">Slug (ที่อยู่ URL)</label>
-        <input type="text" id="slug" name="slug" class="admin-input" value="{{ old('slug', $article->slug) }}" disabled style="background:#f1f5f9;" />
-        <p class="admin-subtitle">ชื่อ URL ถูกล็อกตามระบบจัดการไฟล์</p>
+        <input type="text" id="slug" name="slug" class="admin-input" value="{{ old('slug', $article->slug) }}" readonly style="background:#f1f5f9;" />
+        <p class="admin-subtitle">URL ถูกล็อกไว้ตามระบบไฟล์</p>
       </div>
 
       <div class="admin-field">
@@ -106,22 +106,22 @@
           </div>
           <div class="admin-rte__editor" contenteditable="true" data-rte-editor data-placeholder="พิมพ์เนื้อหาบทความที่นี่..."></div>
         </div>
-        <textarea id="content" name="content" class="admin-input" style="display: none;">{{ old('content', $article->content) }}</textarea>
+        <textarea id="textarea-content" name="content" class="admin-input" style="display: none;">{{ old('content', $article->content) }}</textarea>
       </div>
 
       <div class="admin-field" style="margin-top:20px;">
         <label>คำอธิบายเมตา (Meta Description)</label>
-        <input type="text" name="meta_description" class="admin-input" value="{{ old('meta_description', $article->meta_description) }}" placeholder="คำโปรยสำหรับ Google" />
+        <input type="text" name="meta_description" class="admin-input" value="{{ old('meta_description', $article->meta_description) }}" />
       </div>
 
       <div class="admin-field">
         <label>5 Keywords หลัก (SEO)</label>
-        <input type="text" name="keywords" class="admin-input" value="{{ old('keywords', $article->keywords) }}" placeholder="เช่น: เบอร์มงคล, เสริมดวง" />
+        <input type="text" name="keywords" class="admin-input" value="{{ old('keywords', $article->keywords) }}" />
       </div>
 
       <div class="admin-field">
         <label>10 Keywords รอง (LSI Keywords)</label>
-        <input type="text" name="lsi_keywords" class="admin-input" value="{{ old('lsi_keywords', $article->lsi_keywords) }}" placeholder="คำใกล้เคียง..." />
+        <input type="text" name="lsi_keywords" class="admin-input" value="{{ old('lsi_keywords', $article->lsi_keywords) }}" />
       </div>
 
       <div class="admin-field">
@@ -164,18 +164,70 @@
       </div>
     </form>
   </section>
+
+  <section class="admin-card admin-table-card" style="margin-top: 16px;">
+    <div class="admin-feature-card__head" style="padding: 18px 20px 0;">
+      <div>
+        <h2 class="admin-feature-card__title">คอมเมนต์ ({{ $comments->count() }})</h2>
+        <p class="admin-feature-card__hint">จัดการคอมเมนต์ของบทความนี้</p>
+      </div>
+    </div>
+    <div class="admin-table-wrap">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>เวลา</th>
+            <th>ผู้คอมเมนต์</th>
+            <th>เนื้อหา</th>
+            <th>สถานะ</th>
+            <th>จัดการ</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse ($comments as $comment)
+            <tr>
+              <td>{{ optional($comment->created_at)->format('Y-m-d H:i') }}</td>
+              <td>{{ $comment->commenter_name }}</td>
+              <td style="max-width: 400px; white-space: normal;">{{ $comment->content }}</td>
+              <td>
+                <span class="admin-status-pill {{ $comment->status === 'approved' ? 'admin-status-pill--active' : '' }}">
+                  {{ $comment->status === 'approved' ? 'อนุมัติแล้ว' : 'ซ่อนอยู่' }}
+                </span>
+              </td>
+              <td>
+                <form action="{{ route('admin.articles.comments.' . ($comment->status === 'approved' ? 'archive' : 'unarchive'), [$article, $comment]) }}" method="POST">
+                  @csrf
+                  <button type="submit" class="admin-button admin-button--compact" style="background: {{ $comment->status === 'approved' ? '#f59e0b' : '#3b82f6' }}">
+                    {{ $comment->status === 'approved' ? 'ซ่อน' : 'โชว์' }}
+                  </button>
+                </form>
+              </td>
+            </tr>
+          @empty
+            <tr><td colspan="5" style="text-align:center;">ยังไม่มีคอมเมนต์</td></tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+  </section>
 @endsection
 
 @section('scripts')
   <script>
-    (function() {
-      // 1. RTE
+    document.addEventListener('DOMContentLoaded', function() {
+      // 1. Rich Text Editor Initialization
       document.querySelectorAll("[data-rte-shell]").forEach(shell => {
         const editor = shell.querySelector("[data-rte-editor]");
-        const textarea = shell.parentElement.querySelector('textarea[name="content"]');
+        const container = shell.closest('.admin-field');
+        const textarea = container ? container.querySelector('textarea[name="content"]') : null;
         const form = shell.closest("form");
+        
         if (!editor || !textarea || !form) return;
-        editor.innerHTML = textarea.value || "";
+
+        // FORCE ATTEMPT TO LOAD DATA
+        const initialContent = textarea.value || "";
+        editor.innerHTML = initialContent;
+
         shell.querySelectorAll("[data-rte-cmd]").forEach(btn => {
           btn.addEventListener("click", () => {
             const cmd = btn.dataset.rteCmd;
@@ -184,6 +236,7 @@
             document.execCommand(cmd, false, val);
           });
         });
+
         shell.querySelectorAll("[data-rte-action='link']").forEach(btn => {
           btn.addEventListener("click", () => {
             const url = window.prompt("ใส่ URL:");
@@ -192,36 +245,43 @@
             document.execCommand("createLink", false, url);
           });
         });
-        form.addEventListener("submit", () => { textarea.value = editor.innerHTML.trim(); });
+
+        form.addEventListener("submit", () => {
+          textarea.value = editor.innerHTML.trim();
+        });
       });
 
-      // 2. Preview
+      // 2. Image Preview Logic
       document.querySelectorAll('[data-drop-zone-input]').forEach(input => {
         input.addEventListener('change', function(e) {
           const file = e.target.files[0];
           if (file) {
             const reader = new FileReader();
             reader.onload = (event) => {
-              const container = input.closest('.admin-field');
-              const previewImg = container.querySelector('[data-preview-img]');
-              const previewBox = container.querySelector('[data-preview-box]');
-              const previewInfo = container.querySelector('[data-preview-info]');
+              const field = input.closest('.admin-field');
+              const previewImg = field.querySelector('[data-preview-img]');
+              const previewBox = field.querySelector('[data-preview-box]');
+              const previewInfo = field.querySelector('[data-preview-info]');
               if (previewImg) previewImg.src = event.target.result;
               if (previewBox) previewBox.style.display = 'block';
-              if (previewInfo) previewInfo.innerText = `🌟 เลือกไฟล์: ${file.name}`;
+              if (previewInfo) previewInfo.innerText = `📂 ไฟล์ใหม่: ${file.name}`;
             };
             reader.readAsDataURL(file);
           }
         });
       });
 
-      // 3. Feedback
-      const form = document.getElementById('article-update-form');
-      form.addEventListener('submit', () => {
-        const btn = form.querySelector('button[type="submit"]');
-        btn.disabled = true;
-        btn.innerText = '⏳ กำลังบันทึกข้อมูล...';
-      });
-    })();
+      // 3. Form Submit Feedback
+      const mainForm = document.getElementById('article-update-form');
+      if (mainForm) {
+        mainForm.addEventListener('submit', () => {
+          const btn = mainForm.querySelector('button[type="submit"]');
+          if (btn) {
+            btn.disabled = true;
+            btn.innerText = '⏳ กำลังเซฟข้อมูล...';
+          }
+        });
+      }
+    });
   </script>
 @endsection
