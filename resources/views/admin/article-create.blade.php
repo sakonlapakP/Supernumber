@@ -6,7 +6,8 @@
   <style>
     .admin-drop-zone { border: 2px dashed #d8e0ec; border-radius: 12px; padding: 24px; text-align: center; background: #f8fbff; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 100px; position: relative; transition: all 0.3s; }
     .admin-drop-zone.is-dragover { border-color: #1d4f9f; background: #f0f7ff; }
-    .admin-drop-zone__input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .admin-drop-zone__input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; pointer-events: none; }
+    .admin-drop-zone__button { border: 0; background: transparent; color: inherit; font: inherit; padding: 0; cursor: pointer; }
     .admin-preview-img { max-width: 180px; border-radius: 10px; border: 1px solid #d8e0ec; display: block; }
     .admin-preview-box { margin-top: 12px; }
     .admin-preview-info { font-size: 12px; color: #94a3b8; margin-top: 6px; }
@@ -81,8 +82,9 @@
         <div class="admin-field" style="margin-top:30px; border-left: 4px solid #2563eb; padding-left: 15px;">
           <label style="font-size: 16px; color: #1e293b; font-weight: bold;">รูปหน้ารวมบทความ (แนวนอน 16:9 / 4:3)</label>
           <div class="admin-drop-zone" data-drop-zone>
+            <input type="file" id="upload_media_land" name="upload_media_land" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
             <span class="drop-text">🖼️ ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</span>
-            <input type="file" name="upload_media_land" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
+            <button type="button" class="admin-drop-zone__button" data-drop-zone-button>คลิกเพื่อเลือกไฟล์</button>
           </div>
           <div class="admin-preview-box" data-preview-box style="display:none;">
             <img src="" class="admin-preview-img" data-preview-img style="aspect-ratio:16/9; object-fit:cover; border: 2px solid #2563eb;" />
@@ -93,8 +95,9 @@
         <div class="admin-field" style="margin-top:30px; border-left: 4px solid #10b981; padding-left: 15px;">
           <label style="font-size: 16px; color: #1e293b; font-weight: bold;">รูปภาพบทความ (จัตุรัส 1:1)</label>
           <div class="admin-drop-zone" data-drop-zone>
+            <input type="file" id="upload_media_sq" name="upload_media_sq" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
             <span class="drop-text">🖼️ ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</span>
-            <input type="file" name="upload_media_sq" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
+            <button type="button" class="admin-drop-zone__button" data-drop-zone-button>คลิกเพื่อเลือกไฟล์</button>
           </div>
           <div class="admin-preview-box" data-preview-box style="display:none;">
             <img src="" class="admin-preview-img" data-preview-img style="aspect-ratio:1/1; object-fit:cover; border: 2px solid #10b981;" />
@@ -137,6 +140,7 @@
 
   const initDropZone = (zone) => {
     const input = zone.querySelector('[data-drop-zone-input]');
+    const button = zone.querySelector('[data-drop-zone-button]');
     const previewBox = zone.parentElement.querySelector('[data-preview-box]');
     const previewImg = zone.parentElement.querySelector('[data-preview-img]');
     const previewInfo = zone.parentElement.querySelector('[data-preview-info]');
@@ -166,6 +170,18 @@
       if (e.target.files.length > 0) {
         updatePreview(e.target.files[0]);
       }
+    });
+
+    if (button) {
+      button.addEventListener('click', (e) => {
+        e.preventDefault();
+        input.click();
+      });
+    }
+
+    zone.addEventListener('click', (e) => {
+      if (e.target === input || e.target === button) return;
+      input.click();
     });
 
     ['dragover', 'dragenter'].forEach((type) => {
