@@ -4,71 +4,31 @@
 
 @section('content')
   <style>
-    .admin-drop-zone {
-      position: relative;
-      border: 2px dashed #d8e0ec;
-      border-radius: 12px;
-      padding: 24px;
-      text-align: center;
-      background: #f8fbff;
-      transition: all 0.2s ease;
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: 10px;
-      min-height: 100px;
-    }
-    .admin-drop-zone:hover, .admin-drop-zone.is-dragover {
-      border-color: #1d4f9f;
-      background: #f0f7ff;
-    }
-    .admin-drop-zone__icon { font-size: 24px; color: #94a3b8; }
-    .admin-drop-zone__text { font-size: 14px; color: #64748b; }
-    .admin-drop-zone__input {
-      position: absolute;
-      inset: 0;
-      opacity: 0;
-      cursor: pointer;
-      width: 100%;
-      height: 100%;
-    }
-    .admin-preview-box { margin-top: 12px; position: relative; }
-    .admin-preview-img {
-      max-width: 180px;
-      border-radius: 10px;
-      border: 1px solid #d8e0ec;
-      display: block;
-    }
+    .admin-drop-zone { border: 2px dashed #d8e0ec; border-radius: 12px; padding: 24px; text-align: center; background: #f8fbff; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 100px; position: relative; }
+    .admin-drop-zone:hover { border-color: #1d4f9f; background: #f0f7ff; }
+    .admin-drop-zone__input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+    .admin-preview-img { max-width: 180px; border-radius: 10px; border: 1px solid #d8e0ec; display: block; }
+    .admin-preview-box { margin-top: 12px; }
     .admin-preview-info { font-size: 12px; color: #94a3b8; margin-top: 6px; }
   </style>
 
   <div class="admin-page-head">
     <div>
       <h1>สร้างบทความใหม่</h1>
-      <p class="admin-subtitle">กรอกข้อมูลบทความแบบครบถ้วน เพื่อผลลัพธ์ SEO ที่ดีที่สุด</p>
+      <p class="admin-subtitle">กรอกข้อมูลบทความแบบครบถ้วน (ระบบ Real-time Sync)</p>
     </div>
   </div>
 
   @if ($errors->any())
     <div class="admin-alert admin-alert--error">
       <ul style="margin: 0; padding-left: 18px;">
-        @foreach ($errors->all() as $error)
-          <li>{{ $error }}</li>
-        @endforeach
+        @foreach ($errors->all() as $error) <li>{{ $error }}</li> @endforeach
       </ul>
     </div>
   @endif
 
   <section class="admin-card admin-feature-card">
-    <form
-      id="article-create-form"
-      action="{{ route('articles.store.bypass') }}"
-      method="post"
-      enctype="multipart/form-data"
-      class="admin-form"
-    >
+    <form id="main-create-form" action="{{ route('articles.store.bypass') }}" method="post" enctype="multipart/form-data" class="admin-form">
       @csrf
 
       <div class="admin-field">
@@ -78,67 +38,58 @@
 
       <div class="admin-field">
         <label for="excerpt">คำเกริ่นสั้น (Excerpt)</label>
-        <textarea id="excerpt" name="excerpt" class="admin-input" style="min-height: 80px; padding-top: 12px;" placeholder="คำโปรยที่จะโชว์ในหน้ารวมบทความ...">{{ old('excerpt') }}</textarea>
+        <textarea name="excerpt" class="admin-input" style="min-height: 80px; padding-top: 12px;">{{ old('excerpt') }}</textarea>
       </div>
 
       <div class="admin-field">
-        <label for="content">เนื้อหาบทความ</label>
-        <div class="admin-rte" data-rte-shell>
+        <label>เนื้อหาบทความ</label>
+        <div class="admin-rte">
           <div class="admin-rte__toolbar">
-            <button type="button" class="admin-rte__btn" data-rte-cmd="bold">B</button>
-            <button type="button" class="admin-rte__btn" data-rte-cmd="italic">I</button>
-            <button type="button" class="admin-rte__btn" data-rte-cmd="underline">U</button>
-            <button type="button" class="admin-rte__btn" data-rte-cmd="formatBlock" data-rte-value="h2">H2</button>
-            <button type="button" class="admin-rte__btn" data-rte-cmd="insertUnorderedList">• รายการ</button>
-            <button type="button" class="admin-rte__btn" data-rte-cmd="insertOrderedList">1. ลำดับ</button>
-            <button type="button" class="admin-rte__btn" data-rte-action="link">ลิงก์</button>
-            <button type="button" class="admin-rte__btn" data-rte-cmd="removeFormat">ล้างรูปแบบ</button>
+            <button type="button" class="admin-rte__btn" onclick="execCmd('bold')">B</button>
+            <button type="button" class="admin-rte__btn" onclick="execCmd('italic')">I</button>
+            <button type="button" class="admin-rte__btn" onclick="execCmd('underline')">U</button>
+            <button type="button" class="admin-rte__btn" onclick="execCmd('formatBlock', 'h2')">H2</button>
+            <button type="button" class="admin-rte__btn" onclick="execCmd('insertUnorderedList')">• รายการ</button>
+            <button type="button" class="admin-rte__btn" onclick="addLink()">ลิงก์</button>
+            <button type="button" class="admin-rte__btn" onclick="execCmd('removeFormat')">ล้างรูปแบบ</button>
           </div>
-          <div class="admin-rte__editor" contenteditable="true" data-rte-editor data-placeholder="เริ่มพิมพ์เนื้อหาที่นี่..."></div>
+          <div id="rich-editor" class="admin-rte__editor" contenteditable="true" style="min-height: 300px;">{!! old('content') !!}</div>
         </div>
-        <textarea id="content" name="content" class="admin-input" style="display: none;">{{ old('content') }}</textarea>
+        <textarea id="hidden-content" name="content" style="display: none;">{{ old('content') }}</textarea>
       </div>
 
       <div class="admin-field" style="margin-top:20px;">
-        <label>คำอธิบายเมตา (Meta Description)</label>
-        <input type="text" name="meta_description" class="admin-input" value="{{ old('meta_description') }}" placeholder="คำโปรยสั้นๆ สำหรับคนค้นหาใน Google" />
+        <label> SEO Meta Description</label>
+        <input type="text" name="meta_description" class="admin-input" value="{{ old('meta_description') }}" />
       </div>
 
       <div class="admin-field">
-        <label>5 Keywords หลัก (SEO)</label>
-        <input type="text" name="keywords" class="admin-input" value="{{ old('keywords') }}" placeholder="คัดคำสำคัญ 5 คำ" />
-      </div>
-
-      <div class="admin-field">
-        <label>10 Keywords รอง (LSI Keywords)</label>
-        <input type="text" name="lsi_keywords" class="admin-input" value="{{ old('lsi_keywords') }}" placeholder="คำใกล้เคียงเพื่อขยายฐานการค้นหา..." />
+        <label>Keywords</label>
+        <input type="text" name="keywords" class="admin-input" value="{{ old('keywords') }}" />
       </div>
 
       <div class="admin-field">
         <label for="published_at">เวลาเผยแพร่ (ไม่ใส่ = ตอนนี้)</label>
-        <input type="datetime-local" id="published_at" name="published_at" class="admin-input" value="{{ old('published_at') }}" />
+        <input type="datetime-local" name="published_at" class="admin-input" value="{{ old('published_at') }}" />
       </div>
 
       <div class="admin-field" style="margin-top:20px;">
         <label>รูปภาพบทความ (จัตุรัส 1:1)</label>
-        <div class="admin-drop-zone" data-drop-zone>
-          <div class="admin-drop-zone__icon">🖼️</div>
-          <div class="admin-drop-zone__text">ลากรูปมาวางตรงนี้ หรือคลิกเพื่อเลือกไฟล์</div>
-          <input type="file" name="upload_media_sq" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
+        <div class="admin-drop-zone">
+          <span>🖼️ ลากรูปมาวางตรงนี้ หรือคลิกเลือกไฟล์</span>
+          <input type="file" name="upload_media_sq" class="admin-drop-zone__input" accept="image/*" onchange="previewImg(this)" />
         </div>
-        
-        <div class="admin-preview-box" data-preview-box style="display:none;">
-          <img src="" class="admin-preview-img" data-preview-img style="aspect-ratio:1/1; object-fit:cover;" />
-          <div class="admin-preview-info" data-preview-info></div>
+        <div id="preview-container" class="admin-preview-box" style="display:none;">
+          <img id="img-preview" src="" class="admin-preview-img" style="aspect-ratio:1/1; object-fit:cover;" />
+          <p id="img-info" class="admin-preview-info"></p>
         </div>
       </div>
 
-      <label class="admin-field" style="grid-template-columns: auto 1fr; align-items: center; gap: 10px; display: grid; margin-top:20px;">
-        <input type="checkbox" name="is_published" value="1" @checked(old('is_published', true)) />
-        <span style="font-size: 14px;">เผยแพร่ทันที</span>
+      <label style="display:flex; align-items:center; gap:10px; margin-top:20px;">
+        <input type="checkbox" name="is_published" value="1" @checked(old('is_published', true)) /> เผยแพร่ทันที
       </label>
 
-      <div class="admin-actions" style="margin-top:30px; display:flex; gap:10px;">
+      <div class="admin-actions" style="margin-top:30px;">
         <button type="submit" class="admin-button">🚀 สร้างและอัปโหลดบทความ</button>
         <a href="{{ route('admin.articles') }}" class="admin-button admin-button--secondary">ยกเลิก</a>
       </div>
@@ -147,60 +98,68 @@
 @endsection
 
 @section('scripts')
-  <script>
-    (function() {
-      // 1. RTE
-      document.querySelectorAll("[data-rte-shell]").forEach(shell => {
-        const editor = shell.querySelector("[data-rte-editor]");
-        const textarea = shell.parentElement.querySelector('textarea[name="content"]');
-        const form = shell.closest("form");
-        if (!editor || !textarea || !form) return;
-        shell.querySelectorAll("[data-rte-cmd]").forEach(btn => {
-          btn.addEventListener("click", () => {
-            const cmd = btn.dataset.rteCmd;
-            const val = btn.dataset.rteValue ?? null;
-            editor.focus();
-            document.execCommand(cmd, false, val);
-          });
-        });
-        shell.querySelectorAll("[data-rte-action='link']").forEach(btn => {
-          btn.addEventListener("click", () => {
-            const url = window.prompt("ใส่ URL:");
-            if (!url) return;
-            editor.focus();
-            document.execCommand("createLink", false, url);
-          });
-        });
-        form.addEventListener("submit", () => { textarea.value = editor.innerHTML.trim(); });
-      });
+<script>
+  const editor = document.getElementById('rich-editor');
+  const hiddenContent = document.getElementById('hidden-content');
+  const form = document.getElementById('main-create-form');
 
-      // 2. Preview
-      document.querySelectorAll('[data-drop-zone-input]').forEach(input => {
-        input.addEventListener('change', function(e) {
-          const file = e.target.files[0];
-          if (file) {
-            const reader = new FileReader();
-            reader.onload = (event) => {
-              const container = input.closest('.admin-field');
-              const previewImg = container.querySelector('[data-preview-img]');
-              const previewBox = container.querySelector('[data-preview-box]');
-              const previewInfo = container.querySelector('[data-preview-info]');
-              if (previewImg) previewImg.src = event.target.result;
-              if (previewBox) previewBox.style.display = 'block';
-              if (previewInfo) previewInfo.innerText = `🌟 เลือกไฟล์: ${file.name}`;
-            };
-            reader.readAsDataURL(file);
-          }
-        });
-      });
+  function execCmd(cmd, val = null) {
+    editor.focus();
+    document.execCommand(cmd, false, val);
+    syncContent();
+  }
 
-      // 3. Feedback
-      const form = document.getElementById('article-create-form');
-      form.addEventListener('submit', () => {
-        const btn = form.querySelector('button[type="submit"]');
-        btn.disabled = true;
-        btn.innerText = '🚀 กำลังสร้างบทความ...';
+  function addLink() {
+    const url = prompt("ใส่ URL:");
+    if (url) execCmd("createLink", url);
+  }
+
+  function syncContent() {
+    hiddenContent.value = editor.innerHTML;
+  }
+
+  editor.addEventListener('input', syncContent);
+  editor.addEventListener('blur', syncContent);
+
+  function previewImg(input) {
+    if (input.files && input.files[0]) {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        document.getElementById('img-preview').src = e.target.result;
+        document.getElementById('preview-container').style.display = 'block';
+        document.getElementById('img-info').innerText = "📂 เตรียมอัปโหลดไฟล์: " + input.files[0].name;
+      };
+      reader.readAsDataURL(input.files[0]);
+    }
+  }
+
+  // DRAG & DROP
+  const dropZone = document.querySelector('.admin-drop-zone');
+  const fileInput = document.querySelector('.admin-drop-zone__input');
+
+  if (dropZone && fileInput) {
+    ['dragover', 'dragenter'].forEach(type => {
+      dropZone.addEventListener(type, (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = "#1d4f9f";
+        dropZone.style.background = "#f0f7ff";
       });
-    })();
-  </script>
+    });
+    ['dragleave', 'dragend', 'drop'].forEach(type => {
+      dropZone.addEventListener(type, () => {
+        dropZone.style.borderColor = "#d8e0ec";
+        dropZone.style.background = "#f8fbff";
+      });
+    });
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        fileInput.files = e.dataTransfer.files;
+        previewImg(fileInput);
+      }
+    });
+  }
+
+  form.addEventListener('submit', syncContent);
+</script>
 @endsection

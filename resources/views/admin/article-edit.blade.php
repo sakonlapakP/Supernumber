@@ -175,6 +175,35 @@
     }
   }
 
+  // 3. DRAG & DROP
+  const dropZone = document.querySelector('.admin-drop-zone');
+  const fileInput = document.querySelector('.admin-drop-zone__input');
+
+  if (dropZone && fileInput) {
+    ['dragover', 'dragenter'].forEach(type => {
+      dropZone.addEventListener(type, (e) => {
+        e.preventDefault();
+        dropZone.style.borderColor = "#1d4f9f";
+        dropZone.style.background = "#f0f7ff";
+      });
+    });
+
+    ['dragleave', 'dragend', 'drop'].forEach(type => {
+      dropZone.addEventListener(type, () => {
+        dropZone.style.borderColor = "#d8e0ec";
+        dropZone.style.background = "#f8fbff";
+      });
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        fileInput.files = e.dataTransfer.files;
+        previewImg(fileInput);
+      }
+    });
+  }
+
   // 4. ENSURE SYNC ON SUBMIT
   form.addEventListener('submit', (e) => {
     syncContent();
