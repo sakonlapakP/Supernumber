@@ -35,8 +35,8 @@
   <section class="admin-card admin-feature-card">
     <form id="main-create-form" action="{{ route('admin.articles.store') }}" method="post" class="admin-form">
       @csrf
-      <input type="hidden" id="upload_media_land_b64" name="upload_media_land_b64" value="" />
-      <input type="hidden" id="upload_media_sq_b64" name="upload_media_sq_b64" value="" />
+      <input type="hidden" id="land_path" name="land_path" value="" />
+      <input type="hidden" id="sq_path" name="sq_path" value="" />
 
       <div class="admin-field">
         <label for="title">หัวข้อบทความ</label>
@@ -83,7 +83,7 @@
       <div class="admin-image-grid">
         <div class="admin-field" style="margin-top:30px; border-left: 4px solid #2563eb; padding-left: 15px;">
           <label style="font-size: 16px; color: #1e293b; font-weight: bold;">รูปหน้ารวมบทความ (แนวนอน 16:9 / 4:3)</label>
-          <div class="admin-drop-zone" data-drop-zone data-b64-target="upload_media_land_b64">
+          <div class="admin-drop-zone" data-drop-zone data-path-target="land_path">
             <input type="file" id="upload_media_land" class="admin-drop-zone__input" accept="image/jpeg,image/png,image/webp" data-drop-zone-input />
             <label for="upload_media_land" class="drop-text">🖼️ ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</label>
             <button type="button" class="admin-drop-zone__button" data-drop-zone-button>browse</button>
@@ -96,7 +96,7 @@
 
         <div class="admin-field" style="margin-top:30px; border-left: 4px solid #10b981; padding-left: 15px;">
           <label style="font-size: 16px; color: #1e293b; font-weight: bold;">รูปภาพบทความ (จัตุรัส 1:1)</label>
-          <div class="admin-drop-zone" data-drop-zone data-b64-target="upload_media_sq_b64">
+          <div class="admin-drop-zone" data-drop-zone data-path-target="sq_path">
             <input type="file" id="upload_media_sq" class="admin-drop-zone__input" accept="image/jpeg,image/png,image/webp" data-drop-zone-input />
             <label for="upload_media_sq" class="drop-text">🖼️ ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</label>
             <button type="button" class="admin-drop-zone__button" data-drop-zone-button>browse</button>
@@ -121,147 +121,126 @@
 @endsection
 
 @push('scripts')
-  <script>
+<script>
   window.execCmd = (cmd, val = null) => {
     const editor = document.getElementById('rich-editor');
     editor.focus();
     document.execCommand(cmd, false, val);
     window.syncContent();
   };
-
   window.addLink = () => {
-    const url = prompt("ใส่ URL:");
-    if (url) window.execCmd("createLink", url);
+    const url = prompt('ใส่ URL:');
+    if (url) window.execCmd('createLink', url);
+  };
+  window.syncContent = () => {
+    const ed = document.getElementById('rich-editor');
+    const hc = document.getElementById('hidden-content');
+    if (ed && hc) hc.value = ed.innerHTML;
   };
 
-  window.syncContent = () => {
-    const editor = document.getElementById('rich-editor');
-    const hiddenContent = document.getElementById('hidden-content');
-    if (editor && hiddenContent) hiddenContent.value = editor.innerHTML;
+  let pendingUploads = 0;
+
+  const compressToBlob = (file, cb) => {
+    const img = new Image();
+    const ou = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(ou);
+      const MAX = 900;
+      let w = img.width, h = img.height;
+      if (w > MAX || h > MAX) {
+        if (w > h) { h = Math.round(h * MAX / w); w = MAX; }
+        else       { w = Math.round(w * MAX / h); h = MAX; }
+      }
+      const c = document.createElement('canvas');
+      c.width = w; c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0, w, h);
+      c.toBlob(blob => cb(blob), 'image/jpeg', 0.82);
+    };
+    img.src = ou;
+  };
+
+  const preUpload = async (file, pathInput, previewImg, previewBox, previewInfo, dropText) => {
+    pendingUploads++;
+    previewInfo.innerText = '⏳ กำลังอัปโหลดรูป...';
+    previewBox.style.display = 'block';
+    try {
+      previewImg.src = URL.createObjectURL(file);
+      const blob = await new Promise(resolve => compressToBlob(file, resolve));
+      const fd = new FormData();
+      fd.append('img', blob, 'img.jpg');
+      fd.append('_token', document.querySelector('meta[name="csrf-token"]')?.content
+        || document.querySelector('input[name="_token"]')?.value || '');
+      const resp = await fetch('/p/img', { method: 'POST', body: fd });
+      const json = await resp.json();
+      if (json.ok && json.path) {
+        pathInput.value = json.path;
+        previewInfo.innerText = `✅ อัปโหลดเรียบร้อย: ${file.name} → ${Math.round(blob.size/1024)} KB`;
+        dropText.innerText = 'เปลี่ยนรูปคลิกที่นี่';
+      } else {
+        previewInfo.innerText = `❌ ${json.error || 'Upload failed'}`;
+        pathInput.value = '';
+        previewBox.style.display = 'none';
+      }
+    } catch(err) {
+      previewInfo.innerText = `❌ เน็ตเวิร์ค: ${err.message}`;
+      pathInput.value = '';
+    } finally {
+      pendingUploads--;
+    }
   };
 
   const initDropZone = (zone) => {
-    const input = zone.querySelector('[data-drop-zone-input]');
-    const button = zone.querySelector('[data-drop-zone-button]');
-    const previewBox = zone.parentElement.querySelector('[data-preview-box]');
-    const previewImg = zone.parentElement.querySelector('[data-preview-img]');
+    const input     = zone.querySelector('[data-drop-zone-input]');
+    const button    = zone.querySelector('[data-drop-zone-button]');
+    const previewBox  = zone.parentElement.querySelector('[data-preview-box]');
+    const previewImg  = zone.parentElement.querySelector('[data-preview-img]');
     const previewInfo = zone.parentElement.querySelector('[data-preview-info]');
-    const dropText = zone.querySelector('.drop-text');
-    const maxSize = 5 * 1024 * 1024; // 5 MB raw file limit (will be compressed)
-    const b64TargetId = zone.getAttribute('data-b64-target');
-    const b64Input = b64TargetId ? document.getElementById(b64TargetId) : null;
+    const dropText  = zone.querySelector('.drop-text');
+    const pathInput = document.getElementById(zone.getAttribute('data-path-target'));
+    const maxSize = 5 * 1024 * 1024;
 
-    // Compress image via Canvas before storing as base64
-    const compressAndStore = (file, onDone) => {
-      const img = new Image();
-      const objectUrl = URL.createObjectURL(file);
-      img.onload = () => {
-        URL.revokeObjectURL(objectUrl);
-        const MAX_DIM = 900;
-        let w = img.width, h = img.height;
-        if (w > MAX_DIM || h > MAX_DIM) {
-          if (w > h) { h = Math.round(h * MAX_DIM / w); w = MAX_DIM; }
-          else       { w = Math.round(w * MAX_DIM / h); h = MAX_DIM; }
-        }
-        const canvas = document.createElement('canvas');
-        canvas.width = w; canvas.height = h;
-        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-        const dataUri = canvas.toDataURL('image/jpeg', 0.82);
-        onDone(dataUri);
-      };
-      img.src = objectUrl;
-    };
-
-    const updatePreview = (file) => {
+    const handleFile = (file) => {
       if (!file || !file.type.startsWith('image/')) return;
-
-      if (file.size > maxSize) {
-        alert(`🚨 ไฟล์ใหญ่เกินไป!\n\nรูป "${file.name}" มีขนาด ${(file.size / 1024 / 1024).toFixed(2)} MB\nระบบรองรับได้ไม่เกิน 5 MB ครับ`);
-        input.value = '';
-        return;
-      }
-
-      compressAndStore(file, (dataUri) => {
-        const kb = Math.round(dataUri.length * 0.75 / 1024);
-        previewImg.src = dataUri;
-        previewBox.style.display = 'block';
-        previewInfo.innerText = `✅ รูปพร้อมอัปโหลด: ${file.name} → บีบอัดเหลือ ~${kb} KB`;
-        dropText.innerText = 'เปลี่ยนรูปคลิกที่นี่ หรือลากรูปใหม่มาวาง';
-        if (b64Input) b64Input.value = dataUri;
-      });
+      if (file.size > maxSize) { alert('🚨 ไฟล์ใหญ่เกิน 5 MB'); input.value=''; return; }
+      preUpload(file, pathInput, previewImg, previewBox, previewInfo, dropText);
     };
 
-    input.addEventListener('change', (e) => {
-      if (e.target.files.length > 0) {
-        updatePreview(e.target.files[0]);
-      }
-    });
-
-    if (button) {
-      button.addEventListener('click', (e) => {
-        e.preventDefault();
-        input.click();
-      });
-    }
-
-    ['dragover', 'dragenter'].forEach((type) => {
-      zone.addEventListener(type, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        zone.classList.add('is-dragover');
-      });
-    });
-
-    ['dragleave', 'dragend', 'drop'].forEach((type) => {
-      zone.addEventListener(type, (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        zone.classList.remove('is-dragover');
-      });
-    });
-
-    zone.addEventListener('drop', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        input.files = e.dataTransfer.files;
-        updatePreview(e.dataTransfer.files[0]);
-      }
-    });
+    input.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
+    if (button) button.addEventListener('click', e => { e.preventDefault(); input.click(); });
+    ['dragover','dragenter'].forEach(t => zone.addEventListener(t, e => { e.preventDefault(); e.stopPropagation(); zone.classList.add('is-dragover'); }));
+    ['dragleave','dragend','drop'].forEach(t => zone.addEventListener(t, e => { e.preventDefault(); e.stopPropagation(); zone.classList.remove('is-dragover'); }));
+    zone.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer.files?.[0]) handleFile(e.dataTransfer.files[0]); });
   };
 
   document.querySelectorAll('[data-drop-zone]').forEach(initDropZone);
-  document.addEventListener('dragover', (e) => {
-    e.preventDefault();
-  });
-  document.addEventListener('drop', (e) => {
-    e.preventDefault();
-  });
+  document.addEventListener('dragover', e => e.preventDefault());
+  document.addEventListener('drop', e => e.preventDefault());
 
-  document.addEventListener('DOMContentLoaded', function() {
+  document.addEventListener('DOMContentLoaded', () => {
     const editor = document.getElementById('rich-editor');
-    const form = document.getElementById('main-create-form');
-    const initialContent = @json(old('content', ''));
-
-    editor.innerHTML = initialContent || '';
+    const form   = document.getElementById('main-create-form');
+    editor.innerHTML = @json(old('content', '')) || '';
     editor.addEventListener('input', window.syncContent);
-    editor.addEventListener('blur', window.syncContent);
+    editor.addEventListener('blur',  window.syncContent);
     window.syncContent();
 
-    form.addEventListener('submit', (e) => {
+    form.addEventListener('submit', e => {
       window.syncContent();
+      if (pendingUploads > 0) {
+        e.preventDefault();
+        alert('⏳ ยังอัปโหลดรูปไม่เสร็จ กรุณารอสักครู่ครับ'); return;
+      }
       const content = document.getElementById('hidden-content').value.trim();
       if (!content || content.replace(/<[^>]*>?/gm, '').trim() === '') {
         e.preventDefault();
-        alert('🛑 กรุณากรอก "เนื้อหาบทความ" ด้วยครับพี่! (กล่องพิมพ์ข้อความตรงกลาง)\n\nระบบป้องกันการเซฟเพื่อไม่ให้ไฟล์ภาพที่เลือกไว้หายไปครับ');
+        alert('🛑 กรุณากรอก "เนื้อหาบทความ" ด้วยครับพี่!');
         editor.focus();
-        editor.style.border = "2px solid #ef4444";
-        setTimeout(() => editor.style.border = "1px solid #d8e0ec", 3000);
-      } else {
-        const btn = form.querySelector('button[type="submit"]');
-        btn.disabled = true;
-        btn.innerText = '⏳ กำลังบันทึกข้อมูล...';
+        editor.style.border = '2px solid #ef4444';
+        setTimeout(() => editor.style.border = '1px solid #d8e0ec', 3000);
+        return;
       }
+      const btn = form.querySelector('button[type="submit"]');
+      btn.disabled = true; btn.innerText = '⏳ กำลังบันทึก...';
     });
   });
 </script>
