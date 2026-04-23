@@ -6,8 +6,8 @@
   <style>
     .admin-drop-zone { border: 2px dashed #d8e0ec; border-radius: 12px; padding: 24px; text-align: center; background: #f8fbff; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 100px; position: relative; transition: all 0.3s; }
     .admin-drop-zone.is-dragover { border-color: #1d4f9f; background: #f0f7ff; }
-    .admin-drop-zone__input { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; pointer-events: none; }
-    .admin-drop-zone__button { border: 0; background: transparent; color: inherit; font: inherit; padding: 0; cursor: pointer; }
+    .admin-drop-zone__input { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+    .admin-drop-zone__button { border: 1px solid #cfd8e7; background: #fff; color: #1e293b; font: inherit; padding: 8px 14px; border-radius: 999px; cursor: pointer; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
     .admin-preview-img { max-width: 180px; border-radius: 10px; border: 1px solid #d8e0ec; display: block; }
     .admin-preview-box { margin-top: 12px; }
     .admin-preview-info { font-size: 12px; color: #94a3b8; margin-top: 6px; }
@@ -92,8 +92,8 @@
           <label style="font-size: 16px; color: #1e293b; font-weight: bold;">รูปหน้ารวมบทความ (แนวนอน 16:9 / 4:3)</label>
           <div class="admin-drop-zone" data-drop-zone>
             <input type="file" id="upload_media_land" name="upload_media_land" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
-            <span class="drop-text">🖼️ ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</span>
-            <button type="button" class="admin-drop-zone__button" data-drop-zone-button>คลิกเพื่อเลือกไฟล์</button>
+            <label for="upload_media_land" class="drop-text">🖼️ ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</label>
+            <button type="button" class="admin-drop-zone__button" data-drop-zone-button>browse</button>
           </div>
           <div class="admin-preview-box" data-preview-box style="{{ ($article->cover_image_landscape_path || $article->cover_image_path) ? '' : 'display:none;' }}">
             <img
@@ -112,8 +112,8 @@
           <label style="font-size: 16px; color: #1e293b; font-weight: bold;">รูปภาพบทความ (จัตุรัส 1:1)</label>
           <div class="admin-drop-zone" data-drop-zone>
             <input type="file" id="upload_media_sq" name="upload_media_sq" class="admin-drop-zone__input" accept="image/*" data-drop-zone-input />
-            <span class="drop-text">🖼️ ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</span>
-            <button type="button" class="admin-drop-zone__button" data-drop-zone-button>คลิกเพื่อเลือกไฟล์</button>
+            <label for="upload_media_sq" class="drop-text">🖼️ ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</label>
+            <button type="button" class="admin-drop-zone__button" data-drop-zone-button>browse</button>
           </div>
           <div class="admin-preview-box" data-preview-box style="{{ ($article->cover_image_square_path || $article->cover_image_path) ? '' : 'display:none;' }}">
             <img
@@ -230,26 +230,25 @@
       });
     }
 
-    zone.addEventListener('click', (e) => {
-      if (e.target === input || e.target === button) return;
-      input.click();
-    });
-
     ['dragover', 'dragenter'].forEach((type) => {
       zone.addEventListener(type, (e) => {
         e.preventDefault();
+        e.stopPropagation();
         zone.classList.add('is-dragover');
       });
     });
 
     ['dragleave', 'dragend', 'drop'].forEach((type) => {
-      zone.addEventListener(type, () => {
+      zone.addEventListener(type, (e) => {
+        e.preventDefault();
+        e.stopPropagation();
         zone.classList.remove('is-dragover');
       });
     });
 
     zone.addEventListener('drop', (e) => {
       e.preventDefault();
+      e.stopPropagation();
       if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
         input.files = e.dataTransfer.files;
         updatePreview(e.dataTransfer.files[0]);
@@ -258,6 +257,12 @@
   };
 
   document.querySelectorAll('[data-drop-zone]').forEach(initDropZone);
+  document.addEventListener('dragover', (e) => {
+    e.preventDefault();
+  });
+  document.addEventListener('drop', (e) => {
+    e.preventDefault();
+  });
 
   window.handleFile = (file) => {
     if (!file || !file.type.startsWith('image/')) return;
