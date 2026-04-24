@@ -43,6 +43,16 @@
         <input type="text" id="title" name="title" class="admin-input" value="{{ old('title') }}" required placeholder="ระบุหัวข้อบทความ..." />
       </div>
 
+      <div class="admin-field" style="margin-top:20px;">
+        <label for="slug">Slug (ที่อยู่ URL)</label>
+        <input type="text" id="slug" name="slug" class="admin-input" value="{{ old('slug') }}" placeholder="เช่น my-new-article (เว้นว่างไว้ระบบจะสร้างจากหัวข้อให้อัตโนมัติ)" />
+      </div>
+
+      <div class="admin-field" style="margin-top:20px;">
+        <label for="excerpt">คำเกริ่นสั้น (Excerpt สำหรับแสดงบนการ์ดหน้ารวม)</label>
+        <textarea name="excerpt" class="admin-input" style="min-height: 60px; padding-top: 12px;" placeholder="พิมพ์คำโปรยสั้นๆ... (ไม่บังคับ)">{{ old('excerpt') }}</textarea>
+      </div>
+
       <div class="admin-field" style="margin-top:20px; border-left: 4px solid #3b82f6; padding-left: 15px;">
         <label style="font-size: 16px; color: #1e293b; font-weight: bold;">เนื้อหาบทความ (สำหรับแสดงบนหน้าเว็บหลัก)</label>
         <div class="admin-rte">
@@ -58,11 +68,6 @@
           <div id="rich-editor" class="admin-rte__editor" contenteditable="true" style="min-height: 400px; font-size: 16px; line-height: 1.8;"></div>
         </div>
         <textarea id="hidden-content" name="content" style="display: none;">{{ old('content') }}</textarea>
-      </div>
-
-      <div class="admin-field" style="margin-top:20px;">
-        <label for="excerpt">คำเกริ่นสั้น (Excerpt สำหรับแสดงบนการ์ดหน้ารวม)</label>
-        <textarea name="excerpt" class="admin-input" style="min-height: 60px; padding-top: 12px;" placeholder="พิมพ์คำโปรยสั้นๆ... (ไม่บังคับ)">{{ old('excerpt') }}</textarea>
       </div>
 
       <div class="admin-field" style="margin-top:20px;">
