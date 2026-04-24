@@ -53,16 +53,16 @@
         grid-template-columns: repeat(4, 240px) !important;
         grid-auto-rows: auto !important;
         justify-content: center !important;
-        align-items: start !important;
+        align-items: stretch !important;
         gap: 16px !important;
       }
     }
 
-    /* Ultra-Compact Card Appearance */
+    /* Ideal Balanced Card Appearance (Matching Request) */
     .number-card--home {
-      min-height: 0 !important;
-      height: auto !important;
-      padding: 16px 14px !important;
+      min-height: 290px !important;
+      height: 100% !important;
+      padding: 20px 15px !important;
       gap: 12px !important;
       display: flex !important;
       flex-direction: column !important;
@@ -71,40 +71,38 @@
     .number-card--home .card-topic-icon {
       background: rgba(232, 243, 235, 0.95) !important;
       border-radius: 999px !important;
-      width: 22px !important;
-      height: 22px !important;
+      width: 26px !important;
+      height: 26px !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
-      font-size: 11px !important;
+      font-size: 14px !important;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 2px 6px rgba(34, 94, 67, 0.08) !important;
     }
     .number-card--home .card-body {
-      flex-grow: 0 !important;
+      flex-grow: 1 !important;
       display: flex !important;
       flex-direction: column !important;
-      justify-content: flex-start !important;
-      padding: 0 !important;
-      gap: 4px !important;
+      justify-content: center !important;
+      padding: 4px 0 !important;
     }
     .number-card--home .card-meta-stack {
-      gap: 2px !important;
+      gap: 6px !important;
     }
     .number-card--home .card-network-main {
       font-weight: 800 !important;
-      font-size: 11px !important;
+      font-size: 12px !important;
     }
     .number-card--home .card-meta-price {
-      font-size: 16px !important;
-      margin-top: 0 !important;
-      line-height: 1.2 !important;
+      font-size: 17px !important;
+      margin-top: 2px !important;
     }
     .number-card--home .card-btn {
-      margin-top: 0 !important;
-      min-height: 40px !important;
+      margin-top: auto !important;
+      min-height: 42px !important;
       font-size: 15px !important;
       font-weight: 700 !important;
-      border-radius: 10px !important;
+      border-radius: 12px !important;
     }
 
     /* Redesigned Home Search Section - In-lined for Instant Load */
@@ -381,7 +379,7 @@
         grid-template-columns: repeat(3, 240px) !important;
         grid-auto-rows: auto !important;
         justify-content: center !important;
-        align-items: start !important;
+        align-items: stretch !important;
         gap: 16px !important;
       }
     }
@@ -393,7 +391,7 @@
         grid-template-columns: repeat(2, 240px) !important;
         grid-auto-rows: auto !important;
         justify-content: center !important;
-        align-items: start !important;
+        align-items: stretch !important;
         gap: 16px !important;
       }
     }
