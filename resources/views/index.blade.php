@@ -62,22 +62,22 @@
       }
     }
 
-    /* Premium Aesthetics Fix - Matching Image 29 Perfectly */
+    /* Compact Premium Aesthetics - 300px Height */
     #home-prepaid-grid, #home-postpaid-grid,
     body .home-card-grid[data-view="grid"] {
-        grid-auto-rows: 330px !important;
-        grid-template-rows: repeat(auto-fill, 330px) !important;
-        gap: 24px 18px !important;
+        grid-auto-rows: 300px !important;
+        grid-template-rows: repeat(auto-fill, 300px) !important;
+        gap: 20px 16px !important;
         align-items: stretch !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home {
-      height: 330px !important;
-      min-height: 330px !important;
-      padding: 16px !important;
-      border-radius: 28px !important;
+      height: 300px !important;
+      min-height: 300px !important;
+      padding: 14px !important;
+      border-radius: 26px !important;
       background: #ffffff !important;
-      box-shadow: 0 10px 30px rgba(45, 33, 24, 0.08) !important;
+      box-shadow: 0 8px 25px rgba(45, 33, 24, 0.08) !important;
       border: 1px solid rgba(0,0,0,0.04) !important;
       display: flex !important;
       flex-direction: column !important;
@@ -90,14 +90,14 @@
     body .home-card-grid[data-view="grid"] .number-card--home .card-top {
       background: #1a1612 !important;
       color: #ffffff !important;
-      padding: 15px 10px !important;
-      border-radius: 20px !important;
-      font-size: 22px !important;
+      padding: 12px 10px !important;
+      border-radius: 18px !important;
+      font-size: 21px !important;
       font-weight: 800 !important;
       margin: 0 !important;
       display: block !important;
       line-height: 1 !important;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1) !important;
       flex-shrink: 0 !important;
     }
 
@@ -106,24 +106,23 @@
       justify-content: center !important;
       align-items: center !important;
       flex-wrap: wrap !important;
-      gap: 6px !important;
-      margin: 12px 0 2px 0 !important;
-      min-height: 55px !important; /* Balanced icon zone height */
-      max-height: 55px !important;
+      gap: 5px !important;
+      margin: 10px 0 2px 0 !important;
+      min-height: 45px !important; /* Compact icon zone */
+      max-height: 45px !important;
       overflow: hidden !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-topic-icon {
       background: #f8faf9 !important;
       border-radius: 50% !important;
-      width: 30px !important;
-      height: 30px !important;
+      width: 28px !important;
+      height: 28px !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
-      font-size: 14px !important;
+      font-size: 13px !important;
       border: 1px solid rgba(0,0,0,0.02) !important;
-      box-shadow: 0 2px 4px rgba(0,0,0,0.04) !important;
       flex-shrink: 0 !important;
     }
 
@@ -138,18 +137,18 @@
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-meta-stack {
-      gap: 4px !important;
+      gap: 3px !important;
       width: 100% !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-network-main {
       font-weight: 800 !important;
-      font-size: 14px !important;
+      font-size: 13px !important;
       letter-spacing: 0.05em !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-meta-price {
-      font-size: 19px !important;
+      font-size: 18px !important;
       font-weight: 800 !important;
       color: #1a1612 !important;
       margin-top: 2px !important;
@@ -159,16 +158,16 @@
     body .home-card-grid[data-view="grid"] .number-card--home .card-btn {
       background: #e1b155 !important;
       color: #1a1612 !important;
-      min-height: 48px !important;
-      font-size: 17px !important;
+      min-height: 44px !important;
+      font-size: 16px !important;
       font-weight: 800 !important;
-      border-radius: 18px !important;
-      margin-top: 10px !important;
+      border-radius: 16px !important;
+      margin-top: 8px !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
       flex-shrink: 0 !important;
-      box-shadow: 0 4px 15px rgba(225, 177, 85, 0.2) !important;
+      box-shadow: 0 4px 12px rgba(225, 177, 85, 0.2) !important;
     }
 
     /* List View Override (Shrinks the cards back down) */
