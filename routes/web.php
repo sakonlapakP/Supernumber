@@ -2660,7 +2660,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         $isCurrentlyPublished = (bool) $article->is_published;
         $isPublished = $request->boolean('is_published');
-        $publishedAt = $isCurrentlyPublished ? $article->published_at : ($data['published_at'] ?? null);
+        $publishedAt = $data['published_at'] ?? null;
+        
         if (! $isPublished) {
             $publishedAt = null;
         }
