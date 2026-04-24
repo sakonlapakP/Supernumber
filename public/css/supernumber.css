@@ -185,8 +185,8 @@ body.home-scale-soft .home-card-grid {
 }
 
 body.home-scale-soft .number-card {
-  padding: 12px;
-  gap: 8px;
+  padding: 18px 15px;
+  gap: 12px;
 }
 
 body.home-scale-soft .card-top {
@@ -2618,12 +2618,11 @@ body.under-construction-page main {
 
 @media (min-width: 901px) {
   .home-card-grid[data-view="grid"] .number-card--home {
-    height: 100%;
-    display: grid;
-    grid-template-rows: auto 1fr auto;
-    align-content: stretch;
-    gap: 8px;
-    padding: 14px 12px 12px;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 18px 15px 15px;
   }
 
   .home-card-grid[data-view="grid"] .number-card--home .card-top {
@@ -2631,8 +2630,10 @@ body.under-construction-page main {
   }
 
   .home-card-grid[data-view="grid"] .number-card--home .card-body {
-    display: grid;
-    align-content: center;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
 
   .home-card-grid[data-view="grid"] .number-card--home .card-meta-stack {
@@ -5694,13 +5695,12 @@ body.under-construction-page main {
     width: min(100%, 240px);
     max-width: 240px;
     justify-self: center;
-    height: 100%;
-    display: grid;
-    grid-template-columns: 1fr;
+    min-height: 100%;
+    display: flex;
+    flex-direction: column;
     align-items: stretch;
-    align-content: stretch;
-    gap: 8px;
-    padding: 14px 12px 12px;
+    gap: 12px;
+    padding: 18px 15px 15px;
     border-radius: 16px;
     text-align: center;
   }
