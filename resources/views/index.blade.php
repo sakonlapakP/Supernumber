@@ -78,7 +78,7 @@
       border: 1px solid rgba(0,0,0,0.04) !important;
       display: flex !important;
       flex-direction: column !important;
-      justify-content: space-between !important;
+      justify-content: flex-start !important; /* Fix: Don't force extreme spacing */
       align-items: stretch !important;
       text-align: center !important;
     }
@@ -92,26 +92,30 @@
       font-weight: 800 !important;
       margin: 0 0 10px 0 !important;
       display: block !important;
+      line-height: 1.2 !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-topic-icons {
       display: flex !important;
       justify-content: center !important;
+      align-items: center !important;
+      flex-wrap: nowrap !important;
       gap: 6px !important;
-      margin: 5px 0 !important;
-      min-height: 40px !important;
+      margin: 0 0 10px 0 !important;
+      min-height: 32px !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-topic-icon {
       background: #f8faf9 !important;
       border-radius: 50% !important;
-      width: 36px !important;
-      height: 36px !important;
+      width: 32px !important;
+      height: 32px !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
-      font-size: 16px !important;
+      font-size: 15px !important;
       border: 1px solid rgba(0,0,0,0.03) !important;
+      flex-shrink: 0 !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-body {
@@ -120,31 +124,47 @@
       flex-direction: column !important;
       justify-content: center !important;
       align-items: center !important;
-      margin: 10px 0 !important;
+      margin: 0 !important;
+      padding-bottom: 10px !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-meta-stack {
       gap: 4px !important;
     }
 
+    body .home-card-grid[data-view="grid"] .number-card--home .card-network-main {
+      font-weight: 800 !important;
+      font-size: 14px !important;
+      letter-spacing: 0.05em !important;
+    }
+
+    body .home-card-grid[data-view="grid"] .number-card--home .card-network-suffix {
+      font-size: 14px !important;
+      font-weight: 600 !important;
+      color: #333 !important;
+      margin-left: 5px !important;
+    }
+
     body .home-card-grid[data-view="grid"] .number-card--home .card-meta-price {
-      font-size: 20px !important;
+      font-size: 18px !important; /* Fix: Reduce size slightly so postpaid fits */
       font-weight: 800 !important;
       color: #2d251f !important;
       margin-top: 4px !important;
+      line-height: 1.3 !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-btn {
       background: #e1b155 !important;
       color: #1a1612 !important;
-      min-height: 50px !important;
-      font-size: 18px !important;
+      min-height: 48px !important;
+      font-size: 17px !important;
       font-weight: 800 !important;
       border-radius: 18px !important;
-      margin-top: auto !important;
+      margin-top: auto !important; /* Fix: Push button to the very bottom */
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
+      flex-shrink: 0 !important;
     }
 
     /* List View Override (Shrinks the cards back down) */
