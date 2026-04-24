@@ -3357,5 +3357,14 @@ Route::get('/cron/publish/{secret}', function ($secret) {
                     ->orWhere('published_at', '<=', now());
             })
             ->count(),
+        'scheduled_future' => \App\Models\Article::query()
+            ->where('is_published', true)
+            ->whereNull('notified_at')
+            ->where('published_at', '>', now())
+            ->count(),
+        'already_notified' => \App\Models\Article::query()
+            ->whereNotNull('notified_at')
+            ->count(),
+        'server_time' => now()->timezone('Asia/Bangkok')->format('Y-m-d H:i:s'),
     ]);
 });
