@@ -1,20 +1,17 @@
 @extends('layouts.app')
 
 @section('title', $article->title . ' | Supernumber')
-@section('meta_description', $article->meta_description ?: ($article->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($article->content), 150)))
+@section('meta_description', $article->meta_description ?: ($article->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($article->sanitizedContent()), 150)))
 @section('canonical', route('articles.show', $article->slug))
 @section('og_title', $article->title . ' | Supernumber')
-@section('og_description', $article->meta_description ?: ($article->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($article->content), 160)))
+@section('og_description', $article->meta_description ?: ($article->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($article->sanitizedContent()), 160)))
 @section('og_url', route('articles.show', $article->slug))
 @php
   $detailCoverCandidate = $article->cover_image_square_path ?: $article->cover_image_path;
   $detailCoverPath = null;
 
   if ($detailCoverCandidate) {
-      $normalizedCoverPath = ltrim((string) $detailCoverCandidate, '/');
-      if (\Illuminate\Support\Facades\Storage::disk('public')->exists($normalizedCoverPath)) {
-          $detailCoverPath = $normalizedCoverPath;
-      }
+      $detailCoverPath = ltrim((string) $detailCoverCandidate, '/');
   }
 @endphp
 @if ($detailCoverPath)
@@ -24,7 +21,7 @@
 @section('content')
   @php
     $publishedAt = optional($article->published_at)->format('d/m/Y H:i') ?: optional($article->created_at)->format('d/m/Y H:i');
-    $contentRaw = trim((string) $article->content);
+    $contentRaw = trim((string) $article->sanitizedContent());
     $hasHtml = \Illuminate\Support\Str::contains($contentRaw, ['<p', '<div', '<br', '<ul', '<ol', '<li', '<strong', '<em', '<a', '<h1', '<h2', '<h3']);
     $contentForPattern = $contentRaw;
     if ($hasHtml) {
@@ -75,6 +72,7 @@
         <a href="{{ route('articles.index') }}" class="article-detail__back">กลับไปหน้าบทความ</a>
         <div class="article-detail__meta-row">
           <span class="article-detail__meta-pill">เผยแพร่ {{ $publishedAt }}</span>
+          <span class="article-detail__meta-pill article-detail__meta-pill--soft">👁️ ยอดเข้าชม {{ number_format($article->view_count) }} ครั้ง</span>
           <span class="article-detail__meta-pill article-detail__meta-pill--soft">Supernumber Insight</span>
         </div>
         <h1>{{ $article->title }}</h1>
@@ -106,7 +104,7 @@
       @endif
 
       @if ($hasHtml && ! $usePatternBlocks)
-        <div class="article-detail__content article-detail__content--html">{!! $article->content !!}</div>
+        <div class="article-detail__content article-detail__content--html">{!! $contentRaw !!}</div>
       @else
         <div class="article-detail__content">
           @foreach ($paragraphs as $paragraph)

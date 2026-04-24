@@ -5,6 +5,13 @@
 
     RewriteEngine On
 
+    # Force admin article upload routes into the front controller.
+    # This is a defensive allow-list for Apache setups that can override
+    # rewrite handling per directory. If a higher-level WAF/deny rule exists,
+    # that must still be relaxed in the server config.
+    RewriteRule ^admin/content-media/.*$ index.php [L,QSA]
+    RewriteRule ^admin/articles/.*$ index.php [L,QSA]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

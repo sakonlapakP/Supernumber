@@ -980,7 +980,7 @@
               'active' => request()->routeIs('admin.analytics*'),
             ],
             [
-              'label' => 'ตั้งค่า LINE',
+              'label' => 'ตั้งค่าการเชื่อมต่อ API',
               'url' => route('admin.line-settings'),
               'active' => request()->routeIs('admin.line-settings*'),
             ],
@@ -1127,15 +1127,6 @@
       (() => {
         const toggle = document.getElementById("admin-menu-toggle");
         const menu = document.getElementById("admin-mobile-nav");
-        const logoutForms = document.querySelectorAll(".admin-logout-confirm");
-
-        logoutForms.forEach((form) => {
-          form.addEventListener("submit", (event) => {
-            if (!window.confirm("ยืนยันออกจากระบบ?")) {
-              event.preventDefault();
-            }
-          });
-        });
 
         if (!toggle || !menu) return;
 

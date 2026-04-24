@@ -1,6 +1,6 @@
 @extends('layouts.admin')
 
-@section('title', 'Supernumber Admin | แก้ไขบทความ')
+@section('title', 'Supernumber Admin | สร้างบทความใหม่')
 
 @section('content')
   <style>
@@ -19,8 +19,8 @@
 
   <div class="admin-page-head">
     <div>
-      <h1>แก้ไขบทความ</h1>
-      <p class="admin-subtitle">แก้ไขข้อมูล (ระบบ Standard Upload + Drag & Drop)</p>
+      <h1>สร้างบทความใหม่</h1>
+      <p class="admin-subtitle">กรอกข้อมูลและอัปโหลดรูปภาพ (ระบบ Standard Upload + Drag & Drop)</p>
     </div>
   </div>
 
@@ -32,30 +32,26 @@
     </div>
   @endif
 
-  @if (session('status_message'))
-    <div class="admin-alert admin-alert--success">{{ session('status_message') }}</div>
-  @endif
-
   <section class="admin-card admin-feature-card">
-    <form id="main-update-form" action="{{ route('admin.articles.update', $article) }}" method="post" class="admin-form">
+    <form id="main-create-form" action="{{ route('admin.articles.store') }}" method="post" class="admin-form">
       @csrf
       <input type="hidden" id="land_path" name="land_path" value="" />
       <input type="hidden" id="sq_path" name="sq_path" value="" />
 
       <div class="admin-field">
         <label for="title">หัวข้อบทความ</label>
-        <input type="text" id="title" name="title" class="admin-input" value="{{ old('title', $article->title) }}" required />
+        <input type="text" id="title" name="title" class="admin-input" value="{{ old('title') }}" required placeholder="ระบุหัวข้อบทความ..." />
       </div>
 
       <div class="admin-field" style="margin-top:20px;">
         <label for="slug">Slug (ที่อยู่ URL)</label>
-        <input type="text" id="slug" name="slug" class="admin-input" value="{{ old('slug', $article->slug) }}" placeholder="เช่น my-article-url" />
+        <input type="text" id="slug" name="slug" class="admin-input" value="{{ old('slug') }}" placeholder="เช่น my-new-article (เว้นว่างไว้ระบบจะสร้างจากหัวข้อให้อัตโนมัติ)" />
         <p id="slug-feedback" style="margin: 8px 0 0; font-size: 14px; font-weight: bold; min-height: 20px;"></p>
       </div>
 
       <div class="admin-field" style="margin-top:20px;">
         <label for="excerpt">คำเกริ่นสั้น (Excerpt สำหรับแสดงบนการ์ดหน้ารวม)</label>
-        <textarea name="excerpt" class="admin-input" style="min-height: 60px; padding-top: 12px;" placeholder="พิมพ์คำโปรยสั้นๆ... (ไม่บังคับ)">{{ old('excerpt', $article->excerpt) }}</textarea>
+        <textarea name="excerpt" class="admin-input" style="min-height: 60px; padding-top: 12px;" placeholder="พิมพ์คำโปรยสั้นๆ... (ไม่บังคับ)">{{ old('excerpt') }}</textarea>
       </div>
 
       <div class="admin-field" style="margin-top:20px; border-left: 4px solid #3b82f6; padding-left: 15px;">
@@ -72,22 +68,22 @@
           </div>
           <div id="rich-editor" class="admin-rte__editor" contenteditable="true" style="min-height: 400px; font-size: 16px; line-height: 1.8;"></div>
         </div>
-        <textarea id="hidden-content" name="content" style="display: none;">{{ old('content', $article->content) }}</textarea>
+        <textarea id="hidden-content" name="content" style="display: none;">{{ old('content') }}</textarea>
       </div>
 
       <div class="admin-field" style="margin-top:20px;">
         <label> SEO Meta Description (สำหรับ Google)</label>
-        <input type="text" name="meta_description" class="admin-input" value="{{ old('meta_description', $article->meta_description) }}" />
+        <input type="text" name="meta_description" class="admin-input" value="{{ old('meta_description') }}" />
       </div>
 
       <div class="admin-field" style="margin-top:20px;">
         <label>Keywords (สำหรับ Google)</label>
-        <input type="text" name="keywords" class="admin-input" value="{{ old('keywords', $article->keywords) }}" />
+        <input type="text" name="keywords" class="admin-input" value="{{ old('keywords') }}" />
       </div>
 
       <div class="admin-field" style="margin-top:20px;">
         <label> LSI Keywords (คำค้นหาที่เกี่ยวข้องคั่นด้วยจุลภาค ,)</label>
-        <input type="text" name="lsi_keywords" class="admin-input" value="{{ old('lsi_keywords', $article->lsi_keywords) }}" placeholder="เช่น เปลี่ยนเบอร์, พลังตัวเลข, ทำนายดวง" />
+        <input type="text" name="lsi_keywords" class="admin-input" value="{{ old('lsi_keywords') }}" placeholder="เช่น เปลี่ยนเบอร์, พลังตัวเลข, ทำนายดวง" />
       </div>
 
 
@@ -100,16 +96,9 @@
             <label for="upload_media_land" class="drop-text">🖼️ ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</label>
             <button type="button" class="admin-drop-zone__button" data-drop-zone-button>browse</button>
           </div>
-          <div class="admin-preview-box" data-preview-box style="{{ ($article->cover_image_landscape_path || $article->cover_image_path) ? '' : 'display:none;' }}">
-            <img
-              src="{{ $article->cover_image_landscape_path ? asset('storage/' . $article->cover_image_landscape_path) : ($article->cover_image_path ? asset('storage/' . $article->cover_image_path) : '') }}"
-              class="admin-preview-img"
-              data-preview-img
-              style="aspect-ratio:16/9; object-fit:cover; border: 2px solid #2563eb;"
-            />
-            <p class="admin-preview-info" data-preview-info style="color: #2563eb; font-weight: bold;">
-              {{ $article->cover_image_landscape_path ?: ($article->cover_image_path ? 'รูปปัจจุบัน: ' . $article->cover_image_path : '') }}
-            </p>
+          <div class="admin-preview-box" data-preview-box style="display:none;">
+            <img src="" class="admin-preview-img" data-preview-img style="aspect-ratio:16/9; object-fit:cover; border: 2px solid #2563eb;" />
+            <p class="admin-preview-info" data-preview-info style="color: #2563eb; font-weight: bold;"></p>
           </div>
         </div>
 
@@ -120,75 +109,30 @@
             <label for="upload_media_sq" class="drop-text">🖼️ ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</label>
             <button type="button" class="admin-drop-zone__button" data-drop-zone-button>browse</button>
           </div>
-          <div class="admin-preview-box" data-preview-box style="{{ ($article->cover_image_square_path || $article->cover_image_path) ? '' : 'display:none;' }}">
-            <img
-              src="{{ $article->cover_image_square_path ? asset('storage/' . $article->cover_image_square_path) : ($article->cover_image_path ? asset('storage/' . $article->cover_image_path) : '') }}"
-              class="admin-preview-img"
-              data-preview-img
-              style="aspect-ratio:1/1; object-fit:cover; border: 2px solid #10b981;"
-            />
-            <p class="admin-preview-info" data-preview-info style="color: #059669; font-weight: bold;">
-              {{ $article->cover_image_square_path ?: ($article->cover_image_path ? 'รูปปัจจุบัน: ' . $article->cover_image_path : '') }}
-            </p>
+          <div class="admin-preview-box" data-preview-box style="display:none;">
+            <img src="" class="admin-preview-img" data-preview-img style="aspect-ratio:1/1; object-fit:cover; border: 2px solid #10b981;" />
+            <p class="admin-preview-info" data-preview-info style="color: #059669; font-weight: bold;"></p>
           </div>
         </div>
       </div>
 
       <div class="admin-field" style="margin-top:30px;">
         <label for="published_at">เวลาเผยแพร่ (เว้นว่างไว้เพื่อเผยแพร่ตอนนี้เลย)</label>
-        <input type="datetime-local" name="published_at" class="admin-input" value="{{ old('published_at', optional(optional($article->published_at)->timezone('Asia/Bangkok'))->format('Y-m-d\TH:i')) }}" />
+        <input type="datetime-local" name="published_at" class="admin-input" value="{{ old('published_at') }}" />
       </div>
 
       <input type="hidden" name="is_published" value="1" />
 
       <div class="admin-actions" style="margin-top:30px;">
-        <button type="submit" class="admin-button" style="font-size: 16px; padding: 12px 24px;">💾 บันทึกการแก้ไขบทความ</button>
-        @if($article->is_published)
-          <button type="submit" form="fb-share-form" class="admin-button" style="font-size: 16px; padding: 12px 24px; background: #1877F2; border-color: #1877F2;">🔵 แชร์ไป Facebook</button>
-        @endif
-        <a href="{{ route('admin.articles') }}" class="admin-button admin-button--secondary" style="font-size: 16px; padding: 12px 24px;">กลับหน้ารวม</a>
+        <button type="submit" class="admin-button" style="font-size: 16px; padding: 12px 24px;">🚀 สร้างและอัปโหลดบทความ</button>
+        <a href="{{ route('admin.articles') }}" class="admin-button admin-button--secondary" style="font-size: 16px; padding: 12px 24px;">ยกเลิก</a>
       </div>
     </form>
-    
-    @if($article->is_published)
-      <form id="fb-share-form" action="{{ route('admin.articles.share-fb', $article) }}" method="post" style="display: none;">
-        @csrf
-      </form>
-    @endif
-  </section>
-
-  <section class="admin-card admin-table-card" style="margin-top: 24px;">
-    <div class="admin-feature-card__head" style="padding: 18px 20px 0;">
-      <h2 class="admin-feature-card__title">คอมเมนต์</h2>
-    </div>
-    <div class="admin-table-wrap">
-      <table class="admin-table">
-        <thead>
-          <tr><th>เวลา</th><th>ผู้คอมเมนต์</th><th>เนื้อหา</th><th>สถานะ</th><th>จัดการ</th></tr>
-        </thead>
-        <tbody>
-          @foreach ($comments as $comment)
-            <tr>
-              <td>{{ $comment->created_at->format('Y-m-d H:i') }}</td>
-              <td>{{ $comment->commenter_name }}</td>
-              <td style="max-width: 400px; white-space: normal;">{{ $comment->content }}</td>
-              <td><span class="admin-status-pill {{ $comment->status === 'approved' ? 'admin-status-pill--active' : '' }}">{{ $comment->status === 'approved' ? 'อนุมัติแล้ว' : 'ซ่อน' }}</span></td>
-              <td>
-                <form action="{{ route('admin.articles.comments.' . ($comment->status === 'approved' ? 'archive' : 'unarchive'), [$article, $comment]) }}" method="POST">
-                  @csrf <button type="submit" class="admin-button admin-button--compact" style="background: {{ $comment->status === 'approved' ? '#f59e0b' : '#3b82f6' }}">{{ $comment->status === 'approved' ? 'ซ่อน' : 'โชว์' }}</button>
-                </form>
-              </td>
-            </tr>
-          @endforeach
-        </tbody>
-      </table>
-    </div>
   </section>
 @endsection
 
 @push('scripts')
 <script>
-  // ---- RTE helpers ----
   window.execCmd = (cmd, val = null) => {
     const editor = document.getElementById('rich-editor');
     editor.focus();
@@ -196,7 +140,7 @@
     window.syncContent();
   };
   window.addLink = () => {
-    const url = prompt('ใส่ URL เช่น https://supernumber.co.th');
+    const url = prompt('ใส่ URL:');
     if (url) window.execCmd('createLink', url);
   };
   window.syncContent = () => {
@@ -205,11 +149,8 @@
     if (ed && hc) hc.value = ed.innerHTML;
   };
 
-  // ---- Upload state tracker ----
-  // Tracks how many uploads are currently in-progress so we can block submit.
   let pendingUploads = 0;
 
-  // ---- Canvas compress -> Blob ----
   const compressToBlob = (file, cb) => {
     const img = new Image();
     const ou = URL.createObjectURL(file);
@@ -229,38 +170,29 @@
     img.src = ou;
   };
 
-  // ---- Pre-upload a file to /p/img, store returned path ----
   const preUpload = async (file, pathInput, previewImg, previewBox, previewInfo, dropText) => {
     pendingUploads++;
     previewInfo.innerText = '⏳ กำลังอัปโหลดรูป...';
     previewBox.style.display = 'block';
-
     try {
-      // Show preview immediately from local file
-      const ou = URL.createObjectURL(file);
-      previewImg.src = ou;
-
+      previewImg.src = URL.createObjectURL(file);
       const blob = await new Promise(resolve => compressToBlob(file, resolve));
       const fd = new FormData();
       fd.append('img', blob, 'img.jpg');
       fd.append('_token', document.querySelector('meta[name="csrf-token"]')?.content
         || document.querySelector('input[name="_token"]')?.value || '');
-
       const resp = await fetch('/p/img', { method: 'POST', body: fd });
       const json = await resp.json();
-
       if (json.ok && json.path) {
         pathInput.value = json.path;
-        const kb = Math.round(blob.size / 1024);
-        previewInfo.innerText = `✅ อัปโหลดเรียบร้อย: ${file.name} → ${kb} KB`;
+        previewInfo.innerText = `✅ อัปโหลดเรียบร้อย: ${file.name} → ${Math.round(blob.size/1024)} KB`;
         dropText.innerText = 'เปลี่ยนรูปคลิกที่นี่';
       } else {
-        previewInfo.innerText = `❌ อัปโหลดไม่สำเร็จ: ${json.error || 'unknown error'}`;
+        previewInfo.innerText = `❌ ${json.error || 'Upload failed'}`;
         pathInput.value = '';
-        previewImg.src = '';
         previewBox.style.display = 'none';
       }
-    } catch (err) {
+    } catch(err) {
       previewInfo.innerText = `❌ เน็ตเวิร์ค: ${err.message}`;
       pathInput.value = '';
     } finally {
@@ -268,7 +200,6 @@
     }
   };
 
-  // ---- Drop zone init ----
   const initDropZone = (zone) => {
     const input     = zone.querySelector('[data-drop-zone-input]');
     const button    = zone.querySelector('[data-drop-zone-button]');
@@ -276,49 +207,33 @@
     const previewImg  = zone.parentElement.querySelector('[data-preview-img]');
     const previewInfo = zone.parentElement.querySelector('[data-preview-info]');
     const dropText  = zone.querySelector('.drop-text');
-    const pathTargetId = zone.getAttribute('data-path-target');
-    const pathInput = pathTargetId ? document.getElementById(pathTargetId) : null;
+    const pathInput = document.getElementById(zone.getAttribute('data-path-target'));
     const maxSize = 5 * 1024 * 1024;
 
     const handleFile = (file) => {
       if (!file || !file.type.startsWith('image/')) return;
-      if (file.size > maxSize) {
-        alert(`🚨 ไฟล์ใหญ่เกินไป (max 5 MB)`);
-        input.value = '';
-        return;
-      }
+      if (file.size > maxSize) { alert('🚨 ไฟล์ใหญ่เกิน 5 MB'); input.value=''; return; }
       preUpload(file, pathInput, previewImg, previewBox, previewInfo, dropText);
     };
 
     input.addEventListener('change', e => { if (e.target.files[0]) handleFile(e.target.files[0]); });
     if (button) button.addEventListener('click', e => { e.preventDefault(); input.click(); });
-
-    ['dragover','dragenter'].forEach(t => zone.addEventListener(t, e => {
-      e.preventDefault(); e.stopPropagation(); zone.classList.add('is-dragover');
-    }));
-    ['dragleave','dragend','drop'].forEach(t => zone.addEventListener(t, e => {
-      e.preventDefault(); e.stopPropagation(); zone.classList.remove('is-dragover');
-    }));
-    zone.addEventListener('drop', e => {
-      e.preventDefault(); e.stopPropagation();
-      if (e.dataTransfer.files?.[0]) handleFile(e.dataTransfer.files[0]);
-    });
+    ['dragover','dragenter'].forEach(t => zone.addEventListener(t, e => { e.preventDefault(); e.stopPropagation(); zone.classList.add('is-dragover'); }));
+    ['dragleave','dragend','drop'].forEach(t => zone.addEventListener(t, e => { e.preventDefault(); e.stopPropagation(); zone.classList.remove('is-dragover'); }));
+    zone.addEventListener('drop', e => { e.preventDefault(); e.stopPropagation(); if (e.dataTransfer.files?.[0]) handleFile(e.dataTransfer.files[0]); });
   };
 
   document.querySelectorAll('[data-drop-zone]').forEach(initDropZone);
   document.addEventListener('dragover', e => e.preventDefault());
-  document.addEventListener('drop',     e => e.preventDefault());
+  document.addEventListener('drop', e => e.preventDefault());
 
-  // ---- DOMContentLoaded ----
   document.addEventListener('DOMContentLoaded', () => {
     const editor = document.getElementById('rich-editor');
-    const form   = document.getElementById('main-update-form');
-    const initialContent = @json(old('content', $article->content));
-
-    editor.innerHTML = initialContent || '';
-    window.syncContent();
+    const form   = document.getElementById('main-create-form');
+    editor.innerHTML = @json(old('content', '')) || '';
     editor.addEventListener('input', window.syncContent);
     editor.addEventListener('blur',  window.syncContent);
+    window.syncContent();
 
     const slugInput = document.getElementById('slug');
     const slugFeedback = document.getElementById('slug-feedback');
@@ -338,7 +253,7 @@
                 'Content-Type': 'application/json',
                 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
               },
-              body: JSON.stringify({ slug: val, ignore_id: {{ $article->id }} })
+              body: JSON.stringify({ slug: val })
             });
             const data = await resp.json();
             if (data.exists) {
@@ -355,13 +270,10 @@
 
     form.addEventListener('submit', e => {
       window.syncContent();
-
       if (pendingUploads > 0) {
         e.preventDefault();
-        alert('⏳ ยังอัปโหลดรูปไม่เสร็จ กรุณารอสักครู่ครับ');
-        return;
+        alert('⏳ ยังอัปโหลดรูปไม่เสร็จ กรุณารอสักครู่ครับ'); return;
       }
-
       const content = document.getElementById('hidden-content').value.trim();
       if (!content || content.replace(/<[^>]*>?/gm, '').trim() === '') {
         e.preventDefault();
@@ -371,12 +283,9 @@
         setTimeout(() => editor.style.border = '1px solid #d8e0ec', 3000);
         return;
       }
-
       const btn = form.querySelector('button[type="submit"]');
-      btn.disabled = true;
-      btn.innerText = '⏳ กำลังบันทึก...';
+      btn.disabled = true; btn.innerText = '⏳ กำลังบันทึก...';
     });
   });
 </script>
 @endpush
-

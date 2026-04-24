@@ -302,6 +302,8 @@ class PublicController extends Controller
             ->where('slug', $slug)
             ->firstOrFail();
 
+        $article->increment('view_count');
+
         $lotteryResult = $this->resolveLotteryResultForArticle($article);
 
         return view('articles.show', compact('article', 'lotteryResult'));
@@ -495,6 +497,36 @@ class PublicController extends Controller
                     ? (int) $drawDate->format('j') <= 15
                     : (int) $drawDate->format('j') > 15;
             });
+    }
+
+    /**
+     * Generate XML Sitemap
+     */
+    public function sitemap()
+    {
+        $urls = [];
+
+        // Main pages
+        $urls[] = ['url' => route('home'), 'priority' => '1.0', 'changefreq' => 'daily'];
+        $urls[] = ['url' => route('numbers.index'), 'priority' => '0.9', 'changefreq' => 'daily'];
+        $urls[] = ['url' => route('articles.index'), 'priority' => '0.8', 'changefreq' => 'weekly'];
+        $urls[] = ['url' => route('contact'), 'priority' => '0.6', 'changefreq' => 'monthly'];
+        $urls[] = ['url' => route('privacy'), 'priority' => '0.3', 'changefreq' => 'monthly'];
+
+        // Articles
+        $articles = Article::query()->published()->get();
+        foreach ($articles as $article) {
+            $urls[] = [
+                'url' => route('articles.show', $article->slug),
+                'priority' => '0.7',
+                'changefreq' => 'weekly',
+                'lastmod' => $article->updated_at->toAtomString(),
+            ];
+        }
+
+        $xml = view('sitemap', compact('urls'))->render();
+
+        return response($xml)->header('Content-Type', 'text/xml');
     }
 
     /**

@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Services\ArticleContentSanitizer;
 
 class Article extends Model
 {
@@ -18,8 +19,12 @@ class Article extends Model
         'cover_image_landscape_path',
         'cover_image_square_path',
         'meta_description',
+        'keywords',
+        'lsi_keywords',
         'is_published',
         'published_at',
+        'notified_at',
+        'view_count',
         'author_user_id',
     ];
 
@@ -28,6 +33,7 @@ class Article extends Model
         return [
             'is_published' => 'boolean',
             'published_at' => 'datetime',
+            'notified_at' => 'datetime',
         ];
     }
 
@@ -55,5 +61,10 @@ class Article extends Model
     public function approvedComments(): HasMany
     {
         return $this->comments()->where('status', ArticleComment::STATUS_APPROVED);
+    }
+
+    public function sanitizedContent(): string
+    {
+        return app(ArticleContentSanitizer::class)->sanitize((string) $this->content);
     }
 }

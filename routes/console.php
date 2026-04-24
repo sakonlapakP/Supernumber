@@ -13,3 +13,7 @@ Schedule::command('lottery:fetch-latest')
     ->between('15:45', '16:20')
     ->timezone('Asia/Bangkok')
     ->withoutOverlapping();
+
+Schedule::command('articles:publish-scheduled')
+    ->everyMinute()
+    ->withoutOverlapping();
