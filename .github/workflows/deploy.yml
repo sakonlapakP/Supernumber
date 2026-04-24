@@ -4,7 +4,8 @@ name: 🚀 Auto Deploy via FTP
 on:
   push:
     branches:
-      - prepaid-flow  # ทำงานเฉพาะตอนที่เรา push ขึ้น branch นี้
+      - main
+  workflow_dispatch:
 
 jobs:
   web-deploy:
