@@ -2697,6 +2697,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'meta_description' => trim((string) ($data['meta_description'] ?? '')) ?: null,
                 'is_published' => $isPublished,
                 'published_at' => $isPublished ? $publishedAt : null,
+                'notified_at' => null, // Reset notification status to allow re-notification
                 'cover_image_path' => $coverImagePath,
             ];
 
