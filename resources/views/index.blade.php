@@ -57,12 +57,12 @@
       }
     }
 
-    /* Refined Card Appearance */
+    /* Final Refined Card Appearance */
     .number-card--home {
-      min-height: 330px !important;
+      min-height: 310px !important;
       height: auto !important;
-      padding: 20px 16px !important;
-      gap: 10px !important;
+      padding: 18px 15px !important;
+      gap: 8px !important;
       display: flex !important;
       flex-direction: column !important;
       align-items: stretch !important;
@@ -70,12 +70,12 @@
     .number-card--home .card-topic-icon {
       background: rgba(232, 243, 235, 0.95) !important;
       border-radius: 999px !important;
-      width: 26px !important;
-      height: 26px !important;
+      width: 25px !important;
+      height: 25px !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
-      font-size: 14px !important;
+      font-size: 13px !important;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 2px 6px rgba(34, 94, 67, 0.08) !important;
     }
     .number-card--home .card-body {
@@ -83,12 +83,17 @@
       display: flex !important;
       flex-direction: column !important;
       justify-content: flex-start !important;
-      padding: 4px 0 !important;
+      padding: 2px 0 !important;
+      gap: 4px !important;
+    }
+    .number-card--home .card-meta-stack {
+      gap: 4px !important;
     }
     .number-card--home .card-btn {
       margin-top: auto !important;
-      min-height: 38px !important;
-      font-size: 14px !important;
+      min-height: 42px !important;
+      font-size: 15px !important;
+      font-weight: 700 !important;
     }
 
     /* Redesigned Home Search Section - In-lined for Instant Load */
