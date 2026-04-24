@@ -2268,7 +2268,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         return redirect()
             ->route('admin.line-settings')
-            ->with('status_message', 'บันทึก LINE settings เรียบร้อยแล้ว');
+            ->with('status_message', 'บันทึกการตั้งค่าเรียบร้อยแล้ว');
     })->name('line-settings.update');
 
     Route::post('/lottery/fetch-force', function () use ($ensureAdmin) {
