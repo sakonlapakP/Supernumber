@@ -2689,6 +2689,19 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 $coverImageSquarePath = $sqPath;
             }
 
+            // Only reset notified_at when:
+            // 1. Article transitions from unpublished → published (new publish)
+            // 2. The published_at date changes (re-scheduled)
+            $shouldResetNotification = false;
+            if ($isPublished && !$isCurrentlyPublished) {
+                // Transition from draft → published
+                $shouldResetNotification = true;
+            } elseif ($isPublished && $publishedAt && $article->published_at
+                && !$publishedAt->eq($article->published_at)) {
+                // Published date was changed (re-scheduled)
+                $shouldResetNotification = true;
+            }
+
             $articleData = [
                 'title' => trim($data['title']),
                 'slug' => $slug,
@@ -2697,9 +2710,12 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'meta_description' => trim((string) ($data['meta_description'] ?? '')) ?: null,
                 'is_published' => $isPublished,
                 'published_at' => $isPublished ? $publishedAt : null,
-                'notified_at' => null, // Reset notification status to allow re-notification
                 'cover_image_path' => $coverImagePath,
             ];
+
+            if ($shouldResetNotification) {
+                $articleData['notified_at'] = null;
+            }
 
             if ($articleColumnExists('keywords')) {
                 $articleData['keywords'] = trim((string) ($data['keywords'] ?? '')) ?: null;
@@ -3324,8 +3340,22 @@ Route::get('/cron/publish/{secret}', function ($secret) {
     
     \Illuminate\Support\Facades\Artisan::call('articles:publish-scheduled');
     
+    $lineToken = trim((string) config('services.line.channel_access_token', ''));
+    $lineGroupId = trim((string) config('services.line.group_id', ''));
+    
     return response()->json([
         'status' => 'success',
         'output' => \Illuminate\Support\Facades\Artisan::output(),
+        'line_configured' => $lineToken !== '' && $lineGroupId !== '',
+        'line_token_set' => $lineToken !== '',
+        'line_group_id_set' => $lineGroupId !== '',
+        'pending_articles' => \App\Models\Article::query()
+            ->where('is_published', true)
+            ->whereNull('notified_at')
+            ->where(function ($q) {
+                $q->whereNull('published_at')
+                    ->orWhere('published_at', '<=', now());
+            })
+            ->count(),
     ]);
 });
