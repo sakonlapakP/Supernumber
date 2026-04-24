@@ -6933,8 +6933,7 @@ body.under-construction-page main {
   }
 
   .article-card__cover {
-    aspect-ratio: 49 / 31;
-    object-fit: cover;
+    height: auto;
   }
 
   .article-detail {

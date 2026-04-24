@@ -91,7 +91,7 @@
 
       <div class="admin-image-grid">
         <div class="admin-field" style="margin-top:30px; border-left: 4px solid #2563eb; padding-left: 15px;">
-          <label style="font-size: 16px; color: #1e293b; font-weight: bold;">ภาพหน้าปก</label>
+          <label style="font-size: 16px; color: #1e293b; font-weight: bold;">รูปหน้ารวมบทความ (แนวนอน 16:9 / 4:3)</label>
           <div class="admin-drop-zone" data-drop-zone data-path-target="land_path">
             <input type="file" id="upload_media_land" class="admin-drop-zone__input" accept="image/jpeg,image/png,image/webp" data-drop-zone-input />
             <label for="upload_media_land" class="drop-text">🖼️ ลากรูปมาวางที่นี่ หรือคลิกเพื่อเลือกไฟล์</label>
