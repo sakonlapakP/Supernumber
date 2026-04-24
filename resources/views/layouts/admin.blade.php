@@ -980,7 +980,7 @@
               'active' => request()->routeIs('admin.analytics*'),
             ],
             [
-              'label' => 'ตั้งค่าระบบ',
+              'label' => 'ตั้งค่าการเชื่อมต่อ API',
               'url' => route('admin.line-settings'),
               'active' => request()->routeIs('admin.line-settings*'),
             ],

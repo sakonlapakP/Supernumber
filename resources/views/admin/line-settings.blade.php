@@ -5,8 +5,8 @@
 @section('content')
   <div class="admin-page-head">
     <div>
-      <h1>ตั้งค่าระบบ</h1>
-      <p class="admin-subtitle">จัดการตั้งค่า LINE, Webhook และเครื่องมือดูแลรักษาระบบ</p>
+      <h1>ตั้งค่าการเชื่อมต่อ API</h1>
+      <p class="admin-subtitle">จัดการตั้งค่า LINE, Facebook และเครื่องมือดูแลรักษาระบบ</p>
     </div>
   </div>
 
@@ -74,10 +74,50 @@
       </div>
 
       <div class="admin-muted" style="margin-bottom: 18px; font-size: 0.92rem;">
-        หลังบันทึก ระบบจะ clear config cache ให้ทันที ถ้า environment นี้ใช้ config cache อยู่
+        หลังบันทึก ระบบจะ clear config cache ให้ทันที
       </div>
 
-      <button type="submit" class="admin-button">บันทึกการตั้งค่า LINE</button>
+      <button type="submit" class="admin-button">บันทึกการตั้งค่า API</button>
+    </form>
+  </section>
+
+  <section class="admin-card admin-feature-card" style="margin-top: 18px;">
+    <div class="admin-page-head" style="margin-bottom: 18px;">
+      <div>
+        <h2 style="margin: 0; font-size: 1.1rem;">ตั้งค่า Facebook Graph API</h2>
+        <p class="admin-subtitle" style="margin-top: 6px;">สำหรับการแชร์บทความไปที่ Facebook Page อัตโนมัติเมื่อกดเผยแพร่</p>
+      </div>
+    </div>
+    
+    <form class="admin-form" action="{{ route('admin.line-settings.update') }}" method="post">
+      @csrf
+
+      <div class="admin-field">
+        <label for="fb_page_id">FB_PAGE_ID</label>
+        <input
+          id="fb_page_id"
+          class="admin-input"
+          type="text"
+          name="fb_page_id"
+          value="{{ old('fb_page_id', $settings['FB_PAGE_ID'] ?? '') }}"
+          placeholder="เช่น 123456789012345"
+        />
+        <p class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem;">ไอดีของ Facebook Page ที่ต้องการให้ระบบแชร์บทความไป</p>
+      </div>
+
+      <div class="admin-field">
+        <label for="fb_page_access_token">FB_PAGE_ACCESS_TOKEN</label>
+        <textarea
+          id="fb_page_access_token"
+          class="admin-input"
+          name="fb_page_access_token"
+          rows="4"
+          placeholder="ใส่ Page Access Token (แบบ Long-lived) จาก Facebook Developer"
+        >{{ old('fb_page_access_token', $settings['FB_PAGE_ACCESS_TOKEN'] ?? '') }}</textarea>
+        <p class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem;">ต้องมีสิทธิ์ (Permissions) อย่างน้อย: <code>pages_manage_posts</code>, <code>pages_read_engagement</code></p>
+      </div>
+
+      <button type="submit" class="admin-button" style="margin-top: 8px;">บันทึกการตั้งค่า Facebook</button>
     </form>
   </section>
 

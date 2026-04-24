@@ -54,6 +54,11 @@ return [
         'retry_sleep_ms' => (int) env('LINE_RETRY_SLEEP_MS', 1000),
     ],
 
+    'facebook' => [
+        'page_id' => env('FB_PAGE_ID'),
+        'page_access_token' => env('FB_PAGE_ACCESS_TOKEN'),
+    ],
+
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),
         'model' => env('GEMINI_MODEL', 'gemini-2.5-flash'),

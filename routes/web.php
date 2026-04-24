@@ -2200,6 +2200,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'LINE_CHANNEL_SECRET',
             'LINE_GROUP_ID',
             'LINE_LOTTERY_GROUP_ID',
+            'FB_PAGE_ID',
+            'FB_PAGE_ACCESS_TOKEN',
         ]);
         $baseUrl = rtrim((string) config('app.url', url('/')), '/');
         $webhookUrl = $baseUrl . route('line.webhook', [], false);
@@ -2229,6 +2231,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'line_channel_secret' => ['nullable', 'string', 'max:255'],
             'line_group_id' => ['nullable', 'string', 'max:255'],
             'line_lottery_group_id' => ['nullable', 'string', 'max:255'],
+            'fb_page_id' => ['nullable', 'string', 'max:255'],
+            'fb_page_access_token' => ['nullable', 'string', 'max:4000'],
         ]);
 
         try {
@@ -2236,18 +2240,24 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             $channelSecret = trim((string) ($data['line_channel_secret'] ?? ''));
             $groupId = trim((string) ($data['line_group_id'] ?? ''));
             $lotteryGroupId = trim((string) ($data['line_lottery_group_id'] ?? ''));
+            $fbPageId = trim((string) ($data['fb_page_id'] ?? ''));
+            $fbToken = trim((string) ($data['fb_page_access_token'] ?? ''));
 
             $environmentEditor->setMany([
                 'LINE_CHANNEL_ACCESS_TOKEN' => $token,
                 'LINE_CHANNEL_SECRET' => $channelSecret,
                 'LINE_GROUP_ID' => $groupId,
                 'LINE_LOTTERY_GROUP_ID' => $lotteryGroupId,
+                'FB_PAGE_ID' => $fbPageId,
+                'FB_PAGE_ACCESS_TOKEN' => $fbToken,
             ]);
 
             config()->set('services.line.channel_access_token', $token);
             config()->set('services.line.channel_secret', $channelSecret);
             config()->set('services.line.group_id', $groupId);
             config()->set('services.line.groups.lottery', $lotteryGroupId);
+            config()->set('services.facebook.page_id', $fbPageId);
+            config()->set('services.facebook.page_access_token', $fbToken);
 
             Artisan::call('config:clear');
         } catch (\Throwable $e) {
@@ -2541,7 +2551,11 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 $articleData['cover_image_square_path'] = $coverImageSquarePath;
             }
 
-            Article::query()->create($articleData);
+            $article = Article::query()->create($articleData);
+
+            if ($article->is_published) {
+                app(\App\Services\FacebookPagePoster::class)->postArticle($article);
+            }
         } catch (\Throwable $e) {
             return back()->withInput()->withErrors(['save_error' => 'ไม่สามารถบันทึกบทความหรืออัปโหลดรูปภาพได้: ' . $e->getMessage()]);
         }
@@ -2669,6 +2683,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             }
 
             $article->update($articleData);
+
+            if ($isPublished && !$isCurrentlyPublished) {
+                app(\App\Services\FacebookPagePoster::class)->postArticle($article);
+            }
         } catch (\Throwable $e) {
             return back()->withInput()->withErrors(['save_error' => 'ไม่สามารถอัปเดตบทความหรืออัปโหลดรูปภาพได้: ' . $e->getMessage()]);
         }
