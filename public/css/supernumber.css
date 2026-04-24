@@ -2243,8 +2243,8 @@ a[href^="tel"] {
 
 @media (min-width: 992px) {
   .home-card-grid[data-view="list"] {
-    grid-template-columns: 1fr 1fr !important;
-    gap: 16px !important;
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
   }
 }
 
