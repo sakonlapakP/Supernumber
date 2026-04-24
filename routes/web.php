@@ -2459,6 +2459,23 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.articles', compact('articles'));
     })->name('articles');
 
+    Route::post('/articles/check-slug', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+        $slug = Str::slug(trim((string) $request->input('slug')));
+        $ignoreId = $request->input('ignore_id');
+        
+        $exists = Article::query()
+            ->where('slug', $slug)
+            ->when($ignoreId, function ($query) use ($ignoreId) {
+                return $query->where('id', '!=', $ignoreId);
+            })
+            ->exists();
+            
+        return response()->json(['exists' => $exists, 'slug' => $slug]);
+    })->name('articles.check-slug');
+
     Route::get('/articles/create', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
@@ -2559,7 +2576,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 $lineMessage = "📢 เผยแพร่บทความใหม่แล้ว!\n\n";
                 $lineMessage .= "หัวข้อ: {$article->title}\n";
                 $lineMessage .= "แชร์ไปที่ Facebook Page: " . ($posted ? "สำเร็จ ✅" : "ไม่สำเร็จ ❌") . "\n\n";
-                $lineMessage .= route('article', ['slug' => $article->slug]);
+                $lineMessage .= route('articles.show', ['slug' => $article->slug]);
 
                 app(\App\Services\LineNotifier::class)->queueText(
                     'article_published',
@@ -2701,7 +2718,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 $lineMessage = "📢 เผยแพร่บทความใหม่แล้ว!\n\n";
                 $lineMessage .= "หัวข้อ: {$article->title}\n";
                 $lineMessage .= "แชร์ไปที่ Facebook Page: " . ($posted ? "สำเร็จ ✅" : "ไม่สำเร็จ ❌") . "\n\n";
-                $lineMessage .= route('article', ['slug' => $article->slug]);
+                $lineMessage .= route('articles.show', ['slug' => $article->slug]);
 
                 app(\App\Services\LineNotifier::class)->queueText(
                     'article_published',

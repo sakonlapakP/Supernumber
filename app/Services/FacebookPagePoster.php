@@ -19,7 +19,7 @@ class FacebookPagePoster
 
         $url = "https://graph.facebook.com/v19.0/{$pageId}/feed";
 
-        $articleUrl = route('article', ['slug' => $article->slug]);
+        $articleUrl = route('articles.show', ['slug' => $article->slug]);
         
         $message = "📝 บทความใหม่: {$article->title}\n\n";
         if ($article->excerpt) {
