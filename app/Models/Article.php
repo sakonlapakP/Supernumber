@@ -23,6 +23,8 @@ class Article extends Model
         'lsi_keywords',
         'is_published',
         'published_at',
+        'notified_at',
+        'view_count',
         'author_user_id',
     ];
 
@@ -31,6 +33,7 @@ class Article extends Model
         return [
             'is_published' => 'boolean',
             'published_at' => 'datetime',
+            'notified_at' => 'datetime',
         ];
     }
 
