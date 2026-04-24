@@ -46,6 +46,7 @@
       <div class="admin-field" style="margin-top:20px;">
         <label for="slug">Slug (ที่อยู่ URL)</label>
         <input type="text" id="slug" name="slug" class="admin-input" value="{{ old('slug') }}" placeholder="เช่น my-new-article (เว้นว่างไว้ระบบจะสร้างจากหัวข้อให้อัตโนมัติ)" />
+        <p id="slug-feedback" style="margin: 8px 0 0; font-size: 14px; font-weight: bold; min-height: 20px;"></p>
       </div>
 
       <div class="admin-field" style="margin-top:20px;">
@@ -75,9 +76,14 @@
         <input type="text" name="meta_description" class="admin-input" value="{{ old('meta_description') }}" />
       </div>
 
-      <div class="admin-field">
+      <div class="admin-field" style="margin-top:20px;">
         <label>Keywords (สำหรับ Google)</label>
         <input type="text" name="keywords" class="admin-input" value="{{ old('keywords') }}" />
+      </div>
+
+      <div class="admin-field" style="margin-top:20px;">
+        <label> LSI Keywords (คำค้นหาที่เกี่ยวข้องคั่นด้วยจุลภาค ,)</label>
+        <input type="text" name="lsi_keywords" class="admin-input" value="{{ old('lsi_keywords') }}" placeholder="เช่น เปลี่ยนเบอร์, พลังตัวเลข, ทำนายดวง" />
       </div>
 
       <div class="admin-field">
@@ -228,6 +234,39 @@
     editor.addEventListener('input', window.syncContent);
     editor.addEventListener('blur',  window.syncContent);
     window.syncContent();
+
+    const slugInput = document.getElementById('slug');
+    const slugFeedback = document.getElementById('slug-feedback');
+    let slugTimer = null;
+
+    if (slugInput && slugFeedback) {
+      slugInput.addEventListener('input', () => {
+        clearTimeout(slugTimer);
+        const val = slugInput.value.trim();
+        if (!val) { slugFeedback.innerText = ''; return; }
+        
+        slugTimer = setTimeout(async () => {
+          try {
+            const resp = await fetch('{{ route('admin.articles.check-slug') }}', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+              },
+              body: JSON.stringify({ slug: val })
+            });
+            const data = await resp.json();
+            if (data.exists) {
+              slugFeedback.innerText = '❌ Slug นี้ถูกใช้ไปแล้ว (ซ้ำ) กรุณาเปลี่ยนใหม่';
+              slugFeedback.style.color = '#e11d48';
+            } else {
+              slugFeedback.innerText = '✅ Slug นี้ใช้งานได้';
+              slugFeedback.style.color = '#059669';
+            }
+          } catch (err) {}
+        }, 600);
+      });
+    }
 
     form.addEventListener('submit', e => {
       window.syncContent();

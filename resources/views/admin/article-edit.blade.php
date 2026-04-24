@@ -80,9 +80,14 @@
         <input type="text" name="meta_description" class="admin-input" value="{{ old('meta_description', $article->meta_description) }}" />
       </div>
 
-      <div class="admin-field">
+      <div class="admin-field" style="margin-top:20px;">
         <label>Keywords (สำหรับ Google)</label>
         <input type="text" name="keywords" class="admin-input" value="{{ old('keywords', $article->keywords) }}" />
+      </div>
+
+      <div class="admin-field" style="margin-top:20px;">
+        <label> LSI Keywords (คำค้นหาที่เกี่ยวข้องคั่นด้วยจุลภาค ,)</label>
+        <input type="text" name="lsi_keywords" class="admin-input" value="{{ old('lsi_keywords', $article->lsi_keywords) }}" placeholder="เช่น เปลี่ยนเบอร์, พลังตัวเลข, ทำนายดวง" />
       </div>
 
       <div class="admin-field">
