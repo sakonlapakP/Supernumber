@@ -3315,3 +3315,16 @@ Route::post('/direct-create-article', function (Request $request) use ($ensureAd
 
     return redirect()->route('admin.articles')->with('status_message', 'สร้างบทความเรียบร้อย');
 })->name('articles.store.bypass');
+
+Route::get('/cron/publish/{secret}', function ($secret) {
+    if ($secret !== 'supernumber_secret_789') {
+        return response()->json(['error' => 'Invalid secret'], 403);
+    }
+    
+    \Illuminate\Support\Facades\Artisan::call('articles:publish-scheduled');
+    
+    return response()->json([
+        'status' => 'success',
+        'output' => \Illuminate\Support\Facades\Artisan::output(),
+    ]);
+});
