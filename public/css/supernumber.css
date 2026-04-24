@@ -2618,30 +2618,32 @@ body.under-construction-page main {
 
 @media (min-width: 901px) {
   .home-card-grid[data-view="grid"] .number-card--home {
-    aspect-ratio: 4 / 3;
-    display: grid;
-    grid-template-rows: auto 1fr auto;
-    align-content: stretch;
+    min-height: 0 !important;
+    height: auto !important;
+    display: flex;
+    flex-direction: column;
     gap: 8px;
-    padding: 14px 12px 12px;
+    padding: 14px 14px 12px;
   }
 
   .home-card-grid[data-view="grid"] .number-card--home .card-top {
-    padding: 9px 10px;
+    padding: 8px 10px;
   }
 
   .home-card-grid[data-view="grid"] .number-card--home .card-body {
-    display: grid;
-    align-content: center;
+    flex-grow: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
   }
 
   .home-card-grid[data-view="grid"] .number-card--home .card-meta-stack {
-    gap: 2px;
+    gap: 1px;
   }
 
   .home-card-grid[data-view="grid"] .number-card--home .card-btn {
-    min-height: 34px;
-    padding: 6px 10px;
+    min-height: 32px;
+    padding: 5px 10px;
   }
 }
 
@@ -5692,13 +5694,13 @@ body.under-construction-page main {
     width: min(100%, 240px);
     max-width: 240px;
     justify-self: center;
-    aspect-ratio: 16 / 14;
-    display: grid;
-    grid-template-columns: 1fr;
+    min-height: 0 !important;
+    height: auto !important;
+    display: flex;
+    flex-direction: column;
     align-items: stretch;
-    align-content: stretch;
     gap: 8px;
-    padding: 14px 12px 12px;
+    padding: 14px 14px 12px;
     border-radius: 16px;
     text-align: center;
   }
@@ -5706,7 +5708,7 @@ body.under-construction-page main {
   .listing-card-grid[data-view="grid"] .number-card--listing .card-top,
   .listing-card-grid.is-default-split[data-view="grid"] .number-card--listing .card-top {
     margin: 0;
-    padding: 9px 10px;
+    padding: 8px 10px;
     font-size: 20px;
     line-height: 1.2;
   }
@@ -5714,12 +5716,12 @@ body.under-construction-page main {
   .listing-card-grid[data-view="grid"] .number-card--listing .card-body,
   .listing-card-grid.is-default-split[data-view="grid"] .number-card--listing .card-body {
     display: grid;
-    align-content: center;
+    align-content: start;
   }
 
   .listing-card-grid[data-view="grid"] .number-card--listing .card-meta-stack,
   .listing-card-grid.is-default-split[data-view="grid"] .number-card--listing .card-meta-stack {
-    gap: 2px;
+    gap: 1px;
   }
 
   .listing-card-grid[data-view="grid"] .number-card--listing .card-tier--network .card-network-main,
@@ -5742,9 +5744,28 @@ body.under-construction-page main {
   .listing-card-grid[data-view="grid"] .number-card--listing .card-btn,
   .listing-card-grid.is-default-split[data-view="grid"] .number-card--listing .card-btn {
     width: 100%;
-    min-height: 34px;
-    padding: 6px 10px;
+    min-height: 32px;
+    padding: 5px 10px;
     font-size: 14px;
+  }
+
+  .home-card-grid[data-view="grid"] .number-card--listing.number-card--home {
+    min-height: 0 !important;
+    gap: 8px;
+    padding: 14px 14px 12px;
+  }
+
+  .home-card-grid[data-view="grid"] .number-card--listing.number-card--home .card-body {
+    align-content: start;
+  }
+
+  .home-card-grid[data-view="grid"] .number-card--listing.number-card--home .card-meta-stack {
+    gap: 1px;
+  }
+
+  .home-card-grid[data-view="grid"] .number-card--listing.number-card--home .card-btn {
+    min-height: 32px;
+    padding: 5px 10px;
   }
 }
 
