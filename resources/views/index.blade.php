@@ -62,22 +62,22 @@
       }
     }
 
-    /* Absolute Height Lock for Production - Using Specific IDs */
+    /* Premium Aesthetics Fix - Matching Image 29 Perfectly */
     #home-prepaid-grid, #home-postpaid-grid,
     body .home-card-grid[data-view="grid"] {
-        grid-auto-rows: 350px !important;
-        grid-template-rows: repeat(auto-fill, 350px) !important;
-        gap: 25px 20px !important;
+        grid-auto-rows: 330px !important;
+        grid-template-rows: repeat(auto-fill, 330px) !important;
+        gap: 24px 18px !important;
         align-items: stretch !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home {
-      height: 350px !important; /* Fixed Height to prevent Safari/Mobile shifts */
-      min-height: 350px !important;
-      padding: 20px !important;
-      border-radius: 30px !important;
+      height: 330px !important;
+      min-height: 330px !important;
+      padding: 16px !important;
+      border-radius: 28px !important;
       background: #ffffff !important;
-      box-shadow: 0 10px 35px rgba(45, 33, 24, 0.08) !important;
+      box-shadow: 0 10px 30px rgba(45, 33, 24, 0.08) !important;
       border: 1px solid rgba(0,0,0,0.04) !important;
       display: flex !important;
       flex-direction: column !important;
@@ -90,13 +90,13 @@
     body .home-card-grid[data-view="grid"] .number-card--home .card-top {
       background: #1a1612 !important;
       color: #ffffff !important;
-      padding: 16px 10px !important;
-      border-radius: 22px !important;
-      font-size: 24px !important;
+      padding: 15px 10px !important;
+      border-radius: 20px !important;
+      font-size: 22px !important;
       font-weight: 800 !important;
       margin: 0 !important;
       display: block !important;
-      line-height: 1.1 !important;
+      line-height: 1 !important;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
       flex-shrink: 0 !important;
     }
@@ -105,23 +105,23 @@
       display: flex !important;
       justify-content: center !important;
       align-items: center !important;
-      flex-wrap: wrap !important; /* Allow wrapping but keep container height fixed */
+      flex-wrap: wrap !important;
       gap: 6px !important;
-      margin: 15px 0 5px 0 !important;
-      min-height: 75px !important; /* Fixed height for icon zone to prevent card height shifts */
-      max-height: 75px !important;
+      margin: 12px 0 2px 0 !important;
+      min-height: 55px !important; /* Balanced icon zone height */
+      max-height: 55px !important;
       overflow: hidden !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-topic-icon {
       background: #f8faf9 !important;
       border-radius: 50% !important;
-      width: 32px !important;
-      height: 32px !important;
+      width: 30px !important;
+      height: 30px !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
-      font-size: 15px !important;
+      font-size: 14px !important;
       border: 1px solid rgba(0,0,0,0.02) !important;
       box-shadow: 0 2px 4px rgba(0,0,0,0.04) !important;
       flex-shrink: 0 !important;
@@ -134,41 +134,41 @@
       justify-content: center !important;
       align-items: center !important;
       margin: 0 !important;
-      padding: 5px 0 !important;
+      padding: 2px 0 !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-meta-stack {
-      gap: 5px !important;
+      gap: 4px !important;
       width: 100% !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-network-main {
       font-weight: 800 !important;
-      font-size: 15px !important;
+      font-size: 14px !important;
       letter-spacing: 0.05em !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-meta-price {
-      font-size: 20px !important;
+      font-size: 19px !important;
       font-weight: 800 !important;
       color: #1a1612 !important;
-      margin-top: 4px !important;
+      margin-top: 2px !important;
       line-height: 1.2 !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-btn {
       background: #e1b155 !important;
       color: #1a1612 !important;
-      min-height: 52px !important;
-      font-size: 18px !important;
+      min-height: 48px !important;
+      font-size: 17px !important;
       font-weight: 800 !important;
-      border-radius: 20px !important;
+      border-radius: 18px !important;
       margin-top: 10px !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
       flex-shrink: 0 !important;
-      box-shadow: 0 4px 15px rgba(225, 177, 85, 0.25) !important;
+      box-shadow: 0 4px 15px rgba(225, 177, 85, 0.2) !important;
     }
 
     /* List View Override (Shrinks the cards back down) */
