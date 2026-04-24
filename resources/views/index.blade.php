@@ -99,11 +99,17 @@
       display: flex !important;
       flex-direction: column !important;
       justify-content: center !important;
+      align-items: center !important;
       padding: 0 !important;
+      text-align: center !important;
     }
 
     .number-card--home .card-meta-stack {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
       gap: 2px !important;
+      width: 100% !important;
     }
 
     .number-card--home .card-network-main {
