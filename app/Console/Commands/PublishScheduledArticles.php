@@ -45,9 +45,9 @@ class PublishScheduledArticles extends Command
 
         foreach ($articles as $article) {
             try {
-                DB::transaction(function () use ($article) {
+                \Illuminate\Support\Facades\DB::transaction(function () use ($article) {
                     // To prevent duplicate sends from parallel executions, we check again and update atomically
-                    $updated = DB::table('articles')
+                    $updated = \Illuminate\Support\Facades\DB::table('articles')
                         ->where('id', $article->id)
                         ->whereNull('notified_at')
                         ->update(['notified_at' => now(), 'updated_at' => now()]);
