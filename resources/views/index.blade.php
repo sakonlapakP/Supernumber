@@ -62,8 +62,8 @@
       }
     }
 
-    /* Grid View Specific Overrides */
-    .home-card-grid[data-view="grid"] .number-card--home {
+    /* Base Card Appearance (Defaults to Grid/Balanced Look) */
+    .number-card--home {
       min-height: 290px !important;
       height: 100% !important;
       padding: 20px 15px !important;
@@ -73,7 +73,7 @@
       align-items: stretch !important;
     }
 
-    .home-card-grid[data-view="grid"] .number-card--home .card-top {
+    .number-card--home .card-top {
       padding: 12px 14px !important;
       border-radius: 16px !important;
       font-size: 20px !important;
@@ -82,7 +82,7 @@
       line-height: 1.2 !important;
     }
 
-    .home-card-grid[data-view="grid"] .number-card--home .card-topic-icon {
+    .number-card--home .card-topic-icon {
       background: rgba(232, 243, 235, 0.95) !important;
       border-radius: 999px !important;
       width: 26px !important;
@@ -94,7 +94,7 @@
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 2px 6px rgba(34, 94, 67, 0.08) !important;
     }
 
-    .home-card-grid[data-view="grid"] .number-card--home .card-body {
+    .number-card--home .card-body {
       flex-grow: 1 !important;
       display: flex !important;
       flex-direction: column !important;
@@ -102,21 +102,21 @@
       padding: 4px 0 !important;
     }
 
-    .home-card-grid[data-view="grid"] .number-card--home .card-meta-stack {
+    .number-card--home .card-meta-stack {
       gap: 6px !important;
     }
 
-    .home-card-grid[data-view="grid"] .number-card--home .card-network-main {
+    .number-card--home .card-network-main {
       font-weight: 800 !important;
       font-size: 12px !important;
     }
 
-    .home-card-grid[data-view="grid"] .number-card--home .card-meta-price {
+    .number-card--home .card-meta-price {
       font-size: 17px !important;
       margin-top: 2px !important;
     }
 
-    .home-card-grid[data-view="grid"] .number-card--home .card-btn {
+    .number-card--home .card-btn {
       margin-top: auto !important;
       min-height: 42px !important;
       font-size: 15px !important;
@@ -124,7 +124,7 @@
       border-radius: 12px !important;
     }
 
-    /* List View Specific Overrides (Forced for Production Sync) */
+    /* List View Override (Shrinks the cards back down) */
     .home-card-grid[data-view="list"] {
       grid-template-columns: 1fr !important;
       gap: 12px !important;
