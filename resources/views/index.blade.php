@@ -62,37 +62,39 @@
       }
     }
 
-    /* High-Specificity Fix for Production - Matching Image 29 */
+    /* High-Specificity Fix for Production - Matching Image 29 perfectly */
     body .home-card-grid[data-view="grid"] {
-        grid-auto-rows: 340px !important;
+        grid-auto-rows: 350px !important;
         gap: 24px 20px !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home {
-      min-height: 340px !important;
+      min-height: 350px !important;
       height: 100% !important;
-      padding: 18px !important;
-      border-radius: 28px !important;
+      padding: 20px !important;
+      border-radius: 30px !important;
       background: #ffffff !important;
-      box-shadow: 0 10px 30px rgba(45, 33, 24, 0.08) !important;
+      box-shadow: 0 10px 35px rgba(45, 33, 24, 0.08) !important;
       border: 1px solid rgba(0,0,0,0.04) !important;
       display: flex !important;
       flex-direction: column !important;
-      justify-content: flex-start !important; /* Fix: Don't force extreme spacing */
+      justify-content: flex-start !important;
       align-items: stretch !important;
       text-align: center !important;
+      overflow: hidden !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-top {
       background: #1a1612 !important;
       color: #ffffff !important;
       padding: 16px 10px !important;
-      border-radius: 20px !important;
-      font-size: 22px !important;
+      border-radius: 22px !important;
+      font-size: 24px !important;
       font-weight: 800 !important;
-      margin: 0 0 10px 0 !important;
+      margin: 0 !important;
       display: block !important;
-      line-height: 1.2 !important;
+      line-height: 1.1 !important;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-topic-icons {
@@ -100,72 +102,67 @@
       justify-content: center !important;
       align-items: center !important;
       flex-wrap: nowrap !important;
-      gap: 6px !important;
-      margin: 0 0 10px 0 !important;
-      min-height: 32px !important;
+      gap: 8px !important;
+      margin: 15px 0 5px 0 !important;
+      min-height: 36px !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-topic-icon {
       background: #f8faf9 !important;
       border-radius: 50% !important;
-      width: 32px !important;
-      height: 32px !important;
+      width: 34px !important;
+      height: 34px !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
-      font-size: 15px !important;
-      border: 1px solid rgba(0,0,0,0.03) !important;
+      font-size: 16px !important;
+      border: 1px solid rgba(0,0,0,0.02) !important;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.04) !important;
       flex-shrink: 0 !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-body {
-      flex-grow: 1 !important; /* Robust way to push button down */
+      flex-grow: 1 !important;
       display: flex !important;
       flex-direction: column !important;
-      justify-content: flex-start !important; /* Keep text at the top of the expanded body */
+      justify-content: center !important; /* Centered in the remaining space */
       align-items: center !important;
       margin: 0 !important;
-      padding-bottom: 15px !important;
+      padding: 10px 0 !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-meta-stack {
-      gap: 4px !important;
+      gap: 6px !important;
       width: 100% !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-network-main {
       font-weight: 800 !important;
-      font-size: 14px !important;
+      font-size: 15px !important;
       letter-spacing: 0.05em !important;
     }
 
-    body .home-card-grid[data-view="grid"] .number-card--home .card-network-suffix {
-      font-size: 14px !important;
-      font-weight: 600 !important;
-      color: #333 !important;
-      margin-left: 5px !important;
-    }
-
     body .home-card-grid[data-view="grid"] .number-card--home .card-meta-price {
-      font-size: 18px !important;
+      font-size: 20px !important;
       font-weight: 800 !important;
-      color: #2d251f !important;
-      margin-top: 6px !important;
-      line-height: 1.3 !important;
+      color: #1a1612 !important;
+      margin-top: 5px !important;
+      line-height: 1.2 !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-btn {
       background: #e1b155 !important;
       color: #1a1612 !important;
-      min-height: 48px !important;
-      font-size: 17px !important;
+      min-height: 52px !important;
+      font-size: 18px !important;
       font-weight: 800 !important;
-      border-radius: 18px !important;
-      margin-top: 0 !important; /* Removed auto to fix cross-browser bug */
+      border-radius: 20px !important;
+      margin-top: 10px !important;
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
       flex-shrink: 0 !important;
+      box-shadow: 0 4px 15px rgba(225, 177, 85, 0.25) !important;
     }
 
     /* List View Override (Shrinks the cards back down) */
