@@ -99,11 +99,11 @@
       display: flex !important;
       flex-direction: column !important;
       justify-content: center !important;
-      padding: 4px 0 !important;
+      padding: 0 !important;
     }
 
     .number-card--home .card-meta-stack {
-      gap: 6px !important;
+      gap: 2px !important;
     }
 
     .number-card--home .card-network-main {
@@ -113,7 +113,8 @@
 
     .number-card--home .card-meta-price {
       font-size: 17px !important;
-      margin-top: 2px !important;
+      margin-top: 0 !important;
+      line-height: 1.2 !important;
     }
 
     .number-card--home .card-btn {
