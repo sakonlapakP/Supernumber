@@ -51,60 +51,59 @@
       body.home-scale-soft #home-prepaid-grid[data-view="grid"],
       body.home-scale-soft #home-postpaid-grid[data-view="grid"] {
         grid-template-columns: repeat(4, 240px) !important;
-        grid-auto-rows: 1fr !important;
+        grid-auto-rows: auto !important;
         justify-content: center !important;
         gap: 16px !important;
       }
     }
 
-    /* Ultra-Refined Compact Card Appearance */
+    /* Compact Card Appearance */
     .number-card--home {
-      min-height: 250px !important;
+      min-height: 260px !important;
       height: auto !important;
-      padding: 16px 14px !important;
-      gap: 12px !important;
+      padding: 15px !important;
+      gap: 4px !important;
       display: flex !important;
       flex-direction: column !important;
       align-items: stretch !important;
-      justify-content: space-between !important;
     }
     .number-card--home .card-topic-icon {
       background: rgba(232, 243, 235, 0.95) !important;
       border-radius: 999px !important;
-      width: 24px !important;
-      height: 24px !important;
+      width: 22px !important;
+      height: 22px !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
-      font-size: 12px !important;
+      font-size: 11px !important;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 2px 6px rgba(34, 94, 67, 0.08) !important;
     }
     .number-card--home .card-body {
       flex-grow: 1 !important;
       display: flex !important;
       flex-direction: column !important;
-      justify-content: center !important;
+      justify-content: flex-start !important;
       padding: 0 !important;
-      gap: 4px !important;
+      gap: 2px !important;
     }
     .number-card--home .card-meta-stack {
-      gap: 3px !important;
+      gap: 1px !important;
     }
     .number-card--home .card-network-main {
       font-weight: 800 !important;
       font-size: 11px !important;
     }
     .number-card--home .card-meta-price {
-      font-size: 17px !important;
-      font-weight: 700 !important;
-      color: #3b2f27 !important;
+      font-size: 16px !important;
+      margin-top: 0 !important;
+      line-height: 1.2 !important;
     }
     .number-card--home .card-btn {
-      margin-top: 4px !important;
-      min-height: 42px !important;
+      margin-top: 8px !important;
+      min-height: 40px !important;
       font-size: 15px !important;
       font-weight: 700 !important;
-      border-radius: 12px !important;
+      border-radius: 10px !important;
     }
 
     /* Redesigned Home Search Section - In-lined for Instant Load */
@@ -379,7 +378,7 @@
       body.home-scale-soft #home-prepaid-grid[data-view="grid"],
       body.home-scale-soft #home-postpaid-grid[data-view="grid"] {
         grid-template-columns: repeat(3, 240px) !important;
-        grid-auto-rows: 1fr !important;
+        grid-auto-rows: auto !important;
         justify-content: center !important;
         gap: 16px !important;
       }
@@ -390,7 +389,7 @@
       body.home-scale-soft #home-prepaid-grid[data-view="grid"],
       body.home-scale-soft #home-postpaid-grid[data-view="grid"] {
         grid-template-columns: repeat(2, 240px) !important;
-        grid-auto-rows: 1fr !important;
+        grid-auto-rows: auto !important;
         justify-content: center !important;
         gap: 16px !important;
       }
