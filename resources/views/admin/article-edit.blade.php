@@ -136,7 +136,7 @@
 
       <div class="admin-field" style="margin-top:30px;">
         <label for="published_at">เวลาเผยแพร่ (เว้นว่างไว้เพื่อเผยแพร่ตอนนี้เลย)</label>
-        <input type="datetime-local" name="published_at" class="admin-input" value="{{ old('published_at', optional($article->published_at)->format('Y-m-d\\TH:i')) }}" />
+        <input type="datetime-local" name="published_at" class="admin-input" value="{{ old('published_at', optional(optional($article->published_at)->timezone('Asia/Bangkok'))->format('Y-m-d\TH:i')) }}" />
       </div>
 
       <input type="hidden" name="is_published" value="1" />
