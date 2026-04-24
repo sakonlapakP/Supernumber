@@ -18,9 +18,15 @@
     <div class="admin-alert admin-alert--error">{{ $errors->first() }}</div>
   @endif
 
-  <section class="admin-card admin-feature-card">
-    <form class="admin-form" action="{{ route('admin.line-settings.update') }}" method="post">
-      @csrf
+  <form class="admin-form" action="{{ route('admin.line-settings.update') }}" method="post">
+    @csrf
+    
+    <section class="admin-card admin-feature-card">
+      <div class="admin-page-head" style="margin-bottom: 18px;">
+        <div>
+          <h2 style="margin: 0; font-size: 1.1rem;">ตั้งค่า LINE Messaging API</h2>
+        </div>
+      </div>
 
       <div class="admin-field">
         <label for="line_channel_access_token">LINE_CHANNEL_ACCESS_TOKEN</label>
@@ -77,20 +83,15 @@
         หลังบันทึก ระบบจะ clear config cache ให้ทันที
       </div>
 
-      <button type="submit" class="admin-button">บันทึกการตั้งค่า API</button>
-    </form>
-  </section>
+    </section>
 
-  <section class="admin-card admin-feature-card" style="margin-top: 18px;">
-    <div class="admin-page-head" style="margin-bottom: 18px;">
-      <div>
-        <h2 style="margin: 0; font-size: 1.1rem;">ตั้งค่า Facebook Graph API</h2>
-        <p class="admin-subtitle" style="margin-top: 6px;">สำหรับการแชร์บทความไปที่ Facebook Page อัตโนมัติเมื่อกดเผยแพร่</p>
+    <section class="admin-card admin-feature-card" style="margin-top: 18px;">
+      <div class="admin-page-head" style="margin-bottom: 18px;">
+        <div>
+          <h2 style="margin: 0; font-size: 1.1rem;">ตั้งค่า Facebook Graph API</h2>
+          <p class="admin-subtitle" style="margin-top: 6px;">สำหรับการแชร์บทความไปที่ Facebook Page อัตโนมัติเมื่อกดเผยแพร่</p>
+        </div>
       </div>
-    </div>
-    
-    <form class="admin-form" action="{{ route('admin.line-settings.update') }}" method="post">
-      @csrf
 
       <div class="admin-field">
         <label for="fb_page_id">FB_PAGE_ID</label>
@@ -117,9 +118,12 @@
         <p class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem;">ต้องมีสิทธิ์ (Permissions) อย่างน้อย: <code>pages_manage_posts</code>, <code>pages_read_engagement</code></p>
       </div>
 
-      <button type="submit" class="admin-button" style="margin-top: 8px;">บันทึกการตั้งค่า Facebook</button>
-    </form>
-  </section>
+    </section>
+
+    <div style="margin-top: 24px;">
+      <button type="submit" class="admin-button" style="width: 100%; font-size: 1.1rem; padding: 12px;">บันทึกการตั้งค่าทั้งหมด (LINE & Facebook)</button>
+    </div>
+  </form>
 
   <section class="admin-card admin-feature-card" style="margin-top: 18px;">
     <div class="admin-page-head" style="margin-bottom: 18px;">
