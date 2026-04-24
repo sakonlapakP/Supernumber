@@ -124,6 +124,80 @@
       border-radius: 12px !important;
     }
 
+    /* List View Specific Overrides (Forced for Production Sync) */
+    .home-card-grid[data-view="list"] {
+      grid-template-columns: 1fr !important;
+      gap: 12px !important;
+    }
+
+    .home-card-grid[data-view="list"] .number-card--home {
+      display: grid !important;
+      grid-template-columns: 160px 1fr 100px !important;
+      grid-template-areas: "top body btn" "icons body btn" !important;
+      align-items: center !important;
+      gap: 0 12px !important;
+      padding: 14px 20px !important;
+      border-radius: 18px !important;
+      min-height: 84px !important;
+      height: auto !important;
+      background: #ffffff !important;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.02), 0 10px 20px rgba(45, 33, 24, 0.04) !important;
+    }
+
+    .home-card-grid[data-view="list"] .number-card--home .card-top {
+      grid-area: top !important;
+      font-size: 20px !important;
+      font-weight: 800 !important;
+      line-height: 1 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      background: none !important;
+    }
+
+    .home-card-grid[data-view="list"] .number-card--home .card-topic-icons {
+      grid-area: icons !important;
+      margin-top: 6px !important;
+      gap: 6px !important;
+      display: flex !important;
+    }
+
+    .home-card-grid[data-view="list"] .number-card--home .card-topic-icon {
+      width: 22px !important;
+      height: 22px !important;
+      font-size: 11px !important;
+      border-radius: 6px !important;
+    }
+
+    .home-card-grid[data-view="list"] .number-card--home .card-body {
+      grid-area: body !important;
+      display: flex !important;
+      justify-content: center !important;
+      align-items: center !important;
+      padding: 0 10px !important;
+    }
+
+    .home-card-grid[data-view="list"] .number-card--home .card-meta-stack {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      gap: 2px !important;
+    }
+
+    .home-card-grid[data-view="list"] .number-card--home .card-meta-price {
+      font-size: 16px !important;
+      font-weight: 700 !important;
+    }
+
+    .home-card-grid[data-view="list"] .number-card--home .card-btn {
+      grid-area: btn !important;
+      width: 100% !important;
+      min-height: 42px !important;
+      font-size: 14px !important;
+      font-weight: 700 !important;
+      border-radius: 12px !important;
+      margin: 0 !important;
+    }
+
     /* Redesigned Home Search Section - In-lined for Instant Load */
     .home-search {
       margin-top: -40px; 
