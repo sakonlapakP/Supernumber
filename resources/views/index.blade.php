@@ -62,7 +62,12 @@
       }
     }
 
-    /* Base Card Appearance (Defaults to Grid/Balanced Look) */
+    /* Universal Grid Force - Ensuring identical heights on Production */
+    .home-card-grid[data-view="grid"] {
+        grid-auto-rows: 290px !important;
+        align-items: stretch !important;
+    }
+
     .number-card--home {
       min-height: 290px !important;
       height: 100% !important;
