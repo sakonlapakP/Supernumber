@@ -119,17 +119,18 @@
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-body {
-      flex-grow: 0 !important; /* Fix: Prevent taking up excess space */
+      flex-grow: 1 !important; /* Robust way to push button down */
       display: flex !important;
       flex-direction: column !important;
-      justify-content: center !important;
+      justify-content: flex-start !important; /* Keep text at the top of the expanded body */
       align-items: center !important;
       margin: 0 !important;
-      padding-bottom: 10px !important;
+      padding-bottom: 15px !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-meta-stack {
       gap: 4px !important;
+      width: 100% !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-network-main {
@@ -146,10 +147,10 @@
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-meta-price {
-      font-size: 18px !important; /* Fix: Reduce size slightly so postpaid fits */
+      font-size: 18px !important;
       font-weight: 800 !important;
       color: #2d251f !important;
-      margin-top: 4px !important;
+      margin-top: 6px !important;
       line-height: 1.3 !important;
     }
 
@@ -160,7 +161,7 @@
       font-size: 17px !important;
       font-weight: 800 !important;
       border-radius: 18px !important;
-      margin-top: auto !important; /* Fix: Push button to the very bottom */
+      margin-top: 0 !important; /* Removed auto to fix cross-browser bug */
       display: flex !important;
       align-items: center !important;
       justify-content: center !important;
