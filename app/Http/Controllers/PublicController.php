@@ -302,6 +302,8 @@ class PublicController extends Controller
             ->where('slug', $slug)
             ->firstOrFail();
 
+        $article->increment('view_count');
+
         $lotteryResult = $this->resolveLotteryResultForArticle($article);
 
         return view('articles.show', compact('article', 'lotteryResult'));

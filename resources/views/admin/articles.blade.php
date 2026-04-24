@@ -39,6 +39,7 @@
             <th style="width: 80px;">รูปปก</th>
           <th>หัวข้อ</th>
             <th>สถานะ</th>
+            <th>ยอดวิว</th>
             <th>เวลาเผยแพร่</th>
             <th>จัดการ</th>
           </tr>
@@ -66,6 +67,9 @@
                 @else
                   <span class="admin-status-pill admin-status-pill--hold">ฉบับร่าง</span>
                 @endif
+              </td>
+              <td>
+                <span style="font-weight: 500; color: #475569;">👁️ {{ number_format($article->view_count) }}</span>
               </td>
               <td class="admin-muted">
                 {{ $article->published_at ? $article->published_at->timezone('Asia/Bangkok')->format('d/m/Y H:i') : '-' }}

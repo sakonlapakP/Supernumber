@@ -72,6 +72,7 @@
         <a href="{{ route('articles.index') }}" class="article-detail__back">กลับไปหน้าบทความ</a>
         <div class="article-detail__meta-row">
           <span class="article-detail__meta-pill">เผยแพร่ {{ $publishedAt }}</span>
+          <span class="article-detail__meta-pill article-detail__meta-pill--soft">👁️ ยอดเข้าชม {{ number_format($article->view_count) }} ครั้ง</span>
           <span class="article-detail__meta-pill article-detail__meta-pill--soft">Supernumber Insight</span>
         </div>
         <h1>{{ $article->title }}</h1>
