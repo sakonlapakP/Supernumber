@@ -86,10 +86,7 @@
         <input type="text" name="lsi_keywords" class="admin-input" value="{{ old('lsi_keywords') }}" placeholder="เช่น เปลี่ยนเบอร์, พลังตัวเลข, ทำนายดวง" />
       </div>
 
-      <div class="admin-field">
-        <label for="published_at">เวลาเผยแพร่ (เว้นว่างไว้เพื่อเผยแพร่ตอนนี้เลย)</label>
-        <input type="datetime-local" name="published_at" class="admin-input" value="{{ old('published_at') }}" />
-      </div>
+
 
       <div class="admin-image-grid">
         <div class="admin-field" style="margin-top:30px; border-left: 4px solid #2563eb; padding-left: 15px;">
@@ -119,9 +116,12 @@
         </div>
       </div>
 
-      <label style="display:flex; align-items:center; gap:10px; margin-top:30px; font-size: 16px; font-weight: bold;">
-        <input type="checkbox" name="is_published" value="1" @checked(old('is_published', true)) style="width: 20px; height: 20px;" /> เผยแพร่ทันที
-      </label>
+      <div class="admin-field" style="margin-top:30px;">
+        <label for="published_at">เวลาเผยแพร่ (เว้นว่างไว้เพื่อเผยแพร่ตอนนี้เลย)</label>
+        <input type="datetime-local" name="published_at" class="admin-input" value="{{ old('published_at') }}" />
+      </div>
+
+      <input type="hidden" name="is_published" value="1" />
 
       <div class="admin-actions" style="margin-top:30px;">
         <button type="submit" class="admin-button" style="font-size: 16px; padding: 12px 24px;">🚀 สร้างและอัปโหลดบทความ</button>
