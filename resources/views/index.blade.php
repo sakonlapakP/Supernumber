@@ -119,7 +119,7 @@
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-body {
-      flex-grow: 1 !important;
+      flex-grow: 0 !important; /* Fix: Prevent taking up excess space */
       display: flex !important;
       flex-direction: column !important;
       justify-content: center !important;
