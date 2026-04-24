@@ -56,41 +56,48 @@
 @endif
 <section class="article-detail__lottery-fallback" aria-label="ภาพสรุปผลสลากกินแบ่งรัฐบาล {{ $thaiDateLabel }}">
   <div class="article-detail__lottery-fallback-shell">
-    <p class="article-detail__lottery-brand">SUPERNUMBER</p>
-    <h2>ผลสลากกินแบ่งรัฐบาล</h2>
-    <p class="article-detail__lottery-date">งวดประจำวันที่ {{ $thaiDateLabel }}</p>
+    <div class="lottery-header">
+      <div class="lottery-logo-box">S</div>
+      <p class="lottery-brand-text">SUPERNUMBER</p>
+    </div>
+    
+    <h2 class="lottery-main-title">ผลสลากกินแบ่งรัฐบาล</h2>
+    <p class="lottery-date-label">งวดประจำวันที่ {{ $thaiDateLabel }}</p>
 
-    <div class="article-detail__lottery-first-prize">
-      <span>รางวัลที่ 1</span>
-      <strong>{{ $firstPrize }}</strong>
+    <div class="lottery-prize-1-box">
+      <span class="prize-1-title">รางวัลที่ 1</span>
+      <strong class="prize-1-number">{{ $firstPrize }}</strong>
     </div>
 
-    <p class="article-detail__lottery-near">ข้างเคียงรางวัลที่ 1 : {{ $nearFirstLabel }}</p>
+    <p class="lottery-near-label">ข้างเคียงรางวัลที่ 1 : {{ $nearFirstLabel }}</p>
 
-    <div class="article-detail__lottery-grid">
-      <section class="article-detail__lottery-group">
-        <h3>เลขหน้า 3 ตัว</h3>
-        <div class="article-detail__lottery-box-grid">
-          <div class="article-detail__lottery-box">{{ $frontThree[0] }}</div>
-          <div class="article-detail__lottery-box">{{ $frontThree[1] }}</div>
+    <div class="lottery-prizes-grid">
+      <div class="lottery-column">
+        <h3 class="prize-sub-title">เลขหน้า 3 ตัว</h3>
+        <div class="prize-sub-box-pair">
+          <div class="prize-sub-box">{{ $frontThree[0] }}</div>
+          <div class="prize-sub-box">{{ $frontThree[1] }}</div>
         </div>
-      </section>
+      </div>
 
-      <section class="article-detail__lottery-group">
-        <h3>เลขท้าย 3 ตัว</h3>
-        <div class="article-detail__lottery-box-grid">
-          <div class="article-detail__lottery-box">{{ $backThree[0] }}</div>
-          <div class="article-detail__lottery-box">{{ $backThree[1] }}</div>
+      <div class="lottery-column">
+        <h3 class="prize-sub-title">เลขท้าย 3 ตัว</h3>
+        <div class="prize-sub-box-pair">
+          <div class="prize-sub-box">{{ $backThree[0] }}</div>
+          <div class="prize-sub-box">{{ $backThree[1] }}</div>
         </div>
-      </section>
+      </div>
 
-      <section class="article-detail__lottery-group article-detail__lottery-group--last-two">
-        <h3>เลขท้าย 2 ตัว</h3>
-        <div class="article-detail__lottery-box article-detail__lottery-box--last-two">{{ $lastTwo }}</div>
-      </section>
+      <div class="lottery-column lottery-column--last-two">
+        <h3 class="prize-sub-title">เลขท้าย 2 ตัว</h3>
+        <div class="prize-sub-box prize-sub-box--last-two">{{ $lastTwo }}</div>
+      </div>
     </div>
 
-    <p class="article-detail__lottery-updated">อัปเดตล่าสุด {{ $updatedAtLabel }} น. ({{ $statusLabel }})</p>
+    <div class="lottery-footer">
+      <p class="lottery-footer-url">SUPERNUMBER.CO.TH</p>
+      <p class="lottery-footer-info">Web : www.supernumber.co.th Tel : 0963232656, 0963232665 Line : @supernumber</p>
+    </div>
   </div>
 </section>
 @if ($wrapFigure)
