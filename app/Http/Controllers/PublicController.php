@@ -305,6 +305,16 @@ class PublicController extends Controller
         $article->increment('view_count');
 
         $lotteryResult = $this->resolveLotteryResultForArticle($article);
+        
+        // Simulation mode for admin preview
+        if (request()->query('simulate_lottery') == '1') {
+            $lotteryResult = \App\Models\LotteryResult::query()
+                ->with('prizes')
+                ->orderByRaw('COALESCE(source_draw_date, draw_date) DESC')
+                ->orderByDesc('fetched_at')
+                ->orderByDesc('id')
+                ->first();
+        }
 
         return view('articles.show', compact('article', 'lotteryResult'));
     }
@@ -474,7 +484,7 @@ class PublicController extends Controller
             return (clone $latestResultQuery)->first();
         }
 
-        if (preg_match('/^thai-goverment-lottery-(\d{4})(\d{2})(first|second)$/', $slug, $matches) !== 1) {
+        if (preg_match('/^thai-govern?ment-lottery-(\d{4})(\d{2})(first|second)$/', $slug, $matches) !== 1) {
             return null;
         }
 

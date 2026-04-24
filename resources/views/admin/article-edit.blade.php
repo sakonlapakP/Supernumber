@@ -143,6 +143,7 @@
 
       <div class="admin-actions" style="margin-top:30px;">
         <button type="submit" class="admin-button" style="font-size: 16px; padding: 12px 24px;">💾 บันทึกการแก้ไขบทความ</button>
+        <a href="{{ route('articles.show', $article->slug) }}?simulate_lottery=1" target="_blank" class="admin-button" style="font-size: 16px; padding: 12px 24px; background: #6366f1; border-color: #6366f1;">👁️ จำลองตัวอย่างพร้อมผลหวย</a>
         @if($article->is_published)
           <button type="submit" form="fb-share-form" class="admin-button" style="font-size: 16px; padding: 12px 24px; background: #1877F2; border-color: #1877F2;">🔵 แชร์ไป Facebook</button>
         @endif
