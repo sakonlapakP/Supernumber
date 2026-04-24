@@ -2702,7 +2702,8 @@ body.under-construction-page main {
   border-radius: 18px;
   padding: 20px;
   box-shadow: 0 14px 28px rgba(32, 24, 18, 0.12);
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 14px;
   text-align: center;
   border: 1px solid rgba(216, 163, 74, 0.2);
@@ -2714,6 +2715,7 @@ body.under-construction-page main {
   padding: 9px 14px;
   font-size: 15px;
   font-weight: 600;
+  margin-top: auto;
 }
 
 .number-card:nth-child(2) {
