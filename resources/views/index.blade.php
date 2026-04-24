@@ -363,7 +363,7 @@
       body.home-scale-soft #home-prepaid-grid[data-view="grid"],
       body.home-scale-soft #home-postpaid-grid[data-view="grid"] {
         grid-template-columns: repeat(3, 240px) !important;
-        grid-auto-rows: minmax(360px, auto) !important;
+        grid-auto-rows: 1fr !important;
         justify-content: center !important;
         gap: 16px !important;
       }
@@ -374,7 +374,7 @@
       body.home-scale-soft #home-prepaid-grid[data-view="grid"],
       body.home-scale-soft #home-postpaid-grid[data-view="grid"] {
         grid-template-columns: repeat(2, 240px) !important;
-        grid-auto-rows: minmax(360px, auto) !important;
+        grid-auto-rows: 1fr !important;
         justify-content: center !important;
         gap: 16px !important;
       }
