@@ -8,13 +8,13 @@ use Illuminate\Support\Facades\Log;
 
 class FacebookPagePoster
 {
-    public function postArticle(Article $article): bool
+    public function postArticle(Article $article): array
     {
         $pageId = config('services.facebook.page_id');
         $accessToken = config('services.facebook.page_access_token');
 
         if (empty($pageId) || empty($accessToken)) {
-            return false;
+            return ['success' => false, 'error' => 'Missing Facebook Page ID or Access Token in configuration.'];
         }
 
         $url = "https://graph.facebook.com/v19.0/{$pageId}/feed";
@@ -26,8 +26,6 @@ class FacebookPagePoster
             $message .= strip_tags($article->excerpt) . "\n\n";
         }
         $message .= "อ่านเพิ่มเติมได้ที่นี่เลยครับ 👇\n";
-        // Do not add the URL directly to the message if we are passing it as a link parameter
-        // The link parameter will create a nice preview card on Facebook
 
         try {
             $response = Http::post($url, [
@@ -40,20 +38,23 @@ class FacebookPagePoster
                 Log::info("Successfully posted article [{$article->id}] to Facebook Page.", [
                     'fb_post_id' => $response->json('id')
                 ]);
-                return true;
+                return ['success' => true, 'id' => $response->json('id')];
             }
+
+            $errorData = $response->json();
+            $errorMessage = $errorData['error']['message'] ?? 'Unknown Facebook API error';
 
             Log::error("Failed to post article [{$article->id}] to Facebook Page.", [
                 'status' => $response->status(),
-                'response' => $response->json(),
+                'response' => $errorData,
             ]);
 
-            return false;
+            return ['success' => false, 'error' => $errorMessage];
         } catch (\Throwable $e) {
             Log::error("Exception when posting article [{$article->id}] to Facebook Page.", [
                 'error' => $e->getMessage()
             ]);
-            return false;
+            return ['success' => false, 'error' => $e->getMessage()];
         }
     }
 }

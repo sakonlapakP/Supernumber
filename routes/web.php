@@ -2488,13 +2488,13 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             return $redirect;
         }
         
-        $posted = app(\App\Services\FacebookPagePoster::class)->postArticle($article);
+        $res = app(\App\Services\FacebookPagePoster::class)->postArticle($article);
         
-        if ($posted) {
+        if ($res['success']) {
             return back()->with('status_message', 'แชร์บทความไปที่ Facebook Page สำเร็จ ✅');
         }
         
-        return back()->withErrors(['fb_share' => 'แชร์ไปที่ Facebook Page ไม่สำเร็จ ❌ กรุณาตรวจสอบข้อมูล API ในหน้าตั้งค่า']);
+        return back()->withErrors(['fb_share' => 'แชร์ไปที่ Facebook Page ไม่สำเร็จ ❌ : ' . ($res['error'] ?? 'Unknown Error')]);
     })->name('articles.share-fb');
 
     Route::post('/articles', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink, $decodeBase64Image) {
@@ -2585,12 +2585,15 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             $article = Article::query()->create($articleData);
 
             if ($article->is_published) {
-                $posted = app(\App\Services\FacebookPagePoster::class)->postArticle($article);
+                $res = app(\App\Services\FacebookPagePoster::class)->postArticle($article);
                 
                 $lineMessage = "📢 เผยแพร่บทความใหม่แล้ว!\n\n";
                 $lineMessage .= "หัวข้อ: {$article->title}\n";
-                $lineMessage .= "แชร์ไปที่ Facebook Page: " . ($posted ? "สำเร็จ ✅" : "ไม่สำเร็จ ❌") . "\n\n";
-                $lineMessage .= route('articles.show', ['slug' => $article->slug]);
+                $lineMessage .= "แชร์ไปที่ Facebook Page: " . ($res['success'] ? "สำเร็จ ✅" : "ไม่สำเร็จ ❌") . "\n";
+                if (!$res['success']) {
+                    $lineMessage .= "สาเหตุ: " . ($res['error'] ?? 'Unknown Error') . "\n";
+                }
+                $lineMessage .= "\n" . route('articles.show', ['slug' => $article->slug]);
 
                 app(\App\Services\LineNotifier::class)->queueText(
                     'article_published',
@@ -2727,12 +2730,15 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             $article->update($articleData);
 
             if ($isPublished && !$isCurrentlyPublished) {
-                $posted = app(\App\Services\FacebookPagePoster::class)->postArticle($article);
+                $res = app(\App\Services\FacebookPagePoster::class)->postArticle($article);
 
                 $lineMessage = "📢 เผยแพร่บทความใหม่แล้ว!\n\n";
                 $lineMessage .= "หัวข้อ: {$article->title}\n";
-                $lineMessage .= "แชร์ไปที่ Facebook Page: " . ($posted ? "สำเร็จ ✅" : "ไม่สำเร็จ ❌") . "\n\n";
-                $lineMessage .= route('articles.show', ['slug' => $article->slug]);
+                $lineMessage .= "แชร์ไปที่ Facebook Page: " . ($res['success'] ? "สำเร็จ ✅" : "ไม่สำเร็จ ❌") . "\n";
+                if (!$res['success']) {
+                    $lineMessage .= "สาเหตุ: " . ($res['error'] ?? 'Unknown Error') . "\n";
+                }
+                $lineMessage .= "\n" . route('articles.show', ['slug' => $article->slug]);
 
                 app(\App\Services\LineNotifier::class)->queueText(
                     'article_published',
