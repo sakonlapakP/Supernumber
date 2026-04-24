@@ -53,6 +53,7 @@
         grid-template-columns: repeat(4, 240px) !important;
         grid-auto-rows: auto !important;
         justify-content: center !important;
+        align-items: start !important;
         gap: 16px !important;
       }
     }
@@ -380,6 +381,7 @@
         grid-template-columns: repeat(3, 240px) !important;
         grid-auto-rows: auto !important;
         justify-content: center !important;
+        align-items: start !important;
         gap: 16px !important;
       }
     }
@@ -391,6 +393,7 @@
         grid-template-columns: repeat(2, 240px) !important;
         grid-auto-rows: auto !important;
         justify-content: center !important;
+        align-items: start !important;
         gap: 16px !important;
       }
     }
