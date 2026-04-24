@@ -169,8 +169,9 @@ class PhoneNumber extends Model
         }
 
         $priceText = number_format($price);
+        $compactClass = $price >= 2000 ? ' card-meta-price-strong--compact' : '';
 
-        return $priceText . ' บาท <strong class="card-meta-price-strong">เดือนละ ' . $priceText . '/เดือน</strong>';
+        return $priceText . ' บาท <strong class="card-meta-price-strong' . $compactClass . '">เดือนละ ' . $priceText . '/เดือน</strong>';
     }
 
     public function getNormalizedPackagePriceAttribute(): ?int
