@@ -62,41 +62,61 @@
       }
     }
 
-    /* Universal Grid Force - Ensuring identical heights on Production */
+    /* Ideal Grid Card Appearance - Matching Image 29 Exactly */
     .home-card-grid[data-view="grid"] {
-        grid-auto-rows: 290px !important;
+        grid-auto-rows: 320px !important;
         align-items: stretch !important;
+        gap: 20px !important;
     }
 
     .number-card--home {
-      min-height: 290px !important;
+      min-height: 320px !important;
       height: 100% !important;
-      padding: 20px 15px !important;
-      gap: 12px !important;
+      padding: 15px !important;
+      border-radius: 24px !important;
+      background: #ffffff !important;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.03), 0 12px 30px rgba(45, 33, 24, 0.05) !important;
+      border: 1px solid rgba(0,0,0,0.02) !important;
       display: flex !important;
       flex-direction: column !important;
       align-items: stretch !important;
+      transition: transform 0.2s ease !important;
+    }
+
+    .number-card--home:hover {
+      transform: translateY(-5px) !important;
     }
 
     .number-card--home .card-top {
-      padding: 12px 14px !important;
-      border-radius: 16px !important;
-      font-size: 20px !important;
-      font-weight: 700 !important;
+      background: #2d251f !important;
+      color: #ffffff !important;
+      padding: 18px 15px !important;
+      border-radius: 20px !important;
+      font-size: 22px !important;
+      font-weight: 800 !important;
       letter-spacing: 0.02em !important;
-      line-height: 1.2 !important;
+      line-height: 1 !important;
+      margin-bottom: 15px !important;
+    }
+
+    .number-card--home .card-topic-icons {
+      display: flex !important;
+      justify-content: center !important;
+      gap: 8px !important;
+      margin: 10px 0 !important;
     }
 
     .number-card--home .card-topic-icon {
-      background: rgba(232, 243, 235, 0.95) !important;
-      border-radius: 999px !important;
-      width: 26px !important;
-      height: 26px !important;
+      background: #f1f7f3 !important;
+      border-radius: 50% !important;
+      width: 38px !important;
+      height: 38px !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
-      font-size: 14px !important;
-      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 2px 6px rgba(34, 94, 67, 0.08) !important;
+      font-size: 18px !important;
+      border: 1px solid rgba(0,0,0,0.02) !important;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
     }
 
     .number-card--home .card-body {
@@ -105,7 +125,7 @@
       flex-direction: column !important;
       justify-content: center !important;
       align-items: center !important;
-      padding: 0 !important;
+      padding: 5px 0 !important;
       text-align: center !important;
     }
 
@@ -113,27 +133,39 @@
       display: flex !important;
       flex-direction: column !important;
       align-items: center !important;
-      gap: 2px !important;
+      gap: 4px !important;
       width: 100% !important;
     }
 
     .number-card--home .card-network-main {
       font-weight: 800 !important;
-      font-size: 12px !important;
+      font-size: 14px !important;
+      letter-spacing: 0.05em !important;
+    }
+
+    .number-card--home .card-network-suffix {
+      font-size: 14px !important;
+      font-weight: 600 !important;
+      color: #333 !important;
+      margin-left: 5px !important;
     }
 
     .number-card--home .card-meta-price {
-      font-size: 17px !important;
-      margin-top: 0 !important;
+      font-size: 20px !important;
+      font-weight: 800 !important;
+      margin-top: 5px !important;
+      color: #2d251f !important;
       line-height: 1.2 !important;
     }
 
     .number-card--home .card-btn {
-      margin-top: auto !important;
-      min-height: 42px !important;
-      font-size: 15px !important;
-      font-weight: 700 !important;
-      border-radius: 12px !important;
+      margin-top: 15px !important;
+      min-height: 48px !important;
+      font-size: 17px !important;
+      font-weight: 800 !important;
+      border-radius: 16px !important;
+      background: #e6b34d !important;
+      color: #2d251f !important;
     }
 
     /* List View Override (Shrinks the cards back down) */
