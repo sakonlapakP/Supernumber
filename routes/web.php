@@ -2362,8 +2362,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         try {
             Artisan::call('migrate', ['--force' => true]);
+            Artisan::call('view:clear');
+            Artisan::call('cache:clear');
             $output = Artisan::output();
-            return "Database expanded successfully!<br><pre>" . $output . "</pre><br><a href='" . route('admin.articles') . "'>กลับหน้าบทความ</a>";
+            return "Database expanded and Cache cleared successfully!<br><pre>" . $output . "</pre><br><a href='" . route('admin.articles') . "'>กลับหน้าบทความ</a>";
         } catch (\Exception $e) {
             return "Migration Error: " . $e->getMessage();
         }
@@ -2496,6 +2498,62 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             
         return response()->json(['exists' => $exists, 'slug' => $slug]);
     })->name('articles.check-slug');
+
+    Route::get('/articles/auto-gen-lottery', function () use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+
+        $latestLottery = \App\Models\LotteryResult::query()
+            ->orderByRaw('COALESCE(source_draw_date, draw_date) DESC')
+            ->orderByDesc('fetched_at')
+            ->orderByDesc('id')
+            ->first();
+
+        if (!$latestLottery) {
+            return back()->withErrors(['auto_gen' => 'ไม่พบข้อมูลหวยในระบบ ไม่สามารถสร้างบทความได้']);
+        }
+
+        $drawDate = $latestLottery->source_draw_date ?? $latestLottery->draw_date;
+        if (!$drawDate) {
+            return back()->withErrors(['auto_gen' => 'ข้อมูลหวยงวดล่าสุดไม่มีวันที่ ไม่สามารถสร้างบทความได้']);
+        }
+
+        // Determine round: 1st or 16th
+        $day = (int) $drawDate->format('j');
+        $round = ($day <= 15) ? 'first' : 'second';
+        $slug = 'thai-government-lottery-' . $drawDate->format('Ym') . $round;
+
+        // Check if article already exists
+        $existing = \App\Models\Article::query()->where('slug', $slug)->first();
+        if ($existing) {
+            return redirect()->route('admin.articles.edit', $existing)
+                ->with('status_message', 'บทความหวยงวดนี้มีอยู่แล้วในระบบ พาท่านมาหน้าแก้ไขครับ');
+        }
+
+        // Thai Month Mapping
+        $thaiMonths = [
+            1 => 'มกราคม', 2 => 'กุมภาพันธ์', 3 => 'มีนาคม', 4 => 'เมษายน',
+            5 => 'พฤษภาคม', 6 => 'มิถุนายน', 7 => 'กรกฎาคม', 8 => 'สิงหาคม',
+            9 => 'กันยายน', 10 => 'ตุลาคม', 11 => 'พฤศจิกายน', 12 => 'ธันวาคม'
+        ];
+        $thaiDateStr = $drawDate->format('j') . ' ' . $thaiMonths[(int)$drawDate->format('n')] . ' ' . ($drawDate->format('Y') + 543);
+
+        $title = "ตรวจหวยรัฐบาล งวดวันที่ $thaiDateStr ผลสลากกินแบ่งรัฐบาล";
+        
+        $article = \App\Models\Article::query()->create([
+            'title' => $title,
+            'slug' => $slug,
+            'excerpt' => "ตรวจผลสลากกินแบ่งรัฐบาล งวดวันที่ $thaiDateStr อัปเดตข้อมูลรวดเร็ว ทันใจ พร้อมเช็ครางวัลที่ 1 และรางวัลอื่นๆ",
+            'content' => "<p>อัปเดตผลสลากกินแบ่งรัฐบาล งวดประจำวันที่ $thaiDateStr ได้ที่นี่</p><p>ระบบจะดึงผลหวยมาแสดงด้านล่างนี้โดยอัตโนมัติครับ</p>",
+            'is_published' => false,
+            'published_at' => $drawDate->copy()->setTime(15, 30, 0), // Set to 3:30 PM
+            'author_user_id' => session('admin_user_id'),
+        ]);
+
+        return redirect()->route('admin.articles.edit', $article)
+            ->with('status_message', 'สร้างร่างบทความหวยงวดล่าสุดให้แล้วครับ!');
+    })->name('articles.auto-gen-lottery');
 
     Route::get('/articles/create', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {
@@ -3388,4 +3446,17 @@ Route::get('/cron/publish/{secret}', function ($secret) {
             ->count(),
         'server_time' => now()->timezone('Asia/Bangkok')->format('Y-m-d H:i:s'),
     ]);
+});
+
+Route::get('/cron/clear-all-caches/{secret}', function ($secret) {
+    if ($secret !== 'supernumber_secret_789') {
+        return "Invalid Secret";
+    }
+    
+    \Illuminate\Support\Facades\Artisan::call('view:clear');
+    \Illuminate\Support\Facades\Artisan::call('cache:clear');
+    \Illuminate\Support\Facades\Artisan::call('config:clear');
+    \Illuminate\Support\Facades\Artisan::call('route:clear');
+    
+    return "SUCCESS: All caches have been cleared! Now your button should appear. <br><a href='/admin/articles'>กลับหน้าบทความ</a>";
 });
