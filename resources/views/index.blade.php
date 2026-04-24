@@ -46,6 +46,10 @@
 
 @section('content')
   <style>
+    body.home-scale-soft .numbers {
+      padding-top: 20px !important;
+    }
+
     @media (min-width: 992px) {
       body.home-scale-soft .home-card-grid[data-view="grid"],
       body.home-scale-soft #home-prepaid-grid[data-view="grid"],
@@ -115,7 +119,7 @@
       margin-top: -40px; 
       position: relative;
       z-index: 10;
-      padding-bottom: 40px;
+      padding-bottom: 10px;
     }
 
     .home-filter {
