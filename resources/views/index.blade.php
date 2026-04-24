@@ -51,10 +51,40 @@
       body.home-scale-soft #home-prepaid-grid[data-view="grid"],
       body.home-scale-soft #home-postpaid-grid[data-view="grid"] {
         grid-template-columns: repeat(4, 240px) !important;
-        grid-auto-rows: minmax(360px, auto) !important;
+        grid-auto-rows: minmax(380px, auto) !important;
         justify-content: center !important;
-        gap: 16px !important;
+        gap: 20px !important;
       }
+    }
+
+    /* Emergency UI Sync: Force Card Appearance */
+    .number-card--home {
+      min-height: 380px !important;
+      height: auto !important;
+      padding: 24px 20px !important;
+      gap: 16px !important;
+      display: flex !important;
+      flex-direction: column !important;
+    }
+    .number-card--home .card-topic-icon {
+      background: rgba(232, 243, 235, 0.95) !important;
+      border-radius: 999px !important;
+      width: 28px !important;
+      height: 28px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 2px 6px rgba(34, 94, 67, 0.08) !important;
+    }
+    .number-card--home .card-body {
+      flex-grow: 1 !important;
+      display: flex !important;
+      flex-direction: column !important;
+      justify-content: center !important;
+    }
+    .number-card--home .card-btn {
+      margin-top: auto !important;
+      min-height: 42px !important;
     }
 
     /* Redesigned Home Search Section - In-lined for Instant Load */
