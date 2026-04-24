@@ -62,15 +62,18 @@
       }
     }
 
-    /* High-Specificity Fix for Production - Matching Image 29 perfectly */
+    /* Absolute Height Lock for Production - Using Specific IDs */
+    #home-prepaid-grid, #home-postpaid-grid,
     body .home-card-grid[data-view="grid"] {
         grid-auto-rows: 350px !important;
-        gap: 24px 20px !important;
+        grid-template-rows: repeat(auto-fill, 350px) !important;
+        gap: 25px 20px !important;
+        align-items: stretch !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home {
+      height: 350px !important; /* Fixed Height to prevent Safari/Mobile shifts */
       min-height: 350px !important;
-      height: 100% !important;
       padding: 20px !important;
       border-radius: 30px !important;
       background: #ffffff !important;
@@ -95,27 +98,30 @@
       display: block !important;
       line-height: 1.1 !important;
       box-shadow: 0 4px 12px rgba(0,0,0,0.1) !important;
+      flex-shrink: 0 !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-topic-icons {
       display: flex !important;
       justify-content: center !important;
       align-items: center !important;
-      flex-wrap: nowrap !important;
-      gap: 8px !important;
+      flex-wrap: wrap !important; /* Allow wrapping but keep container height fixed */
+      gap: 6px !important;
       margin: 15px 0 5px 0 !important;
-      min-height: 36px !important;
+      min-height: 75px !important; /* Fixed height for icon zone to prevent card height shifts */
+      max-height: 75px !important;
+      overflow: hidden !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-topic-icon {
       background: #f8faf9 !important;
       border-radius: 50% !important;
-      width: 34px !important;
-      height: 34px !important;
+      width: 32px !important;
+      height: 32px !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
-      font-size: 16px !important;
+      font-size: 15px !important;
       border: 1px solid rgba(0,0,0,0.02) !important;
       box-shadow: 0 2px 4px rgba(0,0,0,0.04) !important;
       flex-shrink: 0 !important;
@@ -125,14 +131,14 @@
       flex-grow: 1 !important;
       display: flex !important;
       flex-direction: column !important;
-      justify-content: center !important; /* Centered in the remaining space */
+      justify-content: center !important;
       align-items: center !important;
       margin: 0 !important;
-      padding: 10px 0 !important;
+      padding: 5px 0 !important;
     }
 
     body .home-card-grid[data-view="grid"] .number-card--home .card-meta-stack {
-      gap: 6px !important;
+      gap: 5px !important;
       width: 100% !important;
     }
 
@@ -146,7 +152,7 @@
       font-size: 20px !important;
       font-weight: 800 !important;
       color: #1a1612 !important;
-      margin-top: 5px !important;
+      margin-top: 4px !important;
       line-height: 1.2 !important;
     }
 
