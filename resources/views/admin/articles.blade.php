@@ -62,7 +62,9 @@
               <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">{{ $article->slug }}</div>
             </td>
               <td>
-                @if ($article->is_published)
+                @if ($article->is_published && $article->published_at && $article->published_at->isFuture())
+                  <span class="admin-status-pill admin-status-pill--hold" style="background-color: #fef08a; color: #854d0e;">ตั้งเวลาล่วงหน้า</span>
+                @elseif ($article->is_published)
                   <span class="admin-status-pill admin-status-pill--active">เผยแพร่แล้ว</span>
                 @else
                   <span class="admin-status-pill admin-status-pill--hold">ฉบับร่าง</span>
