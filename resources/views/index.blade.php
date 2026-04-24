@@ -57,15 +57,16 @@
       }
     }
 
-    /* Final Micro-Refined Card Appearance */
+    /* Ultra-Refined Compact Card Appearance */
     .number-card--home {
-      min-height: 295px !important;
+      min-height: 250px !important;
       height: auto !important;
-      padding: 18px 15px !important;
-      gap: 6px !important;
+      padding: 16px 14px !important;
+      gap: 12px !important;
       display: flex !important;
       flex-direction: column !important;
       align-items: stretch !important;
+      justify-content: space-between !important;
     }
     .number-card--home .card-topic-icon {
       background: rgba(232, 243, 235, 0.95) !important;
@@ -82,23 +83,24 @@
       flex-grow: 1 !important;
       display: flex !important;
       flex-direction: column !important;
-      justify-content: flex-start !important;
+      justify-content: center !important;
       padding: 0 !important;
-      gap: 2px !important;
+      gap: 4px !important;
     }
     .number-card--home .card-meta-stack {
-      gap: 2px !important;
+      gap: 3px !important;
     }
     .number-card--home .card-network-main {
       font-weight: 800 !important;
       font-size: 11px !important;
     }
     .number-card--home .card-meta-price {
-      font-size: 16px !important;
-      margin-top: 2px !important;
+      font-size: 17px !important;
+      font-weight: 700 !important;
+      color: #3b2f27 !important;
     }
     .number-card--home .card-btn {
-      margin-top: auto !important;
+      margin-top: 4px !important;
       min-height: 42px !important;
       font-size: 15px !important;
       font-weight: 700 !important;
