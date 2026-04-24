@@ -62,110 +62,89 @@
       }
     }
 
-    /* Ideal Grid Card Appearance - Matching Image 29 Exactly */
-    .home-card-grid[data-view="grid"] {
-        grid-auto-rows: 320px !important;
-        align-items: stretch !important;
-        gap: 20px !important;
+    /* High-Specificity Fix for Production - Matching Image 29 */
+    body .home-card-grid[data-view="grid"] {
+        grid-auto-rows: 340px !important;
+        gap: 24px 20px !important;
     }
 
-    .number-card--home {
-      min-height: 320px !important;
+    body .home-card-grid[data-view="grid"] .number-card--home {
+      min-height: 340px !important;
       height: 100% !important;
-      padding: 15px !important;
-      border-radius: 24px !important;
+      padding: 18px !important;
+      border-radius: 28px !important;
       background: #ffffff !important;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.03), 0 12px 30px rgba(45, 33, 24, 0.05) !important;
-      border: 1px solid rgba(0,0,0,0.02) !important;
+      box-shadow: 0 10px 30px rgba(45, 33, 24, 0.08) !important;
+      border: 1px solid rgba(0,0,0,0.04) !important;
       display: flex !important;
       flex-direction: column !important;
+      justify-content: space-between !important;
       align-items: stretch !important;
-      transition: transform 0.2s ease !important;
+      text-align: center !important;
     }
 
-    .number-card--home:hover {
-      transform: translateY(-5px) !important;
-    }
-
-    .number-card--home .card-top {
-      background: #2d251f !important;
+    body .home-card-grid[data-view="grid"] .number-card--home .card-top {
+      background: #1a1612 !important;
       color: #ffffff !important;
-      padding: 18px 15px !important;
+      padding: 16px 10px !important;
       border-radius: 20px !important;
       font-size: 22px !important;
       font-weight: 800 !important;
-      letter-spacing: 0.02em !important;
-      line-height: 1 !important;
-      margin-bottom: 15px !important;
+      margin: 0 0 10px 0 !important;
+      display: block !important;
     }
 
-    .number-card--home .card-topic-icons {
+    body .home-card-grid[data-view="grid"] .number-card--home .card-topic-icons {
       display: flex !important;
       justify-content: center !important;
-      gap: 8px !important;
-      margin: 10px 0 !important;
+      gap: 6px !important;
+      margin: 5px 0 !important;
+      min-height: 40px !important;
     }
 
-    .number-card--home .card-topic-icon {
-      background: #f1f7f3 !important;
+    body .home-card-grid[data-view="grid"] .number-card--home .card-topic-icon {
+      background: #f8faf9 !important;
       border-radius: 50% !important;
-      width: 38px !important;
-      height: 38px !important;
+      width: 36px !important;
+      height: 36px !important;
       display: inline-flex !important;
       align-items: center !important;
       justify-content: center !important;
-      font-size: 18px !important;
-      border: 1px solid rgba(0,0,0,0.02) !important;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
+      font-size: 16px !important;
+      border: 1px solid rgba(0,0,0,0.03) !important;
     }
 
-    .number-card--home .card-body {
+    body .home-card-grid[data-view="grid"] .number-card--home .card-body {
       flex-grow: 1 !important;
       display: flex !important;
       flex-direction: column !important;
       justify-content: center !important;
       align-items: center !important;
-      padding: 5px 0 !important;
-      text-align: center !important;
+      margin: 10px 0 !important;
     }
 
-    .number-card--home .card-meta-stack {
-      display: flex !important;
-      flex-direction: column !important;
-      align-items: center !important;
+    body .home-card-grid[data-view="grid"] .number-card--home .card-meta-stack {
       gap: 4px !important;
-      width: 100% !important;
     }
 
-    .number-card--home .card-network-main {
-      font-weight: 800 !important;
-      font-size: 14px !important;
-      letter-spacing: 0.05em !important;
-    }
-
-    .number-card--home .card-network-suffix {
-      font-size: 14px !important;
-      font-weight: 600 !important;
-      color: #333 !important;
-      margin-left: 5px !important;
-    }
-
-    .number-card--home .card-meta-price {
+    body .home-card-grid[data-view="grid"] .number-card--home .card-meta-price {
       font-size: 20px !important;
       font-weight: 800 !important;
-      margin-top: 5px !important;
       color: #2d251f !important;
-      line-height: 1.2 !important;
+      margin-top: 4px !important;
     }
 
-    .number-card--home .card-btn {
-      margin-top: 15px !important;
-      min-height: 48px !important;
-      font-size: 17px !important;
+    body .home-card-grid[data-view="grid"] .number-card--home .card-btn {
+      background: #e1b155 !important;
+      color: #1a1612 !important;
+      min-height: 50px !important;
+      font-size: 18px !important;
       font-weight: 800 !important;
-      border-radius: 16px !important;
-      background: #e6b34d !important;
-      color: #2d251f !important;
+      border-radius: 18px !important;
+      margin-top: auto !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
     }
 
     /* List View Override (Shrinks the cards back down) */
