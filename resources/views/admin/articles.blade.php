@@ -17,6 +17,10 @@
     <div class="admin-alert admin-alert--success">{{ session('status_message') }}</div>
   @endif
 
+  @if ($errors->any())
+    <div class="admin-alert admin-alert--error">{{ $errors->first() }}</div>
+  @endif
+
   <section class="admin-card admin-table-card">
     <div class="admin-feature-card__head" style="padding: 18px 20px 0;">
       <div>
@@ -70,6 +74,12 @@
                 <div class="admin-action-group">
                   <a href="{{ route('admin.articles.preview', $article) }}" target="_blank" class="admin-button admin-button--muted admin-button--compact" title="ดูตัวอย่าง">ดู</a>
                   <a href="{{ route('admin.articles.edit', $article) }}" class="admin-button admin-button--muted admin-button--compact">แก้ไข</a>
+                  @if($article->is_published)
+                    <form action="{{ route('admin.articles.share-fb', $article) }}" method="post" style="display: inline;">
+                      @csrf
+                      <button type="submit" class="admin-button admin-button--compact" style="background: #1877F2; color: #fff; border-color: #1877F2;" title="แชร์ไป Facebook">FB</button>
+                    </form>
+                  @endif
                   <form action="{{ route('admin.articles.delete', $article) }}" method="post" onsubmit="return confirm('ยืนยันลบบทความ?')">
                     @csrf
                     @method('DELETE')

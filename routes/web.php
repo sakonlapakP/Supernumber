@@ -2483,6 +2483,20 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.article-create');
     })->name('articles.create');
 
+    Route::post('/articles/{article}/share-fb', function (Article $article) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+        
+        $posted = app(\App\Services\FacebookPagePoster::class)->postArticle($article);
+        
+        if ($posted) {
+            return back()->with('status_message', 'แชร์บทความไปที่ Facebook Page สำเร็จ ✅');
+        }
+        
+        return back()->withErrors(['fb_share' => 'แชร์ไปที่ Facebook Page ไม่สำเร็จ ❌ กรุณาตรวจสอบข้อมูล API ในหน้าตั้งค่า']);
+    })->name('articles.share-fb');
+
     Route::post('/articles', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink, $decodeBase64Image) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;

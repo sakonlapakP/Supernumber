@@ -50,6 +50,7 @@
       <div class="admin-field" style="margin-top:20px;">
         <label for="slug">Slug (ที่อยู่ URL)</label>
         <input type="text" id="slug" name="slug" class="admin-input" value="{{ old('slug', $article->slug) }}" placeholder="เช่น my-article-url" />
+        <p id="slug-feedback" style="margin: 8px 0 0; font-size: 14px; font-weight: bold; min-height: 20px;"></p>
       </div>
 
       <div class="admin-field" style="margin-top:20px;">
@@ -137,9 +138,18 @@
 
       <div class="admin-actions" style="margin-top:30px;">
         <button type="submit" class="admin-button" style="font-size: 16px; padding: 12px 24px;">💾 บันทึกการแก้ไขบทความ</button>
+        @if($article->is_published)
+          <button type="submit" form="fb-share-form" class="admin-button" style="font-size: 16px; padding: 12px 24px; background: #1877F2; border-color: #1877F2;">🔵 แชร์ไป Facebook</button>
+        @endif
         <a href="{{ route('admin.articles') }}" class="admin-button admin-button--secondary" style="font-size: 16px; padding: 12px 24px;">กลับหน้ารวม</a>
       </div>
     </form>
+    
+    @if($article->is_published)
+      <form id="fb-share-form" action="{{ route('admin.articles.share-fb', $article) }}" method="post" style="display: none;">
+        @csrf
+      </form>
+    @endif
   </section>
 
   <section class="admin-card admin-table-card" style="margin-top: 24px;">
@@ -304,6 +314,39 @@
     window.syncContent();
     editor.addEventListener('input', window.syncContent);
     editor.addEventListener('blur',  window.syncContent);
+
+    const slugInput = document.getElementById('slug');
+    const slugFeedback = document.getElementById('slug-feedback');
+    let slugTimer = null;
+
+    if (slugInput && slugFeedback) {
+      slugInput.addEventListener('input', () => {
+        clearTimeout(slugTimer);
+        const val = slugInput.value.trim();
+        if (!val) { slugFeedback.innerText = ''; return; }
+        
+        slugTimer = setTimeout(async () => {
+          try {
+            const resp = await fetch('{{ route('admin.articles.check-slug') }}', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || ''
+              },
+              body: JSON.stringify({ slug: val, ignore_id: {{ $article->id }} })
+            });
+            const data = await resp.json();
+            if (data.exists) {
+              slugFeedback.innerText = '❌ Slug นี้ถูกใช้ไปแล้ว (ซ้ำ) กรุณาเปลี่ยนใหม่';
+              slugFeedback.style.color = '#e11d48';
+            } else {
+              slugFeedback.innerText = '✅ Slug นี้ใช้งานได้';
+              slugFeedback.style.color = '#059669';
+            }
+          } catch (err) {}
+        }, 600);
+      });
+    }
 
     form.addEventListener('submit', e => {
       window.syncContent();
