@@ -2526,11 +2526,14 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         $isPublished = $request->boolean('is_published');
         $publishedAt = $data['published_at'] ?? null;
+        if ($publishedAt) {
+            $publishedAt = Carbon::parse($publishedAt, 'Asia/Bangkok')->setTimezone(config('app.timezone'));
+        }
         if ($isPublished && $publishedAt === null) {
             $publishedAt = now();
         }
 
-        $imageDate = $publishedAt ? Carbon::parse((string) $publishedAt, 'Asia/Bangkok') : Carbon::now('Asia/Bangkok');
+        $imageDate = $publishedAt ? $publishedAt->copy()->setTimezone('Asia/Bangkok') : Carbon::now('Asia/Bangkok');
         $imageMeta = $resolveArticleImageMeta($slug, $imageDate);
 
         $coverImagePath = null;
@@ -2661,6 +2664,9 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $isCurrentlyPublished = (bool) $article->is_published;
         $isPublished = $request->boolean('is_published');
         $publishedAt = $data['published_at'] ?? null;
+        if ($publishedAt) {
+            $publishedAt = Carbon::parse($publishedAt, 'Asia/Bangkok')->setTimezone(config('app.timezone'));
+        }
         
         if (! $isPublished) {
             $publishedAt = null;
@@ -2670,8 +2676,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
 
         $imageDate = $publishedAt
-            ? Carbon::parse((string) $publishedAt, 'Asia/Bangkok')
-            : ($article->published_at?->copy() ?? $article->created_at?->copy() ?? Carbon::now('Asia/Bangkok'));
+            ? $publishedAt->copy()->setTimezone('Asia/Bangkok')
+            : ($article->published_at?->copy()->setTimezone('Asia/Bangkok') ?? $article->created_at?->copy()->setTimezone('Asia/Bangkok') ?? Carbon::now('Asia/Bangkok'));
         $imageMeta = $resolveArticleImageMeta($slug, $imageDate);
 
         $coverImagePath = $article->cover_image_path;
