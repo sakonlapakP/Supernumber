@@ -2586,24 +2586,6 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             }
 
             $article = Article::query()->create($articleData);
-
-            if ($article->is_published) {
-                $res = app(\App\Services\FacebookPagePoster::class)->postArticle($article);
-                
-                $lineMessage = "📢 เผยแพร่บทความใหม่แล้ว!\n\n";
-                $lineMessage .= "หัวข้อ: {$article->title}\n";
-                $lineMessage .= "แชร์ไปที่ Facebook Page: " . ($res['success'] ? "สำเร็จ ✅" : "ไม่สำเร็จ ❌") . "\n";
-                if (!$res['success']) {
-                    $lineMessage .= "สาเหตุ: " . ($res['error'] ?? 'Unknown Error') . "\n";
-                }
-                $lineMessage .= "\n" . route('articles.show', ['slug' => $article->slug]);
-
-                app(\App\Services\LineNotifier::class)->queueText(
-                    'article_published',
-                    $lineMessage,
-                    $article
-                );
-            }
         } catch (\Throwable $e) {
             return back()->withInput()->withErrors(['save_error' => 'ไม่สามารถบันทึกบทความหรืออัปโหลดรูปภาพได้: ' . $e->getMessage()]);
         }
@@ -2735,24 +2717,6 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             }
 
             $article->update($articleData);
-
-            if ($isPublished && !$isCurrentlyPublished) {
-                $res = app(\App\Services\FacebookPagePoster::class)->postArticle($article);
-
-                $lineMessage = "📢 เผยแพร่บทความใหม่แล้ว!\n\n";
-                $lineMessage .= "หัวข้อ: {$article->title}\n";
-                $lineMessage .= "แชร์ไปที่ Facebook Page: " . ($res['success'] ? "สำเร็จ ✅" : "ไม่สำเร็จ ❌") . "\n";
-                if (!$res['success']) {
-                    $lineMessage .= "สาเหตุ: " . ($res['error'] ?? 'Unknown Error') . "\n";
-                }
-                $lineMessage .= "\n" . route('articles.show', ['slug' => $article->slug]);
-
-                app(\App\Services\LineNotifier::class)->queueText(
-                    'article_published',
-                    $lineMessage,
-                    $article
-                );
-            }
         } catch (\Throwable $e) {
             return back()->withInput()->withErrors(['save_error' => 'ไม่สามารถอัปเดตบทความหรืออัปโหลดรูปภาพได้: ' . $e->getMessage()]);
         }
