@@ -294,6 +294,14 @@ class PublicController extends Controller
      */
     public function showArticle(string $slug)
     {
+        // EMERGENCY CACHE CLEAR BYPASS
+        if (request()->query('force_clear') == '1') {
+            \Illuminate\Support\Facades\Artisan::call('view:clear');
+            \Illuminate\Support\Facades\Artisan::call('route:clear');
+            \Illuminate\Support\Facades\Artisan::call('cache:clear');
+            return "Cache Cleared! Now try the git-sync link.";
+        }
+
         $article = Article::query()
             ->published()
             ->with([
