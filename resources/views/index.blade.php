@@ -51,18 +51,18 @@
       body.home-scale-soft #home-prepaid-grid[data-view="grid"],
       body.home-scale-soft #home-postpaid-grid[data-view="grid"] {
         grid-template-columns: repeat(4, 240px) !important;
-        grid-auto-rows: minmax(380px, auto) !important;
+        grid-auto-rows: minmax(400px, auto) !important;
         justify-content: center !important;
-        gap: 20px !important;
+        gap: 24px !important;
       }
     }
 
     /* Emergency UI Sync: Force Card Appearance */
     .number-card--home {
-      min-height: 380px !important;
+      min-height: 400px !important;
       height: auto !important;
-      padding: 24px 20px !important;
-      gap: 16px !important;
+      padding: 28px 24px !important;
+      gap: 20px !important;
       display: flex !important;
       flex-direction: column !important;
     }
