@@ -392,9 +392,11 @@ body.numbers-scale-soft .number-card--catalog {
 }
 
 body.numbers-scale-soft .number-card--catalog .card-top {
-  font-size: 18px;
-  padding: 10px 12px;
-  border-radius: 14px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 12px 14px;
+  border-radius: 16px;
 }
 
 body.numbers-scale-soft .number-card--catalog .card-tier--network .card-network-main {

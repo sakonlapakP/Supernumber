@@ -72,6 +72,15 @@
       align-items: stretch !important;
     }
 
+    .number-card--home .card-top {
+      padding: 12px 14px !important;
+      border-radius: 16px !important;
+      font-size: 20px !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.02em !important;
+      line-height: 1.2 !important;
+    }
+
     .number-card--home .card-topic-icon {
       background: rgba(232, 243, 235, 0.95) !important;
       border-radius: 999px !important;
