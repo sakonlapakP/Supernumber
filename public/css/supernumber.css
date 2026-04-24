@@ -392,9 +392,11 @@ body.numbers-scale-soft .number-card--catalog {
 }
 
 body.numbers-scale-soft .number-card--catalog .card-top {
-  font-size: 18px;
-  padding: 10px 12px;
-  border-radius: 14px;
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 12px 14px;
+  border-radius: 16px;
 }
 
 body.numbers-scale-soft .number-card--catalog .card-tier--network .card-network-main {
@@ -2239,6 +2241,13 @@ a[href^="tel"] {
   gap: 10px;
 }
 
+@media (min-width: 992px) {
+  .home-card-grid[data-view="list"] {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+}
+
 .home-card-grid[data-view="list"] {
   grid-template-columns: 1fr;
   gap: 12px;
@@ -2246,35 +2255,45 @@ a[href^="tel"] {
 
 .home-card-grid[data-view="list"] .number-card--home {
   display: grid;
-  grid-template-columns: minmax(160px, auto) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(140px, auto) 1fr auto;
   grid-template-areas: 
     "top body btn"
     "icons body btn";
   align-items: center;
-  gap: 2px 16px;
-  padding: 14px 16px;
+  gap: 0 20px;
+  padding: 10px 16px;
   border-radius: 16px;
   text-align: left;
+  min-height: 72px !important;
+  height: auto !important;
+  background: #ffffff;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
 }
 
 .home-card-grid[data-view="list"] .number-card--home .card-top {
   grid-area: top;
-  align-self: center;
   margin: 0;
   padding: 0;
   background: none;
-  border-radius: 0;
   color: #2f251f;
-  font-size: 20px;
-  font-weight: 700;
-  letter-spacing: 0.03em;
-  line-height: 1.2;
+  font-size: 19px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1;
 }
 
 .home-card-grid[data-view="list"] .number-card--home .card-topic-icons {
   grid-area: icons;
   justify-content: flex-start;
-  margin-top: 0;
+  margin-top: 4px;
+  gap: 6px !important;
+}
+
+.home-card-grid[data-view="list"] .number-card--home .card-topic-icon {
+  width: 20px !important;
+  height: 20px !important;
+  font-size: 10px !important;
+  background: rgba(232, 243, 235, 0.7) !important;
 }
 
 .home-card-grid[data-view="list"] .number-card--home .card-body {
@@ -2286,40 +2305,46 @@ a[href^="tel"] {
 }
 
 .home-card-grid[data-view="list"] .number-card--home .card-meta-stack {
-  margin: 0 auto;
+  margin: 0;
   justify-items: center;
-  gap: 2px;
+  gap: 0;
   text-align: center;
 }
 
 .home-card-grid[data-view="list"] .number-card--home .card-tier--network {
   justify-content: center;
+  margin-bottom: 0;
 }
 
-.home-card-grid[data-view="list"] .number-card--home .card-tier--network .card-network-main {
-  font-size: 14px;
-  letter-spacing: 0.06em;
+.home-card-grid[data-view="list"] .number-card--home .card-network-main {
+  font-size: 11px !important;
+  font-weight: 800 !important;
 }
 
-.home-card-grid[data-view="list"] .number-card--home .card-tier--network .card-network-suffix {
-  margin-left: 8px;
-  font-size: 14px;
+.home-card-grid[data-view="list"] .number-card--home .card-network-suffix {
+  margin-left: 6px;
+  font-size: 11px;
+}
+
+.home-card-grid[data-view="list"] .number-card--home .card-meta-price {
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  line-height: 1.1;
+  margin-top: 2px;
 }
 
 .home-card-grid[data-view="list"] .number-card--home .card-meta-plan {
-  font-size: 16px;
-  line-height: 1.25;
+  font-size: 12px;
 }
 
 .home-card-grid[data-view="list"] .number-card--home .card-btn {
   grid-area: btn;
-  width: auto;
-  min-width: 100px;
-  min-height: 38px;
-  padding: 7px 16px;
-  font-size: 13px;
-  align-self: center;
-  white-space: nowrap;
+  min-width: 80px;
+  min-height: 38px !important;
+  padding: 6px 14px;
+  font-size: 14px;
+  font-weight: 700;
+  border-radius: 12px;
 }
 
 .number-card--catalog .card-top {

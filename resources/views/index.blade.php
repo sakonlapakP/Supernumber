@@ -46,6 +46,10 @@
 
 @section('content')
   <style>
+    body.home-scale-soft .numbers {
+      padding-top: 20px !important;
+    }
+
     @media (min-width: 992px) {
       body.home-scale-soft .home-card-grid[data-view="grid"],
       body.home-scale-soft #home-prepaid-grid[data-view="grid"],
@@ -58,8 +62,8 @@
       }
     }
 
-    /* Ideal Balanced Card Appearance (Matching Request) */
-    .number-card--home {
+    /* Grid View Specific Overrides */
+    .home-card-grid[data-view="grid"] .number-card--home {
       min-height: 290px !important;
       height: 100% !important;
       padding: 20px 15px !important;
@@ -68,7 +72,17 @@
       flex-direction: column !important;
       align-items: stretch !important;
     }
-    .number-card--home .card-topic-icon {
+
+    .home-card-grid[data-view="grid"] .number-card--home .card-top {
+      padding: 12px 14px !important;
+      border-radius: 16px !important;
+      font-size: 20px !important;
+      font-weight: 700 !important;
+      letter-spacing: 0.02em !important;
+      line-height: 1.2 !important;
+    }
+
+    .home-card-grid[data-view="grid"] .number-card--home .card-topic-icon {
       background: rgba(232, 243, 235, 0.95) !important;
       border-radius: 999px !important;
       width: 26px !important;
@@ -79,25 +93,30 @@
       font-size: 14px !important;
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 2px 6px rgba(34, 94, 67, 0.08) !important;
     }
-    .number-card--home .card-body {
+
+    .home-card-grid[data-view="grid"] .number-card--home .card-body {
       flex-grow: 1 !important;
       display: flex !important;
       flex-direction: column !important;
       justify-content: center !important;
       padding: 4px 0 !important;
     }
-    .number-card--home .card-meta-stack {
+
+    .home-card-grid[data-view="grid"] .number-card--home .card-meta-stack {
       gap: 6px !important;
     }
-    .number-card--home .card-network-main {
+
+    .home-card-grid[data-view="grid"] .number-card--home .card-network-main {
       font-weight: 800 !important;
       font-size: 12px !important;
     }
-    .number-card--home .card-meta-price {
+
+    .home-card-grid[data-view="grid"] .number-card--home .card-meta-price {
       font-size: 17px !important;
       margin-top: 2px !important;
     }
-    .number-card--home .card-btn {
+
+    .home-card-grid[data-view="grid"] .number-card--home .card-btn {
       margin-top: auto !important;
       min-height: 42px !important;
       font-size: 15px !important;
@@ -110,7 +129,7 @@
       margin-top: -40px; 
       position: relative;
       z-index: 10;
-      padding-bottom: 40px;
+      padding-bottom: 10px;
     }
 
     .home-filter {
@@ -650,7 +669,7 @@
                       <div class="card-meta-stack">
                         <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">{{ $number['service_type_label'] }}</span></span>
                         @if (! $number['is_postpaid'])
-                          <span class="card-meta-plan">{{ $number['payment_label'] }}</span>
+                          <span class="card-meta-plan"><strong>ราคา {{ $number['payment_label'] }}</strong></span>
                         @endif
                         @if ($number['is_postpaid'])
                           <span class="card-meta-price">{!! $number['initial_payment_html'] !!}</span>
@@ -695,7 +714,7 @@
                       <div class="card-meta-stack">
                         <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">{{ $number['service_type_label'] }}</span></span>
                         @if (! $number['is_postpaid'])
-                          <span class="card-meta-plan">{{ $number['payment_label'] }}</span>
+                          <span class="card-meta-plan"><strong>ราคา {{ $number['payment_label'] }}</strong></span>
                         @endif
                         @if ($number['is_postpaid'])
                           <span class="card-meta-price">{!! $number['initial_payment_html'] !!}</span>
@@ -785,7 +804,7 @@
             <div class="card-body">
               <div class="card-meta-stack">
                 <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">${escapeHtml(number.service_type_label)}</span></span>
-                ${!number.is_postpaid ? `<span class="card-meta-plan">${escapeHtml(number.payment_label)}</span>` : ""}
+                ${!number.is_postpaid ? `<span class="card-meta-plan"><strong>ราคา ${escapeHtml(number.payment_label)}</strong></span>` : ""}
                 ${number.is_postpaid ? `<span class="card-meta-price">${number.initial_payment_html}</span>` : ""}
               </div>
             </div>
