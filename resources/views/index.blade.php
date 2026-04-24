@@ -57,12 +57,12 @@
       }
     }
 
-    /* Compact Card Appearance */
+    /* Ultra-Compact Card Appearance */
     .number-card--home {
-      min-height: 260px !important;
+      min-height: 0 !important;
       height: auto !important;
-      padding: 15px !important;
-      gap: 4px !important;
+      padding: 16px 14px !important;
+      gap: 12px !important;
       display: flex !important;
       flex-direction: column !important;
       align-items: stretch !important;
@@ -79,15 +79,15 @@
       box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 2px 6px rgba(34, 94, 67, 0.08) !important;
     }
     .number-card--home .card-body {
-      flex-grow: 1 !important;
+      flex-grow: 0 !important;
       display: flex !important;
       flex-direction: column !important;
       justify-content: flex-start !important;
       padding: 0 !important;
-      gap: 2px !important;
+      gap: 4px !important;
     }
     .number-card--home .card-meta-stack {
-      gap: 1px !important;
+      gap: 2px !important;
     }
     .number-card--home .card-network-main {
       font-weight: 800 !important;
@@ -99,7 +99,7 @@
       line-height: 1.2 !important;
     }
     .number-card--home .card-btn {
-      margin-top: 8px !important;
+      margin-top: 0 !important;
       min-height: 40px !important;
       font-size: 15px !important;
       font-weight: 700 !important;
