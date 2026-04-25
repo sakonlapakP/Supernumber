@@ -3,6 +3,7 @@
   <head>
     @php
       $staticPath = static fn (string $path): string => '/' . ltrim($path, '/');
+      $versionedStaticPath = static fn (string $path): string => '/' . ltrim($path, '/') . '?v=' . substr(md5_file(public_path($path)), 0, 8);
       $adminNavServiceType = request()->query('service_type');
       $showAllNumbersActive = request()->routeIs('admin.numbers*')
         && ! in_array($adminNavServiceType, \App\Models\PhoneNumber::serviceTypeOptions(), true);
@@ -14,11 +15,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@yield('title', 'Supernumber Admin')</title>
-    <link rel="shortcut icon" type="image/x-icon" href="{{ $staticPath('favicon-v2.ico') }}" />
-    <link rel="icon" type="image/svg+xml" sizes="any" href="{{ $staticPath('favicon.svg') }}" />
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ $staticPath('favicon-32x32.png') }}" />
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ $staticPath('favicon-16x16.png') }}" />
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ $staticPath('apple-touch-icon.png') }}" />
+    <link rel="shortcut icon" type="image/x-icon" href="{{ $versionedStaticPath('favicon-v2.ico') }}" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="{{ $versionedStaticPath('favicon.svg') }}" />
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ $versionedStaticPath('favicon-32x32.png') }}" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ $versionedStaticPath('favicon-16x16.png') }}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ $versionedStaticPath('apple-touch-icon.png') }}" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

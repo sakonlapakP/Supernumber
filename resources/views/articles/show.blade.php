@@ -8,15 +8,13 @@
 @section('og_url', route('articles.show', $article->slug))
 @php
   $detailCoverCandidate = $article->cover_image_square_path ?: $article->cover_image_path;
-  $detailCoverPath = null;
+  $ogImagePath = asset('images/home_banner.jpg');
 
   if ($detailCoverCandidate) {
-      $detailCoverPath = ltrim((string) $detailCoverCandidate, '/');
+      $ogImagePath = asset('storage/' . ltrim((string) $detailCoverCandidate, '/'));
   }
 @endphp
-@if ($detailCoverPath)
-  @section('og_image', asset('storage/' . $detailCoverPath))
-@endif
+@section('og_image', $ogImagePath)
 
 @section('content')
   @php

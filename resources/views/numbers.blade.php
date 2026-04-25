@@ -275,21 +275,6 @@
         height: 50px;
         font-size: 16px;
       }
-      
-      /* Optimize Results Grid for Mobile */
-      .numbers-results-grid[data-view="grid"] {
-        gap: 10px !important;
-        padding: 0 5px !important;
-      }
-      .number-card {
-        padding: 12px !important;
-      }
-      .number-card__phone {
-        font-size: 18px !important;
-      }
-      .number-card__price {
-        font-size: 13px !important;
-      }
     }
   </style>
   @php

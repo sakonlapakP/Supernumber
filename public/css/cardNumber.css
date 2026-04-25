@@ -1,0 +1,399 @@
+/* Card Number Styles - Centralized & Refactored */
+
+/* ==========================================================================
+   1. Base Card Components (Global)
+   ========================================================================== */
+.number-card {
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 14px 28px rgba(32, 24, 18, 0.12);
+  border: 1px solid rgba(216, 163, 74, 0.2);
+  animation: cardRise 0.7s ease both;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+  overflow: hidden;
+}
+
+.number-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 18px 35px rgba(32, 24, 18, 0.18);
+}
+
+.card-top {
+  background: linear-gradient(120deg, #1d1816, #46372b);
+  color: #fff;
+  padding: 9px 13px;
+  border-radius: 12px;
+  font-weight: 500;
+  font-size: 24px;
+  letter-spacing: 0.06em;
+}
+
+.card-body {
+  display: grid;
+  gap: 6px;
+  color: #5a4b3e;
+}
+
+.card-meta-stack {
+  display: grid;
+  justify-items: center;
+  gap: 6px;
+  margin: 0 auto;
+  max-width: 100%;
+  text-align: center;
+}
+
+.card-topic-icons {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 14px !important;
+  margin-top: 6px;
+}
+
+.card-topic-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 999px;
+  background: rgba(232, 243, 235, 0.95);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    0 2px 6px rgba(34, 94, 67, 0.08);
+  font-size: 15px;
+  line-height: 1;
+}
+
+.card-topic-icon--more {
+  background: rgba(245, 240, 228, 0.96);
+  color: #7b5d1f;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   2. Card Tiers & Badges
+   ========================================================================== */
+.card-tier {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  width: fit-content;
+  border: 1px solid transparent;
+  margin: 0 auto;
+}
+
+.card-tier--silver {
+  background: linear-gradient(135deg, #f3d2b1 0%, #cf8f58 55%, #a86b3f 100%);
+  color: #593116;
+  border-color: rgba(150, 88, 47, 0.78);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.75);
+}
+
+.card-tier--gold {
+  background: linear-gradient(135deg, #ffe7ae 0%, #f7c766 55%, #e7a948 100%);
+  color: #6a3f06;
+  border-color: rgba(231, 169, 72, 0.9);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.82),
+    0 8px 16px rgba(231, 169, 72, 0.26);
+}
+
+.card-tier--platinum {
+  background: linear-gradient(135deg, #f5f9ff 0%, #d6e3f1 55%, #b9c9dc 100%);
+  color: #2f3b48;
+  border-color: rgba(140, 165, 186, 0.85);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.85),
+    0 0 0 1px rgba(180, 205, 230, 0.45),
+    0 10px 20px rgba(150, 180, 210, 0.25);
+}
+
+.card-tier--network {
+  border: none;
+  border-radius: 0;
+  padding: 0;
+  letter-spacing: 0;
+  text-transform: none;
+  box-shadow: none;
+}
+
+.card-tier--network .card-network-main {
+  background: transparent;
+  background-image: linear-gradient(90deg, #ed1d24 0%, #f04e67 40%, #1b74e8 78%, #4aa0ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-transform: uppercase;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: 0.08em;
+  font-weight: 700;
+}
+
+.card-tier--network .card-network-suffix {
+  color: #2c2521;
+  -webkit-text-fill-color: #2c2521;
+  background: none;
+  text-transform: none;
+  font-size: 16px;
+  line-height: 1.2;
+  letter-spacing: 0;
+  font-weight: 700;
+  margin-left: 10px;
+}
+
+/* ==========================================================================
+   3. Card Buttons
+   ========================================================================== */
+.card-btn {
+  border: var(--card-btn-primary-border);
+  border-radius: 999px;
+  background: var(--card-btn-primary-bg);
+  color: var(--card-btn-primary-color);
+  box-shadow: var(--card-btn-primary-shadow);
+  padding: 12px 26px;
+  min-height: 52px;
+  font-size: 24px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  text-decoration: none;
+}
+
+.card-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--card-btn-primary-hover-shadow);
+  filter: brightness(1.05);
+}
+
+.card-btn--buy {
+  background: var(--card-btn-buy-bg);
+  color: var(--card-btn-buy-color);
+  box-shadow: var(--card-btn-buy-shadow);
+}
+
+.card-btn--buy:hover {
+  box-shadow: var(--card-btn-buy-hover-shadow);
+}
+
+/* ==========================================================================
+   4. Home Page Specific (Grid & Layout)
+   ========================================================================== */
+
+/* Base Logic for Home Grid - Only applied when in grid view */
+body.home-scale-soft .home-card-grid[data-view="grid"] {
+  display: grid !important;
+  gap: 20px 16px !important;
+  align-items: stretch !important;
+  grid-auto-rows: auto !important; /* Changed to auto as requested */
+}
+
+/* Base Home Card Style */
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home {
+  min-height: 165px !important;
+  height: 100% !important;
+  /* Fill grid row height */
+  padding: 10px !important;
+  border-radius: 26px !important;
+  background: #ffffff !important;
+  box-shadow: 0 8px 25px rgba(45, 33, 24, 0.08) !important;
+  border: 1px solid rgba(0, 0, 0, 0.04) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  align-items: stretch !important;
+  text-align: center !important;
+  overflow: hidden !important;
+}
+
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-top {
+  background: #1a1612 !important;
+  color: #ffffff !important;
+  padding: 12px 10px !important;
+  border-radius: 18px !important;
+  font-size: 21px !important;
+  font-weight: 800 !important;
+  margin: 0 !important;
+  display: block !important;
+  line-height: 1 !important;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1) !important;
+  flex-shrink: 0 !important;
+}
+
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-topic-icons {
+  display: flex !important;
+  justify-content: center !important;
+  align-items: center !important;
+  flex-wrap: wrap !important;
+  gap: 5px !important;
+  margin: 5px 0 0 0 !important;
+  min-height: 32px !important;
+  max-height: 32px !important;
+  overflow: hidden !important;
+}
+
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-topic-icon {
+  background: #f8faf9 !important;
+  border-radius: 50% !important;
+  width: 28px !important;
+  height: 28px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 13px !important;
+  border: 1px solid rgba(0, 0, 0, 0.02) !important;
+  flex-shrink: 0 !important;
+}
+
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-body {
+  flex-grow: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: flex-start !important;
+  align-items: center !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-stack {
+  gap: 3px !important;
+  width: 100% !important;
+}
+
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-network-main {
+  font-weight: 800 !important;
+  font-size: 13px !important;
+  letter-spacing: 0.05em !important;
+}
+
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-price,
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-plan {
+  font-size: 16px !important;
+  font-weight: 800 !important;
+  color: #1a1612 !important;
+  margin-top: 0px !important;
+  line-height: 1.1 !important;
+}
+
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-price *,
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-plan * {
+  font-size: 16px !important;
+  font-weight: 800 !important;
+}
+
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-btn {
+  background: #e1b155 !important;
+  color: #1a1612 !important;
+  min-height: 34px !important;
+  font-size: 14px !important;
+  font-weight: 800 !important;
+  border-radius: 12px !important;
+  margin-top: 6px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0 !important;
+  box-shadow: 0 4px 12px rgba(225, 177, 85, 0.2) !important;
+}
+
+
+/* ==========================================================================
+   6. Catalog Page (Numbers Scale Soft)
+   ========================================================================== */
+body.numbers-scale-soft .number-card--catalog {
+  display: flex;
+  flex-direction: column;
+  text-align: center;
+  padding: 16px;
+  gap: 10px;
+  border-radius: 18px;
+}
+
+body.numbers-scale-soft .number-card--catalog .card-top {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  padding: 12px 14px;
+  border-radius: 16px;
+}
+
+body.numbers-scale-soft .number-card--catalog .card-tier--network .card-network-main {
+  font-size: 13px;
+}
+
+body.numbers-scale-soft .number-card--catalog .card-tier--network .card-network-suffix {
+  font-size: 13px;
+  margin-left: 7px;
+}
+
+body.numbers-scale-soft .number-card--catalog .card-meta-plan {
+  font-size: 15px;
+  line-height: 1.25;
+}
+
+body.numbers-scale-soft .number-card--catalog .card-btn {
+  min-height: 40px;
+  padding: 8px 12px;
+  font-size: 13px;
+  border-radius: 999px;
+}
+
+
+/* ==========================================================================
+   7. Responsive Media Queries (Home Grid Only)
+   ========================================================================== */
+
+/* Large Desktop (1200px+) */
+@media (min-width: 1200px) {
+  body.home-scale-soft .home-card-grid[data-view="grid"] {
+    grid-template-columns: repeat(4, 1fr) !important;
+    max-width: 1200px !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    justify-content: center !important;
+  }
+}
+
+/* Standard Desktop / Tablet Landscape (992px - 1199px) */
+@media (min-width: 992px) and (max-width: 1199px) {
+  body.home-scale-soft .home-card-grid[data-view="grid"] {
+    grid-template-columns: repeat(4, 1fr) !important;
+    justify-content: center !important;
+  }
+}
+
+/* Tablet Portrait (681px - 991px) */
+@media (min-width: 681px) and (max-width: 991px) {
+  body.home-scale-soft .home-card-grid[data-view="grid"] {
+    grid-template-columns: repeat(2, 240px) !important;
+    justify-content: center !important;
+  }
+}
+
+/* Mobile Large (421px - 680px) */
+@media (max-width: 680px) {
+  body.home-scale-soft .home-card-grid[data-view="grid"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 10px !important;
+  }
+}
+
+/* Mobile Small (Under 420px) */
+@media (max-width: 420px) {
+  body.home-scale-soft .home-card-grid[data-view="grid"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 8px !important;
+  }
+}

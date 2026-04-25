@@ -1,0 +1,166 @@
+/* Card List View Styles (Home & Catalog) */
+
+/* ==========================================================================
+   1. Home Page List View
+   ========================================================================== */
+body.home-scale-soft .home-card-grid[data-view="list"] {
+  grid-template-columns: 1fr !important;
+  grid-auto-rows: auto !important; /* Force auto height instead of 185px */
+  gap: 6px !important;
+  padding: 0 !important;
+  margin: 0 !important;
+}
+
+body.home-scale-soft .home-card-grid[data-view="list"] .number-card--home {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: flex-start !important; /* Align to the left to keep them close */
+  padding: 6px 16px !important;
+  border-radius: 20px !important;
+  min-height: 58px !important;
+  max-height: 72px !important;
+  height: auto !important;
+  background: #ffffff !important;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03), 0 10px 30px rgba(45, 33, 24, 0.05) !important;
+  border: 1px solid rgba(0, 0, 0, 0.02) !important;
+  gap: 12px !important; /* Smaller gap between groups */
+}
+
+/* Left Section: Number + Icons */
+body.home-scale-soft .home-card-grid[data-view="list"] .number-card--home .card-left-group {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  gap: 0px !important; /* Tighter gap */
+  min-width: 135px !important; /* Reduced width to bring middle section closer */
+}
+
+body.home-scale-soft .home-card-grid[data-view="list"] .number-card--home .card-top {
+  font-size: 19px !important; /* Slightly smaller for compactness */
+  font-weight: 900 !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  background: none !important;
+  color: #1a1612 !important;
+  box-shadow: none !important;
+  white-space: nowrap !important;
+}
+
+body.home-scale-soft .home-card-grid[data-view="list"] .number-card--home .card-topic-icons {
+  margin: 0 !important;
+  gap: 3px !important;
+  display: flex !important;
+  padding: 0 !important;
+}
+
+body.home-scale-soft .home-card-grid[data-view="list"] .number-card--home .card-topic-icon {
+  width: 17px !important;
+  height: 17px !important;
+  font-size: 9px !important;
+}
+
+/* Middle Section: Price Stack */
+body.home-scale-soft .home-card-grid[data-view="list"] .number-card--home .card-body {
+  flex: 1 !important;
+  display: flex !important;
+  justify-content: center !important; /* Still centered but closer due to left group shrink */
+  padding: 0 !important;
+  margin: 0 !important;
+  min-width: 0 !important;
+}
+
+body.home-scale-soft .home-card-grid[data-view="list"] .number-card--home .card-meta-stack {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 0px !important;
+  line-height: 1 !important;
+  white-space: nowrap !important; /* Prevent wrapping */
+}
+
+body.home-scale-soft .home-card-grid[data-view="list"] .number-card--home .card-tier--network {
+  background: none !important;
+  border: none !important;
+  color: #1a1612 !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  font-weight: 800 !important;
+  font-size: 13px !important;
+  line-height: 1.1 !important;
+  display: flex !important;
+  gap: 4px !important;
+}
+
+body.home-scale-soft .home-card-grid[data-view="list"] .number-card--home .card-meta-price,
+body.home-scale-soft .home-card-grid[data-view="list"] .number-card--home .card-meta-plan {
+  font-size: 14px !important;
+  font-weight: 700 !important;
+  color: #3b2f27 !important;
+  line-height: 1 !important;
+  margin: 0 !important;
+}
+
+/* Right Section: Button */
+body.home-scale-soft .home-card-grid[data-view="list"] .number-card--home .card-btn {
+  width: 90px !important;
+  min-height: 32px !important;
+  height: 32px !important;
+  font-size: 13px !important;
+  font-weight: 800 !important;
+  border-radius: 12px !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: #e1b155 !important;
+  color: #1a1612 !important;
+}
+
+/* ==========================================================================
+   2. Catalog Page List View
+   ========================================================================== */
+body.numbers-scale-soft .numbers-catalog-grid[data-view="list"] .number-card--catalog {
+  grid-template-columns: minmax(156px, auto) minmax(0, 1fr) auto;
+  grid-template-areas:
+    "top body btn"
+    "icons body btn";
+  align-items: center;
+  gap: 2px 14px;
+  padding: 11px 14px;
+  border-radius: 14px;
+}
+
+body.numbers-scale-soft .numbers-catalog-grid[data-view="list"] .number-card--catalog .card-top {
+  grid-area: top;
+  font-size: 20px;
+}
+
+body.numbers-scale-soft .numbers-catalog-grid[data-view="list"] .number-card--catalog .card-topic-icons {
+  grid-area: icons;
+  justify-content: flex-start;
+  margin-top: 0;
+}
+
+body.numbers-scale-soft .numbers-catalog-grid[data-view="list"] .number-card--catalog .card-body {
+  grid-area: body;
+}
+
+body.numbers-scale-soft .numbers-catalog-grid[data-view="list"] .number-card--catalog .card-tier--network .card-network-main,
+body.numbers-scale-soft .numbers-catalog-grid[data-view="list"] .number-card--catalog .card-tier--network .card-network-suffix {
+  font-size: 14px;
+}
+
+body.numbers-scale-soft .numbers-catalog-grid[data-view="list"] .number-card--catalog .card-meta-plan {
+  font-size: 15px;
+}
+
+body.numbers-scale-soft .numbers-catalog-grid[data-view="list"] .number-card--catalog .card-btn {
+  grid-area: btn;
+  min-width: 96px;
+  min-height: 36px;
+  padding: 7px 14px;
+  font-size: 13px;
+}

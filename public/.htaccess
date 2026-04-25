@@ -3,6 +3,14 @@
         Options -MultiViews -Indexes
     </IfModule>
 
+    # Allow common bots to bypass some restrictions if needed
+    SetEnvIf User-Agent "facebookexternalhit" allow_bot
+    SetEnvIf User-Agent "Facebot" allow_bot
+    SetEnvIf User-Agent "Twitterbot" allow_bot
+    SetEnvIf User-Agent "Googlebot" allow_bot
+    SetEnvIf User-Agent "Bingbot" allow_bot
+    SetEnvIf User-Agent "Pinterest" allow_bot
+
     RewriteEngine On
 
     # Force admin article upload routes into the front controller.

@@ -3460,3 +3460,32 @@ Route::get('/cron/clear-all-caches/{secret}', function ($secret) {
     
     return "SUCCESS: All caches have been cleared! Now your button should appear. <br><a href='/admin/articles'>กลับหน้าบทความ</a>";
 });
+
+Route::get('/cron/git-sync/{secret}', function ($secret) {
+    if ($secret !== 'supernumber_secret_789') return "Invalid Secret";
+    
+    $files = [
+        'resources/views/admin/articles.blade.php' => 'https://raw.githubusercontent.com/sakonlapakP/Supernumber/main/resources/views/admin/articles.blade.php',
+        'resources/views/admin/article-edit.blade.php' => 'https://raw.githubusercontent.com/sakonlapakP/Supernumber/main/resources/views/admin/article-edit.blade.php',
+        'app/Http/Controllers/PublicController.php' => 'https://raw.githubusercontent.com/sakonlapakP/Supernumber/main/app/Http/Controllers/PublicController.php',
+        'public/.htaccess' => 'https://raw.githubusercontent.com/sakonlapakP/Supernumber/main/public/.htaccess',
+        'resources/views/articles/show.blade.php' => 'https://raw.githubusercontent.com/sakonlapakP/Supernumber/main/resources/views/articles/show.blade.php',
+        'resources/views/layouts/app.blade.php' => 'https://raw.githubusercontent.com/sakonlapakP/Supernumber/main/resources/views/layouts/app.blade.php',
+    ];
+    
+    $output = "";
+    foreach ($files as $localPath => $remoteUrl) {
+        $fullPath = base_path($localPath);
+        $content = @file_get_contents($remoteUrl);
+        if ($content) {
+            file_put_contents($fullPath, $content);
+            $output .= "✅ Updated: $localPath<br>";
+        } else {
+            $output .= "❌ Failed: $localPath (Check GitHub URL)<br>";
+        }
+    }
+    
+    \Illuminate\Support\Facades\Artisan::call('view:clear');
+    
+    return $output . "<br><b>All Sync Completed!</b> <br><a href='/admin/articles'>กลับหน้าบทความ</a>";
+});

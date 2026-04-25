@@ -3,11 +3,11 @@
     <head>
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
-        <link rel="shortcut icon" type="image/x-icon" href="{{ asset('favicon-v2.ico') }}">
-        <link rel="icon" type="image/svg+xml" sizes="any" href="{{ asset('favicon.svg') }}">
-        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}">
-        <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}">
-        <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
+        <link rel="shortcut icon" type="image/x-icon" href="{{ asset('favicon-v2.ico') }}?v={{ substr(md5_file(public_path('favicon-v2.ico')), 0, 8) }}">
+        <link rel="icon" type="image/svg+xml" sizes="any" href="{{ asset('favicon.svg') }}?v={{ substr(md5_file(public_path('favicon.svg')), 0, 8) }}">
+        <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}?v={{ substr(md5_file(public_path('favicon-32x32.png')), 0, 8) }}">
+        <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}?v={{ substr(md5_file(public_path('favicon-16x16.png')), 0, 8) }}">
+        <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}?v={{ substr(md5_file(public_path('apple-touch-icon.png')), 0, 8) }}">
 
         <title>{{ config('app.name', 'Laravel') }}</title>
 

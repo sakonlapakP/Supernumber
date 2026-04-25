@@ -3,6 +3,7 @@
   <head>
     @php
       $staticPath = static fn (string $path): string => '/' . ltrim($path, '/');
+      $versionedStaticPath = static fn (string $path): string => '/' . ltrim($path, '/') . '?v=' . substr(md5_file(public_path($path)), 0, 8);
       $cssHash = substr(md5_file(public_path('css/supernumber.css')), 0, 8);
       $gaMeasurementId = trim((string) config('services.ga4.measurement_id', ''));
     @endphp
@@ -18,14 +19,14 @@
     <meta property="og:title" content="@yield('og_title', 'Supernumber')" />
     <meta property="og:description" content="@yield('og_description', 'ดูดวงเบอร์มือถือฟรี วิเคราะห์เสริมพลัง และคัดเบอร์มงคลที่เหมาะกับคุณ')" />
     <meta property="og:url" content="@yield('og_url', url()->current())" />
-    <meta property="og:image" content="@yield('og_image', $staticPath('images/home_banner.jpg'))" />
+    <meta property="og:image" content="@yield('og_image', asset('images/home_banner.jpg'))" />
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="theme-color" content="@yield('theme_color', '#2a2321')" />
-    <link rel="shortcut icon" type="image/x-icon" href="{{ $staticPath('favicon-v2.ico') }}" />
-    <link rel="icon" type="image/svg+xml" sizes="any" href="{{ asset('favicon.svg') }}?v=2" />
-    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon-32x32.png') }}?v=2" />
-    <link rel="icon" type="image/png" sizes="16x16" href="{{ asset('favicon-16x16.png') }}?v=2" />
-    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}?v=2" />
+    <link rel="shortcut icon" type="image/x-icon" href="{{ $versionedStaticPath('favicon-v2.ico') }}" />
+    <link rel="icon" type="image/svg+xml" sizes="any" href="{{ $versionedStaticPath('favicon.svg') }}" />
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ $versionedStaticPath('favicon-32x32.png') }}" />
+    <link rel="icon" type="image/png" sizes="16x16" href="{{ $versionedStaticPath('favicon-16x16.png') }}" />
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ $versionedStaticPath('apple-touch-icon.png') }}" />
     @hasSection('preload_image')
       <link rel="preload" as="image" href="@yield('preload_image')" />
     @endif
@@ -33,6 +34,8 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="{{ $staticPath('css/supernumber.css') }}?v={{ $cssHash }}" />
+    <link rel="stylesheet" href="{{ $staticPath('css/cardNumber.css') }}?v={{ $cssHash }}" />
+    <link rel="stylesheet" href="{{ $staticPath('css/cardList.css') }}?v={{ $cssHash }}" />
     <style>
         /* Precision Branding Overrides */
         .brand-mark {

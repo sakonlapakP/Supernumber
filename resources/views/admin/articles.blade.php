@@ -8,7 +8,8 @@
       <h1>บทความ</h1>
       <p class="admin-subtitle">จัดการบทความทั้งหมดแบบลิสต์ พร้อมปุ่มจัดการด้านท้ายแต่ละแถว</p>
     </div>
-    <div class="admin-page-actions">
+    <div class="admin-page-actions" style="display: flex; gap: 10px;">
+      <a href="{{ route('admin.articles.auto-gen-lottery') }}" class="admin-button" style="background-color: #6366f1; border-color: #6366f1;">🎰 สร้างบทความหวยอัตโนมัติ</a>
       <a href="{{ route('admin.articles.create') }}" class="admin-button">เพิ่มบทความ</a>
     </div>
   </div>
