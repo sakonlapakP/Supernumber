@@ -44,6 +44,7 @@ jobs:
         server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
         password: ${{ secrets.FTP_PASSWORD }}
+        local-dir: public/
         server-dir: domains/supernumber.co.th/public_html/
         exclude: |
           **/.git*
