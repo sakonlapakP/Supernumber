@@ -587,7 +587,9 @@
               <div class="card-grid home-card-grid listing-card-grid" id="home-prepaid-grid" data-view="grid">
                 @foreach ($initialPrepaidNumbers as $number)
                   <article class="number-card number-card--listing number-card--home">
-                    <div class="card-top">{{ $number['display_number'] }}</div>
+                    <div class="card-left-group">
+                      <div class="card-top">{{ $number['display_number'] }}</div>
+
                     @if (! empty($number['supported_topic_icons']))
                       @php
                         $topicIcons = collect($number['supported_topic_icons']);
@@ -603,11 +605,12 @@
                         @endif
                       </div>
                     @endif
+                    </div>
                     <div class="card-body">
                       <div class="card-meta-stack">
                         <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">{{ $number['service_type_label'] }}</span></span>
                         @if (! $number['is_postpaid'])
-                          <span class="card-meta-plan"><strong>ราคา {{ $number['payment_label'] }}</strong></span>
+                          <span class="card-meta-plan">{{ $number['payment_label'] }}</span>
                         @endif
                         @if ($number['is_postpaid'])
                           <span class="card-meta-price">{!! $number['initial_payment_html'] !!}</span>
@@ -735,14 +738,16 @@
 
         const renderCard = (number) => `
           <article class="number-card number-card--listing number-card--home">
-            <div class="card-top">${escapeHtml(number.display_number)}</div>
-            ${Array.isArray(number.supported_topic_icons) && number.supported_topic_icons.length
-              ? `<div class="card-topic-icons" aria-label="หมวดที่เบอร์นี้ช่วย">${number.supported_topic_icons.slice(0, 4).map((topic) => `<span class="card-topic-icon" title="${escapeHtml(topic.topic)}" aria-label="${escapeHtml(topic.topic)}">${escapeHtml(topic.icon)}</span>`).join("")}${number.supported_topic_icons.length > 4 ? `<span class="card-topic-icon card-topic-icon--more" aria-label="มีหมวดที่ช่วยเพิ่มเติม">+</span>` : ""}</div>`
-              : ""}
+            <div class="card-left-group">
+              <div class="card-top">${escapeHtml(number.display_number)}</div>
+              ${Array.isArray(number.supported_topic_icons) && number.supported_topic_icons.length
+                ? `<div class="card-topic-icons" aria-label="หมวดที่เบอร์ this helps">${number.supported_topic_icons.slice(0, 4).map((topic) => `<span class="card-topic-icon" title="${escapeHtml(topic.topic)}" aria-label="${escapeHtml(topic.topic)}">${escapeHtml(topic.icon)}</span>`).join("")}${number.supported_topic_icons.length > 4 ? `<span class="card-topic-icon card-topic-icon--more" aria-label="More categories">+</span>` : ""}</div>`
+                : ""}
+            </div>
             <div class="card-body">
               <div class="card-meta-stack">
                 <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">${escapeHtml(number.service_type_label)}</span></span>
-                ${!number.is_postpaid ? `<span class="card-meta-plan"><strong>ราคา ${escapeHtml(number.payment_label)}</strong></span>` : ""}
+                ${!number.is_postpaid ? `<span class="card-meta-plan">${escapeHtml(number.payment_label)}</span>` : ""}
                 ${number.is_postpaid ? `<span class="card-meta-price">${number.initial_payment_html}</span>` : ""}
               </div>
             </div>

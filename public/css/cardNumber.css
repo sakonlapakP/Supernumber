@@ -160,9 +160,8 @@
   background: var(--card-btn-primary-bg);
   color: var(--card-btn-primary-color);
   box-shadow: var(--card-btn-primary-shadow);
-  padding: 12px 26px;
-  min-height: 52px;
-  font-size: 24px;
+  padding: 5px 20px;
+  font-size: 12px;
   font-weight: 600;
   cursor: pointer;
   transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
@@ -197,7 +196,8 @@ body.home-scale-soft .home-card-grid[data-view="grid"] {
   display: grid !important;
   gap: 20px 16px !important;
   align-items: stretch !important;
-  grid-auto-rows: auto !important; /* Changed to auto as requested */
+  grid-auto-rows: auto !important;
+  /* Changed to auto as requested */
 }
 
 /* Base Home Card Style */
@@ -281,7 +281,7 @@ body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-
 body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-price,
 body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-plan {
   font-size: 16px !important;
-  font-weight: 800 !important;
+  font-weight: 400 !important;
   color: #1a1612 !important;
   margin-top: 0px !important;
   line-height: 1.1 !important;
@@ -290,13 +290,14 @@ body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-
 body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-price *,
 body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-plan * {
   font-size: 16px !important;
-  font-weight: 800 !important;
+  font-weight: 400 !important;
 }
 
 body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-btn {
   background: #e1b155 !important;
-  color: #1a1612 !important;
-  min-height: 30px !important;
+  color: #4b382a !important;
+  min-height: 36px !important;
+  padding: 0 10px !important;
   font-size: 14px !important;
   font-weight: 800 !important;
   border-radius: 12px !important;
