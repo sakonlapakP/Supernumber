@@ -36,6 +36,7 @@
     <link rel="stylesheet" href="{{ $versionedStaticPath('css/supernumber.css') }}" />
     <link rel="stylesheet" href="{{ $versionedStaticPath('css/cardNumber.css') }}" />
     <link rel="stylesheet" href="{{ $versionedStaticPath('css/cardList.css') }}" />
+    @stack('styles')
     <style>
         /* Precision Branding Overrides */
         .brand-mark {

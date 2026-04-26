@@ -7,6 +7,7 @@
 @section('og_description', $article->meta_description ?: ($article->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($article->sanitizedContent()), 160)))
 @section('og_url', route('articles.show', $article->slug))
 @php
+  $detailCoverPath = $article->cover_image_landscape_path ?: ($article->cover_image_path ?: $article->cover_image_square_path);
   $detailCoverCandidate = $article->cover_image_square_path ?: $article->cover_image_path;
   $ogImagePath = asset('images/home_banner.jpg');
 
@@ -15,6 +16,10 @@
   }
 @endphp
 @section('og_image', $ogImagePath)
+
+@push('styles')
+  <link rel="stylesheet" href="{{ asset('css/article.css') }}?v={{ substr(md5_file(public_path('css/article.css')), 0, 8) }}" />
+@endpush
 
 @section('content')
   @php

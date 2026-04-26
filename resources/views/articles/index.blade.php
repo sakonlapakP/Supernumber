@@ -7,6 +7,10 @@
 @section('og_description', 'รวมบทความความรู้เรื่องเบอร์มงคล และเทคนิคการเลือกเบอร์ให้ตอบโจทย์ชีวิต')
 @section('og_url', route('articles.index'))
 
+@push('styles')
+  <link rel="stylesheet" href="{{ asset('css/article.css') }}?v={{ substr(md5_file(public_path('css/article.css')), 0, 8) }}" />
+@endpush
+
 @section('content')
   <section class="article-hero">
     <div class="container">
