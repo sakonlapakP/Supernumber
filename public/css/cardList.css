@@ -5,9 +5,10 @@
    ========================================================================== */
 body.home-scale-soft .home-card-grid[data-view="list"],
 body.numbers-scale-soft .numbers-catalog-grid[data-view="list"] {
+  display: grid !important; /* Force grid layout */
   grid-template-columns: 1fr !important;
-  grid-auto-rows: auto !important; /* Force auto height instead of 185px */
-  gap: 12px !important; /* More spacious list */
+  grid-auto-rows: auto !important;
+  gap: 20px !important; /* Increased to ensure visible separation */
   padding: 0 !important;
   margin: 0 !important;
 }
@@ -17,14 +18,14 @@ body.numbers-scale-soft .numbers-catalog-grid[data-view="list"] .number-card--ca
   display: grid !important;
   grid-template-columns: auto 1fr auto !important;
   align-items: center !important;
-  padding: 12px 16px !important;
-  border-radius: 20px !important;
-  min-height: 72px !important;
+  padding: 14px 20px !important; /* Increased vertical padding for more height */
+  border-radius: 16px !important;
+  min-height: 80px !important; /* Increased height as requested previously */
   height: auto !important;
   background: #ffffff !important;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.03), 0 10px 30px rgba(45, 33, 24, 0.05) !important;
+  box-shadow: 0 10px 30px rgba(45, 33, 24, 0.08) !important; /* Stronger shadow for clear separation */
   border: 1px solid rgba(0, 0, 0, 0.02) !important;
-  gap: 24px !important; /* Increased gap for better breathing room */
+  margin: 0 !important;
 }
 
 /* Left Section: Number + Icons */
