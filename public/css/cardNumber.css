@@ -201,7 +201,8 @@ body.home-scale-soft .home-card-grid[data-view="grid"] {
 }
 
 /* Base Home Card Style */
-body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home {
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home,
+body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog {
   min-height: 165px !important;
   height: 100% !important;
   /* Fill grid row height */
@@ -218,7 +219,8 @@ body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home {
   overflow: hidden !important;
 }
 
-body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-top {
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-top,
+body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-top {
   background: #1a1612 !important;
   color: #ffffff !important;
   padding: 12px 10px !important;
@@ -232,7 +234,8 @@ body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-
   flex-shrink: 0 !important;
 }
 
-body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-topic-icons {
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-topic-icons,
+body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-topic-icons {
   display: flex !important;
   justify-content: center !important;
   align-items: center !important;
@@ -244,7 +247,8 @@ body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-
   overflow: hidden !important;
 }
 
-body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-topic-icon {
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-topic-icon,
+body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-topic-icon {
   background: #f8faf9 !important;
   border-radius: 50% !important;
   width: 28px !important;
@@ -257,7 +261,8 @@ body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-
   flex-shrink: 0 !important;
 }
 
-body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-body {
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-body,
+body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-body {
   flex-grow: 1 !important;
   display: flex !important;
   flex-direction: column !important;
@@ -267,19 +272,23 @@ body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-
   padding: 0 !important;
 }
 
-body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-stack {
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-stack,
+body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-meta-stack {
   gap: 3px !important;
   width: 100% !important;
 }
 
-body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-network-main {
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-network-main,
+body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-network-main {
   font-weight: 800 !important;
   font-size: 13px !important;
   letter-spacing: 0.05em !important;
 }
 
 body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-price,
-body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-plan {
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-plan,
+body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-meta-price,
+body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-meta-plan {
   font-size: 16px !important;
   font-weight: 400 !important;
   color: #1a1612 !important;
@@ -288,12 +297,15 @@ body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-
 }
 
 body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-price *,
-body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-plan * {
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-plan *,
+body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-meta-price *,
+body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-meta-plan * {
   font-size: 16px !important;
   font-weight: 400 !important;
 }
 
-body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-btn {
+body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-btn,
+body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-btn {
   background: #e1b155 !important;
   color: #4b382a !important;
   min-height: 36px !important;

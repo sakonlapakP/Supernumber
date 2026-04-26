@@ -343,15 +343,7 @@ body.numbers-scale-soft .numbers-view-toggle__button {
   font-size: 12px;
 }
 
-body.numbers-scale-soft .numbers-catalog-grid {
-  gap: 16px;
-}
 
-body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"],
-body.numbers-scale-soft .numbers-catalog-grid.is-default-split[data-view="grid"] {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
-}
 
 
 body.numbers-scale-soft .numbers-pagination {
@@ -1961,11 +1953,7 @@ a[href^="tel"] {
   gap: 4px;
 }
 
-.numbers-catalog-grid {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 18px;
-}
+
 
 .numbers-default-columns {
   display: grid;
@@ -1978,14 +1966,7 @@ a[href^="tel"] {
   gap: 14px;
 }
 
-.numbers-catalog-grid.is-default-split[data-view="grid"] {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-}
 
-.numbers-catalog-grid.is-default-split[data-view="list"] {
-  grid-template-columns: 1fr;
-  gap: 12px;
-}
 
 .numbers-default-column__head {
   display: grid;
@@ -2044,10 +2025,7 @@ a[href^="tel"] {
   box-shadow: 0 10px 20px rgba(31, 24, 19, 0.18);
 }
 
-.numbers-catalog-grid[data-view="list"] {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-}
+
 
 
 
@@ -2371,25 +2349,7 @@ body.under-construction-page main {
   font-size: 16px;
 }
 
-.card-btn {
-  border: var(--card-btn-primary-border);
-  border-radius: 999px;
-  background: var(--card-btn-primary-bg);
-  color: var(--card-btn-primary-color);
-  box-shadow: var(--card-btn-primary-shadow);
-  cursor: pointer;
-  transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  text-decoration: none;
-}
 
-.card-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: var(--card-btn-primary-hover-shadow);
-  filter: saturate(1.04);
-}
 
 .card-btn:disabled,
 .card-btn[disabled] {
@@ -3505,19 +3465,12 @@ body.under-construction-page main {
 }
 
 @media (min-width: 901px) {
-  .numbers-default-columns[data-view="list"] {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 24px;
-    align-items: start;
-  }
+
 }
 
 
 @media (max-width: 900px) {
-  .home-number-groups[data-view="list"] {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
+
 
 
 
@@ -3564,17 +3517,9 @@ body.under-construction-page main {
     min-width: 0;
   }
 
-  .numbers-catalog-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 
-  .numbers-catalog-grid.is-default-split[data-view="grid"] {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 
-  .home-card-grid[data-view="grid"] {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
+
 
   .evaluate-summary {
     grid-template-columns: 1fr;
