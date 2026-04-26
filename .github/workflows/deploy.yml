@@ -1,4 +1,4 @@
-# 🚀 Triggering first automated deployment with secrets...
+# 🚀 Production Deployment Workflow
 name: 🚀 Auto Deploy via FTP
 
 on:
@@ -9,36 +9,13 @@ on:
 
 jobs:
   web-deploy:
-    name: 🎉 Deploying to Pathosting
+    name: 🎉 Deploying to Production
     runs-on: ubuntu-latest
     steps:
     - name: 🚚 Get latest code
       uses: actions/checkout@v3
 
-    - name: 📂 Sync files to Server
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
-      with:
-        server: ${{ secrets.FTP_SERVER }}
-        username: ${{ secrets.FTP_USERNAME }}
-        password: ${{ secrets.FTP_PASSWORD }}
-        server-dir: domains/supernumber.co.th/app/
-        exclude: |
-          **/.git*
-          **/.git*/**
-          **/node_modules/**
-          **/vendor/**
-          **/tests/**
-          **/storage/*.pdf
-          .github/workflows/**
-          README.md
-          composer.json
-          composer.lock
-          package.json
-          package-lock.json
-          webpack.mix.js
-          vite.config.js
-
-    - name: 📂 Sync to public_html as well
+    - name: 📂 Sync to public_html
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
         server: ${{ secrets.FTP_SERVER }}
@@ -49,14 +26,8 @@ jobs:
           **/.git*
           **/.git*/**
           **/node_modules/**
-          **/vendor/**
           **/tests/**
           **/storage/*.pdf
           .github/workflows/**
           README.md
-          composer.json
-          composer.lock
-          package.json
-          package-lock.json
-          webpack.mix.js
-          vite.config.js
+
