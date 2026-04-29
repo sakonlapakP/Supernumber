@@ -2528,7 +2528,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return response()->json(['exists' => $exists, 'slug' => $slug]);
     })->name('articles.check-slug');
 
-    Route::get('/articles/auto-gen-lottery', function () use ($ensureAdmin) {
+    Route::get('/articles/auto-gen-lottery', function () use ($ensureAdmin, $resolveArticleImageMeta) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
@@ -2578,12 +2578,15 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'excerpt' => "ตรวจผลสลากกินแบ่งรัฐบาล งวดวันที่ $thaiDateStr อัปเดตข้อมูลรวดเร็ว ทันใจ พร้อมเช็ครางวัลที่ 1 และรางวัลอื่นๆ",
             'content' => "<p>อัปเดตผลสลากกินแบ่งรัฐบาล งวดประจำวันที่ $thaiDateStr ได้ที่นี่</p><p>ระบบจะดึงผลหวยมาแสดงด้านล่างนี้โดยอัตโนมัติครับ</p>",
             'is_published' => true,
-            'published_at' => \Illuminate\Support\Carbon::parse($drawDate->format('Y-m-d') . ' 11:30:00', 'Asia/Bangkok')->timezone('UTC'),
+            'published_at' => now(), // Set to Current Time
             'author_user_id' => session('admin_user_id'),
             'cover_image_path' => $imageMeta['square_path'],
             'cover_image_square_path' => $imageMeta['square_path'],
             'cover_image_landscape_path' => $imageMeta['cover_path'],
         ]);
+
+        // Trigger image generation immediately
+        \Illuminate\Support\Facades\Artisan::call('lottery:fetch-latest', ['--force' => true]);
 
         return redirect()->route('admin.articles')
             ->with('status_message', 'สร้างและเผยแพร่บทความหวยงวดล่าสุดเรียบร้อยแล้วครับ!');
