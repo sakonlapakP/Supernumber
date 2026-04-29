@@ -365,11 +365,25 @@ class FetchLatestLotteryCommand extends Command
                 @chmod(Storage::disk('public')->path($squareSvgFilename), 0644);
                 @chmod(Storage::disk('public')->path($landscapeSvgFilename), 0644);
 
-                $article->cover_image_square_path = $squareSvgFilename;
-                $article->cover_image_landscape_path = $landscapeSvgFilename;
-                $article->cover_image_path = $squareSvgFilename;
+                // Attempt to convert SVG to PNG as a fallback for social sharing
+                $this->convertSvgToPng(Storage::disk('public')->path($squareSvgFilename), Storage::disk('public')->path($squareFilename));
+                $this->convertSvgToPng(Storage::disk('public')->path($landscapeSvgFilename), Storage::disk('public')->path($landscapeFilename));
+
+                if (Storage::disk('public')->exists($squareFilename)) {
+                    @chmod(Storage::disk('public')->path($squareFilename), 0644);
+                    @chmod(Storage::disk('public')->path($landscapeFilename), 0644);
+                    $article->cover_image_square_path = $squareFilename;
+                    $article->cover_image_landscape_path = $landscapeFilename;
+                    $article->cover_image_path = $squareFilename;
+                    $coverSyncMode = 'png-fallback';
+                } else {
+                    $article->cover_image_square_path = $squareSvgFilename;
+                    $article->cover_image_landscape_path = $landscapeSvgFilename;
+                    $article->cover_image_path = $squareSvgFilename;
+                    $coverSyncMode = 'svg-fallback';
+                }
+                
                 $coverSyncSucceeded = true;
-                $coverSyncMode = 'svg-fallback';
             } else {
                 $squareContents = file_get_contents($renderedSquare) ?: '';
                 Storage::disk('public')->put($squareFilename, $squareContents);
@@ -652,6 +666,38 @@ HTML;
     private function escapeHtml(string $value): string
     {
         return htmlspecialchars($value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
+
+    private function convertSvgToPng(string $svgPath, string $pngPath): bool
+    {
+        if (class_exists(\Imagick::class)) {
+            try {
+                $imagick = new \Imagick();
+                $imagick->setBackgroundColor(new \ImagickPixel('transparent'));
+                $imagick->readImageBlob(file_get_contents($svgPath));
+                $imagick->setImageFormat("png24");
+                $imagick->writeImage($pngPath);
+                return true;
+            } catch (\Throwable $e) {
+                $this->warn('Imagick conversion failed: '.$e->getMessage());
+            }
+        }
+
+        try {
+            $process = new Process(['convert', $svgPath, $pngPath]);
+            $process->run();
+            if ($process->isSuccessful()) {
+                return true;
+            }
+            
+            // Try with 'magick' command (ImageMagick 7+)
+            $process = new Process(['magick', 'convert', $svgPath, $pngPath]);
+            $process->run();
+            return $process->isSuccessful();
+        } catch (\Throwable $e) {
+            $this->warn('CLI conversion failed: '.$e->getMessage());
+            return false;
+        }
     }
 
     private function buildLotteryCoverSvg(LotteryResult $result): string
