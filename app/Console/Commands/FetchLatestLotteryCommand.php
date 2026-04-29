@@ -299,9 +299,13 @@ class FetchLatestLotteryCommand extends Command
         $l2 = $this->pickFirstPrizeNumber($prizes, 'เลขท้าย 2 ตัว', '..');
         $f3_arr = $this->pickPrizeNumbers($prizes, 'เลขหน้า 3 ตัว', 2);
         $l3_arr = $this->pickPrizeNumbers($prizes, 'เลขท้าย 3 ตัว', 2);
+        $near_arr = $this->pickPrizeNumbers($prizes, 'ข้างเคียง', 2);
         
-        $f3 = count($f3_arr) > 0 ? implode(' ', $f3_arr) : '... ...';
-        $l3 = count($l3_arr) > 0 ? implode(' ', $l3_arr) : '... ...';
+        $f3_1 = $f3_arr[0] ?? '...';
+        $f3_2 = $f3_arr[1] ?? '...';
+        $l3_1 = $l3_arr[0] ?? '...';
+        $l3_2 = $l3_arr[1] ?? '...';
+        $near = count($near_arr) > 0 ? implode(', ', $near_arr) : '-';
 
         $fontPath = public_path('fonts/Kanit-700.ttf');
         $fontBase64 = is_file($fontPath) ? base64_encode((string)file_get_contents($fontPath)) : '';
@@ -318,40 +322,44 @@ class FetchLatestLotteryCommand extends Command
             <stop offset="50%" style="stop-color:#120907;stop-opacity:1" />
             <stop offset="100%" style="stop-color:#1e140d;stop-opacity:1" />
         </linearGradient>
-        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#D4AF37;stop-opacity:1" />
-            <stop offset="50%" style="stop-color:#F9E27D;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#B8860B;stop-opacity:1" />
-        </linearGradient>
     </defs>
     <rect width="1200" height="630" fill="url(#bgGrad)" />
+    
+    <!-- Premium Borders -->
     <rect x="10" y="10" width="1180" height="610" fill="none" stroke="#c59d62" stroke-width="3" />
     <rect x="30" y="30" width="1140" height="570" fill="none" stroke="#ba8e4d" stroke-width="2" opacity="0.4" />
+    <line x1="1000" y1="0" x2="850" y2="400" stroke="#ba8e4d" stroke-width="3" opacity="0.3" />
 
-    <text x="600" y="80" font-size="36" font-weight="bold" fill="#f5c76d" text-anchor="middle">ผลสลากกินแบ่งรัฐบาล</text>
-    <text x="600" y="130" font-size="48" font-weight="bold" fill="#ffffff" text-anchor="middle">งวดวันที่ $thaiDate</text>
+    <!-- Header & Logo Box -->
+    <rect x="565" y="45" width="70" height="70" fill="#2a1a10" stroke="#d7a64e" stroke-width="2" />
+    <text x="600" y="100" font-size="52" font-weight="bold" fill="#f5c76d" text-anchor="middle">S</text>
+    <text x="600" y="150" font-size="24" font-weight="800" fill="#f7d58f" text-anchor="middle" letter-spacing="4">SUPERNUMBER</text>
 
-    <!-- Prize 1 -->
-    <rect x="60" y="170" width="700" height="220" rx="15" fill="#fffaf0" />
-    <text x="410" y="225" font-size="32" font-weight="bold" fill="#64748b" text-anchor="middle">รางวัลที่ 1</text>
-    <text x="410" y="345" font-size="120" font-weight="900" fill="#2a1a10" text-anchor="middle" letter-spacing="10">$p1</text>
+    <text x="600" y="200" font-size="52" font-weight="bold" fill="#ffffff" text-anchor="middle">ผลสลากกินแบ่งรัฐบาล</text>
+    <text x="600" y="245" font-size="32" font-weight="bold" fill="#f8e2b0" text-anchor="middle">งวดประจำวันที่ $thaiDate</text>
 
-    <!-- Last 2 -->
-    <rect x="780" y="170" width="360" height="220" rx="15" fill="#1e293b" stroke="#d7a64e" stroke-width="2" />
-    <text x="960" y="225" font-size="32" font-weight="bold" fill="#f8e2b0" text-anchor="middle">เลขท้าย 2 ตัว</text>
-    <text x="960" y="350" font-size="130" font-weight="900" fill="#ffffff" text-anchor="middle">$l2</text>
+    <!-- Main Prize -->
+    <rect x="60" y="270" width="680" height="200" rx="10" fill="#fffaf0" />
+    <text x="400" y="325" font-size="36" font-weight="800" fill="#2a1a10" text-anchor="middle">รางวัลที่ 1</text>
+    <text x="400" y="435" font-size="110" font-weight="900" fill="#2a1a10" text-anchor="middle" letter-spacing="6">$p1</text>
+    <text x="400" y="500" font-size="20" font-weight="700" fill="#f6deac" text-anchor="middle">ข้างเคียง : $near</text>
 
-    <!-- Front 3 / Back 3 -->
-    <rect x="60" y="410" width="530" height="130" rx="15" fill="#fffaf0" />
-    <text x="180" y="485" font-size="28" font-weight="bold" fill="#64748b" text-anchor="middle">เลขหน้า 3 ตัว</text>
-    <text x="410" y="495" font-size="70" font-weight="900" fill="#2a1a10" text-anchor="middle">$f3</text>
+    <!-- Small Prizes -->
+    <rect x="760" y="270" width="380" height="200" rx="10" fill="#fffaf0" />
+    <text x="950" y="325" font-size="32" font-weight="800" fill="#2a1a10" text-anchor="middle">เลขท้าย 2 ตัว</text>
+    <text x="950" y="440" font-size="110" font-weight="900" fill="#2a1a10" text-anchor="middle">$l2</text>
 
-    <rect x="610" y="410" width="530" height="130" rx="15" fill="#fffaf0" />
-    <text x="730" y="485" font-size="28" font-weight="bold" fill="#64748b" text-anchor="middle">เลขท้าย 3 ตัว</text>
-    <text x="960" y="495" font-size="70" font-weight="900" fill="#2a1a10" text-anchor="middle">$l3</text>
+    <rect x="60" y="525" width="530" height="80" rx="8" fill="#fffaf0" />
+    <text x="180" y="575" font-size="24" font-weight="bold" fill="#64748b" text-anchor="middle">เลขหน้า 3 ตัว</text>
+    <text x="420" y="580" font-size="60" font-weight="900" fill="#2a1a10" text-anchor="middle">$f3_1  $f3_2</text>
 
-    <text x="600" y="585" font-size="20" fill="#94a3b8" text-anchor="middle">SUPERNUMBER.CO.TH | เปลี่ยนตัวเลข เปลี่ยนชีวิต</text>
+    <rect x="610" y="525" width="530" height="80" rx="8" fill="#fffaf0" />
+    <text x="730" y="575" font-size="24" font-weight="bold" fill="#64748b" text-anchor="middle">เลขท้าย 3 ตัว</text>
+    <text x="970" y="580" font-size="60" font-weight="900" fill="#2a1a10" text-anchor="middle">$l3_1  $l3_2</text>
+
 </svg>
+SVG;
+    }
 SVG;
     }
 
