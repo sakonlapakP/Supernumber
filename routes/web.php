@@ -2570,14 +2570,19 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         $title = "ตรวจหวยรัฐบาล งวดวันที่ $thaiDateStr ผลสลากกินแบ่งรัฐบาล";
         
+        $imageMeta = $resolveArticleImageMeta($slug, $drawDate);
+
         $article = \App\Models\Article::query()->create([
             'title' => $title,
             'slug' => $slug,
             'excerpt' => "ตรวจผลสลากกินแบ่งรัฐบาล งวดวันที่ $thaiDateStr อัปเดตข้อมูลรวดเร็ว ทันใจ พร้อมเช็ครางวัลที่ 1 และรางวัลอื่นๆ",
             'content' => "<p>อัปเดตผลสลากกินแบ่งรัฐบาล งวดประจำวันที่ $thaiDateStr ได้ที่นี่</p><p>ระบบจะดึงผลหวยมาแสดงด้านล่างนี้โดยอัตโนมัติครับ</p>",
             'is_published' => true,
-            'published_at' => $drawDate->copy()->setTime(15, 30, 0), // Set to 3:30 PM
+            'published_at' => \Illuminate\Support\Carbon::parse($drawDate->format('Y-m-d') . ' 11:30:00', 'Asia/Bangkok')->timezone('UTC'),
             'author_user_id' => session('admin_user_id'),
+            'cover_image_path' => $imageMeta['square_path'],
+            'cover_image_square_path' => $imageMeta['square_path'],
+            'cover_image_landscape_path' => $imageMeta['cover_path'],
         ]);
 
         return redirect()->route('admin.articles')
