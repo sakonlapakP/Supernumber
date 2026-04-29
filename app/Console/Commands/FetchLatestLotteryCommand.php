@@ -274,8 +274,9 @@ class FetchLatestLotteryCommand extends Command
 
         try {
             // Priority 1: High-quality conversion using Playwright
+            $nodePath = is_file('/usr/local/bin/node') ? '/usr/local/bin/node' : (is_file('/opt/homebrew/bin/node') ? '/opt/homebrew/bin/node' : 'node');
             $scriptPath = base_path('scratch/svg2png.js');
-            $process = new Process(['node', $scriptPath, $svgPath, $pngPath]);
+            $process = new Process([$nodePath, $scriptPath, $svgPath, $pngPath]);
             $process->run();
             
             if ($process->isSuccessful()) {
