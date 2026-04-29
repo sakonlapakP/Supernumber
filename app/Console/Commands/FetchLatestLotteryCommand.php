@@ -318,6 +318,12 @@ class FetchLatestLotteryCommand extends Command
         $landscapeFilename = sprintf('%s/%s_cover.png', $articleDir, $articleName);
         $squareSvgFilename = sprintf('%s/%s.svg', $articleDir, $articleName);
         $landscapeSvgFilename = sprintf('%s/%s_cover.svg', $articleDir, $articleName);
+
+        // Ensure directory exists with correct permissions
+        if (!Storage::disk('public')->exists($articleDir)) {
+            Storage::disk('public')->makeDirectory($articleDir);
+            @chmod(Storage::disk('public')->path($articleDir), 0755);
+        }
         $thaiDateLabel = $this->toThaiDateLabel($drawDate->copy());
         $articleTitle = sprintf('ตรวจหวยรัฐบาล งวดวันที่ %s ผลสลากกินแบ่งรัฐบาล', $thaiDateLabel);
         $article = Article::query()->firstOrNew([
@@ -356,6 +362,8 @@ class FetchLatestLotteryCommand extends Command
                 $svgContents = $this->buildLotteryCoverSvg($result);
                 Storage::disk('public')->put($squareSvgFilename, $svgContents);
                 Storage::disk('public')->put($landscapeSvgFilename, $svgContents);
+                @chmod(Storage::disk('public')->path($squareSvgFilename), 0644);
+                @chmod(Storage::disk('public')->path($landscapeSvgFilename), 0644);
 
                 $article->cover_image_square_path = $squareSvgFilename;
                 $article->cover_image_landscape_path = $landscapeSvgFilename;
@@ -365,14 +373,17 @@ class FetchLatestLotteryCommand extends Command
             } else {
                 $squareContents = file_get_contents($renderedSquare) ?: '';
                 Storage::disk('public')->put($squareFilename, $squareContents);
+                @chmod(Storage::disk('public')->path($squareFilename), 0644);
                 @unlink($renderedSquare);
                 $coverSyncSucceeded = true;
                 $coverSyncMode = 'png';
 
                 if ($renderedLandscape === null) {
                     Storage::disk('public')->put($landscapeFilename, $squareContents);
+                    @chmod(Storage::disk('public')->path($landscapeFilename), 0644);
                 } else {
                     Storage::disk('public')->put($landscapeFilename, file_get_contents($renderedLandscape) ?: '');
+                    @chmod(Storage::disk('public')->path($landscapeFilename), 0644);
                     @unlink($renderedLandscape);
                 }
             }
