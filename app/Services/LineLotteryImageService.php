@@ -106,7 +106,7 @@ class LineLotteryImageService
         $round = (int) $drawDate->format('j') <= 15 ? 'first' : 'second';
 
         return sprintf(
-            'thai-goverment-lottery-%s%s%s',
+            'thai-government-lottery-%s%s%s',
             $drawDate->format('Y'),
             $drawDate->format('m'),
             $round

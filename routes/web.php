@@ -3536,7 +3536,7 @@ Route::get('/cron/git-sync/{secret}', function ($secret) {
 });
 
 Route::get('/cron/fix-storage-link/{secret}', function ($secret) {
-    if ($secret !== 'supernumber_secret_789') return \"Invalid Secret\";
+    if ($secret !== 'supernumber_secret_789') return "Invalid Secret";
     
     $publicStoragePath = public_path('storage');
     $status = [];
@@ -3544,23 +3544,23 @@ Route::get('/cron/fix-storage-link/{secret}', function ($secret) {
     if (file_exists($publicStoragePath) && !is_link($publicStoragePath)) {
         $backupPath = public_path('storage_backup_' . time());
         rename($publicStoragePath, $backupPath);
-        $status[] = \"✅ Renamed existing storage directory to \" . basename($backupPath);
+        $status[] = "✅ Renamed existing storage directory to " . basename($backupPath);
     } elseif (is_link($publicStoragePath)) {
-        $status[] = \"ℹ️ public/storage is already a link.\";
+        $status[] = "ℹ️ public/storage is already a link.";
     }
     
     try {
         \Illuminate\Support\Facades\Artisan::call('storage:link');
-        $status[] = \"🚀 Artisan storage:link executed successfully.\";
+        $status[] = "🚀 Artisan storage:link executed successfully.";
     } catch (\Exception $e) {
-        $status[] = \"❌ Error: \" . $e->getMessage();
+        $status[] = "❌ Error: " . $e->getMessage();
     }
     
-    $logOutput = implode(\"<br>\", $status);
+    $logOutput = implode("<br>", $status);
     $currentTarget = is_link($publicStoragePath) ? readlink($publicStoragePath) : 'Not a link';
     
-    return \"<h3>Storage Repair Status:</h3>
+    return "<h3>Storage Repair Status:</h3>
             $logOutput <br>
             <b>Current Target:</b> $currentTarget <br><br>
-            <a href='/admin/articles'>กลับหน้าบทความ</a>\";
+            <a href='/admin/articles'>กลับหน้าบทความ</a>";
 });
