@@ -84,7 +84,11 @@
                   @if($article->is_published)
                     <form action="{{ route('admin.articles.share-fb', $article) }}" method="post" style="display: inline;">
                       @csrf
-                      <button type="submit" class="admin-button admin-button--compact" style="background: #1877F2; color: #fff; border-color: #1877F2;" title="แชร์ไป Facebook">FB</button>
+                      <button type="button" 
+                              onclick="shareToFb(this, {{ $article->id }}, '{{ $article->cover_image_landscape_path ? Storage::disk('public')->url($article->cover_image_landscape_path) : '' }}', '{{ route('admin.articles.upload-rendered-image', $article) }}')"
+                              class="admin-button admin-button--compact" 
+                              style="background: #1877F2; color: #fff; border-color: #1877F2;" 
+                              title="แชร์ไป Facebook (วาดรูปสวยอัตโนมัติ)">FB</button>
                     </form>
                   @endif
                   <form action="{{ route('admin.articles.delete', $article) }}" method="post" onsubmit="return confirm('ยืนยันลบบทความ?')">
@@ -139,7 +143,110 @@
 @endsection
 
 @push('scripts')
+  </script>
+
+  {{-- Client-side Rendering Bridge --}}
+  <canvas id="render-canvas" style="display: none;"></canvas>
+  <div id="render-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 99999; color: white; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
+      <div style="border: 4px solid #f3f3f3; border-top: 4px solid #1877F2; border-radius: 50%; width: 50px; height: 50px; animation: spin_render 1s linear infinite; margin-bottom: 20px;"></div>
+      <div id="render-status" style="font-size: 18px; font-weight: bold;">กำลังวาดรูปหวยให้สวยงาม...</div>
+      <p style="margin-top: 10px; opacity: 0.8;">กรุณารอครู่เดียว ระบบกำลังใช้เบราว์เซอร์ของคุณวาดรูปให้ชัดเป๊ะ</p>
+      <style>@keyframes spin_render { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+  </div>
+
   <script>
+    (function() {
+        const overlay = document.getElementById('render-overlay');
+        const status = document.getElementById('render-status');
+        const canvas = document.getElementById('render-canvas');
+        const ctx = canvas.getContext('2d');
+
+        window.shareToFb = async function(button, articleId, landscapePath, uploadUrl) {
+            const form = button.closest('form');
+            
+            // Only render if it's an SVG
+            if (!landscapePath || !landscapePath.toLowerCase().endsWith('.svg')) {
+                form.submit();
+                return;
+            }
+
+            overlay.style.display = 'flex';
+            status.innerText = 'กำลังดึงข้อมูล SVG...';
+
+            try {
+                // 1. Fetch SVG content
+                const response = await fetch(landscapePath);
+                if (!response.ok) throw new Error('ไม่สามารถดึงไฟล์รูปภาพต้นฉบับได้');
+                let svgText = await response.text();
+
+                // 2. Render to PNG (Landscape 1200x630 for FB)
+                status.innerText = 'กำลังวาดรูปความละเอียดสูง (1200x630)...';
+                const pngData = await renderSvgToPng(svgText, 1200, 630);
+                
+                // 3. Upload PNG back to Server
+                status.innerText = 'กำลังส่งรูปกลับไปที่ Server...';
+                const uploadRes = await fetch(uploadUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        image: pngData,
+                        type: 'landscape'
+                    })
+                });
+
+                const uploadJson = await uploadRes.json();
+                if (!uploadJson.success) throw new Error(uploadJson.error || 'Upload failed');
+
+                status.innerText = 'วาดรูปสำเร็จ! กำลังส่งไป Facebook...';
+                setTimeout(() => form.submit(), 800);
+
+            } catch (err) {
+                console.error('Render error:', err);
+                alert('การวาดรูปอัตโนมัติขัดข้อง: ' + err.message + '\nระบบจะแชร์แบบปกติให้ครับ');
+                form.submit();
+            }
+        };
+
+        function renderSvgToPng(svgText, width, height) {
+            return new Promise((resolve, reject) => {
+                const img = new Image();
+                // Ensure SVG has proper dimensions for rendering
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(svgText, 'image/svg+xml');
+                const svgEl = doc.querySelector('svg');
+                svgEl.setAttribute('width', width);
+                svgEl.setAttribute('height', height);
+                const updatedSvg = new XMLSerializer().serializeToString(doc);
+
+                const svgBlob = new Blob([updatedSvg], {type: 'image/svg+xml;charset=utf-8'});
+                const url = URL.createObjectURL(svgBlob);
+                
+                img.onload = function() {
+                    canvas.width = width;
+                    canvas.height = height;
+                    ctx.clearRect(0, 0, width, height);
+                    
+                    // Fill white background just in case
+                    ctx.fillStyle = "white";
+                    ctx.fillRect(0, 0, width, height);
+                    
+                    ctx.drawImage(img, 0, 0, width, height);
+                    URL.revokeObjectURL(url);
+                    resolve(canvas.toDataURL('image/png', 1.0));
+                };
+                
+                img.onerror = function(e) {
+                    URL.revokeObjectURL(url);
+                    reject(new Error('เบราว์เซอร์ไม่สามารถประมวลผล SVG ได้'));
+                };
+                
+                img.src = url;
+            });
+        }
+    })();
     (() => {
       const searchInput = document.getElementById("article-search");
       const rows = Array.from(document.querySelectorAll(".article-row"));

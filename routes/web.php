@@ -2599,6 +2599,48 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.article-create');
     })->name('articles.create');
 
+    Route::post('/articles/{article}/upload-rendered-image', function (Request $request, Article $article) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) return $redirect;
+        
+        $type = $request->input('type', 'landscape'); // landscape or square
+        $base64Data = $request->input('image');
+        
+        if (!$base64Data || !str_contains($base64Data, 'base64,')) {
+            return response()->json(['success' => false, 'error' => 'Invalid image data']);
+        }
+
+        try {
+            $data = explode(',', $base64Data);
+            $decoded = base64_decode($data[1]);
+            
+            $filename = $type === 'landscape' ? $article->cover_image_landscape_path : $article->cover_image_square_path;
+            
+            // If path is still SVG or empty, generate a new PNG path
+            if (!$filename || str_ends_with(strtolower($filename), '.svg')) {
+                $ts = time();
+                $articleDir = dirname($article->cover_image_landscape_path ?: 'articles/rendered');
+                $filename = $articleDir . '/' . $article->slug . ($type === 'landscape' ? '_cover_' : '_') . $ts . '.png';
+            } else {
+                // Ensure it ends in .png
+                $filename = str_replace('.svg', '.png', $filename);
+            }
+
+            Storage::disk('public')->put($filename, $decoded);
+            
+            if ($type === 'landscape') {
+                $article->cover_image_landscape_path = $filename;
+            } else {
+                $article->cover_image_square_path = $filename;
+                $article->cover_image_path = $filename;
+            }
+            $article->save();
+
+            return response()->json(['success' => true, 'path' => $filename]);
+        } catch (\Throwable $e) {
+            return response()->json(['success' => false, 'error' => $e->getMessage()]);
+        }
+    })->name('articles.upload-rendered-image');
+
     Route::post('/articles/{article}/share-fb', function (Article $article) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
