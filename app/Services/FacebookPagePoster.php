@@ -25,11 +25,20 @@ class FacebookPagePoster
         }
         $message .= "อ่านผลรางวัลฉบับเต็มและตรวจเลขอื่นๆ ได้ที่นี่ครับ 👇\n{$articleUrl}";
 
-        // Robust Image Path Resolution
+        // Robust Image Path Resolution (Prefer PNG over SVG)
         $imagePath = null;
         if (!empty($article->cover_image_landscape_path)) {
             $relPath = $article->cover_image_landscape_path;
             
+            // If the path is SVG, try to find a PNG version first
+            if (str_ends_with(strtolower($relPath), '.svg')) {
+                $pngRelPath = str_replace('.svg', '.png', $relPath);
+                $pngPath = \Illuminate\Support\Facades\Storage::disk('public')->path($pngRelPath);
+                if (file_exists($pngPath) && is_readable($pngPath)) {
+                    $relPath = $pngRelPath;
+                }
+            }
+
             // Try 1: Storage Disk Public Path
             $path1 = \Illuminate\Support\Facades\Storage::disk('public')->path($relPath);
             if (file_exists($path1) && is_readable($path1)) {
@@ -46,7 +55,7 @@ class FacebookPagePoster
 
         Log::info("FB Post Debug: Article {$article->id} - Final Image Path: " . ($imagePath ?: 'NOT_FOUND'));
 
-        if ($imagePath) {
+        if ($imagePath && !str_ends_with(strtolower($imagePath), '.svg')) {
             $url = "https://graph.facebook.com/v19.0/{$pageId}/photos";
             
             try {
@@ -66,6 +75,8 @@ class FacebookPagePoster
             } catch (\Throwable $e) {
                 Log::error("FB Photo Upload exception: " . $e->getMessage());
             }
+        } else {
+            Log::warning("FB Post: Skipping photo upload - File not found, path empty, or still SVG.");
         }
 
         // Fallback to simple link post
