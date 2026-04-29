@@ -360,8 +360,6 @@ class FetchLatestLotteryCommand extends Command
 </svg>
 SVG;
     }
-SVG;
-    }
 
     private function buildLotteryCoverSvg(LotteryResult $result): string
     {
