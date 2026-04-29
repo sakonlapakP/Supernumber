@@ -315,7 +315,6 @@ class FetchLatestLotteryCommand extends Command
     <defs>
         <style>
             @font-face { font-family: 'KanitCustom'; src: url(data:font/ttf;base64,{$fontBase64}); }
-            text { font-family: 'KanitCustom', sans-serif; }
         </style>
         <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" style="stop-color:#1e140d;stop-opacity:1" />
@@ -324,39 +323,36 @@ class FetchLatestLotteryCommand extends Command
         </linearGradient>
     </defs>
     <rect width="1200" height="630" fill="url(#bgGrad)" />
+    <rect x="15" y="15" width="1170" height="600" fill="none" stroke="#c59d62" stroke-width="3" />
+    <rect x="40" y="40" width="1120" height="550" fill="none" stroke="#ba8e4d" stroke-width="1" opacity="0.3" />
     
-    <!-- Premium Borders -->
-    <rect x="10" y="10" width="1180" height="610" fill="none" stroke="#c59d62" stroke-width="3" />
-    <rect x="30" y="30" width="1140" height="570" fill="none" stroke="#ba8e4d" stroke-width="2" opacity="0.4" />
-    <line x1="1000" y1="0" x2="850" y2="400" stroke="#ba8e4d" stroke-width="3" opacity="0.3" />
+    <line x1="150" y1="95" x2="520" y2="95" stroke="#ba8e4d" stroke-width="2" opacity="0.6" />
+    <line x1="680" y1="95" x2="1050" y2="95" stroke="#ba8e4d" stroke-width="2" opacity="0.6" />
 
-    <!-- Header & Logo Box -->
-    <rect x="565" y="45" width="70" height="70" fill="#2a1a10" stroke="#d7a64e" stroke-width="2" />
-    <text x="600" y="100" font-size="52" font-weight="bold" fill="#f5c76d" text-anchor="middle">S</text>
-    <text x="600" y="150" font-size="24" font-weight="800" fill="#f7d58f" text-anchor="middle" letter-spacing="4">SUPERNUMBER</text>
+    <rect x="560" y="55" width="80" height="80" fill="#2a1a10" stroke="#d7a64e" stroke-width="2" />
+    <text x="600" y="115" font-family="KanitCustom" font-size="62" font-weight="900" fill="#f5c76d" text-anchor="middle">S</text>
+    <text x="600" y="165" font-family="KanitCustom" font-size="28" font-weight="900" fill="#f7d58f" text-anchor="middle" letter-spacing="3">SUPERNUMBER</text>
 
-    <text x="600" y="200" font-size="52" font-weight="bold" fill="#ffffff" text-anchor="middle">ผลสลากกินแบ่งรัฐบาล</text>
-    <text x="600" y="245" font-size="32" font-weight="bold" fill="#f8e2b0" text-anchor="middle">งวดประจำวันที่ $thaiDate</text>
+    <text x="600" y="225" font-family="KanitCustom" font-size="64" font-weight="900" fill="#ffffff" text-anchor="middle">ผลสลากกินแบ่งรัฐบาล</text>
+    <text x="600" y="275" font-family="KanitCustom" font-size="36" font-weight="900" fill="#f8e2b0" text-anchor="middle">งวดประจำวันที่ $thaiDate</text>
 
-    <!-- Main Prize -->
-    <rect x="60" y="270" width="680" height="200" rx="10" fill="#fffaf0" />
-    <text x="400" y="325" font-size="36" font-weight="800" fill="#2a1a10" text-anchor="middle">รางวัลที่ 1</text>
-    <text x="400" y="435" font-size="110" font-weight="900" fill="#2a1a10" text-anchor="middle" letter-spacing="6">$p1</text>
-    <text x="400" y="500" font-size="20" font-weight="700" fill="#f6deac" text-anchor="middle">ข้างเคียง : $near</text>
+    <rect x="75" y="300" width="1050" height="190" rx="10" fill="#fffaf0" />
+    <text x="600" y="340" font-family="KanitCustom" font-size="42" font-weight="900" fill="#2a1a10" text-anchor="middle">รางวัลที่ 1</text>
+    <text x="600" y="455" font-family="KanitCustom" font-size="130" font-weight="900" fill="#2a1a10" text-anchor="middle" letter-spacing="10">$p1</text>
+    
+    <text x="600" y="525" font-family="KanitCustom" font-size="24" font-weight="900" fill="#f6deac" text-anchor="middle">ข้างเคียงรางวัลที่ 1 : $near</text>
 
-    <!-- Small Prizes -->
-    <rect x="760" y="270" width="380" height="200" rx="10" fill="#fffaf0" />
-    <text x="950" y="325" font-size="32" font-weight="800" fill="#2a1a10" text-anchor="middle">เลขท้าย 2 ตัว</text>
-    <text x="950" y="440" font-size="110" font-weight="900" fill="#2a1a10" text-anchor="middle">$l2</text>
+    <rect x="75" y="550" width="340" height="60" rx="5" fill="#fffaf0" />
+    <text x="245" y="540" font-family="KanitCustom" font-size="28" font-weight="900" fill="#ffffff" text-anchor="middle">เลขหน้า 3 ตัว</text>
+    <text x="245" y="595" font-family="KanitCustom" font-size="52" font-weight="900" fill="#2a1a10" text-anchor="middle">$f3_1  $f3_2</text>
 
-    <rect x="60" y="525" width="530" height="80" rx="8" fill="#fffaf0" />
-    <text x="180" y="575" font-size="24" font-weight="bold" fill="#64748b" text-anchor="middle">เลขหน้า 3 ตัว</text>
-    <text x="420" y="580" font-size="60" font-weight="900" fill="#2a1a10" text-anchor="middle">$f3_1  $f3_2</text>
+    <rect x="430" y="550" width="340" height="60" rx="5" fill="#fffaf0" />
+    <text x="600" y="540" font-family="KanitCustom" font-size="28" font-weight="900" fill="#ffffff" text-anchor="middle">เลขท้าย 3 ตัว</text>
+    <text x="600" y="595" font-family="KanitCustom" font-size="52" font-weight="900" fill="#2a1a10" text-anchor="middle">$l3_1  $l3_2</text>
 
-    <rect x="610" y="525" width="530" height="80" rx="8" fill="#fffaf0" />
-    <text x="730" y="575" font-size="24" font-weight="bold" fill="#64748b" text-anchor="middle">เลขท้าย 3 ตัว</text>
-    <text x="970" y="580" font-size="60" font-weight="900" fill="#2a1a10" text-anchor="middle">$l3_1  $l3_2</text>
-
+    <rect x="785" y="550" width="340" height="60" rx="5" fill="#fffaf0" />
+    <text x="955" y="540" font-family="KanitCustom" font-size="28" font-weight="900" fill="#ffffff" text-anchor="middle">เลขท้าย 2 ตัว</text>
+    <text x="955" y="600" font-family="KanitCustom" font-size="62" font-weight="900" fill="#2a1a10" text-anchor="middle">$l2</text>
 </svg>
 SVG;
     }
@@ -379,81 +375,70 @@ SVG;
         $l3_2 = $l3_arr[1] ?? '...';
         $near = count($near_arr) > 0 ? implode(', ', $near_arr) : '-';
 
-        // Load font and convert to base64 for embedding
         $fontPath = public_path('fonts/Kanit-700.ttf');
-        $fontBase64 = '';
-        if (is_file($fontPath)) {
-            $fontBase64 = base64_encode((string)file_get_contents($fontPath));
-        }
+        $fontBase64 = is_file($fontPath) ? base64_encode((string)file_get_contents($fontPath)) : '';
 
         return <<<SVG
 <svg width="1200" height="1200" viewBox="0 0 1200 1200" xmlns="http://www.w3.org/2000/svg">
     <defs>
         <style>
-            @font-face {
-                font-family: 'KanitCustom';
-                src: url(data:font/ttf;base64,{$fontBase64});
-            }
-            text { font-family: 'KanitCustom', sans-serif; }
+            @font-face { font-family: 'KanitCustom'; src: url(data:font/ttf;base64,{$fontBase64}); }
         </style>
         <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" style="stop-color:#1e140d;stop-opacity:1" />
             <stop offset="50%" style="stop-color:#120907;stop-opacity:1" />
             <stop offset="100%" style="stop-color:#1e140d;stop-opacity:1" />
         </linearGradient>
-        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#D4AF37;stop-opacity:1" />
-            <stop offset="50%" style="stop-color:#F9E27D;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#B8860B;stop-opacity:1" />
-        </linearGradient>
     </defs>
     
-    <!-- Background and Borders -->
     <rect width="1200" height="1200" fill="url(#bgGrad)" />
-    <rect x="12" y="12" width="1176" height="1176" fill="none" stroke="#c59d62" stroke-width="3" />
-    <rect x="48" y="48" width="1104" height="1104" fill="none" stroke="#ba8e4d" stroke-width="3" opacity="0.45" />
+    <rect x="15" y="15" width="1170" height="1170" fill="none" stroke="#c59d62" stroke-width="3" />
+    <rect x="50" y="50" width="1100" height="1100" fill="none" stroke="#ba8e4d" stroke-width="2" opacity="0.4" />
     <line x1="940" y1="0" x2="840" y2="500" stroke="#ba8e4d" stroke-width="3" opacity="0.35" />
 
-    <!-- Header -->
+    <!-- Header Lines -->
     <line x1="160" y1="125" x2="520" y2="125" stroke="#ba8e4d" stroke-width="3" opacity="0.6" />
     <line x1="680" y1="125" x2="1040" y2="125" stroke="#ba8e4d" stroke-width="3" opacity="0.6" />
     
     <rect x="554" y="78" width="92" height="92" fill="#2a1a10" stroke="#d7a64e" stroke-width="3" />
-    <text x="600" y="146" font-size="68" font-weight="bold" fill="#f5c76d" text-anchor="middle">S</text>
-    <text x="600" y="215" font-size="32" font-weight="800" fill="#f7d58f" text-anchor="middle" letter-spacing="3">SUPERNUMBER</text>
+    <text x="600" y="146" font-family="KanitCustom" font-size="68" font-weight="900" fill="#f5c76d" text-anchor="middle">S</text>
+    <text x="600" y="215" font-family="KanitCustom" font-size="32" font-weight="900" fill="#f7d58f" text-anchor="middle" letter-spacing="3">SUPERNUMBER</text>
 
-    <text x="600" y="280" font-size="64" font-weight="bold" fill="#ffffff" text-anchor="middle">ผลสลากกินแบ่งรัฐบาล</text>
-    <text x="600" y="335" font-size="38" font-weight="bold" fill="#f8e2b0" text-anchor="middle">งวดประจำวันที่ $thaiDate</text>
+    <text x="600" y="280" font-family="KanitCustom" font-size="64" font-weight="900" fill="#ffffff" text-anchor="middle">ผลสลากกินแบ่งรัฐบาล</text>
+    <text x="600" y="335" font-family="KanitCustom" font-size="38" font-weight="900" fill="#f8e2b0" text-anchor="middle">งวดประจำวันที่ $thaiDate</text>
 
     <!-- Main Panel (Prize 1) -->
     <rect x="80" y="360" width="1040" height="260" rx="10" fill="#fffaf0" />
-    <text x="600" y="445" font-size="60" font-weight="800" fill="#2a1a10" text-anchor="middle">รางวัลที่ 1</text>
-    <text x="600" y="580" font-size="138" font-weight="900" fill="#2a1a10" text-anchor="middle" letter-spacing="8">$p1</text>
-    <text x="600" y="670" font-size="26" font-weight="700" fill="#f6deac" text-anchor="middle">ข้างเคียงรางวัลที่ 1 : $near</text>
+    <text x="600" y="445" font-family="KanitCustom" font-size="60" font-weight="900" fill="#2a1a10" text-anchor="middle">รางวัลที่ 1</text>
+    <text x="600" y="580" font-family="KanitCustom" font-size="170" font-weight="900" fill="#2a1a10" text-anchor="middle" letter-spacing="8">$p1</text>
+    <text x="600" y="670" font-family="KanitCustom" font-size="26" font-weight="900" fill="#f6deac" text-anchor="middle">ข้างเคียงรางวัลที่ 1 : $near</text>
+
+    <!-- Sub Prizes Labels -->
+    <text x="250" y="745" font-family="KanitCustom" font-size="38" font-weight="900" fill="#ffffff" text-anchor="middle">เลขหน้า 3 ตัว</text>
+    <text x="600" y="745" font-family="KanitCustom" font-size="38" font-weight="900" fill="#ffffff" text-anchor="middle">เลขท้าย 3 ตัว</text>
+    <text x="950" y="745" font-family="KanitCustom" font-size="38" font-weight="900" fill="#ffffff" text-anchor="middle">เลขท้าย 2 ตัว</text>
 
     <!-- Small Panels -->
-    <text x="250" y="745" font-size="38" font-weight="bold" fill="#fff0d2" text-anchor="middle">เลขหน้า 3 ตัว</text>
-    <text x="600" y="745" font-size="38" font-weight="bold" fill="#fff0d2" text-anchor="middle">เลขท้าย 3 ตัว</text>
-    <text x="950" y="745" font-size="38" font-weight="bold" fill="#fff0d2" text-anchor="middle">เลขท้าย 2 ตัว</text>
-
     <rect x="80" y="775" width="337" height="120" rx="10" fill="#fffaf0" />
     <rect x="80" y="910" width="337" height="120" rx="10" fill="#fffaf0" />
-    <text x="250" y="865" font-size="96" font-weight="900" fill="#2a1a10" text-anchor="middle">$f3_1</text>
-    <text x="250" y="1000" font-size="96" font-weight="900" fill="#2a1a10" text-anchor="middle">$f3_2</text>
+    <text x="250" y="865" font-family="KanitCustom" font-size="96" font-weight="900" fill="#2a1a10" text-anchor="middle">$f3_1</text>
+    <text x="250" y="1000" font-family="KanitCustom" font-size="96" font-weight="900" fill="#2a1a10" text-anchor="middle">$f3_2</text>
 
     <rect x="431" y="775" width="337" height="120" rx="10" fill="#fffaf0" />
     <rect x="431" y="910" width="337" height="120" rx="10" fill="#fffaf0" />
-    <text x="600" y="865" font-size="96" font-weight="900" fill="#2a1a10" text-anchor="middle">$l3_1</text>
-    <text x="600" y="1000" font-size="96" font-weight="900" fill="#2a1a10" text-anchor="middle">$l3_2</text>
+    <text x="600" y="865" font-family="KanitCustom" font-size="96" font-weight="900" fill="#2a1a10" text-anchor="middle">$l3_1</text>
+    <text x="600" y="1000" font-family="KanitCustom" font-size="96" font-weight="900" fill="#2a1a10" text-anchor="middle">$l3_2</text>
 
     <rect x="783" y="775" width="337" height="255" rx="10" fill="#fffaf0" />
-    <text x="950" y="945" font-size="132" font-weight="900" fill="#2a1a10" text-anchor="middle">$l2</text>
+    <text x="950" y="945" font-family="KanitCustom" font-size="160" font-weight="900" fill="#2a1a10" text-anchor="middle">$l2</text>
 
     <!-- Footer -->
-    <rect x="460" y="1070" width="280" height="42" fill="#1a0f08" />
-    <text x="600" y="1101" font-size="30" font-weight="bold" fill="#fff6e4" text-anchor="middle">SUPERNUMBER.CO.TH</text>
-    <text x="600" y="1135" font-size="22" font-weight="bold" fill="#f5e4c4" text-anchor="middle">Web : www.supernumber.co.th Tel : 0963232656, 0963232665 Line : @supernumber</text>
+    <rect x="450" y="1090" width="300" height="42" fill="#1a0f08" />
+    <text x="600" y="1121" font-family="KanitCustom" font-size="32" font-weight="900" fill="#fff6e4" text-anchor="middle">SUPERNUMBER.CO.TH</text>
+    <text x="600" y="1165" font-family="KanitCustom" font-size="22" font-weight="900" fill="#f5e4c4" text-anchor="middle">Web : www.supernumber.co.th Tel : 0963232656, 0963232665 Line : @supernumber</text>
 </svg>
+SVG;
+    }
 SVG;
     }
 
