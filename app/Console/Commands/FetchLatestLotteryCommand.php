@@ -284,8 +284,16 @@ class FetchLatestLotteryCommand extends Command
 
     private function convertSvgToPng(string $svgPath, string $pngPath): bool
     {
+        Log::info("SVG2PNG: Start conversion process for [{$svgPath}]");
+
         if (!is_file($svgPath)) {
             Log::error("SVG2PNG: SVG file not found at [{$svgPath}]");
+            return false;
+        }
+
+        // Check if we can even run commands
+        if (!function_exists('proc_open')) {
+            Log::error("SVG2PNG: proc_open() is disabled on this server. Cannot run Playwright or ImageMagick.");
             return false;
         }
 
@@ -303,13 +311,14 @@ class FetchLatestLotteryCommand extends Command
             }
 
             $scriptPath = base_path('scratch/svg2png.js');
-            Log::info("SVG2PNG: Attempting conversion with [{$nodePath}] from [{$svgPath}] to [{$pngPath}]");
+            Log::info("SVG2PNG: Attempting Playwright with [{$nodePath}]");
             
             $process = new Process([$nodePath, $scriptPath, $svgPath, $pngPath]);
+            $process->setTimeout(60);
             $process->run();
             
             if ($process->isSuccessful()) {
-                Log::info("SVG2PNG: Success!");
+                Log::info("SVG2PNG: Playwright Success!");
                 return true;
             }
             
