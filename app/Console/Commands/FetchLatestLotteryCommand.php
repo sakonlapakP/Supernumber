@@ -117,14 +117,14 @@ class FetchLatestLotteryCommand extends Command
         DB::transaction(function () use ($storageDate, $sourceDrawDate, $drawDateText, $isComplete, $now, $payload, $prizes, $storedResult, $shouldReplacePrizes, &$savedResult): void {
             $savedResult = LotteryResult::query()->updateOrCreate(
                 ['draw_date' => $storageDate->toDateString()],
-                    [
-                        'source_draw_date' => $sourceDrawDate?->toDateString() ?? $storedResult?->source_draw_date?->toDateString(),
-                        'source_draw_date_text' => $drawDateText ?? $storedResult?->source_draw_date_text,
-                        'is_complete' => $isComplete,
-                        'fetched_at' => $now->copy()->utc()->toDateTimeString(),
-                        'source_payload' => $payload !== [] ? $payload : $storedResult?->source_payload,
-                    ]
-                );
+                [
+                    'source_draw_date' => $sourceDrawDate?->toDateString() ?? $storedResult?->source_draw_date?->toDateString(),
+                    'source_draw_date_text' => $drawDateText ?? $storedResult?->source_draw_date_text,
+                    'is_complete' => $isComplete,
+                    'fetched_at' => $now->copy()->utc()->toDateTimeString(),
+                    'source_payload' => $payload !== [] ? $payload : $storedResult?->source_payload,
+                ]
+            );
 
             if ($shouldReplacePrizes && ! empty($prizes)) {
                 $savedResult->prizes()->delete();
@@ -312,17 +312,23 @@ class FetchLatestLotteryCommand extends Command
         $year = $drawDate->format('Y');
         $month = $drawDate->format('m');
         $round = $this->resolveDrawRound($drawDate);
-        $articleName = sprintf('thai-goverment-lottery-%s%s%s', $year, $month, $round);
+        $articleName = sprintf('thai-government-lottery-%s%s%s', $year, $month, $round);
         $articleDir = sprintf('articles/%s/%s', $year, $articleName);
         $squareFilename = sprintf('%s/%s.png', $articleDir, $articleName);
         $landscapeFilename = sprintf('%s/%s_cover.png', $articleDir, $articleName);
         $squareSvgFilename = sprintf('%s/%s.svg', $articleDir, $articleName);
         $landscapeSvgFilename = sprintf('%s/%s_cover.svg', $articleDir, $articleName);
         $thaiDateLabel = $this->toThaiDateLabel($drawDate->copy());
-        $articleTitle = 'สลากกินแบ่งรัฐบาล ประจำวันที่ '.$thaiDateLabel;
+        $articleTitle = sprintf('ตรวจหวยรัฐบาล งวดวันที่ %s ผลสลากกินแบ่งรัฐบาล', $thaiDateLabel);
         $article = Article::query()->firstOrNew([
             'slug' => $articleName,
         ]);
+
+        if (!$article->exists) {
+            $article->is_published = true;
+            $article->published_at = now();
+        }
+
         $articleExcerpt = $this->buildLotteryArticleExcerpt($result, $drawDate->copy());
         $articleContent = $this->buildLotteryArticleContent($result, $drawDate->copy(), $now->copy());
         $articleMetaDescription = $this->buildLotteryArticleMetaDescription($result, $drawDate->copy());
@@ -384,8 +390,8 @@ class FetchLatestLotteryCommand extends Command
         $article->excerpt = $articleExcerpt;
         $article->content = $articleContent;
         $article->meta_description = $articleMetaDescription;
-        $article->is_published = $result->is_complete;
-        $article->published_at = $publishedAt;
+        $article->is_published = true;
+        $article->published_at = $article->published_at ?? $now;
         $article->save();
 
         if ($coverSyncSucceeded) {
