@@ -2575,13 +2575,13 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'slug' => $slug,
             'excerpt' => "ตรวจผลสลากกินแบ่งรัฐบาล งวดวันที่ $thaiDateStr อัปเดตข้อมูลรวดเร็ว ทันใจ พร้อมเช็ครางวัลที่ 1 และรางวัลอื่นๆ",
             'content' => "<p>อัปเดตผลสลากกินแบ่งรัฐบาล งวดประจำวันที่ $thaiDateStr ได้ที่นี่</p><p>ระบบจะดึงผลหวยมาแสดงด้านล่างนี้โดยอัตโนมัติครับ</p>",
-            'is_published' => false,
+            'is_published' => true,
             'published_at' => $drawDate->copy()->setTime(15, 30, 0), // Set to 3:30 PM
             'author_user_id' => session('admin_user_id'),
         ]);
 
-        return redirect()->route('admin.articles.edit', $article)
-            ->with('status_message', 'สร้างร่างบทความหวยงวดล่าสุดให้แล้วครับ!');
+        return redirect()->route('admin.articles')
+            ->with('status_message', 'สร้างและเผยแพร่บทความหวยงวดล่าสุดเรียบร้อยแล้วครับ!');
     })->name('articles.auto-gen-lottery');
 
     Route::get('/articles/create', function () use ($ensureAdmin) {
