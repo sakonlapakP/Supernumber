@@ -384,11 +384,36 @@ SVG;
     {
         $rows = [];
         $data = data_get($payload, 'response.data', []);
-        $map = ['first' => 'รางวัลที่ 1', 'last3f' => 'เลขหน้า 3 ตัว', 'last3b' => 'เลขท้าย 3 ตัว', 'last2' => 'เลขท้าย 2 ตัว'];
+        $map = [
+            'first' => 'รางวัลที่ 1', 
+            'last3f' => 'เลขหน้า 3 ตัว', 
+            'last3b' => 'เลขท้าย 3 ตัว', 
+            'last2' => 'เลขท้าย 2 ตัว'
+        ];
+
         foreach ($map as $key => $name) {
             $numbers = data_get($data, "{$key}.number", []);
-            if (is_scalar($numbers)) $numbers = [$numbers];
-            foreach ($numbers as $num) $rows[] = ['name' => $name, 'number' => $num];
+            
+            // Ensure numbers is an array
+            if (is_scalar($numbers)) {
+                $numbers = [$numbers];
+            }
+
+            if (is_array($numbers)) {
+                foreach ($numbers as $num) {
+                    // If num is an array (sometimes API returns objects/arrays), pick the first value
+                    if (is_array($num)) {
+                        $num = data_get($num, 'value') ?? reset($num);
+                    }
+                    
+                    if (is_scalar($num)) {
+                        $rows[] = [
+                            'name' => $name, 
+                            'number' => (string) $num
+                        ];
+                    }
+                }
+            }
         }
         return $rows;
     }
