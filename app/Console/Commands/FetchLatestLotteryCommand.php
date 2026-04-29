@@ -322,12 +322,12 @@ class FetchLatestLotteryCommand extends Command
 
     <!-- Header Logo -->
     <rect x="565" y="95" width="70" height="70" fill="#2a1a10" stroke="#d7a64e" stroke-width="3" />
-    <text x="600" y="148" font-family="KanitCustom" font-size="48" font-weight="900" fill="#f5c76d" text-anchor="middle">S</text>
+    <text x="600" y="152" font-family="'Times New Roman', serif" font-size="62" font-weight="900" fill="#f5c76d" text-anchor="middle">S</text>
     
     <line x1="80" y1="130" x2="530" y2="130" stroke="#ba8e4d" stroke-width="2" opacity="0.5" />
     <line x1="670" y1="130" x2="1120" y2="130" stroke="#ba8e4d" stroke-width="2" opacity="0.5" />
 
-    <text x="600" y="205" font-family="KanitCustom" font-size="45" font-weight="900" fill="#f7d58f" text-anchor="middle" letter-spacing="6">SUPERNUMBER</text>
+    <text x="600" y="200" font-family="KanitCustom" font-size="28" font-weight="900" fill="#f7d58f" text-anchor="middle" letter-spacing="8">SUPERNUMBER</text>
 
     <!-- Main Content -->
     <text x="600" y="440" font-family="KanitCustom" font-size="88" font-weight="900" fill="#ffffff" text-anchor="middle">สลากกินแบ่งรัฐบาลล่าสุด</text>
@@ -385,8 +385,8 @@ SVG;
     <line x1="680" y1="125" x2="1040" y2="125" stroke="#ba8e4d" stroke-width="3" opacity="0.6" />
     
     <rect x="554" y="78" width="92" height="92" fill="#2a1a10" stroke="#d7a64e" stroke-width="3" />
-    <text x="600" y="146" font-family="KanitCustom" font-size="68" font-weight="900" fill="#f5c76d" text-anchor="middle">S</text>
-    <text x="600" y="215" font-family="KanitCustom" font-size="32" font-weight="900" fill="#f7d58f" text-anchor="middle" letter-spacing="3">SUPERNUMBER</text>
+    <text x="600" y="152" font-family="'Times New Roman', serif" font-size="82" font-weight="900" fill="#f5c76d" text-anchor="middle">S</text>
+    <text x="600" y="215" font-family="KanitCustom" font-size="28" font-weight="900" fill="#f7d58f" text-anchor="middle" letter-spacing="6">SUPERNUMBER</text>
 
     <text x="600" y="280" font-family="KanitCustom" font-size="64" font-weight="900" fill="#ffffff" text-anchor="middle">ผลสลากกินแบ่งรัฐบาล</text>
     <text x="600" y="335" font-family="KanitCustom" font-size="38" font-weight="900" fill="#f8e2b0" text-anchor="middle">งวดประจำวันที่ $thaiDate</text>
