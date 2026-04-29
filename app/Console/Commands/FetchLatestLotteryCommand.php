@@ -6,6 +6,7 @@ use App\Models\Article;
 use App\Models\LineNotificationLog;
 use App\Models\LotteryResult;
 use App\Services\LineLotteryNotifier;
+use App\Services\FacebookPagePoster;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Collection;
@@ -124,8 +125,9 @@ class FetchLatestLotteryCommand extends Command
 
         if ($savedResult instanceof LotteryResult) {
             $savedResult->load('prizes');
-            $this->syncLotteryArticleCover($savedResult, $now);
+            $article = $this->syncLotteryArticleCover($savedResult, $now);
             $this->notifyLineWhenCompleted($savedResult, $wasAlreadyComplete);
+            $this->notifyFacebookWhenCompleted($article, $savedResult, $wasAlreadyComplete);
         }
 
         $this->info(sprintf('Saved draw %s (%d prizes, complete=%s).', $storageDate->toDateString(), count($prizes), $isComplete ? 'yes' : 'no'));
@@ -197,7 +199,19 @@ class FetchLatestLotteryCommand extends Command
         }
     }
 
-    private function syncLotteryArticleCover(LotteryResult $result, Carbon $now): void
+    private function notifyFacebookWhenCompleted(?Article $article, LotteryResult $result, bool $wasAlreadyComplete): void
+    {
+        if ($article === null || $wasAlreadyComplete || !$result->is_complete) return;
+        
+        // Use notification log to avoid duplicates if possible, or just rely on wasAlreadyComplete
+        try {
+            app(FacebookPagePoster::class)->postArticle($article);
+        } catch (\Throwable $exception) {
+            Log::warning('Lottery Facebook notification failed: '.$exception->getMessage());
+        }
+    }
+
+    private function syncLotteryArticleCover(LotteryResult $result, Carbon $now): ?Article
     {
         if (!$result->relationLoaded('prizes')) $result->load('prizes');
 
@@ -264,6 +278,8 @@ class FetchLatestLotteryCommand extends Command
 
         $article->save();
         $this->info("Synced lottery article: {$articleName}");
+        
+        return $article;
     }
 
     private function convertSvgToPng(string $svgPath, string $pngPath): bool
