@@ -25,18 +25,32 @@ class FacebookPagePoster
         }
         $message .= "อ่านผลรางวัลฉบับเต็มและตรวจเลขอื่นๆ ได้ที่นี่ครับ 👇\n{$articleUrl}";
 
-        // If we have a landscape cover, post it as a photo
-        $hasCover = !empty($article->cover_image_landscape_path);
-        $existsOnDisk = $hasCover && \Illuminate\Support\Facades\Storage::disk('public')->exists($article->cover_image_landscape_path);
+        // Robust Image Path Resolution
+        $imagePath = null;
+        if (!empty($article->cover_image_landscape_path)) {
+            $relPath = $article->cover_image_landscape_path;
+            
+            // Try 1: Storage Disk Public Path
+            $path1 = \Illuminate\Support\Facades\Storage::disk('public')->path($relPath);
+            if (file_exists($path1) && is_readable($path1)) {
+                $imagePath = $path1;
+            } 
+            // Try 2: Direct public_path if stored there
+            else {
+                $path2 = public_path('storage/' . $relPath);
+                if (file_exists($path2) && is_readable($path2)) {
+                    $imagePath = $path2;
+                }
+            }
+        }
 
-        Log::info("FB Post Debug: Article {$article->id} - HasCover: " . ($hasCover ? 'Yes' : 'No') . ", Path: {$article->cover_image_landscape_path}, Exists: " . ($existsOnDisk ? 'Yes' : 'No'));
+        Log::info("FB Post Debug: Article {$article->id} - Final Image Path: " . ($imagePath ?: 'NOT_FOUND'));
 
-        if ($existsOnDisk) {
+        if ($imagePath) {
             $url = "https://graph.facebook.com/v19.0/{$pageId}/photos";
-            $imagePath = \Illuminate\Support\Facades\Storage::disk('public')->path($article->cover_image_landscape_path);
             
             try {
-                Log::info("FB Post: Attempting photo upload from: {$imagePath}");
+                Log::info("FB Post: Uploading photo from: {$imagePath}");
                 $response = Http::attach('source', file_get_contents($imagePath), basename($imagePath))
                     ->post($url, [
                         'message' => $message,
@@ -52,12 +66,10 @@ class FacebookPagePoster
             } catch (\Throwable $e) {
                 Log::error("FB Photo Upload exception: " . $e->getMessage());
             }
-        } else {
-            Log::warning("FB Post: Skipping photo upload - File not found or path empty.");
         }
 
-        // Fallback to simple link post if photo fails or missing
-        Log::info("FB Post: Falling back to link-only post.");
+        // Fallback to simple link post
+        Log::info("FB Post: Falling back to link post.");
         $url = "https://graph.facebook.com/v19.0/{$pageId}/feed";
         try {
             $response = Http::post($url, [
