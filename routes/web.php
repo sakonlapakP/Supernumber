@@ -253,6 +253,35 @@ $decodeBase64Image = function (?string $base64String): ?UploadedFile {
     );
 };
 
+$moveTmpImagesToPermanent = function (string $content, string $articleSlug, int $year): string {
+    $permanentDir = "articles/{$year}/{$articleSlug}";
+    $disk = Storage::disk('public');
+    
+    if (! $disk->exists($permanentDir)) {
+        $disk->makeDirectory($permanentDir);
+    }
+
+    // Pattern to find images in content that are in articles/tmp
+    $pattern = '/articles\/tmp\/([a-zA-Z0-9._-]+)/';
+    
+    return preg_replace_callback($pattern, function ($matches) use ($permanentDir, $disk) {
+        $filename = $matches[1];
+        $tmpPath = "articles/tmp/{$filename}";
+        $newPath = "{$permanentDir}/{$filename}";
+
+        if ($disk->exists($tmpPath)) {
+            // Check if destination already exists (to avoid collision)
+            if (! $disk->exists($newPath)) {
+                $disk->copy($tmpPath, $newPath); // Copy instead of move for safety during testing, or use move
+                // $disk->delete($tmpPath); 
+            }
+            return $newPath;
+        }
+
+        return $matches[0];
+    }, $content);
+};
+
 $rejectAdminLogin = function (Request $request) {
     return back()
         ->withInput($request->except('password'))
@@ -639,7 +668,7 @@ $resolveArticleImageMeta = function (string $slug, ?Carbon $date = null): array 
         $articleName = $normalizedSlug !== '' ? $normalizedSlug : 'article';
     }
 
-    $directory = sprintf('article/%s/%s', $year, $articleName);
+    $directory = sprintf('articles/%s/%s', $year, $articleName);
 
     return [
         'directory' => $directory,
@@ -3309,13 +3338,17 @@ Route::post('/direct-save-article/{article}', function (Request $request, Articl
 
     $sqPath = $article->cover_image_square_path;
     $content = $sanitizeArticleContent(trim($data['content']));
+    
+    // Move tmp images to permanent storage
+    $content = $moveTmpImagesToPermanent($content, $slug, $year);
+    
     $ensurePublicStorageLink();
     if ($request->hasFile('upload_media_sq')) {
-        if ($sqPath) Storage::disk('public')->delete($sqPath);
+        if ($sqPath && Storage::disk('public')->exists($sqPath)) Storage::disk('public')->delete($sqPath);
         $file = $request->file('upload_media_sq');
         $ext = $file->getClientOriginalExtension();
-        $filename = "{$slug}.{$ext}";
-        $dir = "{$year}";
+        $filename = "sq_{$slug}.{$ext}";
+        $dir = "articles/{$year}/{$slug}";
         if (!Storage::disk('public')->exists($dir)) Storage::disk('public')->makeDirectory($dir);
         Storage::disk('public')->putFileAs($dir, $file, $filename);
         $sqPath = "{$dir}/{$filename}";
@@ -3373,12 +3406,16 @@ Route::post('/direct-create-article', function (Request $request) use ($ensureAd
 
     $sqPath = null;
     $content = $sanitizeArticleContent(trim($data['content']));
+    
+    // Move tmp images to permanent storage
+    $content = $moveTmpImagesToPermanent($content, $slug, $year);
+
     $ensurePublicStorageLink();
     if ($request->hasFile('upload_media_sq')) {
         $file = $request->file('upload_media_sq');
         $ext = $file->getClientOriginalExtension();
-        $filename = "{$slug}.{$ext}";
-        $dir = "{$year}";
+        $filename = "sq_{$slug}.{$ext}";
+        $dir = "articles/{$year}/{$slug}";
         if (!Storage::disk('public')->exists($dir)) Storage::disk('public')->makeDirectory($dir);
         Storage::disk('public')->putFileAs($dir, $file, $filename);
         $sqPath = "{$dir}/{$filename}";

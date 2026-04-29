@@ -313,7 +313,7 @@ class FetchLatestLotteryCommand extends Command
         $month = $drawDate->format('m');
         $round = $this->resolveDrawRound($drawDate);
         $articleName = sprintf('thai-goverment-lottery-%s%s%s', $year, $month, $round);
-        $articleDir = sprintf('article/%s/%s', $year, $articleName);
+        $articleDir = sprintf('articles/%s/%s', $year, $articleName);
         $squareFilename = sprintf('%s/%s.png', $articleDir, $articleName);
         $landscapeFilename = sprintf('%s/%s_cover.png', $articleDir, $articleName);
         $squareSvgFilename = sprintf('%s/%s.svg', $articleDir, $articleName);
