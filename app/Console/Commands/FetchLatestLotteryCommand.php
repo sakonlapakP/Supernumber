@@ -439,8 +439,6 @@ SVG;
 </svg>
 SVG;
     }
-SVG;
-    }
 
     private function buildLotteryArticleContent(LotteryResult $result, Carbon $drawDate, Carbon $now): string
     {
