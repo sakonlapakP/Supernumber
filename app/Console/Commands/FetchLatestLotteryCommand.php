@@ -268,22 +268,24 @@ class FetchLatestLotteryCommand extends Command
 
     private function convertSvgToPng(string $svgPath, string $pngPath): bool
     {
-        if (class_exists(\Imagick::class)) {
-            try {
-                $imagick = new \Imagick();
-                $imagick->setBackgroundColor(new \ImagickPixel('transparent'));
-                $imagick->readImageBlob(file_get_contents($svgPath));
-                $imagick->setImageFormat("png32");
-                $imagick->writeImage($pngPath);
-                return true;
-            } catch (\Throwable $e) {
-                Log::warning('Imagick conversion failed: '.$e->getMessage());
-            }
+        if (!is_file($svgPath)) {
+            return false;
         }
 
         try {
+            // Priority 1: High-quality conversion using Playwright
+            $scriptPath = base_path('scratch/svg2png.js');
+            $process = new Process(['node', $scriptPath, $svgPath, $pngPath]);
+            $process->run();
+            
+            if ($process->isSuccessful()) {
+                return true;
+            }
+            
+            // Priority 2: Fallback to standard convert command
             $process = new Process(['convert', $svgPath, $pngPath]);
             $process->run();
+            
             return $process->isSuccessful();
         } catch (\Throwable $e) {
             return false;
