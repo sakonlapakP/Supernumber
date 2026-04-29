@@ -1,0 +1,163 @@
+html,
+body {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  font-family: "Kanit", "Prompt", Tahoma, sans-serif;
+  background: transparent;
+}
+
+html.square,
+body.square {
+  width: 1200px;
+  height: 1200px;
+}
+
+.lottery-cover-render-wrap {
+  margin: 0;
+  padding: 0;
+  background: transparent;
+}
+
+.lottery-cover-render-wrap--square {
+  width: 1200px;
+  height: 1200px;
+}
+
+.article-lottery-poster__frame {
+  display: block;
+  width: 1200px;
+  height: 1200px;
+}
+
+.sq-outer-border {
+  fill: none;
+  stroke: #c59d62;
+  stroke-width: 3;
+}
+
+.sq-inner-border {
+  fill: none;
+  stroke: rgba(186, 142, 77, 0.45);
+  stroke-width: 3;
+}
+
+.sq-diagonal {
+  stroke: #ba8e4d;
+  stroke-width: 3;
+  opacity: 0.35;
+}
+
+.sq-header-line {
+  stroke: #ba8e4d;
+  stroke-width: 3;
+  opacity: 0.6;
+}
+
+.sq-logo-box {
+  fill: rgba(42, 26, 16, 0.95);
+  stroke: #d7a64e;
+  stroke-width: 3;
+}
+
+.sq-logo-text {
+  fill: #f5c76d;
+  font-size: 68px;
+  font-family: "Cinzel", Georgia, serif;
+  font-weight: 600;
+}
+
+.sq-brand {
+  fill: #f7d58f;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+}
+
+.sq-title {
+  fill: #ffffff;
+  font-size: 64px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.sq-date {
+  fill: #f8e2b0;
+  font-size: 38px;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+}
+
+.sq-main-panel,
+.sq-small-panel {
+  fill: #fffaf0;
+  stroke: #caa36a;
+  stroke-width: 0;
+}
+
+.sq-first-label {
+  fill: #2a1a10;
+  font-size: 60px;
+  font-weight: 800;
+}
+
+.sq-first-number {
+  fill: #2a1a10;
+  font-size: 138px;
+  letter-spacing: 8px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.sq-near-first {
+  fill: #f6deac;
+  font-size: 26px;
+  font-weight: 700;
+}
+
+.sq-small-heading {
+  fill: #fff0d2;
+  font-size: 38px;
+  font-weight: 800;
+}
+
+.sq-small-number {
+  fill: #2a1a10;
+  font-size: 96px;
+  font-weight: 900;
+}
+
+.sq-last-two-number {
+  fill: #2a1a10;
+  font-size: 132px;
+  font-weight: 900;
+}
+
+.sq-footer-line {
+  stroke: rgba(186, 142, 77, 0.4);
+  stroke-width: 2;
+}
+
+.sq-footer-tag {
+  fill: #1a0f08;
+}
+
+.sq-footer-site {
+  fill: #fff6e4;
+  font-size: 30px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+}
+
+.sq-footer-meta {
+  fill: #f5e4c4;
+  font-size: 22px;
+  font-weight: 700;
+}
+
+.sq-footer-updated {
+  fill: rgba(220, 197, 158, 0.8);
+  font-size: 14px;
+  font-weight: 600;
+}
+

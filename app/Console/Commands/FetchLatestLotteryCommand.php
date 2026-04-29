@@ -570,8 +570,8 @@ HTML;
 
         $nearFirstText = empty($nearFirst) ? '-' : implode(', ', $nearFirst);
 
-        $cssPath = public_path('css/supernumber.css');
-        $css = is_file($cssPath) ? (string) file_get_contents($cssPath) : '';
+        $coverCssPath = public_path('css/randerLottteryCover.css');
+        $coverCss = is_file($coverCssPath) ? (string) file_get_contents($coverCssPath) : '';
 
         $lotteryWebsite = 'www.supernumber.co.th';
         $lotteryWebsiteDisplay = preg_replace('/^www\./iu', '', $lotteryWebsite) ?: $lotteryWebsite;
@@ -587,139 +587,9 @@ HTML;
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Kanit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 980px;
-      height: 620px;
-      overflow: hidden;
-      font-family: "Kanit", Tahoma, sans-serif;
-      background: transparent;
-    }
-    .landscape-poster {
-      position: relative;
-      width: 980px;
-      height: 620px;
-      border: 3px solid rgba(214, 178, 107, 0.68);
-      box-sizing: border-box;
-      background:
-        radial-gradient(circle at -2% 12%, rgba(253, 221, 146, 0.34), rgba(253, 221, 146, 0) 26%),
-        radial-gradient(circle at 92% 8%, rgba(255, 199, 101, 0.24), rgba(255, 199, 101, 0) 28%),
-        linear-gradient(26deg, rgba(219, 177, 101, 0.34) 0%, rgba(219, 177, 101, 0) 18%),
-        linear-gradient(145deg, #120c08 0%, #20140d 42%, #2a1a10 100%);
-      color: #fff;
-      overflow: hidden;
-    }
-    .landscape-poster::before {
-      content: "";
-      position: absolute;
-      inset: 24px;
-      border: 3px solid rgba(237, 203, 137, 0.42);
-      pointer-events: none;
-    }
-    .landscape-poster::after {
-      content: "";
-      position: absolute;
-      top: -28px;
-      right: 210px;
-      width: 3px;
-      height: 360px;
-      background: linear-gradient(180deg, rgba(245, 208, 136, 0.88), rgba(245, 208, 136, 0));
-      transform: rotate(16deg);
-      opacity: 0.52;
-    }
-    .inner {
-      position: relative;
-      z-index: 2;
-      height: 100%;
-      padding: 18px 52px 20px;
-      box-sizing: border-box;
-      display: grid;
-      grid-template-rows: auto 1fr auto;
-    }
-    .top-line {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-    }
-    .top-line .line {
-      flex: 1;
-      max-width: 330px;
-      height: 4px;
-      background: linear-gradient(90deg, rgba(230,197,131,0.22), rgba(230,197,131,0.62));
-    }
-    .logo-mark {
-      width: 66px;
-      height: 66px;
-      border: 3px solid #d7a64e;
-      color: #f5c76d;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      font-family: "Cinzel", serif;
-      font-size: 48px;
-      line-height: 1;
-      background: linear-gradient(180deg, rgba(255,217,149,0.14), rgba(255,217,149,0.04));
-    }
-    .header-block {
-      display: flex;
-      flex-direction: column;
-    }
-    .brand {
-      margin: 8px 0 0;
-      text-align: center;
-      color: #f6d390;
-      font-size: 34px;
-      font-weight: 700;
-      letter-spacing: .08em;
-    }
-    .center-block {
-      display: flex;
-      flex-direction: column;
-      justify-content: center;
-      align-items: center;
-      min-height: 0;
-    }
-    .title {
-      margin: 0;
-      text-align: center;
-      color: #fff7e8;
-      font-size: 76px;
-      line-height: 1.02;
-      font-weight: 700;
-      text-shadow: -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 3px 3px 0 #000;
-    }
-    .subtitle {
-      margin: 8px 0 0;
-      text-align: center;
-      color: #f6dfad;
-      font-size: 54px;
-      font-weight: 700;
-      line-height: 1.04;
-      text-shadow: -2px -2px 0 #000, 2px -2px 0 #000, -2px 2px 0 #000, 2px 2px 0 #000;
-    }
-    .footer {
-      margin-top: 0;
-      border-top: 2px solid rgba(237, 203, 137, 0.34);
-      padding-top: 8px;
-      text-align: center;
-    }
-    .website {
-      margin: 0;
-      color: #fff9ea;
-      font-family: "Kanit", Tahoma, sans-serif;
-      font-size: 34px;
-      font-weight: 700;
-      line-height: 1.05;
-      display: inline-block;
-      padding: 0 12px 2px;
-      background: #22140c;
-    }
-  </style>
+  <style>'.$coverCss.'</style>
 </head>
-<body>
+<body class="landscape">
   <section class="landscape-poster">
     <div class="inner">
       <div class="header-block">
@@ -744,87 +614,19 @@ HTML;
 </html>';
         }
 
+        $squareCssPath = public_path('css/randerLottterySquare.css');
+        $squareCss = is_file($squareCssPath) ? (string) file_get_contents($squareCssPath) : '';
+
         return '<!doctype html>
 <html lang="th">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <style>'.$css.'</style>
-  <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      background: transparent;
-      overflow: hidden;
-      font-family: "Kanit", Tahoma, sans-serif;
-    }
-    .lottery-cover-render-wrap {
-      width: 980px;
-      margin: 0;
-      padding: 0;
-      background: transparent;
-    }
-    .lottery-cover-render-wrap .article-lottery-poster {
-      margin: 0;
-      padding: 0;
-    }
-    .lottery-cover-render-wrap .article-lottery-poster__updated--outside {
-      display: none !important;
-    }
-  </style>
+  <style>'.$squareCss.'</style>
 </head>
-<body>
-  <div class="lottery-cover-render-wrap">
-    <section class="article-lottery-poster">
-      <div class="article-lottery-poster__frame">
-        <div class="article-lottery-poster__logo-wrap">
-          <span class="article-lottery-poster__logo-mark" aria-hidden="true">S</span>
-          <p class="article-lottery-poster__brand">SUPERNUMBER</p>
-        </div>
-        <h2 class="article-lottery-poster__title">ผลสลากกินแบ่งรัฐบาล</h2>
-        <p class="article-lottery-poster__subtitle">งวดประจำวันที่ '.$this->escapeHtml($thaiDate).'</p>
-
-        <div class="article-lottery-poster__first-prize">
-          <p>รางวัลที่ 1</p>
-          <strong>'.$this->escapeHtml($firstPrize).'</strong>
-        </div>
-
-        <p class="article-lottery-poster__near-inline">ข้างเคียงรางวัลที่ 1 : '.$this->escapeHtml($nearFirstText).'</p>
-
-        <div class="article-lottery-poster__groups">
-          <section class="article-lottery-poster__group">
-            <h3>เลขหน้า 3 ตัว</h3>
-            <div class="article-lottery-poster__group-grid">
-              <div class="article-lottery-poster__box">'.$this->escapeHtml($frontThree[0]).'</div>
-              <div class="article-lottery-poster__box">'.$this->escapeHtml($frontThree[1]).'</div>
-            </div>
-          </section>
-
-          <section class="article-lottery-poster__group">
-            <h3>เลขท้าย 3 ตัว</h3>
-            <div class="article-lottery-poster__group-grid">
-              <div class="article-lottery-poster__box">'.$this->escapeHtml($backThree[0]).'</div>
-              <div class="article-lottery-poster__box">'.$this->escapeHtml($backThree[1]).'</div>
-            </div>
-          </section>
-
-          <section class="article-lottery-poster__group article-lottery-poster__group--last-two">
-            <h3>เลขท้าย 2 ตัว</h3>
-            <div class="article-lottery-poster__box article-lottery-poster__box--last-two">'.$this->escapeHtml($lastTwo).'</div>
-          </section>
-        </div>
-
-        <div class="article-lottery-poster__footer">
-          <div class="article-lottery-poster__contact">
-            <p class="article-lottery-poster__website">'.$this->escapeHtml($lotteryWebsiteDisplay).'</p>
-            <p class="article-lottery-poster__contact-line">Web : '.$this->escapeHtml($lotteryWebsite).' Tel : '.$this->escapeHtml($lotteryTel).' Line : '.$this->escapeHtml($lotteryLine).'</p>
-          </div>
-        </div>
-      </div>
-    </section>
+<body class="square">
+  <div class="lottery-cover-render-wrap lottery-cover-render-wrap--square">
+    '.$this->buildLotteryCoverSvg($result).'
   </div>
 </body>
 </html>';
@@ -873,62 +675,80 @@ HTML;
             '{{STATUS}}' => $this->xmlSafe($status),
         ];
 
+        $squareCssPath = public_path('css/randerLottterySquare.css');
+        $squareCss = is_file($squareCssPath) ? (string) file_get_contents($squareCssPath) : '';
+
         $template = <<<'SVG'
-<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
+<svg class="article-lottery-poster__frame" xmlns="http://www.w3.org/2000/svg" width="1200" height="1200" viewBox="0 0 1200 1200">
   <defs>
+    <style><![CDATA[{{SQUARE_CSS}}]]></style>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#27160e"/>
-      <stop offset="50%" stop-color="#140a06"/>
-      <stop offset="100%" stop-color="#352112"/>
+      <stop offset="0%" stop-color="#1e140d"/>
+      <stop offset="15%" stop-color="#120907"/>
+      <stop offset="85%" stop-color="#120907"/>
+      <stop offset="100%" stop-color="#1e140d"/>
     </linearGradient>
-    <linearGradient id="panel" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" stop-color="#fffaf1"/>
-      <stop offset="100%" stop-color="#f2ebe2"/>
-    </linearGradient>
+    <radialGradient id="glowLeft" cx="10%" cy="10%" r="40%">
+      <stop offset="0%" stop-color="#ba8d49" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#ba8d49" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="glowRight" cx="90%" cy="10%" r="40%">
+      <stop offset="0%" stop-color="#ba8d49" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#ba8d49" stop-opacity="0"/>
+    </radialGradient>
   </defs>
 
   <rect width="1200" height="1200" fill="url(#bg)"/>
-  <rect x="6" y="6" width="1188" height="1188" fill="none" stroke="#c59d62" stroke-width="4"/>
-  <rect x="62" y="62" width="1076" height="1076" fill="none" stroke="#b18d59" stroke-width="4"/>
+  <rect width="1200" height="1200" fill="url(#glowLeft)"/>
+  <rect width="1200" height="1200" fill="url(#glowRight)"/>
+  <rect class="sq-outer-border" x="12" y="12" width="1176" height="1176"/>
+  <rect class="sq-inner-border" x="48" y="48" width="1104" height="1104"/>
+  <line class="sq-diagonal" x1="940" y1="0" x2="840" y2="500"/>
 
-  <line x1="190" y1="150" x2="530" y2="150" stroke="#c8a268" stroke-width="4" opacity="0.7"/>
-  <line x1="670" y1="150" x2="1010" y2="150" stroke="#c8a268" stroke-width="4" opacity="0.7"/>
+  <line class="sq-header-line" x1="160" y1="125" x2="520" y2="125"/>
+  <line class="sq-header-line" x1="680" y1="125" x2="1040" y2="125"/>
 
-  <rect x="555" y="88" width="90" height="90" fill="#2a1a10" stroke="#d7a64e" stroke-width="4"/>
-  <text x="600" y="149" text-anchor="middle" font-size="64" fill="#f5c76d" font-family="Georgia, serif">S</text>
-  <text x="600" y="210" text-anchor="middle" font-size="52" font-weight="700" fill="#f7d58f" font-family="Kanit, Tahoma, sans-serif">SUPERNUMBER</text>
+  <rect class="sq-logo-box" x="554" y="78" width="92" height="92"/>
+  <text class="sq-logo-text" x="600" y="146" text-anchor="middle">S</text>
+  <text class="sq-brand" x="600" y="215" text-anchor="middle">SUPERNUMBER</text>
 
-  <text x="600" y="285" text-anchor="middle" font-size="78" font-weight="700" fill="#ffffff" font-family="Kanit, Tahoma, sans-serif">ผลสลากกินแบ่งรัฐบาล</text>
-  <text x="600" y="336" text-anchor="middle" font-size="56" font-weight="700" fill="#f8e2b0" font-family="Kanit, Tahoma, sans-serif">งวดประจำวันที่ {{DRAW_DATE}}</text>
+  <text class="sq-title" x="600" y="270" text-anchor="middle">ผลสลากกินแบ่งรัฐบาล</text>
+  <text class="sq-date" x="600" y="325" text-anchor="middle">งวดประจำวันที่ {{DRAW_DATE}}</text>
 
-  <rect x="95" y="385" width="1010" height="355" fill="url(#panel)" stroke="#caa36a" stroke-width="4"/>
-  <text x="600" y="505" text-anchor="middle" font-size="82" font-weight="700" fill="#3a2410" font-family="Kanit, Tahoma, sans-serif">รางวัลที่ 1</text>
-  <text x="600" y="640" text-anchor="middle" font-size="160" letter-spacing="8" font-weight="800" fill="#3a2410" font-family="Kanit, Tahoma, sans-serif">{{FIRST}}</text>
-  <text x="600" y="775" text-anchor="middle" font-size="46" font-weight="700" fill="#f6deac" font-family="Kanit, Tahoma, sans-serif">ข้างเคียงรางวัลที่ 1 : {{NEAR_FIRST}}</text>
+  <rect class="sq-main-panel" x="80" y="360" width="1040" height="260"/>
+  <text class="sq-first-label" x="600" y="445" text-anchor="middle">รางวัลที่ 1</text>
+  <text class="sq-first-number" x="600" y="580" text-anchor="middle">{{FIRST}}</text>
+  <text class="sq-near-first" x="600" y="670" text-anchor="middle">ข้างเคียงรางวัลที่ 1 : {{NEAR_FIRST}}</text>
 
-  <text x="265" y="845" text-anchor="middle" font-size="64" font-weight="700" fill="#fff0d2" font-family="Kanit, Tahoma, sans-serif">เลขหน้า 3 ตัว</text>
-  <text x="600" y="845" text-anchor="middle" font-size="64" font-weight="700" fill="#fff0d2" font-family="Kanit, Tahoma, sans-serif">เลขท้าย 3 ตัว</text>
-  <text x="935" y="845" text-anchor="middle" font-size="64" font-weight="700" fill="#fff0d2" font-family="Kanit, Tahoma, sans-serif">เลขท้าย 2 ตัว</text>
+  <text class="sq-small-heading" x="250" y="745" text-anchor="middle">เลขหน้า 3 ตัว</text>
+  <text class="sq-small-heading" x="600" y="745" text-anchor="middle">เลขท้าย 3 ตัว</text>
+  <text class="sq-small-heading" x="950" y="745" text-anchor="middle">เลขท้าย 2 ตัว</text>
 
-  <rect x="95" y="868" width="320" height="135" fill="url(#panel)" stroke="#caa36a" stroke-width="4"/>
-  <rect x="95" y="1018" width="320" height="135" fill="url(#panel)" stroke="#caa36a" stroke-width="4"/>
-  <rect x="440" y="868" width="320" height="135" fill="url(#panel)" stroke="#caa36a" stroke-width="4"/>
-  <rect x="440" y="1018" width="320" height="135" fill="url(#panel)" stroke="#caa36a" stroke-width="4"/>
-  <rect x="785" y="868" width="320" height="285" fill="url(#panel)" stroke="#caa36a" stroke-width="4"/>
+  <rect class="sq-small-panel" x="80" y="775" width="337" height="120"/>
+  <rect class="sq-small-panel" x="80" y="910" width="337" height="120"/>
+  <rect class="sq-small-panel" x="431" y="775" width="337" height="120"/>
+  <rect class="sq-small-panel" x="431" y="910" width="337" height="120"/>
+  <rect class="sq-small-panel" x="783" y="775" width="337" height="255"/>
 
-  <text x="255" y="960" text-anchor="middle" font-size="122" font-weight="800" fill="#3a2410" font-family="Kanit, Tahoma, sans-serif">{{FRONT_1}}</text>
-  <text x="255" y="1110" text-anchor="middle" font-size="122" font-weight="800" fill="#3a2410" font-family="Kanit, Tahoma, sans-serif">{{FRONT_2}}</text>
-  <text x="600" y="960" text-anchor="middle" font-size="122" font-weight="800" fill="#3a2410" font-family="Kanit, Tahoma, sans-serif">{{BACK_1}}</text>
-  <text x="600" y="1110" text-anchor="middle" font-size="122" font-weight="800" fill="#3a2410" font-family="Kanit, Tahoma, sans-serif">{{BACK_2}}</text>
-  <text x="945" y="1035" text-anchor="middle" font-size="170" font-weight="800" fill="#3a2410" font-family="Kanit, Tahoma, sans-serif">{{LAST_2}}</text>
+  <text class="sq-small-number" x="250" y="865" text-anchor="middle">{{FRONT_1}}</text>
+  <text class="sq-small-number" x="250" y="1000" text-anchor="middle">{{FRONT_2}}</text>
+  <text class="sq-small-number" x="600" y="865" text-anchor="middle">{{BACK_1}}</text>
+  <text class="sq-small-number" x="600" y="1000" text-anchor="middle">{{BACK_2}}</text>
+  <text class="sq-last-two-number" x="950" y="945" text-anchor="middle">{{LAST_2}}</text>
 
-  <line x1="95" y1="1118" x2="1105" y2="1118" stroke="#b18d59" stroke-width="4"/>
-  <rect x="455" y="1092" width="290" height="42" fill="#22140c"/>
-  <text x="600" y="1126" text-anchor="middle" font-size="44" font-weight="700" fill="#fff6e4" font-family="Cinzel, Georgia, serif">SUPERNUMBER.CO.TH</text>
-  <text x="600" y="1162" text-anchor="middle" font-size="36" font-weight="700" fill="#f5e4c4" font-family="Kanit, Tahoma, sans-serif">Web : www.supernumber.co.th Tel : 0963232656, 0963232665 Line : @supernumber</text>
-  <text x="600" y="1188" text-anchor="middle" font-size="28" font-weight="700" fill="#dcc59e" font-family="Kanit, Tahoma, sans-serif">อัปเดตล่าสุด {{UPDATED_AT}} น. ({{STATUS}})</text>
+  <rect class="sq-footer-tag" x="460" y="1070" width="280" height="42"/>
+  <text class="sq-footer-site" x="600" y="1101" text-anchor="middle">SUPERNUMBER.CO.TH</text>
+  <text class="sq-footer-meta" x="600" y="1135" text-anchor="middle">Web : www.supernumber.co.th Tel : 0963232656, 0963232665 Line : @supernumber</text>
 </svg>
+
+
+
+
+
+
 SVG;
+
+        $vars['{{SQUARE_CSS}}'] = str_replace(']]>', ']]]]><![CDATA[>', $squareCss);
 
         return strtr($template, $vars);
     }

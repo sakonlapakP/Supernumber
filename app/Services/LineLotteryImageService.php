@@ -150,15 +150,20 @@ class LineLotteryImageService
 
             $this->paintBackground($image, $width, $height);
 
-            $cream = imagecolorallocate($image, 255, 247, 232);
+            $white = imagecolorallocate($image, 255, 255, 255);
+            $outline = imagecolorallocate($image, 18, 9, 7);
             $gold = imagecolorallocate($image, 239, 199, 120);
-            $goldDark = imagecolorallocate($image, 163, 117, 53);
-            $panel = imagecolorallocate($image, 249, 234, 197);
+            $goldDark = imagecolorallocate($image, 181, 141, 89);
+            $panel = imagecolorallocate($image, 255, 250, 243);
             $panelDark = imagecolorallocate($image, 63, 42, 19);
-            $muted = imagecolorallocate($image, 230, 215, 184);
+            $muted = imagecolorallocate($image, 245, 228, 196);
+            $footerBg = imagecolorallocate($image, 34, 20, 12);
 
-            imagerectangle($image, 34, 34, $width - 35, $height - 35, $gold);
-            imagerectangle($image, 58, 58, $width - 59, $height - 59, $goldDark);
+            imagerectangle($image, 6, 6, $width - 7, $height - 7, $goldDark);
+            imagerectangle($image, 38, 38, $width - 39, $height - 39, $goldDark);
+            imageline($image, 965, 0, 860, 520, imagecolorallocatealpha($image, 140, 103, 55, 64));
+
+            $this->drawTopBrand($image, $gold, $goldDark);
 
             $drawDate = $result->source_draw_date ?? $result->draw_date ?? now('Asia/Bangkok');
             $prizes = $result->prizes;
@@ -181,24 +186,31 @@ class LineLotteryImageService
                 $backThree[] = '-';
             }
 
-            $this->drawCenteredText($image, 'SUPERNUMBER', $this->fontPath('Kanit-700.ttf'), 28, 600, 105, $gold);
-            $this->drawCenteredText($image, 'ผลสลากกินแบ่งรัฐบาล', $this->fontPath('Kanit-700.ttf'), 54, 600, 172, $cream);
-            $this->drawCenteredText($image, 'งวดประจำวันที่ '.$thaiDate, $this->fontPath('Kanit-500.ttf'), 30, 600, 222, $muted);
+            $this->drawCenteredTextWithOutline($image, 'ผลสลากกินแบ่งรัฐบาล', $this->fontPath('Kanit-700.ttf'), 60, 600, 308, $white, $outline, 4);
+            $this->drawCenteredTextWithOutline($image, 'งวดประจำวันที่ '.$thaiDate, $this->fontPath('Kanit-700.ttf'), 34, 600, 388, $muted, $outline, 3);
 
-            imagefilledrectangle($image, 150, 276, 1050, 490, $panel);
-            imagerectangle($image, 150, 276, 1050, 490, $gold);
-            $this->drawCenteredText($image, 'รางวัลที่ 1', $this->fontPath('Kanit-700.ttf'), 40, 600, 345, $goldDark);
-            $this->drawCenteredText($image, $firstPrize, $this->fontPath('Kanit-700.ttf'), 112, 600, 452, $panelDark);
+            imagefilledrectangle($image, 70, 400, 1130, 602, $panel);
+            imagerectangle($image, 70, 400, 1130, 602, $goldDark);
+            $this->drawCenteredText($image, 'รางวัลที่ 1', $this->fontPath('Kanit-700.ttf'), 46, 600, 458, $panelDark);
+            $this->drawCenteredText($image, $firstPrize, $this->fontPath('Kanit-700.ttf'), 110, 600, 572, $panelDark);
 
-            $nearFirstText = $nearFirst !== [] ? implode(' ', $nearFirst) : '-';
-            $this->drawCenteredText($image, 'ข้างเคียงรางวัลที่ 1 : '.$nearFirstText, $this->fontPath('Kanit-500.ttf'), 28, 600, 548, $muted);
+            $nearFirstText = $nearFirst !== [] ? implode(', ', $nearFirst) : '-';
+            $this->drawCenteredText($image, 'ข้างเคียงรางวัลที่ 1 : '.$nearFirstText, $this->fontPath('Kanit-600.ttf'), 20, 600, 666, $muted);
 
-            $this->drawGroupPanel($image, 82, 620, 310, 360, 'เลขหน้า 3 ตัว', $frontThree, 78, $panel, $gold, $panelDark);
-            $this->drawGroupPanel($image, 445, 620, 310, 360, 'เลขท้าย 3 ตัว', $backThree, 78, $panel, $gold, $panelDark);
-            $this->drawGroupPanel($image, 808, 620, 310, 360, 'เลขท้าย 2 ตัว', [$lastTwo], 118, $panel, $gold, $panelDark);
+            $this->drawCenteredText($image, 'เลขหน้า 3 ตัว', $this->fontPath('Kanit-700.ttf'), 26, 220, 756, $white);
+            $this->drawCenteredText($image, 'เลขท้าย 3 ตัว', $this->fontPath('Kanit-700.ttf'), 26, 600, 756, $white);
+            $this->drawCenteredText($image, 'เลขท้าย 2 ตัว', $this->fontPath('Kanit-700.ttf'), 26, 980, 756, $white);
+
+            $this->drawDoubleNumberPanel($image, 50, 770, 360, 92, $frontThree[0], $frontThree[1], $panel, $goldDark, $panelDark);
+            $this->drawDoubleNumberPanel($image, 420, 770, 360, 92, $backThree[0], $backThree[1], $panel, $goldDark, $panelDark);
+            $this->drawSingleNumberPanel($image, 790, 770, 360, 184, $lastTwo, $panel, $goldDark, $panelDark);
 
             $status = $result->is_complete ? 'ข้อมูลครบแล้ว' : 'ผลรางวัลยังอัปเดตอยู่';
-            $this->drawCenteredText($image, 'อัปเดตล่าสุด '.$updatedAt.' น. ('.$status.')', $this->fontPath('Kanit-500.ttf'), 24, 600, 1088, $muted);
+            imageline($image, 86, 1112, 1114, 1112, $goldDark);
+            imagefilledrectangle($image, 434, 1118, 766, 1154, $footerBg);
+            $this->drawCenteredText($image, 'SUPERNUMBER.CO.TH', $this->fontPath('Kanit-700.ttf'), 22, 600, 1146, $white);
+            $this->drawCenteredText($image, 'Web : www.supernumber.co.th Tel : 0963232656, 0963232665 Line : @supernumber', $this->fontPath('Kanit-600.ttf'), 16, 600, 1172, $muted);
+            $this->drawCenteredText($image, 'อัปเดตล่าสุด '.$updatedAt.' น. ('.$status.')', $this->fontPath('Kanit-500.ttf'), 13, 600, 1188, $muted);
 
             ob_start();
             imagepng($image);
@@ -214,18 +226,53 @@ class LineLotteryImageService
     {
         for ($y = 0; $y < $height; $y++) {
             $ratio = $y / max($height - 1, 1);
-            $red = (int) round(18 + (($ratio * 30)));
-            $green = (int) round(12 + (($ratio * 20)));
-            $blue = (int) round(12 + (($ratio * 10)));
+            $red = (int) round(16 + (($ratio * 42)));
+            $green = (int) round(9 + (($ratio * 24)));
+            $blue = (int) round(7 + (($ratio * 13)));
             $lineColor = imagecolorallocate($image, $red, $green, $blue);
             imageline($image, 0, $y, $width, $y, $lineColor);
         }
 
-        $glowLeft = imagecolorallocatealpha($image, 241, 208, 141, 92);
-        imagefilledellipse($image, 90, 90, 340, 340, $glowLeft);
+        $glowLeft = imagecolorallocatealpha($image, 197, 149, 78, 96);
+        imagefilledellipse($image, 88, 96, 360, 360, $glowLeft);
 
-        $glowRight = imagecolorallocatealpha($image, 255, 204, 120, 102);
-        imagefilledellipse($image, 1110, 120, 320, 320, $glowRight);
+        $glowRight = imagecolorallocatealpha($image, 197, 149, 78, 108);
+        imagefilledellipse($image, 1108, 108, 360, 320, $glowRight);
+    }
+
+    private function drawTopBrand($image, int $gold, int $goldDark): void
+    {
+        imageline($image, 154, 134, 525, 134, $goldDark);
+        imageline($image, 675, 134, 1046, 134, $goldDark);
+        imagerectangle($image, 548, 78, 652, 182, $gold);
+        imagerectangle($image, 549, 79, 651, 181, $goldDark);
+
+        $brandBg = imagecolorallocate($image, 42, 26, 16);
+        imagefilledrectangle($image, 550, 80, 650, 180, $brandBg);
+
+        $this->drawCenteredText($image, 'S', $this->fontPath('Kanit-700.ttf'), 50, 600, 150, $gold);
+        $this->drawCenteredText($image, 'SUPERNUMBER', $this->fontPath('Kanit-700.ttf'), 18, 600, 212, $gold);
+    }
+
+    private function drawDoubleNumberPanel($image, int $x, int $y, int $width, int $boxHeight, string $top, string $bottom, int $panelColor, int $borderColor, int $textColor): void
+    {
+        $gap = 14;
+        imagefilledrectangle($image, $x, $y, $x + $width, $y + $boxHeight, $panelColor);
+        imagerectangle($image, $x, $y, $x + $width, $y + $boxHeight, $borderColor);
+        imagefilledrectangle($image, $x, $y + $boxHeight + $gap, $x + $width, $y + ($boxHeight * 2) + $gap, $panelColor);
+        imagerectangle($image, $x, $y + $boxHeight + $gap, $x + $width, $y + ($boxHeight * 2) + $gap, $borderColor);
+
+        $centerX = $x + (int) floor($width / 2);
+        $this->drawCenteredText($image, $top, $this->fontPath('Kanit-700.ttf'), 64, $centerX, $y + 74, $textColor);
+        $this->drawCenteredText($image, $bottom, $this->fontPath('Kanit-700.ttf'), 64, $centerX, $y + $boxHeight + $gap + 74, $textColor);
+    }
+
+    private function drawSingleNumberPanel($image, int $x, int $y, int $width, int $height, string $number, int $panelColor, int $borderColor, int $textColor): void
+    {
+        imagefilledrectangle($image, $x, $y, $x + $width, $y + $height, $panelColor);
+        imagerectangle($image, $x, $y, $x + $width, $y + $height, $borderColor);
+        $centerX = $x + (int) floor($width / 2);
+        $this->drawCenteredText($image, $number, $this->fontPath('Kanit-700.ttf'), 112, $centerX, $y + 132, $textColor);
     }
 
     private function drawGroupPanel(
@@ -287,6 +334,39 @@ class LineLotteryImageService
         $x = $centerX - (int) floor($textWidth / 2);
 
         imagettftext($image, $size, 0, $x, $baselineY, $color, $fontPath, $text);
+    }
+
+    private function drawCenteredTextWithOutline(
+        $image,
+        string $text,
+        string $fontPath,
+        int $size,
+        int $centerX,
+        int $baselineY,
+        int $fillColor,
+        int $outlineColor,
+        int $outlineWidth
+    ): void {
+        for ($offsetX = -$outlineWidth; $offsetX <= $outlineWidth; $offsetX++) {
+            for ($offsetY = -$outlineWidth; $offsetY <= $outlineWidth; $offsetY++) {
+                if ($offsetX === 0 && $offsetY === 0) {
+                    continue;
+                }
+
+                $box = imagettfbbox($size, 0, $fontPath, $text);
+
+                if ($box === false) {
+                    return;
+                }
+
+                $textWidth = (int) abs($box[4] - $box[0]);
+                $x = $centerX - (int) floor($textWidth / 2) + $offsetX;
+
+                imagettftext($image, $size, 0, $x, $baselineY + $offsetY, $outlineColor, $fontPath, $text);
+            }
+        }
+
+        $this->drawCenteredText($image, $text, $fontPath, $size, $centerX, $baselineY, $fillColor);
     }
 
     private function fontPath(string $filename): string
