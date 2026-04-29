@@ -321,23 +321,25 @@ class FetchLatestLotteryCommand extends Command
     <line x1="1000" y1="25" x2="850" y2="500" stroke="#ba8e4d" stroke-width="1" opacity="0.2" />
 
     <!-- Header Logo -->
-    <rect x="554" y="95" width="92" height="92" fill="#2a1a10" stroke="#d7a64e" stroke-width="3" />
-    <text x="600" y="163" font-family="KanitCustom" font-size="68" font-weight="900" fill="#f5c76d" text-anchor="middle">S</text>
+    <rect x="565" y="95" width="70" height="70" fill="#2a1a10" stroke="#d7a64e" stroke-width="3" />
+    <text x="600" y="148" font-family="KanitCustom" font-size="48" font-weight="900" fill="#f5c76d" text-anchor="middle">S</text>
     
-    <line x1="80" y1="140" x2="520" y2="140" stroke="#ba8e4d" stroke-width="2" opacity="0.5" />
-    <line x1="680" y1="140" x2="1120" y2="140" stroke="#ba8e4d" stroke-width="2" opacity="0.5" />
+    <line x1="80" y1="130" x2="530" y2="130" stroke="#ba8e4d" stroke-width="2" opacity="0.5" />
+    <line x1="670" y1="130" x2="1120" y2="130" stroke="#ba8e4d" stroke-width="2" opacity="0.5" />
 
-    <text x="600" y="245" font-family="KanitCustom" font-size="64" font-weight="900" fill="#f7d58f" text-anchor="middle" letter-spacing="6">SUPERNUMBER</text>
+    <text x="600" y="205" font-family="KanitCustom" font-size="45" font-weight="900" fill="#f7d58f" text-anchor="middle" letter-spacing="6">SUPERNUMBER</text>
 
     <!-- Main Content -->
-    <text x="600" y="440" font-family="KanitCustom" font-size="125" font-weight="900" fill="#ffffff" text-anchor="middle">สลากกินแบ่งรัฐบาลล่าสุด</text>
-    <text x="600" y="535" font-family="KanitCustom" font-size="68" font-weight="900" fill="#f8e2b0" text-anchor="middle">งวดประจำวันที่ $thaiDate</text>
+    <text x="600" y="440" font-family="KanitCustom" font-size="88" font-weight="900" fill="#ffffff" text-anchor="middle">สลากกินแบ่งรัฐบาลล่าสุด</text>
+    <text x="600" y="515" font-family="KanitCustom" font-size="48" font-weight="900" fill="#f8e2b0" text-anchor="middle">งวดประจำวันที่ $thaiDate</text>
 
     <!-- Footer -->
-    <rect x="300" y="660" width="600" height="70" fill="#1a0f08" stroke="#ba8e4d" stroke-width="0" />
-    <text x="600" y="712" font-family="KanitCustom" font-size="52" font-weight="900" fill="#ffffff" text-anchor="middle">supernumber.co.th</text>
+    <rect x="400" y="660" width="400" height="55" fill="#1a0f08" stroke="#ba8e4d" stroke-width="0" />
+    <text x="600" y="698" font-family="KanitCustom" font-size="36" font-weight="900" fill="#ffffff" text-anchor="middle">supernumber.co.th</text>
 
 </svg>
+SVG;
+    }
 SVG;
     }
 
