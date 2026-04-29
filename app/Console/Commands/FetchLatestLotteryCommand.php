@@ -298,9 +298,23 @@ class FetchLatestLotteryCommand extends Command
         $l3_2 = $l3_arr[1] ?? '...';
         $near = count($near_arr) > 0 ? implode(', ', $near_arr) : '-';
 
+        // Load font and convert to base64 for embedding
+        $fontPath = public_path('fonts/Kanit-700.ttf');
+        $fontBase64 = '';
+        if (is_file($fontPath)) {
+            $fontBase64 = base64_encode((string)file_get_contents($fontPath));
+        }
+
         return <<<SVG
 <svg width="1200" height="1200" viewBox="0 0 1200 1200" xmlns="http://www.w3.org/2000/svg">
     <defs>
+        <style>
+            @font-face {
+                font-family: 'KanitCustom';
+                src: url(data:font/ttf;base64,{$fontBase64});
+            }
+            text { font-family: 'KanitCustom', sans-serif; }
+        </style>
         <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
             <stop offset="0%" style="stop-color:#1e140d;stop-opacity:1" />
             <stop offset="50%" style="stop-color:#120907;stop-opacity:1" />
@@ -324,40 +338,40 @@ class FetchLatestLotteryCommand extends Command
     <line x1="680" y1="125" x2="1040" y2="125" stroke="#ba8e4d" stroke-width="3" opacity="0.6" />
     
     <rect x="554" y="78" width="92" height="92" fill="#2a1a10" stroke="#d7a64e" stroke-width="3" />
-    <text x="600" y="146" font-family="serif" font-size="68" font-weight="bold" fill="#f5c76d" text-anchor="middle">S</text>
-    <text x="600" y="215" font-family="sans-serif" font-size="32" font-weight="800" fill="#f7d58f" text-anchor="middle" letter-spacing="3">SUPERNUMBER</text>
+    <text x="600" y="146" font-size="68" font-weight="bold" fill="#f5c76d" text-anchor="middle">S</text>
+    <text x="600" y="215" font-size="32" font-weight="800" fill="#f7d58f" text-anchor="middle" letter-spacing="3">SUPERNUMBER</text>
 
-    <text x="600" y="280" font-family="sans-serif" font-size="64" font-weight="bold" fill="#ffffff" text-anchor="middle">ผลสลากกินแบ่งรัฐบาล</text>
-    <text x="600" y="335" font-family="sans-serif" font-size="38" font-weight="bold" fill="#f8e2b0" text-anchor="middle">งวดประจำวันที่ $thaiDate</text>
+    <text x="600" y="280" font-size="64" font-weight="bold" fill="#ffffff" text-anchor="middle">ผลสลากกินแบ่งรัฐบาล</text>
+    <text x="600" y="335" font-size="38" font-weight="bold" fill="#f8e2b0" text-anchor="middle">งวดประจำวันที่ $thaiDate</text>
 
     <!-- Main Panel (Prize 1) -->
     <rect x="80" y="360" width="1040" height="260" rx="10" fill="#fffaf0" />
-    <text x="600" y="445" font-family="sans-serif" font-size="60" font-weight="800" fill="#2a1a10" text-anchor="middle">รางวัลที่ 1</text>
-    <text x="600" y="580" font-family="sans-serif" font-size="138" font-weight="900" fill="#2a1a10" text-anchor="middle" letter-spacing="8">$p1</text>
-    <text x="600" y="670" font-family="sans-serif" font-size="26" font-weight="700" fill="#f6deac" text-anchor="middle">ข้างเคียงรางวัลที่ 1 : $near</text>
+    <text x="600" y="445" font-size="60" font-weight="800" fill="#2a1a10" text-anchor="middle">รางวัลที่ 1</text>
+    <text x="600" y="580" font-size="138" font-weight="900" fill="#2a1a10" text-anchor="middle" letter-spacing="8">$p1</text>
+    <text x="600" y="670" font-size="26" font-weight="700" fill="#f6deac" text-anchor="middle">ข้างเคียงรางวัลที่ 1 : $near</text>
 
     <!-- Small Panels -->
-    <text x="250" y="745" font-family="sans-serif" font-size="38" font-weight="bold" fill="#fff0d2" text-anchor="middle">เลขหน้า 3 ตัว</text>
-    <text x="600" y="745" font-family="sans-serif" font-size="38" font-weight="bold" fill="#fff0d2" text-anchor="middle">เลขท้าย 3 ตัว</text>
-    <text x="950" y="745" font-family="sans-serif" font-size="38" font-weight="bold" fill="#fff0d2" text-anchor="middle">เลขท้าย 2 ตัว</text>
+    <text x="250" y="745" font-size="38" font-weight="bold" fill="#fff0d2" text-anchor="middle">เลขหน้า 3 ตัว</text>
+    <text x="600" y="745" font-size="38" font-weight="bold" fill="#fff0d2" text-anchor="middle">เลขท้าย 3 ตัว</text>
+    <text x="950" y="745" font-size="38" font-weight="bold" fill="#fff0d2" text-anchor="middle">เลขท้าย 2 ตัว</text>
 
     <rect x="80" y="775" width="337" height="120" rx="10" fill="#fffaf0" />
     <rect x="80" y="910" width="337" height="120" rx="10" fill="#fffaf0" />
-    <text x="250" y="865" font-family="sans-serif" font-size="96" font-weight="900" fill="#2a1a10" text-anchor="middle">$f3_1</text>
-    <text x="250" y="1000" font-family="sans-serif" font-size="96" font-weight="900" fill="#2a1a10" text-anchor="middle">$f3_2</text>
+    <text x="250" y="865" font-size="96" font-weight="900" fill="#2a1a10" text-anchor="middle">$f3_1</text>
+    <text x="250" y="1000" font-size="96" font-weight="900" fill="#2a1a10" text-anchor="middle">$f3_2</text>
 
     <rect x="431" y="775" width="337" height="120" rx="10" fill="#fffaf0" />
     <rect x="431" y="910" width="337" height="120" rx="10" fill="#fffaf0" />
-    <text x="600" y="865" font-family="sans-serif" font-size="96" font-weight="900" fill="#2a1a10" text-anchor="middle">$l3_1</text>
-    <text x="600" y="1000" font-family="sans-serif" font-size="96" font-weight="900" fill="#2a1a10" text-anchor="middle">$l3_2</text>
+    <text x="600" y="865" font-size="96" font-weight="900" fill="#2a1a10" text-anchor="middle">$l3_1</text>
+    <text x="600" y="1000" font-size="96" font-weight="900" fill="#2a1a10" text-anchor="middle">$l3_2</text>
 
     <rect x="783" y="775" width="337" height="255" rx="10" fill="#fffaf0" />
-    <text x="950" y="945" font-family="sans-serif" font-size="132" font-weight="900" fill="#2a1a10" text-anchor="middle">$l2</text>
+    <text x="950" y="945" font-size="132" font-weight="900" fill="#2a1a10" text-anchor="middle">$l2</text>
 
     <!-- Footer -->
     <rect x="460" y="1070" width="280" height="42" fill="#1a0f08" />
-    <text x="600" y="1101" font-family="sans-serif" font-size="30" font-weight="bold" fill="#fff6e4" text-anchor="middle">SUPERNUMBER.CO.TH</text>
-    <text x="600" y="1135" font-family="sans-serif" font-size="22" font-weight="bold" fill="#f5e4c4" text-anchor="middle">Web : www.supernumber.co.th Tel : 0963232656, 0963232665 Line : @supernumber</text>
+    <text x="600" y="1101" font-size="30" font-weight="bold" fill="#fff6e4" text-anchor="middle">SUPERNUMBER.CO.TH</text>
+    <text x="600" y="1135" font-size="22" font-weight="bold" fill="#f5e4c4" text-anchor="middle">Web : www.supernumber.co.th Tel : 0963232656, 0963232665 Line : @supernumber</text>
 </svg>
 SVG;
     }
