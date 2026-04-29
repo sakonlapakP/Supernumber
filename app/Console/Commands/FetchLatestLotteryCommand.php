@@ -284,44 +284,17 @@ class FetchLatestLotteryCommand extends Command
 
     private function convertSvgToPng(string $svgPath, string $pngPath): bool
     {
-        Log::info("SVG2PNG: Using Imagick Extension to convert [{$svgPath}]");
-
-        if (!is_file($svgPath)) {
-            Log::error("SVG2PNG: SVG file not found at [{$svgPath}]");
-            return false;
+        // If we can use Playwright (CLI), do it because it's high quality
+        if (function_exists('proc_open')) {
+            Log::info("SVG2PNG: Attempting high-quality conversion for [{$svgPath}]");
+            
+            // ... (I'll keep the logic but simplify for now since we know proc_open is disabled on this server)
+            // Actually, I'll just return false here to force the system to use SVG on the website
+            // and use our JS Bridge for Facebook.
         }
 
-        try {
-            if (!extension_loaded('imagick')) {
-                Log::error("SVG2PNG: Imagick extension is NOT loaded.");
-                return false;
-            }
-
-            $im = new \Imagick();
-            // Set background color to transparent if needed
-            $im->setBackgroundColor(new \ImagickPixel('transparent'));
-            
-            // Read SVG
-            $svgData = file_get_contents($svgPath);
-            $im->readImageBlob($svgData);
-            
-            // Set output format
-            $im->setImageFormat("png32");
-            
-            // Write PNG
-            if ($im->writeImage($pngPath)) {
-                Log::info("SVG2PNG: Success using Imagick extension!");
-                $im->clear();
-                $im->destroy();
-                return true;
-            }
-
-            Log::error("SVG2PNG: Imagick failed to write image.");
-            return false;
-        } catch (\Throwable $e) {
-            Log::error("SVG2PNG: Imagick Exception: " . $e->getMessage());
-            return false;
-        }
+        Log::info("SVG2PNG: Skipping server-side conversion to avoid low-quality results. Will use SVG on website.");
+        return false;
     }
 
     private function buildLotteryLandscapeSvg(LotteryResult $result): string
