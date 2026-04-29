@@ -285,26 +285,50 @@ class FetchLatestLotteryCommand extends Command
     private function convertSvgToPng(string $svgPath, string $pngPath): bool
     {
         if (!is_file($svgPath)) {
+            Log::error("SVG2PNG: SVG file not found at [{$svgPath}]");
             return false;
         }
 
         try {
-            // Priority 1: High-quality conversion using Playwright
-            $nodePath = is_file('/usr/local/bin/node') ? '/usr/local/bin/node' : (is_file('/opt/homebrew/bin/node') ? '/opt/homebrew/bin/node' : 'node');
+            // Find node path automatically
+            $nodePath = 'node';
+            if (PHP_OS_FAMILY !== 'Windows') {
+                $commonPaths = ['/usr/bin/node', '/usr/local/bin/node', '/opt/homebrew/bin/node'];
+                foreach ($commonPaths as $path) {
+                    if (is_file($path) && is_executable($path)) {
+                        $nodePath = $path;
+                        break;
+                    }
+                }
+            }
+
             $scriptPath = base_path('scratch/svg2png.js');
+            Log::info("SVG2PNG: Attempting conversion with [{$nodePath}] from [{$svgPath}] to [{$pngPath}]");
+            
             $process = new Process([$nodePath, $scriptPath, $svgPath, $pngPath]);
             $process->run();
             
             if ($process->isSuccessful()) {
+                Log::info("SVG2PNG: Success!");
                 return true;
             }
             
+            Log::warning("SVG2PNG: Playwright failed: " . $process->getErrorOutput());
+            
             // Priority 2: Fallback to standard convert command
+            Log::info("SVG2PNG: Falling back to 'convert' command...");
             $process = new Process(['convert', $svgPath, $pngPath]);
             $process->run();
             
-            return $process->isSuccessful();
+            if ($process->isSuccessful()) {
+                Log::info("SVG2PNG: Success with 'convert'!");
+                return true;
+            }
+
+            Log::error("SVG2PNG: All conversion methods failed.");
+            return false;
         } catch (\Throwable $e) {
+            Log::error("SVG2PNG: Exception: " . $e->getMessage());
             return false;
         }
     }
