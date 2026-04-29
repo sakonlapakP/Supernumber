@@ -284,60 +284,42 @@ class FetchLatestLotteryCommand extends Command
 
     private function convertSvgToPng(string $svgPath, string $pngPath): bool
     {
-        Log::info("SVG2PNG: Start conversion process for [{$svgPath}]");
+        Log::info("SVG2PNG: Using Imagick Extension to convert [{$svgPath}]");
 
         if (!is_file($svgPath)) {
             Log::error("SVG2PNG: SVG file not found at [{$svgPath}]");
             return false;
         }
 
-        // Check if we can even run commands
-        if (!function_exists('proc_open')) {
-            Log::error("SVG2PNG: proc_open() is disabled on this server. Cannot run Playwright or ImageMagick.");
-            return false;
-        }
-
         try {
-            // Find node path automatically
-            $nodePath = 'node';
-            if (PHP_OS_FAMILY !== 'Windows') {
-                $commonPaths = ['/usr/bin/node', '/usr/local/bin/node', '/opt/homebrew/bin/node'];
-                foreach ($commonPaths as $path) {
-                    if (is_file($path) && is_executable($path)) {
-                        $nodePath = $path;
-                        break;
-                    }
-                }
+            if (!extension_loaded('imagick')) {
+                Log::error("SVG2PNG: Imagick extension is NOT loaded.");
+                return false;
             }
 
-            $scriptPath = base_path('scratch/svg2png.js');
-            Log::info("SVG2PNG: Attempting Playwright with [{$nodePath}]");
+            $im = new \Imagick();
+            // Set background color to transparent if needed
+            $im->setBackgroundColor(new \ImagickPixel('transparent'));
             
-            $process = new Process([$nodePath, $scriptPath, $svgPath, $pngPath]);
-            $process->setTimeout(60);
-            $process->run();
+            // Read SVG
+            $svgData = file_get_contents($svgPath);
+            $im->readImageBlob($svgData);
             
-            if ($process->isSuccessful()) {
-                Log::info("SVG2PNG: Playwright Success!");
-                return true;
-            }
+            // Set output format
+            $im->setImageFormat("png32");
             
-            Log::warning("SVG2PNG: Playwright failed: " . $process->getErrorOutput());
-            
-            // Priority 2: Fallback to standard convert command
-            Log::info("SVG2PNG: Falling back to 'convert' command...");
-            $process = new Process(['convert', $svgPath, $pngPath]);
-            $process->run();
-            
-            if ($process->isSuccessful()) {
-                Log::info("SVG2PNG: Success with 'convert'!");
+            // Write PNG
+            if ($im->writeImage($pngPath)) {
+                Log::info("SVG2PNG: Success using Imagick extension!");
+                $im->clear();
+                $im->destroy();
                 return true;
             }
 
-            Log::error("SVG2PNG: All conversion methods failed.");
+            Log::error("SVG2PNG: Imagick failed to write image.");
             return false;
         } catch (\Throwable $e) {
-            Log::error("SVG2PNG: Exception: " . $e->getMessage());
+            Log::error("SVG2PNG: Imagick Exception: " . $e->getMessage());
             return false;
         }
     }
