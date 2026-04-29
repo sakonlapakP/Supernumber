@@ -319,11 +319,15 @@ class FetchLatestLotteryCommand extends Command
         $squareSvgFilename = sprintf('%s/%s.svg', $articleDir, $articleName);
         $landscapeSvgFilename = sprintf('%s/%s_cover.svg', $articleDir, $articleName);
 
-        // Ensure directory exists with correct permissions
+        // Ensure directory and all parents exist with correct permissions
         if (!Storage::disk('public')->exists($articleDir)) {
             Storage::disk('public')->makeDirectory($articleDir);
-            @chmod(Storage::disk('public')->path($articleDir), 0755);
         }
+        
+        // Explicitly fix permissions for articles, articles/year, and the final slug folder
+        @chmod(Storage::disk('public')->path('articles'), 0755);
+        @chmod(Storage::disk('public')->path('articles/' . $year), 0755);
+        @chmod(Storage::disk('public')->path($articleDir), 0755);
         $thaiDateLabel = $this->toThaiDateLabel($drawDate->copy());
         $articleTitle = sprintf('ตรวจหวยรัฐบาล งวดวันที่ %s ผลสลากกินแบ่งรัฐบาล', $thaiDateLabel);
         $article = Article::query()->firstOrNew([
