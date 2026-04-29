@@ -211,6 +211,7 @@ class FetchLatestLotteryCommand extends Command
         $squareFilename = sprintf('%s/%s.png', $articleDir, $articleName);
         $landscapeFilename = sprintf('%s/%s_cover.png', $articleDir, $articleName);
         $squareSvgFilename = sprintf('%s/%s.svg', $articleDir, $articleName);
+        $landscapeSvgFilename = sprintf('%s/%s_cover.svg', $articleDir, $articleName);
 
         if (!Storage::disk('public')->exists($articleDir)) {
             Storage::disk('public')->makeDirectory($articleDir);
@@ -232,24 +233,32 @@ class FetchLatestLotteryCommand extends Command
         $article->excerpt = sprintf('สรุปผลสลากกินแบ่งรัฐบาล งวดประจำวันที่ %s', $thaiDateLabel);
         $article->content = $this->buildLotteryArticleContent($result, $drawDate->copy(), $now->copy());
         
-        // Render Cover
-        $svgContents = $this->buildLotteryCoverSvg($result);
-        Storage::disk('public')->put($squareSvgFilename, $svgContents);
+        // Render Square Cover
+        $squareSvgContents = $this->buildLotteryCoverSvg($result);
+        Storage::disk('public')->put($squareSvgFilename, $squareSvgContents);
         @chmod(Storage::disk('public')->path($squareSvgFilename), 0644);
 
-        // Convert to PNG for sharing
+        // Render Landscape Cover
+        $landscapeSvgContents = $this->buildLotteryLandscapeSvg($result);
+        Storage::disk('public')->put($landscapeSvgFilename, $landscapeSvgContents);
+        @chmod(Storage::disk('public')->path($landscapeSvgFilename), 0644);
+
+        // Convert Square to PNG
         if ($this->convertSvgToPng(Storage::disk('public')->path($squareSvgFilename), Storage::disk('public')->path($squareFilename))) {
             @chmod(Storage::disk('public')->path($squareFilename), 0644);
-            Storage::disk('public')->copy($squareFilename, $landscapeFilename);
-            @chmod(Storage::disk('public')->path($landscapeFilename), 0644);
-            
             $article->cover_image_square_path = $squareFilename;
-            $article->cover_image_landscape_path = $landscapeFilename;
             $article->cover_image_path = $squareFilename;
         } else {
             $article->cover_image_square_path = $squareSvgFilename;
-            $article->cover_image_landscape_path = $squareSvgFilename;
             $article->cover_image_path = $squareSvgFilename;
+        }
+
+        // Convert Landscape to PNG
+        if ($this->convertSvgToPng(Storage::disk('public')->path($landscapeSvgFilename), Storage::disk('public')->path($landscapeFilename))) {
+            @chmod(Storage::disk('public')->path($landscapeFilename), 0644);
+            $article->cover_image_landscape_path = $landscapeFilename;
+        } else {
+            $article->cover_image_landscape_path = $landscapeSvgFilename;
         }
 
         $article->save();
@@ -278,6 +287,72 @@ class FetchLatestLotteryCommand extends Command
         } catch (\Throwable $e) {
             return false;
         }
+    }
+
+    private function buildLotteryLandscapeSvg(LotteryResult $result): string
+    {
+        $drawDate = $result->source_draw_date ?? $result->draw_date;
+        $thaiDate = $drawDate ? $this->toThaiDateLabel($drawDate->copy()) : '-';
+        $prizes = $result->prizes;
+
+        $p1 = $this->pickFirstPrizeNumber($prizes, 'รางวัลที่ 1', '......');
+        $l2 = $this->pickFirstPrizeNumber($prizes, 'เลขท้าย 2 ตัว', '..');
+        $f3_arr = $this->pickPrizeNumbers($prizes, 'เลขหน้า 3 ตัว', 2);
+        $l3_arr = $this->pickPrizeNumbers($prizes, 'เลขท้าย 3 ตัว', 2);
+        
+        $f3 = count($f3_arr) > 0 ? implode(' ', $f3_arr) : '... ...';
+        $l3 = count($l3_arr) > 0 ? implode(' ', $l3_arr) : '... ...';
+
+        $fontPath = public_path('fonts/Kanit-700.ttf');
+        $fontBase64 = is_file($fontPath) ? base64_encode((string)file_get_contents($fontPath)) : '';
+
+        return <<<SVG
+<svg width="1200" height="630" viewBox="0 0 1200 630" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+        <style>
+            @font-face { font-family: 'KanitCustom'; src: url(data:font/ttf;base64,{$fontBase64}); }
+            text { font-family: 'KanitCustom', sans-serif; }
+        </style>
+        <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#1e140d;stop-opacity:1" />
+            <stop offset="50%" style="stop-color:#120907;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#1e140d;stop-opacity:1" />
+        </linearGradient>
+        <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" style="stop-color:#D4AF37;stop-opacity:1" />
+            <stop offset="50%" style="stop-color:#F9E27D;stop-opacity:1" />
+            <stop offset="100%" style="stop-color:#B8860B;stop-opacity:1" />
+        </linearGradient>
+    </defs>
+    <rect width="1200" height="630" fill="url(#bgGrad)" />
+    <rect x="10" y="10" width="1180" height="610" fill="none" stroke="#c59d62" stroke-width="3" />
+    <rect x="30" y="30" width="1140" height="570" fill="none" stroke="#ba8e4d" stroke-width="2" opacity="0.4" />
+
+    <text x="600" y="80" font-size="36" font-weight="bold" fill="#f5c76d" text-anchor="middle">ผลสลากกินแบ่งรัฐบาล</text>
+    <text x="600" y="130" font-size="48" font-weight="bold" fill="#ffffff" text-anchor="middle">งวดวันที่ $thaiDate</text>
+
+    <!-- Prize 1 -->
+    <rect x="60" y="170" width="700" height="220" rx="15" fill="#fffaf0" />
+    <text x="410" y="225" font-size="32" font-weight="bold" fill="#64748b" text-anchor="middle">รางวัลที่ 1</text>
+    <text x="410" y="345" font-size="120" font-weight="900" fill="#2a1a10" text-anchor="middle" letter-spacing="10">$p1</text>
+
+    <!-- Last 2 -->
+    <rect x="780" y="170" width="360" height="220" rx="15" fill="#1e293b" stroke="#d7a64e" stroke-width="2" />
+    <text x="960" y="225" font-size="32" font-weight="bold" fill="#f8e2b0" text-anchor="middle">เลขท้าย 2 ตัว</text>
+    <text x="960" y="350" font-size="130" font-weight="900" fill="#ffffff" text-anchor="middle">$l2</text>
+
+    <!-- Front 3 / Back 3 -->
+    <rect x="60" y="410" width="530" height="130" rx="15" fill="#fffaf0" />
+    <text x="180" y="485" font-size="28" font-weight="bold" fill="#64748b" text-anchor="middle">เลขหน้า 3 ตัว</text>
+    <text x="410" y="495" font-size="70" font-weight="900" fill="#2a1a10" text-anchor="middle">$f3</text>
+
+    <rect x="610" y="410" width="530" height="130" rx="15" fill="#fffaf0" />
+    <text x="730" y="485" font-size="28" font-weight="bold" fill="#64748b" text-anchor="middle">เลขท้าย 3 ตัว</text>
+    <text x="960" y="495" font-size="70" font-weight="900" fill="#2a1a10" text-anchor="middle">$l3</text>
+
+    <text x="600" y="585" font-size="20" fill="#94a3b8" text-anchor="middle">SUPERNUMBER.CO.TH | เปลี่ยนตัวเลข เปลี่ยนชีวิต</text>
+</svg>
+SVG;
     }
 
     private function buildLotteryCoverSvg(LotteryResult $result): string
