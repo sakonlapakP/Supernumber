@@ -7,8 +7,8 @@
 @section('og_description', $article->meta_description ?: ($article->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($article->sanitizedContent()), 160)))
 @section('og_url', route('articles.show', $article->slug))
 @php
-  $detailCoverPath = $article->cover_image_landscape_path ?: ($article->cover_image_path ?: $article->cover_image_square_path);
-  $detailCoverCandidate = $article->cover_image_landscape_path ?: $article->cover_image_path;
+  $detailCoverPath = $article->cover_image_square_path ?: ($article->cover_image_path ?: $article->cover_image_landscape_path);
+  $detailCoverCandidate = $article->cover_image_square_path ?: $article->cover_image_path;
   $ogImagePath = asset('images/home_banner.jpg');
 
   if ($detailCoverCandidate) {
