@@ -1637,7 +1637,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             return $redirect;
         }
 
-        if (session('admin_user_role') !== User::ROLE_MANAGER) {
+        if (!in_array(session('admin_user_role'), [User::ROLE_MANAGER, User::ROLE_ADMIN])) {
             abort(403);
         }
 
@@ -2405,7 +2405,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             return $redirect;
         }
 
-        if (session('admin_user_role') !== User::ROLE_MANAGER) {
+        if (!in_array(session('admin_user_role'), [User::ROLE_MANAGER, User::ROLE_ADMIN])) {
             abort(403);
         }
 
@@ -2461,7 +2461,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             return $redirect;
         }
 
-        if (session('admin_user_role') !== User::ROLE_MANAGER) {
+        if (!in_array(session('admin_user_role'), [User::ROLE_MANAGER, User::ROLE_ADMIN])) {
             abort(403);
         }
 
@@ -2878,7 +2878,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             return $redirect;
         }
 
-        if (session('admin_user_role') !== User::ROLE_MANAGER) {
+        if (!in_array(session('admin_user_role'), [User::ROLE_MANAGER, User::ROLE_ADMIN])) {
             abort(403);
         }
 
