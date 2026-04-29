@@ -395,7 +395,6 @@ SVG;
     <rect x="80" y="360" width="1040" height="260" rx="10" fill="#fffaf0" />
     <text x="600" y="445" font-family="KanitCustom" font-size="60" font-weight="900" fill="#2a1a10" text-anchor="middle">รางวัลที่ 1</text>
     <text x="600" y="580" font-family="KanitCustom" font-size="170" font-weight="900" fill="#2a1a10" text-anchor="middle" letter-spacing="8">$p1</text>
-    <text x="600" y="670" font-family="KanitCustom" font-size="26" font-weight="900" fill="#f6deac" text-anchor="middle">ข้างเคียงรางวัลที่ 1 : $near</text>
 
     <!-- Sub Prizes Labels -->
     <text x="250" y="745" font-family="KanitCustom" font-size="38" font-weight="900" fill="#ffffff" text-anchor="middle">เลขหน้า 3 ตัว</text>
