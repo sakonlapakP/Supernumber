@@ -273,83 +273,15 @@
         window.renderAndShare = async function(type, button, articleId, landscapeUrl, uploadUrl, reportUrl) {
             const isFb = (type === 'fb');
             const form = isFb ? button.closest('form') : document.getElementById('share-line-form-' + articleId);
-            const imageInput = document.getElementById((isFb ? 'share-fb-image-' : 'share-line-image-') + articleId);
             
-            // Ensure we are fetching the SVG source via Proxy to bypass 403 Forbidden
-            const svgPath = landscapeUrl.replace(/\.(png|jpg|jpeg)$/i, '.svg');
-            const svgUrl = `{{ route('admin.articles.get-svg-proxy') }}?path=${encodeURIComponent(svgPath)}`;
-            
-            if (!svgUrl || !svgUrl.toLowerCase().includes('.svg')) {
-                form.submit();
-                return;
-            }
-
-            const canvgObj = window.canvg || window.Canvg;
-            if (!canvgObj) {
-                alert('ระบบวาดรูปยังไม่พร้อม กรุณารอ 2 วินาทีแล้วลองใหม่ครับ');
-                return;
-            }
-
             overlay.style.display = 'flex';
-            status.innerText = isFb ? 'กำลังเตรียมรูปภาพสำหรับ Facebook...' : 'กำลังเตรียมรูปภาพสำหรับ LINE...';
-
-            try {
-                const response = await fetch(svgUrl);
-                if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพจาก Server ได้ (SVG Not Found)');
-                let svgText = await response.text();
-
-                // Clean up old styles and unify font to 'Kanit' from Google Fonts
-                svgText = svgText.replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, '');
-                svgText = svgText.replace(/font-family="[^"]*"/g, 'font-family="Kanit"');
-                
-                const fontStyle = `<style>text { font-family: 'Kanit', sans-serif !important; font-weight: 700; }</style>`;
-                svgText = svgText.replace('<defs>', `<defs>${fontStyle}`);
-
-                status.innerText = 'กำลังวาดรูปจัตุรัสพรีเมียม...';
-                canvas.width = 1200;
-                canvas.height = 1200;
-                
-                ctx.fillStyle = "black";
-                ctx.fillRect(0, 0, 1200, 1200);
-
-                if (typeof canvgObj === 'function') {
-                    await canvgObj(canvas, svgText);
-                } else if (canvgObj.Canvg && typeof canvgObj.Canvg.fromString === 'function') {
-                    const v = await canvgObj.Canvg.fromString(ctx, svgText);
-                    await v.render();
-                } else if (typeof canvgObj.fromString === 'function') {
-                    const v = await canvgObj.fromString(ctx, svgText);
-                    await v.render();
-                } else {
-                    // Fallback for newer Canvg versions
-                    const v = canvgObj.Canvg ? await canvgObj.Canvg.fromCanvas(ctx, svgText) : null;
-                    if (v) await v.render();
-                    else throw new Error('ไม่สามารถเริ่มต้นระบบวาดรูปได้ (Canvg Engine Not Found)');
-                }
-
-                const pngData = canvas.toDataURL('image/png', 0.9);
-                
-                status.innerText = 'กำลังส่งรูปพรีเมียม...';
-                const uploadRes = await fetch(uploadUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ image: pngData, type: type })
-                });
-
-                const uploadJson = await uploadRes.json();
-                if (!uploadJson.success) throw new Error(uploadJson.error || 'Upload failed');
-
-                if (imageInput) imageInput.value = uploadJson.path;
-
-                status.innerText = isFb ? 'สำเร็จ! กำลังไปที่ Facebook...' : 'สำเร็จ! กำลังส่งรูปเข้ากลุ่ม LINE...';
-                setTimeout(() => form.submit(), 1000);
-
-            } catch (err) {
-                handleRenderError(err, overlay, reportUrl);
-            }
+            status.innerText = isFb ? 'กำลังเตรียมแชร์ไป Facebook...' : 'กำลังเตรียมแชร์ไป LINE...';
+            
+            // Bypass browser-side rendering and use the fixed server-side images
+            setTimeout(() => {
+                form.submit();
+                setTimeout(() => { overlay.style.display = 'none'; }, 2000);
+            }, 500);
         };
 
         function handleRenderError(err, overlay, reportUrl) {

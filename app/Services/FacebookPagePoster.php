@@ -25,7 +25,7 @@ class FacebookPagePoster
         }
         $message .= "อ่านผลรางวัลฉบับเต็มและตรวจเลขอื่นๆ ได้ที่นี่ครับ 👇\n{$articleUrl}";
 
-        // Robust Image Path Resolution (Prefer PNG over SVG)
+        // Robust Image Path Resolution (Prefer Square over Landscape)
         $imagePath = null;
         
         // Use manual image path if provided
@@ -37,8 +37,13 @@ class FacebookPagePoster
             }
         }
 
-        if (!$imagePath && !empty($article->cover_image_landscape_path)) {
-            $relPath = $article->cover_image_landscape_path;
+        // Prefer Square over Landscape if no manual path or if manual path fails
+        if (!$imagePath) {
+            $relPath = !empty($article->cover_image_square_path) 
+                ? $article->cover_image_square_path 
+                : $article->cover_image_landscape_path;
+            
+            if (!empty($relPath)) {
             
             // If the path is SVG, try to find a PNG version first
             if (str_ends_with(strtolower($relPath), '.svg')) {

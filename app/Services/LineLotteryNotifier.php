@@ -48,7 +48,18 @@ class LineLotteryNotifier
             ],
         ];
 
-        $imageUrl = $manualImageUrl ?? $this->lineLotteryImageService->buildLineImageUrl($result);
+        $imageUrl = $manualImageUrl;
+        
+        if ($imageUrl === null) {
+            $article = \App\Models\Article::where('draw_date', $result->draw_date)->first();
+            if ($article && !empty($article->cover_image_square_path)) {
+                $imageUrl = asset('storage/' . $article->cover_image_square_path);
+                // Ensure we use PNG version
+                $imageUrl = str_replace('.svg', '.png', $imageUrl);
+            } else {
+                $imageUrl = $this->lineLotteryImageService->buildLineImageUrl($result);
+            }
+        }
 
         if ($imageUrl !== null) {
             $messages[] = [
