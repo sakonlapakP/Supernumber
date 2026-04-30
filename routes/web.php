@@ -2711,7 +2711,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         if ($lotteryResult) {
             Log::info("Manual LINE Share: Found LotteryResult ID [{$lotteryResult->id}]. Sending notification...");
-            app(\App\Services\LineLotteryNotifier::class)->sendCompleted($lotteryResult, $manualImageUrl);
+            app(\App\Services\LineLotteryNotifier::class)->sendCompleted($lotteryResult, $manualImageUrl, $article);
             return back()->with('success', 'ส่งข้อมูลเข้า LINE เรียบร้อยแล้ว');
         }
 
