@@ -50,7 +50,7 @@
 
 .article-card__cover {
   width: 100%;
-  aspect-ratio: 49 / 31;
+  aspect-ratio: 1200 / 630;
   object-fit: cover;
   object-position: center;
   display: block;
