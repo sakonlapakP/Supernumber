@@ -2641,6 +2641,15 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
     })->name('articles.upload-rendered-image');
 
+    Route::get('/articles/get-svg-proxy', function (Illuminate\Http\Request $request) {
+        $path = $request->query('path');
+        if (!$path || !\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
+            abort(404);
+        }
+        return response(\Illuminate\Support\Facades\Storage::disk('public')->get($path), 200)
+            ->header('Content-Type', 'image/svg+xml');
+    })->name('articles.get-svg-proxy');
+
     Route::post('/articles/upload-temp-image', function (Illuminate\Http\Request $request) {
         $data = $request->input('image');
         if (!$data) return response()->json(['success' => false, 'error' => 'No data']);

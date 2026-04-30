@@ -175,13 +175,13 @@
                       @csrf
                       <input type="hidden" name="manual_image_url" id="share-line-image-{{ $article->id }}">
                       <button type="button" 
-                              onclick="shareToLine(this, '{{ $article->id }}', '{{ $article->cover_image_square_path ? Storage::disk('public')->url($article->cover_image_square_path) : '' }}', '{{ route('admin.articles.upload-temp-image') }}', '{{ route('admin.articles.report-render-error', $article) }}')"
+                              onclick="shareToLine(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-temp-image') }}', '{{ route('admin.articles.report-render-error', $article) }}')"
                               class="admin-button admin-button--compact" style="background: #06C755; border-color: #06C755; color: white;">LINE</button>
                     </form>
                     <form action="{{ route('admin.articles.share-fb', $article) }}" method="post" style="display: inline;">
                       @csrf
                       <button type="button" 
-                              onclick="shareToFb(this, {{ $article->id }}, '{{ $article->cover_image_square_path ? '/storage/' . $article->cover_image_square_path : '' }}', '{{ route('admin.articles.upload-rendered-image', $article) }}', '{{ route('admin.articles.report-render-error', $article) }}')"
+                              onclick="shareToFb(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-temp-image') }}', '{{ route('admin.articles.report-render-error', $article) }}')"
                               class="admin-button admin-button--compact" 
                               style="background: #1877F2; color: #fff; border-color: #1877F2;" 
                               title="แชร์ไป Facebook (รูปจัตุรัสพรีเมียม)">FB</button>
@@ -270,8 +270,9 @@
         window.shareToFb = async function(button, articleId, landscapeUrl, uploadUrl, reportUrl) {
             const form = button.closest('form');
             
-            // Ensure we are fetching the SVG source, not the rendered PNG
-            const svgUrl = landscapeUrl.replace(/\.(png|jpg|jpeg)$/i, '.svg');
+            // Ensure we are fetching the SVG source via Proxy to bypass 403 Forbidden
+            const svgPath = landscapeUrl.replace(/\.(png|jpg|jpeg)$/i, '.svg');
+            const svgUrl = `{{ route('admin.articles.get-svg-proxy') }}?path=${encodeURIComponent(svgPath)}`;
             
             if (!svgUrl || !svgUrl.toLowerCase().includes('.svg')) {
                 form.submit();
@@ -347,8 +348,9 @@
             const form = document.getElementById('share-line-form-' + articleId);
             const imageInput = document.getElementById('share-line-image-' + articleId);
             
-            // Ensure we are fetching the SVG source, not the rendered PNG
-            const svgUrl = landscapeUrl.replace(/\.(png|jpg|jpeg)$/i, '.svg');
+            // Ensure we are fetching the SVG source via Proxy to bypass 403 Forbidden
+            const svgPath = landscapeUrl.replace(/\.(png|jpg|jpeg)$/i, '.svg');
+            const svgUrl = `{{ route('admin.articles.get-svg-proxy') }}?path=${encodeURIComponent(svgPath)}`;
             
             if (!svgUrl || !svgUrl.toLowerCase().includes('.svg')) {
                 form.submit();
