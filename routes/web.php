@@ -2641,6 +2641,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
     })->name('articles.upload-rendered-image');
 
+    // ระบบ Proxy ดึงรูปวาด (SVG): เพื่อแก้ปัญหา Nginx บล็อกการเข้าถึงไฟล์ .svg (403 Forbidden)
     Route::get('/articles/get-svg-proxy', function (Illuminate\Http\Request $request) {
         $path = $request->query('path');
         if (!$path || !\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
@@ -2650,6 +2651,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->header('Content-Type', 'image/svg+xml');
     })->name('articles.get-svg-proxy');
 
+    // ระบบรับรูปภาพที่วาดเสร็จจาก Browser: รับ PNG (Base64) มาเก็บไว้ที่ temp_lottery ชั่วคราวเพื่อส่งให้ LINE/FB
     Route::post('/articles/upload-temp-image', function (Illuminate\Http\Request $request) {
         $data = $request->input('image');
         if (!$data) return response()->json(['success' => false, 'error' => 'No data']);

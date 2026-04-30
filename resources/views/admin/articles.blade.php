@@ -260,25 +260,32 @@
 @push('scripts')
   <script src="https://cdn.jsdelivr.net/npm/canvg@3.0.10/lib/umd.js"></script>
   
-  <script>
+    <script>
     (function() {
-        const overlay = document.getElementById('render-overlay');
-        const status = document.getElementById('render-status');
-        const canvas = document.getElementById('render-canvas');
+        // --- ส่วนควบคุมการแสดงผลและพื้นที่วาดรูป ---
+        const overlay = document.getElementById('render-overlay'); // หน้าจอสีดำตอนกำลังวาดรูป
+        const status = document.getElementById('render-status');   // ข้อความสถานะการวาด
+        const canvas = document.getElementById('render-canvas');   // พื้นที่วาดรูป (ซ่อนไว้)
         const ctx = canvas.getContext('2d');
 
+        /**
+         * ฟังก์ชันแชร์ไป Facebook (ฉบับพรีเมียม)
+         * ทำงานโดย: วาดรูป SVG ใหม่ในเบราว์เซอร์ -> แปลงเป็น PNG -> อัปโหลด -> โพสต์ลงเพจ
+         */
         window.shareToFb = async function(button, articleId, landscapeUrl, uploadUrl, reportUrl) {
             const form = button.closest('form');
             
-            // Ensure we are fetching the SVG source via Proxy to bypass 403 Forbidden
+            // 1. เตรียม URL สำหรับดึงโค้ดรูปวาด (SVG) ผ่าน Proxy เพื่อไม่ให้โดนเซิร์ฟเวอร์บล็อก (403)
             const svgPath = landscapeUrl.replace(/\.(png|jpg|jpeg)$/i, '.svg');
             const svgUrl = `{{ route('admin.articles.get-svg-proxy') }}?path=${encodeURIComponent(svgPath)}`;
             
+            // ถ้าไม่มีไฟล์รูปวาด ให้ส่งข้อมูลแบบปกติ (รูปเดิมจาก Server)
             if (!svgUrl || !svgUrl.toLowerCase().includes('.svg')) {
                 form.submit();
                 return;
             }
 
+            // ตรวจสอบว่าระบบวาดรูป (Canvg) โหลดเสร็จหรือยัง
             const canvgObj = window.canvg || window.Canvg;
             if (!canvgObj) {
                 alert('ระบบวาดรูปยังไม่พร้อม กรุณารอ 2 วินาทีแล้วลองใหม่ครับ');
@@ -289,6 +296,7 @@
             status.innerText = 'กำลังเตรียมรูปภาพ...';
 
             try {
+                // 2. ดึงไฟล์ฟอนต์ Kanit มาแปลงเป็น Base64 เพื่อฝังลงในรูป (แก้ปัญหาฟอนต์หัวหยักในมือถือ)
                 const fontRes = await fetch('/fonts/Kanit-700.ttf');
                 const fontBlob = await fontRes.blob();
                 const fontBase64 = await new Promise((resolve) => {
@@ -297,10 +305,12 @@
                     reader.readAsDataURL(fontBlob);
                 });
 
+                // 3. ดึงโค้ด SVG ต้นฉบับมาเตรียมวาด
                 const response = await fetch(svgUrl);
                 if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพจาก Server ได้ (SVG Not Found)');
                 let svgText = await response.text();
 
+                // 4. ฉีดฟอนต์ที่แปลงเป็น Base64 เข้าไปในโค้ด SVG (รองรับทั้งชื่อ Kanit และ KanitCustom)
                 const fontStyle = `<style>@font-face { font-family: 'Kanit'; src: url("${fontBase64}"); font-weight: 700; } @font-face { font-family: 'KanitCustom'; src: url("${fontBase64}"); font-weight: 700; }</style>`;
                 svgText = svgText.replace('<defs>', `<defs>${fontStyle}`);
 
@@ -308,9 +318,11 @@
                 canvas.width = 1200;
                 canvas.height = 1200;
                 
+                // ลงสีพื้นหลังเป็นสีดำกันพลาด
                 ctx.fillStyle = "black";
                 ctx.fillRect(0, 0, 1200, 1200);
 
+                // 5. เริ่มกระบวนการวาด SVG ลงบน Canvas
                 if (typeof canvgObj === 'function') {
                     await canvgObj(canvas, svgText);
                 } else if (canvgObj.Canvg && typeof canvgObj.Canvg.fromString === 'function') {
@@ -321,8 +333,10 @@
                     await v.render();
                 }
 
+                // 6. แปลงผลลัพธ์เป็นรูป PNG ที่มีความชัดเจนสูง
                 const pngData = canvas.toDataURL('image/png', 0.9);
                 
+                // 7. ส่งรูปที่วาดเสร็จแล้วกลับไปที่ Server เพื่อบันทึกชั่วคราว
                 status.innerText = 'กำลังบันทึกรูป...';
                 const uploadRes = await fetch(uploadUrl, {
                     method: 'POST',
@@ -336,6 +350,7 @@
                 const uploadJson = await uploadRes.json();
                 if (!uploadJson.success) throw new Error(uploadJson.error || 'Upload failed');
 
+                // 8. เมื่อบันทึกเสร็จ ให้ส่งฟอร์มเพื่อโพสต์ลง Facebook จริงๆ
                 status.innerText = 'สำเร็จ! กำลังไปที่ Facebook...';
                 setTimeout(() => form.submit(), 1000);
 
@@ -344,11 +359,15 @@
             }
         };
 
+        /**
+         * ฟังก์ชันแชร์ไป LINE (ฉบับพรีเมียม)
+         * ทำงานเหมือน Facebook: วาดรูปใหม่ในเบราว์เซอร์เพื่อให้ฟอนต์สวยที่สุด
+         */
         window.shareToLine = async function(button, articleId, landscapeUrl, uploadUrl, reportUrl) {
             const form = document.getElementById('share-line-form-' + articleId);
             const imageInput = document.getElementById('share-line-image-' + articleId);
             
-            // Ensure we are fetching the SVG source via Proxy to bypass 403 Forbidden
+            // 1. เตรียม URL รูปวาดผ่าน Proxy
             const svgPath = landscapeUrl.replace(/\.(png|jpg|jpeg)$/i, '.svg');
             const svgUrl = `{{ route('admin.articles.get-svg-proxy') }}?path=${encodeURIComponent(svgPath)}`;
             
@@ -367,6 +386,7 @@
             status.innerText = 'กำลังเตรียมรูปภาพสำหรับ LINE...';
 
             try {
+                // 2. ดึงและแปลงฟอนต์
                 const fontRes = await fetch('/fonts/Kanit-700.ttf');
                 const fontBlob = await fontRes.blob();
                 const fontBase64 = await new Promise((resolve) => {
@@ -375,11 +395,13 @@
                     reader.readAsDataURL(fontBlob);
                 });
 
+                // 3. ดึงโค้ดรูปวาด
                 const response = await fetch(svgUrl);
                 if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพจาก Server ได้ (SVG Not Found)');
                 let svgText = await response.text();
 
-                const fontStyle = `<style>@font-face { font-family: 'KanitCustom'; src: url("${fontBase64}"); font-weight: 700; }</style>`;
+                // 4. ฉีดฟอนต์ (รองรับทั้งชื่อ Kanit และ KanitCustom)
+                const fontStyle = `<style>@font-face { font-family: 'Kanit'; src: url("${fontBase64}"); font-weight: 700; } @font-face { font-family: 'KanitCustom'; src: url("${fontBase64}"); font-weight: 700; }</style>`;
                 svgText = svgText.replace('<defs>', `<defs>${fontStyle}`);
 
                 canvas.width = 1200;
@@ -387,6 +409,7 @@
                 ctx.fillStyle = "black";
                 ctx.fillRect(0, 0, 1200, 1200);
 
+                // 5. เริ่มการวาดรูป
                 if (typeof canvgObj === 'function') {
                     await canvgObj(canvas, svgText);
                 } else {
@@ -394,8 +417,10 @@
                     await v.render();
                 }
 
+                // 6. แปลงเป็น PNG
                 const pngData = canvas.toDataURL('image/png', 0.9);
                 
+                // 7. บันทึกรูปที่วาดเสร็จลง Server ชั่วคราว
                 status.innerText = 'กำลังส่งรูปพรีเมียมเข้ากลุ่ม LINE...';
                 const uploadRes = await fetch(uploadUrl, {
                     method: 'POST',
@@ -409,6 +434,7 @@
                 const uploadJson = await uploadRes.json();
                 if (!uploadJson.success) throw new Error(uploadJson.error || 'Upload failed');
 
+                // 8. นำ Path รูปที่ได้มาใส่ใน Hidden Input แล้วส่งฟอร์มเข้ากลุ่ม LINE
                 imageInput.value = uploadJson.path;
                 setTimeout(() => form.submit(), 1000);
 
@@ -417,11 +443,16 @@
             }
         };
 
+        /**
+         * ฟังก์ชันจัดการเมื่อการวาดรูปขัดข้อง
+         * จะปิดหน้าจอโหลด และส่งข้อมูลแบบปกติ (ไม่พรีเมียม) แทน เพื่อให้งานไม่สะดุด
+         */
         function handleRenderError(err, overlay, reportUrl) {
             console.error('Render error:', err);
             overlay.style.display = 'none';
             alert('การวาดรูปขัดข้อง ระบบจะส่งข้อมูลแบบปกติให้แทนครับ');
             
+            // ส่งรายงาน Error ไปยังกลุ่ม LINE แจ้งเตือนแอดมิน (ถ้ามีการตั้งค่าไว้)
             if (reportUrl) {
                 fetch(reportUrl, {
                     method: 'POST',

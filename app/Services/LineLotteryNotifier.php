@@ -15,6 +15,12 @@ class LineLotteryNotifier
     ) {
     }
 
+    /**
+     * ส่งข้อความแจ้งเตือนหวยออกเข้ากลุ่ม LINE
+     * @param LotteryResult $result ข้อมูลผลหวย
+     * @param string|null $manualImageUrl URL รูปภาพที่วาดเสร็จจากเบราว์เซอร์ (ถ้ามี) 
+     *                                   หากส่งค่านี้มา ระบบจะใช้รูปนี้แทนรูปออโต้ทันที
+     */
     public function sendCompleted(LotteryResult $result, ?string $manualImageUrl = null): ?LineNotificationLog
     {
         if (! $result->relationLoaded('prizes')) {
@@ -48,6 +54,8 @@ class LineLotteryNotifier
             ],
         ];
 
+        // ตรรกะสำคัญ: ถ้ามีการส่ง manualImageUrl (รูปพรีเมียมจากเบราว์เซอร์) มา ให้ใช้ค่านั้นเลย
+        // ถ้าไม่มี ถึงจะไปเรียกใช้ระบบ buildLineImageUrl ตามปกติครับ
         $imageUrl = $manualImageUrl ?? $this->lineLotteryImageService->buildLineImageUrl($result);
 
         if ($imageUrl !== null) {

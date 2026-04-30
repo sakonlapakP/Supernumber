@@ -385,13 +385,18 @@ SVG;
         $l3_2 = $l3_arr[1] ?? '...';
         $near = count($near_arr) > 0 ? implode(', ', $near_arr) : '-';
 
+        // 1. ดึงไฟล์ฟอนต์ Kanit จากเครื่องมาเตรียมไว้
         $fontPath = public_path('fonts/Kanit-700.ttf');
+        
+        // 2. แปลงฟอนต์เป็น Base64 เพื่อฝังลงในรูปภาพโดยตรง (ช่วยให้รูปมีฟอนต์สวยแม้ปลายทางไม่มีฟอนต์ Kanit)
         $fontBase64 = is_file($fontPath) ? base64_encode((string)file_get_contents($fontPath)) : '';
 
+        // 3. สร้างโครงสร้างรูปภาพ (SVG) พร้อมกำหนดสีและเลย์เอาต์พรีเมียม
         return <<<SVG
 <svg width="1200" height="1200" viewBox="0 0 1200 1200" xmlns="http://www.w3.org/2000/svg">
     <defs>
         <style>
+            /* ฝังฟอนต์ Kanit ลงในรูปภาพ */
             @font-face { font-family: 'Kanit'; src: url(data:font/ttf;base64,{$fontBase64}); }
         </style>
         <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">

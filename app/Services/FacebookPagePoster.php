@@ -25,12 +25,13 @@ class FacebookPagePoster
         }
         $message .= "อ่านผลรางวัลฉบับเต็มและตรวจเลขอื่นๆ ได้ที่นี่ครับ 👇\n{$articleUrl}";
 
-        // Robust Image Path Resolution (Prefer PNG over SVG)
+        // --- ส่วนการจัดการรูปภาพสำหรับโพสต์ Facebook ---
         $imagePath = null;
         if (!empty($article->cover_image_landscape_path)) {
             $relPath = $article->cover_image_landscape_path;
             
-            // If the path is SVG, try to find a PNG version first
+            // 1. ตรวจสอบไฟล์: ถ้าเป็นไฟล์ SVG ให้พยายามหาไฟล์ PNG ชื่อเดียวกันก่อน
+            // เพราะ Facebook API ไม่รองรับการโพสต์รูปภาพประเภท SVG
             if (str_ends_with(strtolower($relPath), '.svg')) {
                 $pngRelPath = str_replace('.svg', '.png', $relPath);
                 $pngPath = \Illuminate\Support\Facades\Storage::disk('public')->path($pngRelPath);
@@ -39,13 +40,13 @@ class FacebookPagePoster
                 }
             }
 
-            // Try 1: Storage Disk Public Path
+            // 2. ค้นหาที่อยู่ไฟล์จริงบนเซิร์ฟเวอร์ (Absolute Path)
             $path1 = \Illuminate\Support\Facades\Storage::disk('public')->path($relPath);
             if (file_exists($path1) && is_readable($path1)) {
                 $imagePath = $path1;
             } 
-            // Try 2: Direct public_path if stored there
             else {
+                // ถ้าหาที่จุดแรกไม่เจอ ให้ลองหาที่โฟลเดอร์ public/storage
                 $path2 = public_path('storage/' . $relPath);
                 if (file_exists($path2) && is_readable($path2)) {
                     $imagePath = $path2;
