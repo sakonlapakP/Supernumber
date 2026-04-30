@@ -73,10 +73,10 @@
                     <form action="{{ route('admin.articles.share-fb', $article) }}" method="post" style="display: inline;">
                       @csrf
                       <button type="button" 
-                              onclick="shareToFb(this, {{ $article->id }}, '{{ $article->cover_image_landscape_path ? '/storage/' . $article->cover_image_landscape_path : '' }}', '{{ route('admin.articles.upload-rendered-image', $article) }}')"
+                              onclick="shareToFb(this, {{ $article->id }}, '{{ $article->cover_image_square_path ? '/storage/' . $article->cover_image_square_path : '' }}', '{{ route('admin.articles.upload-rendered-image', $article) }}')"
                               class="admin-button admin-button--compact" 
                               style="background: #1877F2; color: #fff; border-color: #1877F2;" 
-                              title="แชร์ไป Facebook (วาดรูปสวยอัตโนมัติ)">FB</button>
+                              title="แชร์ไป Facebook (รูปจัตุรัสพรีเมียม)">FB</button>
                     </form>
                   @endif
                   <form action="{{ route('admin.articles.delete', $article) }}" method="post" onsubmit="return confirm('ยืนยันลบบทความ?')">
@@ -172,23 +172,20 @@
                 if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพได้');
                 let svgText = await response.text();
 
-                status.innerText = 'กำลังวาดรูปความละเอียดสูง (1200x630)...';
+                status.innerText = 'กำลังวาดรูปจัตุรัสพรีเมียม (1200x1200)...';
                 canvas.width = 1200;
-                canvas.height = 630;
+                canvas.height = 1200;
                 
                 ctx.fillStyle = "black";
-                ctx.fillRect(0, 0, 1200, 630);
+                ctx.fillRect(0, 0, 1200, 1200);
 
                 // Version-agnostic rendering call
                 if (typeof canvgObj === 'function') {
-                    // Classic v1/v2/some v3
                     await canvgObj(canvas, svgText);
                 } else if (canvgObj.Canvg && typeof canvgObj.Canvg.fromString === 'function') {
-                    // Modern v3 UMD
                     const v = await canvgObj.Canvg.fromString(ctx, svgText);
                     await v.render();
                 } else if (typeof canvgObj.fromString === 'function') {
-                    // Alternative v3
                     const v = await canvgObj.fromString(ctx, svgText);
                     await v.render();
                 } else {
@@ -197,14 +194,14 @@
 
                 const pngData = canvas.toDataURL('image/png', 0.9);
                 
-                status.innerText = 'กำลังส่งรูปกลับไปที่ Server...';
+                status.innerText = 'กำลังบันทึกรูปจัตุรัสลง Server...';
                 const uploadRes = await fetch(uploadUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({ image: pngData, type: 'landscape' })
+                    body: JSON.stringify({ image: pngData, type: 'landscape' }) // Still target landscape slot for FB
                 });
 
                 const uploadJson = await uploadRes.json();
