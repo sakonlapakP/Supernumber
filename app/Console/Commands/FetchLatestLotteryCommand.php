@@ -415,18 +415,6 @@ SVG;
     <text x="600" y="215" font-family="Kanit" font-size="28" font-weight="900" fill="#f7d58f" text-anchor="middle" letter-spacing="6">SUPERNUMBER</text>
 
     <text x="600" y="280" font-family="Kanit" font-size="64" font-weight="900" fill="#ffffff" text-anchor="middle">ผลสลากกินแบ่งรัฐบาล</text>
-    <text x="600" y="335" font-family="Kanit" font-size="38" font-weight="900" fill="#f8e2b0" text-anchor="middle">งวดประจำวันที่ $thaiDate</text>
-
-    <!-- Main Panel (Prize 1) -->
-    <rect x="80" y="360" width="1040" height="260" rx="10" fill="#fffaf0" />
-    <text x="600" y="445" font-family="Kanit" font-size="60" font-weight="900" fill="#2a1a10" text-anchor="middle">รางวัลที่ 1</text>
-    <text x="600" y="580" font-family="Kanit" font-size="170" font-weight="900" fill="#2a1a10" text-anchor="middle" letter-spacing="8">$p1</text>
-
-    <!-- Sub Prizes Labels -->
-    <text x="250" y="745" font-family="Kanit" font-size="38" font-weight="900" fill="#ffffff" text-anchor="middle">เลขหน้า 3 ตัว</text>
-    <text x="600" y="745" font-family="Kanit" font-size="38" font-weight="900" fill="#ffffff" text-anchor="middle">เลขท้าย 3 ตัว</text>
-    <text x="950" y="745" font-family="Kanit" font-size="38" font-weight="900" fill="#ffffff" text-anchor="middle">เลขท้าย 2 ตัว</text>
-
     <!-- Small Panels -->
     <rect x="80" y="775" width="337" height="120" rx="10" fill="#fffaf0" />
     <rect x="80" y="910" width="337" height="120" rx="10" fill="#fffaf0" />

@@ -15,7 +15,7 @@ class LineLotteryNotifier
     ) {
     }
 
-    public function sendCompleted(LotteryResult $result, ?string $manualImageUrl = null, ?\App\Models\Article $article = null): ?LineNotificationLog
+    public function sendCompleted(LotteryResult $result, ?string $manualImageUrl = null): ?LineNotificationLog
     {
         if (! $result->relationLoaded('prizes')) {
             $result->load('prizes');
@@ -23,7 +23,7 @@ class LineLotteryNotifier
 
         return $this->lineNotifier->queueMessages(
             eventType: 'lottery_completed',
-            messages: $this->buildMessages($result, $manualImageUrl, $article),
+            messages: $this->buildMessages($result, $manualImageUrl),
             notifiable: $result,
             destinationKey: 'lottery',
         );
@@ -39,7 +39,7 @@ class LineLotteryNotifier
         );
     }
 
-    private function buildMessages(LotteryResult $result, ?string $manualImageUrl = null, ?\App\Models\Article $article = null): array
+    private function buildMessages(LotteryResult $result, ?string $manualImageUrl = null): array
     {
         $messages = [
             [
@@ -48,19 +48,7 @@ class LineLotteryNotifier
             ],
         ];
 
-        $imageUrl = $manualImageUrl;
-        
-        if ($imageUrl === null) {
-            // Priority 1: Use the provided article's square image
-            if ($article && !empty($article->cover_image_square_path)) {
-                $imageUrl = asset('storage/' . $article->cover_image_square_path);
-                $imageUrl = str_replace('.svg', '.png', $imageUrl);
-            } 
-            // Priority 2: Fallback to finding article by slug pattern if no article provided
-            else {
-                $imageUrl = $this->lineLotteryImageService->buildLineImageUrl($result);
-            }
-        }
+        $imageUrl = $manualImageUrl ?? $this->lineLotteryImageService->buildLineImageUrl($result);
 
         if ($imageUrl !== null) {
             $messages[] = [

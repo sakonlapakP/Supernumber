@@ -2711,20 +2711,19 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         if ($lotteryResult) {
             Log::info("Manual LINE Share: Found LotteryResult ID [{$lotteryResult->id}]. Sending notification...");
-            app(\App\Services\LineLotteryNotifier::class)->sendCompleted($lotteryResult, $manualImageUrl, $article);
+            app(\App\Services\LineLotteryNotifier::class)->sendCompleted($lotteryResult, $manualImageUrl);
             return back()->with('success', 'ส่งข้อมูลเข้า LINE เรียบร้อยแล้ว');
         }
 
         return back()->withErrors(['share_line' => 'ไม่พบข้อมูลหวยที่ตรงกับบทความนี้']);
     })->name('articles.share-line');
 
-    Route::post('/articles/{article}/share-fb', function (Illuminate\Http\Request $request, Article $article) use ($ensureAdmin) {
+    Route::post('/articles/{article}/share-fb', function (Article $article) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
         
-        $manualImageUrl = $request->input('manual_image_url');
-        $res = app(\App\Services\FacebookPagePoster::class)->postArticle($article, $manualImageUrl);
+        $res = app(\App\Services\FacebookPagePoster::class)->postArticle($article);
         
         if ($res['success']) {
             return back()->with('status_message', 'แชร์บทความไปที่ Facebook Page สำเร็จ ✅');

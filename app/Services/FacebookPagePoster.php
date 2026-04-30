@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class FacebookPagePoster
 {
-    public function postArticle(Article $article, ?string $manualImagePath = null): array
+    public function postArticle(Article $article): array
     {
         $pageId = config('services.facebook.page_id');
         $accessToken = config('services.facebook.page_access_token');
@@ -25,45 +25,30 @@ class FacebookPagePoster
         }
         $message .= "อ่านผลรางวัลฉบับเต็มและตรวจเลขอื่นๆ ได้ที่นี่ครับ 👇\n{$articleUrl}";
 
-        // Robust Image Path Resolution (Prefer Square over Landscape)
+        // Robust Image Path Resolution (Prefer PNG over SVG)
         $imagePath = null;
-        
-        // Use manual image path if provided
-        if ($manualImagePath) {
-            $path = \Illuminate\Support\Facades\Storage::disk('public')->path($manualImagePath);
-            if (file_exists($path) && is_readable($path)) {
-                $imagePath = $path;
-                Log::info("FB Post: Using manual image override: {$imagePath}");
-            }
-        }
-
-        // Prefer Square over Landscape if no manual path or if manual path fails
-        if (!$imagePath) {
-            $relPath = !empty($article->cover_image_square_path) 
-                ? $article->cover_image_square_path 
-                : $article->cover_image_landscape_path;
+        if (!empty($article->cover_image_landscape_path)) {
+            $relPath = $article->cover_image_landscape_path;
             
-            if (!empty($relPath)) {
-                // If the path is SVG, try to find a PNG version first
-                if (str_ends_with(strtolower($relPath), '.svg')) {
-                    $pngRelPath = str_replace('.svg', '.png', $relPath);
-                    $pngPath = \Illuminate\Support\Facades\Storage::disk('public')->path($pngRelPath);
-                    if (file_exists($pngPath) && is_readable($pngPath)) {
-                        $relPath = $pngRelPath;
-                    }
+            // If the path is SVG, try to find a PNG version first
+            if (str_ends_with(strtolower($relPath), '.svg')) {
+                $pngRelPath = str_replace('.svg', '.png', $relPath);
+                $pngPath = \Illuminate\Support\Facades\Storage::disk('public')->path($pngRelPath);
+                if (file_exists($pngPath) && is_readable($pngPath)) {
+                    $relPath = $pngRelPath;
                 }
+            }
 
-                // Try 1: Storage Disk Public Path
-                $path1 = \Illuminate\Support\Facades\Storage::disk('public')->path($relPath);
-                if (file_exists($path1) && is_readable($path1)) {
-                    $imagePath = $path1;
-                } 
-                // Try 2: Direct public_path if stored there
-                else {
-                    $path2 = public_path('storage/' . $relPath);
-                    if (file_exists($path2) && is_readable($path2)) {
-                        $imagePath = $path2;
-                    }
+            // Try 1: Storage Disk Public Path
+            $path1 = \Illuminate\Support\Facades\Storage::disk('public')->path($relPath);
+            if (file_exists($path1) && is_readable($path1)) {
+                $imagePath = $path1;
+            } 
+            // Try 2: Direct public_path if stored there
+            else {
+                $path2 = public_path('storage/' . $relPath);
+                if (file_exists($path2) && is_readable($path2)) {
+                    $imagePath = $path2;
                 }
             }
         }
