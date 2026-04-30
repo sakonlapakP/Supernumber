@@ -427,17 +427,17 @@ SVG;
     <text x="600" y="152" font-family="'Times New Roman', serif" font-size="82" font-weight="900" fill="#f5c76d" text-anchor="middle">S</text>
     <text x="600" y="215" font-family="Kanit" font-size="28" font-weight="900" fill="#f7d58f" text-anchor="middle" letter-spacing="6">SUPERNUMBER</text>
 
-    <text x="600" y="345" font-family="Kanit" font-size="34" font-weight="900" fill="#f7d58f" text-anchor="middle">งวดประจำวันที่ $thaiDate</text>
+    <text x="600" y="285" font-family="Kanit" font-size="34" font-weight="900" fill="#f7d58f" text-anchor="middle">งวดประจำวันที่ $thaiDate</text>
 
     <!-- Main Prize Panel -->
-    <rect x="100" y="390" width="1000" height="340" rx="15" fill="#fffaf0" />
-    <text x="600" y="470" font-family="Kanit" font-size="64" font-weight="900" fill="#2a1a10" text-anchor="middle">รางวัลที่ 1</text>
-    <text x="600" y="650" font-family="Kanit" font-size="260" font-weight="900" fill="#2a1a10" text-anchor="middle" letter-spacing="15">$p1</text>
+    <rect x="100" y="330" width="1000" height="340" rx="15" fill="#fffaf0" />
+    <text x="600" y="410" font-family="Kanit" font-size="64" font-weight="900" fill="#2a1a10" text-anchor="middle">รางวัลที่ 1</text>
+    <text x="600" y="590" font-family="Kanit" font-size="220" font-weight="900" fill="#2a1a10" text-anchor="middle" letter-spacing="15">$p1</text>
 
     <!-- Small Prize Labels -->
-    <text x="250" y="745" font-family="Kanit" font-size="32" font-weight="900" fill="#ffffff" text-anchor="middle">เลขหน้า 3 ตัว</text>
-    <text x="600" y="745" font-family="Kanit" font-size="32" font-weight="900" fill="#ffffff" text-anchor="middle">เลขท้าย 3 ตัว</text>
-    <text x="950" y="745" font-family="Kanit" font-size="32" font-weight="900" fill="#ffffff" text-anchor="middle">เลขท้าย 2 ตัว</text>
+    <text x="250" y="735" font-family="Kanit" font-size="32" font-weight="900" fill="#ffffff" text-anchor="middle">เลขหน้า 3 ตัว</text>
+    <text x="600" y="735" font-family="Kanit" font-size="32" font-weight="900" fill="#ffffff" text-anchor="middle">เลขท้าย 3 ตัว</text>
+    <text x="950" y="735" font-family="Kanit" font-size="32" font-weight="900" fill="#ffffff" text-anchor="middle">เลขท้าย 2 ตัว</text>
 
     <!-- Small Panels -->
     <rect x="80" y="775" width="337" height="120" rx="10" fill="#fffaf0" />
