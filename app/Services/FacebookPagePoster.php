@@ -44,26 +44,26 @@ class FacebookPagePoster
                 : $article->cover_image_landscape_path;
             
             if (!empty($relPath)) {
-            
-            // If the path is SVG, try to find a PNG version first
-            if (str_ends_with(strtolower($relPath), '.svg')) {
-                $pngRelPath = str_replace('.svg', '.png', $relPath);
-                $pngPath = \Illuminate\Support\Facades\Storage::disk('public')->path($pngRelPath);
-                if (file_exists($pngPath) && is_readable($pngPath)) {
-                    $relPath = $pngRelPath;
+                // If the path is SVG, try to find a PNG version first
+                if (str_ends_with(strtolower($relPath), '.svg')) {
+                    $pngRelPath = str_replace('.svg', '.png', $relPath);
+                    $pngPath = \Illuminate\Support\Facades\Storage::disk('public')->path($pngRelPath);
+                    if (file_exists($pngPath) && is_readable($pngPath)) {
+                        $relPath = $pngRelPath;
+                    }
                 }
-            }
 
-            // Try 1: Storage Disk Public Path
-            $path1 = \Illuminate\Support\Facades\Storage::disk('public')->path($relPath);
-            if (file_exists($path1) && is_readable($path1)) {
-                $imagePath = $path1;
-            } 
-            // Try 2: Direct public_path if stored there
-            else {
-                $path2 = public_path('storage/' . $relPath);
-                if (file_exists($path2) && is_readable($path2)) {
-                    $imagePath = $path2;
+                // Try 1: Storage Disk Public Path
+                $path1 = \Illuminate\Support\Facades\Storage::disk('public')->path($relPath);
+                if (file_exists($path1) && is_readable($path1)) {
+                    $imagePath = $path1;
+                } 
+                // Try 2: Direct public_path if stored there
+                else {
+                    $path2 = public_path('storage/' . $relPath);
+                    if (file_exists($path2) && is_readable($path2)) {
+                        $imagePath = $path2;
+                    }
                 }
             }
         }
