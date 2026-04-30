@@ -2641,6 +2641,19 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
     })->name('articles.upload-rendered-image');
 
+    Route::post('/articles/{article}/report-render-error', function (Illuminate\Http\Request $request, \App\Models\Article $article) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) return $redirect;
+        $errorMessage = $request->input('error', 'Unknown rendering error');
+        $notifier = app(\App\Services\LineNotifier::class);
+        $msg = "⚠️ [แจ้งเตือนระบบวาดรูป]\n\n";
+        $msg .= "พบปัญหาการวาดรูปบทความ: {$article->title}\n";
+        $msg .= "ID: {$article->id}\n";
+        $msg .= "ข้อความ Error: {$errorMessage}\n\n";
+        $msg .= "ระบบได้ระงับการแชร์ Facebook เพื่อป้องกันความผิดพลาดครับ";
+        $notifier->queueText('rendering_error', $msg);
+        return response()->json(['success' => true]);
+    })->name('articles.report-render-error');
+
     Route::post('/articles/{article}/share-fb', function (Article $article) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;

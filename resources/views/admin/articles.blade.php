@@ -73,7 +73,7 @@
                     <form action="{{ route('admin.articles.share-fb', $article) }}" method="post" style="display: inline;">
                       @csrf
                       <button type="button" 
-                              onclick="shareToFb(this, {{ $article->id }}, '{{ $article->cover_image_square_path ? '/storage/' . $article->cover_image_square_path : '' }}', '{{ route('admin.articles.upload-rendered-image', $article) }}')"
+                              onclick="shareToFb(this, {{ $article->id }}, '{{ $article->cover_image_square_path ? '/storage/' . $article->cover_image_square_path : '' }}', '{{ route('admin.articles.upload-rendered-image', $article) }}', '{{ route('admin.articles.report-render-error', $article) }}')"
                               class="admin-button admin-button--compact" 
                               style="background: #1877F2; color: #fff; border-color: #1877F2;" 
                               title="แชร์ไป Facebook (รูปจัตุรัสพรีเมียม)">FB</button>
@@ -149,7 +149,7 @@
         const canvas = document.getElementById('render-canvas');
         const ctx = canvas.getContext('2d');
 
-        window.shareToFb = async function(button, articleId, landscapeUrl, uploadUrl) {
+        window.shareToFb = async function(button, articleId, landscapeUrl, uploadUrl, reportUrl) {
             const form = button.closest('form');
             
             if (!landscapeUrl || !landscapeUrl.toLowerCase().includes('.svg')) {
@@ -169,7 +169,7 @@
 
             try {
                 const response = await fetch(landscapeUrl);
-                if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพได้');
+                if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพจาก Server ได้');
                 let svgText = await response.text();
 
                 status.innerText = 'กำลังวาดรูปจัตุรัสพรีเมียม (1200x1200)...';
@@ -189,7 +189,7 @@
                     const v = await canvgObj.fromString(ctx, svgText);
                     await v.render();
                 } else {
-                    throw new Error('ไม่พบวิธีเรียกใช้ระบบวาดรูปที่รองรับ');
+                    throw new Error('ไม่พบวิธีเรียกใช้ระบบวาดรูปที่รองรับในเบราว์เซอร์');
                 }
 
                 const pngData = canvas.toDataURL('image/png', 0.9);
@@ -201,7 +201,7 @@
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({ image: pngData, type: 'landscape' }) // Still target landscape slot for FB
+                    body: JSON.stringify({ image: pngData, type: 'landscape' })
                 });
 
                 const uploadJson = await uploadRes.json();
@@ -213,8 +213,21 @@
             } catch (err) {
                 console.error('Render error:', err);
                 overlay.style.display = 'none';
-                alert('ระบบวาดรูปขัดข้อง: ' + err.message + '\nจะพยายามแชร์แบบปกติให้ครับ');
-                form.submit();
+                
+                // Show requested error message
+                alert('การวาดรูปขัดข้อง กรุณาดำเนินการใหม่ภายหลัง');
+                
+                // Report to LINE
+                if (reportUrl) {
+                    fetch(reportUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                        },
+                        body: JSON.stringify({ error: err.message })
+                    }).catch(lineErr => console.error('LINE reporting failed:', lineErr));
+                }
             }
         };
     })();
