@@ -133,14 +133,14 @@
     <div id="render-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; color: white; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
         <div style="border: 4px solid #f3f3f3; border-top: 4px solid #1877F2; border-radius: 50%; width: 50px; height: 50px; animation: spin_render 1s linear infinite; margin-bottom: 20px;"></div>
         <div id="render-status" style="font-size: 18px; font-weight: bold;">กำลังวาดรูปหวยให้สวยงาม...</div>
-        <p style="margin-top: 10px; opacity: 0.8;">กำลังใช้ระบบวาดรูปขั้นสูง (Canvg) เพื่อความชัดเจนที่สุด</p>
+        <p style="margin-top: 10px; opacity: 0.8;">กำลังใช้ระบบวาดรูปขั้นสูงเพื่อให้ Facebook แสดงผลได้ชัดที่สุด</p>
         <style>@keyframes spin_render { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
     </div>
 @endsection
 
 @push('scripts')
-  <!-- Load Canvg from CDN for robust SVG-to-Canvas rendering -->
-  <script src="https://cdn.jsdelivr.net/npm/canvg@4.0.1/dist/index.umd.min.js"></script>
+  <!-- Load Canvg and its dependencies for robust rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/canvg@3.0.10/lib/umd.js"></script>
   
   <script>
     (function() {
@@ -158,6 +158,13 @@
                 return;
             }
 
+            // Check if canvg is loaded
+            const Canvg = window.canvg || (window.Canvg ? window.Canvg.Canvg : null);
+            if (!Canvg) {
+                alert('ระบบวาดรูปยังโหลดไม่เสร็จ กรุณารอ 2-3 วินาทีแล้วลองใหม่ครับ');
+                return;
+            }
+
             overlay.style.display = 'flex';
             status.innerText = 'กำลังเตรียมระบบวาดรูป...';
 
@@ -168,7 +175,7 @@
                 if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพได้');
                 let svgText = await response.text();
 
-                // 2. Render to PNG using Canvg (Robust method)
+                // 2. Render to PNG
                 status.innerText = 'กำลังวาดรูปความละเอียดสูง (1200x630)...';
                 
                 // Set canvas size
@@ -180,7 +187,7 @@
                 ctx.fillRect(0, 0, 1200, 630);
 
                 // Use Canvg to draw
-                const v = canvg.Canvg.fromString(ctx, svgText);
+                const v = await Canvg.fromString(ctx, svgText);
                 await v.render();
 
                 const pngData = canvas.toDataURL('image/png', 0.9);
