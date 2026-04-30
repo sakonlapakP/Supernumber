@@ -2654,10 +2654,15 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return response()->json(['success' => true]);
     })->name('articles.report-render-error');
 
-    Route::post('/articles/{article}/share-line', function (\App\Models\Article $article) use ($ensureAdmin) {
+    Route::post('/articles/{article}/share-line', function (Request $request, \App\Models\Article $article) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) return $redirect;
         
         Log::info("Manual LINE Share: Article ID [{$article->id}], Title [{$article->title}]");
+
+        $manualImageUrl = $request->input('manual_image_url');
+        if ($manualImageUrl && !str_starts_with($manualImageUrl, 'http')) {
+            $manualImageUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($manualImageUrl);
+        }
 
         // Find lottery result by published_at date or slug pattern
         $date = $article->published_at ? $article->published_at->toDateString() : null;
@@ -2680,7 +2685,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         if ($lotteryResult) {
             Log::info("Manual LINE Share: Found LotteryResult ID [{$lotteryResult->id}]. Sending notification...");
-            app(\App\Services\LineLotteryNotifier::class)->sendCompleted($lotteryResult);
+            app(\App\Services\LineLotteryNotifier::class)->sendCompleted($lotteryResult, $manualImageUrl);
             return back()->with('success', 'ส่งข้อมูลเข้า LINE เรียบร้อยแล้ว');
         }
 

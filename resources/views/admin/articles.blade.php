@@ -76,9 +76,12 @@
                   <a href="{{ route('admin.articles.preview', $article) }}" target="_blank" class="admin-button admin-button--muted admin-button--compact" title="ดูตัวอย่าง">ดู</a>
                   <a href="{{ route('admin.articles.edit', $article) }}" class="admin-button admin-button--muted admin-button--compact">แก้ไข</a>
                   @if($article->is_published)
-                    <form action="{{ route('admin.articles.share-line', $article) }}" method="post" style="display: inline;">
+                    <form id="share-line-form-{{ $article->id }}" action="{{ route('articles.share-line', $article) }}" method="POST" style="display: inline;">
                       @csrf
-                      <button type="submit" class="admin-button admin-button--compact" style="background: #06C755; color: #fff; border-color: #06C755;" title="แชร์ไป LINE Group">LINE</button>
+                      <input type="hidden" name="manual_image_url" id="share-line-image-{{ $article->id }}">
+                      <button type="button" 
+                              onclick="shareToLine(this, '{{ $article->id }}', '{{ $article->cover_image_landscape_path ? Storage::disk('public')->url($article->cover_image_landscape_path) : '' }}', '{{ route('articles.upload-temp-image') }}', '{{ route('articles.report-render-error') }}')"
+                              class="admin-button admin-button--compact" style="background: #06C755; border-color: #06C755; color: white;">LINE</button>
                     </form>
                     <form action="{{ route('admin.articles.share-fb', $article) }}" method="post" style="display: inline;">
                       @csrf
@@ -143,18 +146,15 @@
     <div id="render-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; color: white; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
         <div style="border: 4px solid #f3f3f3; border-top: 4px solid #1877F2; border-radius: 50%; width: 50px; height: 50px; animation: spin_render 1s linear infinite; margin-bottom: 20px;"></div>
         <div id="render-status" style="font-size: 18px; font-weight: bold;">กำลังวาดรูปหวยให้สวยงาม...</div>
-        <p style="margin-top: 10px; opacity: 0.8;">กำลังใช้ระบบวาดรูปขั้นสูงเพื่อให้ Facebook แสดงผลได้ชัดที่สุด</p>
+        <p style="margin-top: 10px; opacity: 0.8;">กำลังใช้ระบบวาดรูปขั้นสูงเพื่อให้แสดงผลได้ชัดที่สุด</p>
         <style>
           @keyframes spin_render { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
           
-          /* Pre-load font for rendering bridge */
-          /* Pre-load font for rendering bridge */
           @font-face {
               font-family: 'Kanit';
               src: url('/fonts/Kanit-700.ttf') format('truetype');
               font-weight: 700;
           }
-          /* Invisible text to force font load */
           .font-loader { font-family: 'Kanit'; position: absolute; visibility: hidden; opacity: 0; }
       </style>
       <div class="font-loader">Force Load Kanit</div>
@@ -162,7 +162,6 @@
 @endsection
 
 @push('scripts')
-  <!-- Load Canvg v3 (UMD) -->
   <script src="https://cdn.jsdelivr.net/npm/canvg@3.0.10/lib/umd.js"></script>
   
   <script>
@@ -174,13 +173,11 @@
 
         window.shareToFb = async function(button, articleId, landscapeUrl, uploadUrl, reportUrl) {
             const form = button.closest('form');
-            
             if (!landscapeUrl || !landscapeUrl.toLowerCase().includes('.svg')) {
                 form.submit();
                 return;
             }
 
-            // Universal Canvg Detection
             const canvgObj = window.canvg || window.Canvg;
             if (!canvgObj) {
                 alert('ระบบวาดรูปยังไม่พร้อม กรุณารอ 2 วินาทีแล้วลองใหม่ครับ');
@@ -188,12 +185,9 @@
             }
 
             overlay.style.display = 'flex';
-            status.innerText = 'กำลังตรวจสอบฟอนต์และระบบวาดรูป...';
+            status.innerText = 'กำลังเตรียมรูปภาพ...';
 
             try {
-                status.innerText = 'กำลังตรวจสอบระบบฟอนต์พรีเมียม...';
-                
-                // Fetch the font file and convert to base64 for injection
                 const fontRes = await fetch('/fonts/Kanit-700.ttf');
                 const fontBlob = await fontRes.blob();
                 const fontBase64 = await new Promise((resolve) => {
@@ -206,18 +200,16 @@
                 if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพจาก Server ได้');
                 let svgText = await response.text();
 
-                // Inject font-face into SVG
                 const fontStyle = `<style>@font-face { font-family: 'Kanit'; src: url("${fontBase64}"); font-weight: 700; }</style>`;
                 svgText = svgText.replace('<defs>', `<defs>${fontStyle}`);
 
-                status.innerText = 'กำลังวาดรูปจัตุรัสพรีเมียม (1200x1200)...';
+                status.innerText = 'กำลังวาดรูปจัตุรัสพรีเมียม...';
                 canvas.width = 1200;
                 canvas.height = 1200;
                 
                 ctx.fillStyle = "black";
                 ctx.fillRect(0, 0, 1200, 1200);
 
-                // Version-agnostic rendering call
                 if (typeof canvgObj === 'function') {
                     await canvgObj(canvas, svgText);
                 } else if (canvgObj.Canvg && typeof canvgObj.Canvg.fromString === 'function') {
@@ -226,13 +218,11 @@
                 } else if (typeof canvgObj.fromString === 'function') {
                     const v = await canvgObj.fromString(ctx, svgText);
                     await v.render();
-                } else {
-                    throw new Error('ไม่พบวิธีเรียกใช้ระบบวาดรูปที่รองรับในเบราว์เซอร์');
                 }
 
                 const pngData = canvas.toDataURL('image/png', 0.9);
                 
-                status.innerText = 'กำลังบันทึกรูปจัตุรัสลง Server...';
+                status.innerText = 'กำลังบันทึกรูป...';
                 const uploadRes = await fetch(uploadUrl, {
                     method: 'POST',
                     headers: {
@@ -249,25 +239,92 @@
                 setTimeout(() => form.submit(), 1000);
 
             } catch (err) {
-                console.error('Render error:', err);
-                overlay.style.display = 'none';
-                
-                // Show requested error message
-                alert('การวาดรูปขัดข้อง กรุณาดำเนินการใหม่ภายหลัง');
-                
-                // Report to LINE
-                if (reportUrl) {
-                    fetch(reportUrl, {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                        },
-                        body: JSON.stringify({ error: err.message })
-                    }).catch(lineErr => console.error('LINE reporting failed:', lineErr));
-                }
+                handleRenderError(err, overlay, reportUrl);
             }
         };
+
+        window.shareToLine = async function(button, articleId, landscapeUrl, uploadUrl, reportUrl) {
+            const form = document.getElementById('share-line-form-' + articleId);
+            const imageInput = document.getElementById('share-line-image-' + articleId);
+            
+            if (!landscapeUrl || !landscapeUrl.toLowerCase().includes('.svg')) {
+                form.submit();
+                return;
+            }
+
+            const canvgObj = window.canvg || window.Canvg;
+            if (!canvgObj) {
+                alert('ระบบวาดรูปยังไม่พร้อม กรุณารอ 2 วินาทีแล้วลองใหม่ครับ');
+                return;
+            }
+
+            overlay.style.display = 'flex';
+            status.innerText = 'กำลังเตรียมรูปภาพสำหรับ LINE...';
+
+            try {
+                const fontRes = await fetch('/fonts/Kanit-700.ttf');
+                const fontBlob = await fontRes.blob();
+                const fontBase64 = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(fontBlob);
+                });
+
+                const response = await fetch(landscapeUrl);
+                if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพจาก Server ได้');
+                let svgText = await response.text();
+
+                const fontStyle = `<style>@font-face { font-family: 'Kanit'; src: url("${fontBase64}"); font-weight: 700; }</style>`;
+                svgText = svgText.replace('<defs>', `<defs>${fontStyle}`);
+
+                canvas.width = 1200;
+                canvas.height = 1200;
+                ctx.fillStyle = "black";
+                ctx.fillRect(0, 0, 1200, 1200);
+
+                if (typeof canvgObj === 'function') {
+                    await canvgObj(canvas, svgText);
+                } else {
+                    const v = await canvgObj.Canvg.fromString(ctx, svgText);
+                    await v.render();
+                }
+
+                const pngData = canvas.toDataURL('image/png', 0.9);
+                
+                status.innerText = 'กำลังส่งรูปพรีเมียมเข้ากลุ่ม LINE...';
+                const uploadRes = await fetch(uploadUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({ image: pngData, type: 'landscape' })
+                });
+
+                const uploadJson = await uploadRes.json();
+                if (!uploadJson.success) throw new Error(uploadJson.error || 'Upload failed');
+
+                imageInput.value = uploadJson.path;
+                setTimeout(() => form.submit(), 1000);
+
+            } catch (err) {
+                handleRenderError(err, overlay, reportUrl);
+            }
+        };
+
+        function handleRenderError(err, overlay, reportUrl) {
+            console.error('Render error:', err);
+            overlay.style.display = 'none';
+            alert('การวาดรูปขัดข้อง ระบบจะส่งข้อมูลแบบปกติให้แทนครับ');
+            
+            if (reportUrl) {
+                fetch(reportUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: JSON.stringify({ error: err.message, stack: err.stack })
+                });
+            }
+        }
     })();
 
     (() => {
