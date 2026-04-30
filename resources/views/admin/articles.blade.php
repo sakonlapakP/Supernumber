@@ -177,8 +177,19 @@
                       <button type="button" 
                               id="btn-share-line-{{ $article->id }}"
                               onclick="shareToLine(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-temp-image') }}', '{{ route('admin.articles.report-render-error', $article) }}')"
-                              class="admin-button admin-button--compact" style="background: #06C755; border-color: #06C755; color: white;">LINE</button>
+                              class="admin-button admin-button--compact" style="background: #06C755; border-color: #06C755; color: white;" title="ส่งเข้ากลุ่ม LINE">กลุ่ม LINE</button>
                     </form>
+                    @if($article->is_line_broadcasted)
+                       <button type="button" class="admin-button admin-button--compact" style="background: #94a3b8; border-color: #94a3b8; color: white; cursor: not-allowed;" disabled title="Broadcast ไปแล้ว">Broadcast แล้ว</button>
+                    @else
+                      <form id="broadcast-line-form-{{ $article->id }}" action="{{ route('admin.articles.broadcast-line', $article) }}" method="POST" style="display: inline;" onsubmit="return confirm('ยืนยันการ Broadcast บทความนี้ส่งหาผู้ติดตามทุกคน? (หากส่งแล้วจะไม่สามารถดึงกลับได้)')">
+                        @csrf
+                        <input type="hidden" name="manual_image_url" id="broadcast-line-image-{{ $article->id }}">
+                        <button type="button" 
+                                onclick="shareToLine(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-temp-image') }}', '{{ route('admin.articles.report-render-error', $article) }}', 'broadcast')"
+                                class="admin-button admin-button--compact" style="background: #f97316; border-color: #f97316; color: white;" title="Broadcast หาผู้ติดตามทุกคน">Broadcast</button>
+                      </form>
+                    @endif
                     <form id="share-fb-form-{{ $article->id }}" action="{{ route('admin.articles.share-fb', $article) }}" method="post" style="display: inline;">
                       @csrf
                       <input type="hidden" name="manual_image_url" id="share-fb-image-{{ $article->id }}">
@@ -373,15 +384,22 @@
         /**
          * ฟังก์ชันแชร์ไป LINE (เรียกใช้ตัวกลาง)
          */
-        window.shareToLine = async function(button, articleId, landscapeUrl, uploadUrl, reportUrl) {
-            const form = document.getElementById('share-line-form-' + articleId);
-            const imageInput = document.getElementById('share-line-image-' + articleId);
+        window.shareToLine = async function(button, articleId, landscapeUrl, uploadUrl, reportUrl, prefix = 'share') {
+            const form = document.getElementById(prefix + '-line-form-' + articleId);
+            const imageInput = document.getElementById(prefix + '-line-image-' + articleId);
+            
+            // For broadcast, we show confirmation before rendering
+            if (prefix === 'broadcast') {
+                if (!confirm('ยืนยันการ Broadcast ส่งหาผู้ติดตามทุกคน? หากส่งแล้วจะไม่สามารถดึงข้อความกลับได้')) {
+                    return;
+                }
+            }
             
             const result = await renderAndUploadPremiumImage(landscapeUrl, uploadUrl, 'กำลังเตรียมรูปภาพสำหรับ LINE...', reportUrl);
             
             if (result) {
                 imageInput.value = result.path;
-                status.innerText = 'สำเร็จ! กำลังส่งเข้ากลุ่ม LINE...';
+                status.innerText = 'สำเร็จ! กำลังส่งเข้า LINE...';
                 setTimeout(() => form.submit(), 1000);
             } else {
                 form.submit(); // ถ้าพรีเมียมขัดข้อง ให้ส่งแบบธรรมดาแทน

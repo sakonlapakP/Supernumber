@@ -257,13 +257,14 @@ class FetchLatestLotteryCommand extends Command
             @font-face { font-family: 'Kanit'; font-weight: 500; src: url(data:font/ttf;base64,{$fontBase64_500}); }
             @font-face { font-family: 'Kanit'; font-weight: 700; src: url(data:font/ttf;base64,{$fontBase64_700}); }
         </style>
-        <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#1e140d;stop-opacity:1" />
-            <stop offset="50%" style="stop-color:#120907;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#1e140d;stop-opacity:1" />
-        </linearGradient>
+        <radialGradient id="bgGrad" cx="50%" cy="15%" r="85%" fx="50%" fy="15%">
+            <stop offset="0%" stop-color="#5a4227" />
+            <stop offset="40%" stop-color="#261a11" />
+            <stop offset="100%" stop-color="#100a06" />
+        </radialGradient>
     </defs>
     <rect width="1200" height="630" fill="url(#bgGrad)" />
+    <line x1="965" y1="0" x2="874" y2="450" stroke="#f5c76d" stroke-width="2" opacity="0.3" />
     <rect x="6" y="6" width="1188" height="618" fill="none" stroke="#c59d62" stroke-width="3" />
     <rect x="38" y="38" width="1124" height="554" fill="none" stroke="#ba8e4d" stroke-width="2" opacity="0.4" />
     
@@ -315,13 +316,14 @@ SVG;
             @font-face { font-family: 'Kanit'; font-weight: 500; src: url(data:font/ttf;base64,{$fontBase64_500}); }
             @font-face { font-family: 'Kanit'; font-weight: 700; src: url(data:font/ttf;base64,{$fontBase64_700}); }
         </style>
-        <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" style="stop-color:#1e140d;stop-opacity:1" />
-            <stop offset="50%" style="stop-color:#120907;stop-opacity:1" />
-            <stop offset="100%" style="stop-color:#1e140d;stop-opacity:1" />
-        </linearGradient>
+        <radialGradient id="bgGrad" cx="50%" cy="15%" r="85%" fx="50%" fy="15%">
+            <stop offset="0%" stop-color="#5a4227" />
+            <stop offset="40%" stop-color="#261a11" />
+            <stop offset="100%" stop-color="#100a06" />
+        </radialGradient>
     </defs>
     <rect width="1200" height="1200" fill="url(#bgGrad)" />
+    <line x1="965" y1="0" x2="850" y2="380" stroke="#f5c76d" stroke-width="2" opacity="0.3" />
     <rect x="6" y="6" width="1188" height="1188" fill="none" stroke="#c59d62" stroke-width="3" />
     <rect x="38" y="38" width="1124" height="1124" fill="none" stroke="#ba8e4d" stroke-width="2" opacity="0.4" />
     
@@ -411,8 +413,11 @@ SVG;
     {
         $candidate = data_get($payload, 'response.date') ?? data_get($payload, 'date');
         if ($candidate) {
-            if (preg_match('/(\d{2})\/(\d{2})\/(\d{4})/', $candidate, $m)) {
+            if (preg_match('/^(\d{2})\/(\d{2})\/(\d{4})$/', $candidate, $m)) {
                 return [$candidate, Carbon::create((int)$m[3]-543, (int)$m[2], (int)$m[1], 0, 0, 0, self::TZ)];
+            }
+            if (preg_match('/^(\d{4})-(\d{2})-(\d{2})$/', $candidate, $m)) {
+                return [$candidate, Carbon::create((int)$m[1], (int)$m[2], (int)$m[3], 0, 0, 0, self::TZ)];
             }
         }
         return [null, null];

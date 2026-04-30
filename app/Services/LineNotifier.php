@@ -86,6 +86,51 @@ class LineNotifier
         return $log;
     }
 
+    public function queueBroadcastMessages(
+        string $eventType,
+        array $messages,
+        ?Model $notifiable = null
+    ): ?LineNotificationLog {
+        if (! Schema::hasTable('line_notification_logs')) {
+            return null;
+        }
+
+        $messages = array_values($messages);
+        $token = $this->resolveToken();
+
+        if ($token === '' || $messages === []) {
+            Log::warning('LINE: Skipping broadcast. Config missing or empty messages.', [
+                'has_token' => $token !== '',
+                'has_messages' => $messages !== [],
+                'event' => $eventType
+            ]);
+            return null;
+        }
+
+        $payload = [
+            'messages' => $messages,
+        ];
+
+        $log = new LineNotificationLog();
+        $log->forceFill([
+            'event_type' => $eventType,
+            'destination_key' => 'broadcast',
+            'destination_id' => 'broadcast',
+            'status' => LineNotificationLog::STATUS_QUEUED,
+            'message_preview' => $this->buildMessagePreview($messages),
+            'request_payload' => $payload,
+        ]);
+
+        if ($notifiable) {
+            $log->notifiable()->associate($notifiable);
+        }
+
+        $log->save();
+        $this->deliverImmediately($log);
+
+        return $log;
+    }
+
     public function deliverLog(int $logId, int $attempt): void
     {
         if (! Schema::hasTable('line_notification_logs')) {
@@ -106,15 +151,20 @@ class LineNotifier
         }
 
         $payload = (array) ($log->request_payload ?? []);
+        $isBroadcast = $log->destination_id === 'broadcast';
 
-        if (($payload['to'] ?? '') === '') {
+        if (!$isBroadcast && ($payload['to'] ?? '') === '') {
             $payload['to'] = $log->destination_id ?: $this->resolveDestinationId($log->destination_key);
         }
 
-        if (($payload['to'] ?? '') === '') {
+        if (!$isBroadcast && ($payload['to'] ?? '') === '') {
             $this->markPermanentFailure($log, $attempt, 'LINE destination group is missing.');
             return;
         }
+
+        $url = $isBroadcast
+            ? 'https://api.line.me/v2/bot/message/broadcast'
+            : 'https://api.line.me/v2/bot/message/push';
 
         try {
             $response = Http::timeout(10)
@@ -125,7 +175,7 @@ class LineNotifier
                     false
                 )
                 ->withToken($token)
-                ->post('https://api.line.me/v2/bot/message/push', $payload);
+                ->post($url, $payload);
         } catch (\Throwable $e) {
             $log->forceFill([
                 'status' => LineNotificationLog::STATUS_FAILED,

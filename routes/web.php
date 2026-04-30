@@ -2720,6 +2720,45 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return back()->withErrors(['share_line' => 'ไม่พบข้อมูลหวยที่ตรงกับบทความนี้']);
     })->name('articles.share-line');
 
+    Route::post('/articles/{article}/broadcast-line', function (Request $request, \App\Models\Article $article) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) return $redirect;
+        
+        if ($article->is_line_broadcasted) {
+            return back()->withErrors(['broadcast' => 'บทความนี้ถูก Broadcast ไปแล้ว']);
+        }
+
+        $manualImageUrl = $request->input('manual_image_url');
+        if ($manualImageUrl && !str_starts_with($manualImageUrl, 'http')) {
+            $manualImageUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($manualImageUrl);
+        } elseif (!$manualImageUrl && $article->cover_image_square_path) {
+            $manualImageUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($article->cover_image_square_path);
+        }
+
+        $messages = [];
+        if ($manualImageUrl) {
+            $messages[] = [
+                'type' => 'image',
+                'originalContentUrl' => $manualImageUrl,
+                'previewImageUrl' => $manualImageUrl,
+            ];
+        }
+
+        $messages[] = [
+            'type' => 'text',
+            'text' => "📢 บทความใหม่!\n" . $article->title . "\n\nอ่านเพิ่มเติม: " . route('articles.show', $article->slug),
+        ];
+
+        app(\App\Services\LineNotifier::class)->queueBroadcastMessages(
+            'article_broadcast',
+            $messages,
+            $article
+        );
+
+        $article->update(['is_line_broadcasted' => true]);
+
+        return back()->with('status_message', 'Broadcast ข้อความเรียบร้อยแล้ว');
+    })->name('articles.broadcast-line');
+
     Route::post('/articles/{article}/share-fb', function (Article $article) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;

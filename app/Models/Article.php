@@ -22,6 +22,7 @@ class Article extends Model
         'keywords',
         'lsi_keywords',
         'is_published',
+        'is_line_broadcasted',
         'published_at',
         'notified_at',
         'view_count',
@@ -32,6 +33,7 @@ class Article extends Model
     {
         return [
             'is_published' => 'boolean',
+            'is_line_broadcasted' => 'boolean',
             'published_at' => 'datetime',
             'notified_at' => 'datetime',
         ];
