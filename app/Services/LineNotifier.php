@@ -52,6 +52,12 @@ class LineNotifier
         $destinationId = $this->resolveDestinationId($destinationKey);
 
         if ($token === '' || $destinationId === '' || $messages === []) {
+            Log::warning('LINE: Skipping notification. Config missing.', [
+                'has_token' => $token !== '',
+                'has_destination' => $destinationId !== '',
+                'has_messages' => $messages !== [],
+                'event' => $eventType
+            ]);
             return null;
         }
 
