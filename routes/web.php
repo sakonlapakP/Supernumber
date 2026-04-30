@@ -2641,6 +2641,23 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
     })->name('articles.upload-rendered-image');
 
+    Route::post('/articles/upload-temp-image', function (Illuminate\Http\Request $request) {
+        $data = $request->input('image');
+        if (!$data) return response()->json(['success' => false, 'error' => 'No data']);
+        
+        $image = str_replace('data:image/png;base64,', '', $data);
+        $image = str_replace(' ', '+', $image);
+        $imageName = 'temp_render_' . time() . '_' . uniqid() . '.png';
+        
+        \Illuminate\Support\Facades\Storage::disk('public')->put('temp_lottery/' . $imageName, base64_decode($image));
+        
+        return response()->json([
+            'success' => true, 
+            'path' => 'temp_lottery/' . $imageName,
+            'url' => \Illuminate\Support\Facades\Storage::disk('public')->url('temp_lottery/' . $imageName)
+        ]);
+    })->name('articles.upload-temp-image');
+
     Route::post('/articles/{article}/report-render-error', function (Illuminate\Http\Request $request, \App\Models\Article $article) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) return $redirect;
         $errorMessage = $request->input('error', 'Unknown rendering error');

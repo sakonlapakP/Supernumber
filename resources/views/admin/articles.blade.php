@@ -171,11 +171,11 @@
                   <a href="{{ route('admin.articles.preview', $article) }}" target="_blank" class="admin-button admin-button--muted admin-button--compact" title="ดูตัวอย่าง">ดู</a>
                   <a href="{{ route('admin.articles.edit', $article) }}" class="admin-button admin-button--muted admin-button--compact">แก้ไข</a>
                   @if($article->is_published)
-                    <form id="share-line-form-{{ $article->id }}" action="{{ route('articles.share-line', $article) }}" method="POST" style="display: inline;">
+                    <form id="share-line-form-{{ $article->id }}" action="{{ route('admin.articles.share-line', $article) }}" method="POST" style="display: inline;">
                       @csrf
                       <input type="hidden" name="manual_image_url" id="share-line-image-{{ $article->id }}">
                       <button type="button" 
-                              onclick="shareToLine(this, '{{ $article->id }}', '{{ $article->cover_image_landscape_path ? Storage::disk('public')->url($article->cover_image_landscape_path) : '' }}', '{{ route('articles.upload-temp-image') }}', '{{ route('articles.report-render-error') }}')"
+                              onclick="shareToLine(this, '{{ $article->id }}', '{{ $article->cover_image_landscape_path ? Storage::disk('public')->url($article->cover_image_landscape_path) : '' }}', '{{ route('admin.articles.upload-temp-image') }}', '{{ route('admin.articles.report-render-error', $article) }}')"
                               class="admin-button admin-button--compact" style="background: #06C755; border-color: #06C755; color: white;">LINE</button>
                     </form>
                     <form action="{{ route('admin.articles.share-fb', $article) }}" method="post" style="display: inline;">
