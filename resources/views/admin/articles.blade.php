@@ -240,7 +240,9 @@
 
     {{-- Client-side Rendering Bridge --}}
     <canvas id="render-canvas" style="display: none;"></canvas>
-    <div id="render-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; color: white; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
+    <div class="admin-content">
+      <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@700;900&display=swap" rel="stylesheet">
+      <div id="render-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 9999; flex-direction: column; align-items: center; justify-content: center; color: white; font-family: 'Kanit', sans-serif;">
         <div style="border: 4px solid #f3f3f3; border-top: 4px solid #1877F2; border-radius: 50%; width: 50px; height: 50px; animation: spin_render 1s linear infinite; margin-bottom: 20px;"></div>
         <div id="render-status" style="font-size: 18px; font-weight: bold;">กำลังวาดรูปหวยให้สวยงาม...</div>
         <p style="margin-top: 10px; opacity: 0.8;">กำลังใช้ระบบวาดรูปขั้นสูงเพื่อให้แสดงผลได้ชัดที่สุด</p>
@@ -292,22 +294,15 @@
             status.innerText = isFb ? 'กำลังเตรียมรูปภาพสำหรับ Facebook...' : 'กำลังเตรียมรูปภาพสำหรับ LINE...';
 
             try {
-                const fontRes = await fetch('/fonts/Kanit-700.ttf');
-                const fontBlob = await fontRes.blob();
-                const fontBase64 = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result);
-                    reader.readAsDataURL(fontBlob);
-                });
-
                 const response = await fetch(svgUrl);
                 if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพจาก Server ได้ (SVG Not Found)');
                 let svgText = await response.text();
 
-                // Clean up old styles to prevent conflicts
+                // Clean up old styles and unify font to 'Kanit' from Google Fonts
                 svgText = svgText.replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, '');
-
-                const fontStyle = `<style>@font-face { font-family: 'Kanit'; src: url("${fontBase64}"); font-weight: 700; } @font-face { font-family: 'KanitCustom'; src: url("${fontBase64}"); font-weight: 700; } text { font-family: 'KanitCustom', 'Kanit', sans-serif !important; }</style>`;
+                svgText = svgText.replace(/font-family="[^"]*"/g, 'font-family="Kanit"');
+                
+                const fontStyle = `<style>text { font-family: 'Kanit', sans-serif !important; font-weight: 700; }</style>`;
                 svgText = svgText.replace('<defs>', `<defs>${fontStyle}`);
 
                 status.innerText = 'กำลังวาดรูปจัตุรัสพรีเมียม...';
