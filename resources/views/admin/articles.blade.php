@@ -130,15 +130,18 @@
 
     {{-- Client-side Rendering Bridge --}}
     <canvas id="render-canvas" style="display: none;"></canvas>
-    <div id="render-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 99999; color: white; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
+    <div id="render-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; color: white; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
         <div style="border: 4px solid #f3f3f3; border-top: 4px solid #1877F2; border-radius: 50%; width: 50px; height: 50px; animation: spin_render 1s linear infinite; margin-bottom: 20px;"></div>
         <div id="render-status" style="font-size: 18px; font-weight: bold;">กำลังวาดรูปหวยให้สวยงาม...</div>
-        <p style="margin-top: 10px; opacity: 0.8;">กรุณารอครู่เดียว ระบบกำลังใช้เบราว์เซอร์ของคุณวาดรูปให้ชัดเป๊ะ</p>
+        <p style="margin-top: 10px; opacity: 0.8;">กำลังใช้ระบบวาดรูปขั้นสูง (Canvg) เพื่อความชัดเจนที่สุด</p>
         <style>@keyframes spin_render { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
     </div>
 @endsection
 
 @push('scripts')
+  <!-- Load Canvg from CDN for robust SVG-to-Canvas rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/canvg@4.0.1/dist/index.umd.min.js"></script>
+  
   <script>
     (function() {
         const overlay = document.getElementById('render-overlay');
@@ -156,21 +159,34 @@
             }
 
             overlay.style.display = 'flex';
-            status.innerText = 'กำลังเตรียมการวาดรูป...';
+            status.innerText = 'กำลังเตรียมระบบวาดรูป...';
 
             try {
                 // 1. Fetch SVG content directly
-                status.innerText = 'กำลังดึงข้อมูลต้นฉบับ...';
+                status.innerText = 'กำลังอ่านข้อมูลต้นฉบับ...';
                 const response = await fetch(landscapeUrl);
-                if (!response.ok) throw new Error('ไม่สามารถเข้าถึงไฟล์รูปภาพได้ (404/CORS)');
+                if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพได้');
                 let svgText = await response.text();
 
-                // 2. Render to PNG
-                status.innerText = 'กำลังประมวลผลรูปภาพ (1200x630)...';
-                const pngData = await renderSvgToPng(svgText, 1200, 630);
+                // 2. Render to PNG using Canvg (Robust method)
+                status.innerText = 'กำลังวาดรูปความละเอียดสูง (1200x630)...';
+                
+                // Set canvas size
+                canvas.width = 1200;
+                canvas.height = 630;
+                
+                // Clear and background
+                ctx.fillStyle = "black";
+                ctx.fillRect(0, 0, 1200, 630);
+
+                // Use Canvg to draw
+                const v = canvg.Canvg.fromString(ctx, svgText);
+                await v.render();
+
+                const pngData = canvas.toDataURL('image/png', 0.9);
                 
                 // 3. Upload PNG back to Server
-                status.innerText = 'กำลังบันทึกรูปภาพลง Server...';
+                status.innerText = 'กำลังส่งรูปกลับไปที่ Server...';
                 const uploadRes = await fetch(uploadUrl, {
                     method: 'POST',
                     headers: {
@@ -186,50 +202,16 @@
                 const uploadJson = await uploadRes.json();
                 if (!uploadJson.success) throw new Error(uploadJson.error || 'Upload failed');
 
-                status.innerText = 'วาดรูปสำเร็จ! กำลังไปที่ Facebook...';
+                status.innerText = 'สำเร็จ! กำลังไปที่ Facebook...';
                 setTimeout(() => form.submit(), 1000);
 
             } catch (err) {
                 console.error('Render error:', err);
                 overlay.style.display = 'none';
-                alert('การวาดรูปขัดข้อง: ' + err.message + '\nระบบจะแชร์แบบปกติให้ครับ');
+                alert('ระบบวาดรูปขัดข้อง: ' + err.message + '\nจะพยายามแชร์แบบปกติให้ครับ');
                 form.submit();
             }
         };
-
-        function renderSvgToPng(svgText, width, height) {
-            return new Promise((resolve, reject) => {
-                const img = new Image();
-                
-                // Prepare SVG text: Ensure it has dimensions and strip problematic external fonts for rendering
-                // Note: We strip external fonts ONLY for the PNG generation to avoid browser security blocks
-                let processedSvg = svgText
-                    .replace(/<svg/, `<svg width="${width}" height="${height}"`)
-                    .replace(/@import url\(['"]https:\/\/fonts\.googleapis\.com\/css2.*?['"]\);/g, '');
-
-                const svgBase64 = btoa(unescape(encodeURIComponent(processedSvg)));
-                const dataUrl = 'data:image/svg+xml;base64,' + svgBase64;
-                
-                img.onload = function() {
-                    canvas.width = width;
-                    canvas.height = height;
-                    ctx.clearRect(0, 0, width, height);
-                    
-                    // Background
-                    ctx.fillStyle = "black";
-                    ctx.fillRect(0, 0, width, height);
-                    
-                    ctx.drawImage(img, 0, 0, width, height);
-                    resolve(canvas.toDataURL('image/png', 0.9));
-                };
-                
-                img.onerror = function() {
-                    reject(new Error('เบราว์เซอร์ปฏิเสธการประมวลผลไฟล์นี้'));
-                };
-                
-                img.src = dataUrl;
-            });
-        }
     })();
 
     (() => {
