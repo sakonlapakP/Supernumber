@@ -5,7 +5,7 @@ namespace App\Services;
 use App\Models\Article;
 use App\Models\LineNotificationLog;
 use App\Models\LotteryResult;
-use Illuminate\Support\Carbon;
+use Carbon\Carbon;
 use Illuminate\Support\Collection;
 
 class LineLotteryNotifier
