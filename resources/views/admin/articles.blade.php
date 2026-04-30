@@ -273,15 +273,71 @@
         window.renderAndShare = async function(type, button, articleId, landscapeUrl, uploadUrl, reportUrl) {
             const isFb = (type === 'fb');
             const form = isFb ? button.closest('form') : document.getElementById('share-line-form-' + articleId);
+            const imageInput = document.getElementById((isFb ? 'share-fb-image-' : 'share-line-image-') + articleId);
+            
+            // Priority: Use the square SVG for high-fidelity rendering
+            const svgPath = landscapeUrl.replace(/\.(png|jpg|jpeg)$/i, '.svg');
+            const svgUrl = `{{ route('admin.articles.get-svg-proxy') }}?path=${encodeURIComponent(svgPath)}`;
             
             overlay.style.display = 'flex';
-            status.innerText = isFb ? 'กำลังเตรียมแชร์ไป Facebook...' : 'กำลังเตรียมแชร์ไป LINE...';
-            
-            // Bypass browser-side rendering and use the fixed server-side images
-            setTimeout(() => {
-                form.submit();
-                setTimeout(() => { overlay.style.display = 'none'; }, 2000);
-            }, 500);
+            status.innerText = 'กำลังโหลดฟอนต์และเตรียมข้อมูลพรีเมียม...';
+
+            try {
+                // Ensure fonts are loaded before rendering to prevent Serif fallback
+                await document.fonts.load('1em Kanit');
+                await new Promise(r => setTimeout(r, 300)); // Small safety buffer
+
+                const canvgObj = window.canvg || window.Canvg;
+                if (!canvgObj) throw new Error('ระบบวาดรูป (Canvg) ยังไม่พร้อม กรุณารอสักครู่ครับ');
+
+                const response = await fetch(svgUrl);
+                if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพจาก Server ได้');
+                let svgText = await response.text();
+
+                // Clean and unify fonts
+                svgText = svgText.replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, '');
+                svgText = svgText.replace(/font-family="[^"]*"/g, 'font-family="Kanit"');
+                const fontStyle = `<style>text { font-family: 'Kanit', sans-serif !important; font-weight: 700; }</style>`;
+                svgText = svgText.replace('<defs>', `<defs>${fontStyle}`);
+
+                status.innerText = 'กำลังวาดรูปความละเอียดสูง...';
+                canvas.width = 1200;
+                canvas.height = 1200;
+                ctx.fillStyle = "black";
+                ctx.fillRect(0, 0, 1200, 1200);
+
+                if (typeof canvgObj === 'function') {
+                    await canvgObj(canvas, svgText);
+                } else {
+                    const v = await (canvgObj.Canvg ? canvgObj.Canvg.fromString(ctx, svgText) : canvgObj.fromString(ctx, svgText));
+                    await v.render();
+                }
+
+                const pngData = canvas.toDataURL('image/png', 1.0);
+                
+                status.innerText = 'กำลังบันทึกรูปพรีเมียม...';
+                const uploadRes = await fetch(uploadUrl, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+                    body: JSON.stringify({ image: pngData, type: type })
+                });
+
+                const uploadJson = await uploadRes.json();
+                if (!uploadJson.success) throw new Error(uploadJson.error || 'Upload failed');
+
+                if (imageInput) imageInput.value = uploadJson.path;
+
+                status.innerText = 'สำเร็จ! กำลังนำคุณไปแชร์...';
+                setTimeout(() => form.submit(), 800);
+
+            } catch (err) {
+                console.error(err);
+                status.innerText = 'เกิดข้อผิดพลาด: ' + err.message;
+                setTimeout(() => {
+                    overlay.style.display = 'none';
+                    form.submit(); // Fallback to normal share
+                }, 2000);
+            }
         };
 
         function handleRenderError(err, overlay, reportUrl) {
