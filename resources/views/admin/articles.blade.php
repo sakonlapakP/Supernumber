@@ -269,7 +269,11 @@
 
         window.shareToFb = async function(button, articleId, landscapeUrl, uploadUrl, reportUrl) {
             const form = button.closest('form');
-            if (!landscapeUrl || !landscapeUrl.toLowerCase().includes('.svg')) {
+            
+            // Ensure we are fetching the SVG source, not the rendered PNG
+            const svgUrl = landscapeUrl.replace(/\.(png|jpg|jpeg)$/i, '.svg');
+            
+            if (!svgUrl || !svgUrl.toLowerCase().includes('.svg')) {
                 form.submit();
                 return;
             }
@@ -292,8 +296,8 @@
                     reader.readAsDataURL(fontBlob);
                 });
 
-                const response = await fetch(landscapeUrl);
-                if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพจาก Server ได้');
+                const response = await fetch(svgUrl);
+                if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพจาก Server ได้ (SVG Not Found)');
                 let svgText = await response.text();
 
                 const fontStyle = `<style>@font-face { font-family: 'Kanit'; src: url("${fontBase64}"); font-weight: 700; }</style>`;
@@ -343,7 +347,10 @@
             const form = document.getElementById('share-line-form-' + articleId);
             const imageInput = document.getElementById('share-line-image-' + articleId);
             
-            if (!landscapeUrl || !landscapeUrl.toLowerCase().includes('.svg')) {
+            // Ensure we are fetching the SVG source, not the rendered PNG
+            const svgUrl = landscapeUrl.replace(/\.(png|jpg|jpeg)$/i, '.svg');
+            
+            if (!svgUrl || !svgUrl.toLowerCase().includes('.svg')) {
                 form.submit();
                 return;
             }
@@ -366,8 +373,8 @@
                     reader.readAsDataURL(fontBlob);
                 });
 
-                const response = await fetch(landscapeUrl);
-                if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพจาก Server ได้');
+                const response = await fetch(svgUrl);
+                if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพจาก Server ได้ (SVG Not Found)');
                 let svgText = await response.text();
 
                 const fontStyle = `<style>@font-face { font-family: 'Kanit'; src: url("${fontBase64}"); font-weight: 700; }</style>`;
