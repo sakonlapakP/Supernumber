@@ -433,7 +433,7 @@ SVG;
     <!-- Main Prize Panel -->
     <rect x="100" y="380" width="1000" height="340" rx="15" fill="#fffaf0" />
     <text x="600" y="460" font-family="Kanit" font-size="60" font-weight="700" fill="#2a1a10" text-anchor="middle">รางวัลที่ 1</text>
-    <text x="600" y="640" font-family="Kanit" font-size="220" font-weight="700" fill="#2a1a10" text-anchor="middle" letter-spacing="15">$p1</text>
+    <text x="600" y="630" font-family="Kanit" font-size="187" font-weight="700" fill="#2a1a10" text-anchor="middle" letter-spacing="15">$p1</text>
 
     <!-- Small Prize Labels -->
     <text x="250" y="770" font-family="Kanit" font-size="30" font-weight="700" fill="#ffffff" text-anchor="middle">เลขหน้า 3 ตัว</text>
@@ -443,16 +443,16 @@ SVG;
     <!-- Small Panels -->
     <rect x="80" y="805" width="337" height="120" rx="10" fill="#fffaf0" />
     <rect x="80" y="940" width="337" height="120" rx="10" fill="#fffaf0" />
-    <text x="250" y="895" font-family="Kanit" font-size="90" font-weight="700" fill="#2a1a10" text-anchor="middle">$f3_1</text>
-    <text x="250" y="1030" font-family="Kanit" font-size="90" font-weight="700" fill="#2a1a10" text-anchor="middle">$f3_2</text>
+    <text x="250" y="890" font-family="Kanit" font-size="77" font-weight="700" fill="#2a1a10" text-anchor="middle">$f3_1</text>
+    <text x="250" y="1025" font-family="Kanit" font-size="77" font-weight="700" fill="#2a1a10" text-anchor="middle">$f3_2</text>
 
     <rect x="431" y="805" width="337" height="120" rx="10" fill="#fffaf0" />
     <rect x="431" y="940" width="337" height="120" rx="10" fill="#fffaf0" />
-    <text x="600" y="895" font-family="Kanit" font-size="90" font-weight="700" fill="#2a1a10" text-anchor="middle">$l3_1</text>
-    <text x="600" y="1030" font-family="Kanit" font-size="90" font-weight="700" fill="#2a1a10" text-anchor="middle">$l3_2</text>
+    <text x="600" y="890" font-family="Kanit" font-size="77" font-weight="700" fill="#2a1a10" text-anchor="middle">$l3_1</text>
+    <text x="600" y="1025" font-family="Kanit" font-size="77" font-weight="700" fill="#2a1a10" text-anchor="middle">$l3_2</text>
 
     <rect x="783" y="805" width="337" height="255" rx="10" fill="#fffaf0" />
-    <text x="950" y="975" font-family="Kanit" font-size="150" font-weight="700" fill="#2a1a10" text-anchor="middle">$l2</text>
+    <text x="950" y="965" font-family="Kanit" font-size="128" font-weight="700" fill="#2a1a10" text-anchor="middle">$l2</text>
 
     <!-- Footer -->
     <rect x="450" y="1090" width="300" height="42" fill="#1a0f08" />
