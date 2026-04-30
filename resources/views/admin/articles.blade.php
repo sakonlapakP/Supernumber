@@ -269,121 +269,26 @@
         const ctx = canvas.getContext('2d');
 
         /**
-         * ฟังก์ชันแชร์ไป Facebook (ฉบับพรีเมียม)
-         * ทำงานโดย: วาดรูป SVG ใหม่ในเบราว์เซอร์ -> แปลงเป็น PNG -> อัปโหลด -> โพสต์ลงเพจ
+         * ฟังก์ชันกลางสำหรับวาดรูปพรีเมียมและอัปโหลดขึ้น Server
+         * คืนค่าเป็นข้อมูลรูปภาพที่อัปโหลดเสร็จแล้ว
          */
-        window.shareToFb = async function(button, articleId, landscapeUrl, uploadUrl, reportUrl) {
-            const form = button.closest('form');
-            
-            // 1. เตรียม URL สำหรับดึงโค้ดรูปวาด (SVG) ผ่าน Proxy เพื่อไม่ให้โดนเซิร์ฟเวอร์บล็อก (403)
-            const svgPath = landscapeUrl.replace(/\.(png|jpg|jpeg)$/i, '.svg');
-            const svgUrl = `{{ route('admin.articles.get-svg-proxy') }}?path=${encodeURIComponent(svgPath)}`;
-            
-            // ถ้าไม่มีไฟล์รูปวาด ให้ส่งข้อมูลแบบปกติ (รูปเดิมจาก Server)
-            if (!svgUrl || !svgUrl.toLowerCase().includes('.svg')) {
-                form.submit();
-                return;
-            }
-
-            // ตรวจสอบว่าระบบวาดรูป (Canvg) โหลดเสร็จหรือยัง
-            const canvgObj = window.canvg || window.Canvg;
-            if (!canvgObj) {
-                alert('ระบบวาดรูปยังไม่พร้อม กรุณารอ 2 วินาทีแล้วลองใหม่ครับ');
-                return;
-            }
-
-            overlay.style.display = 'flex';
-            status.innerText = 'กำลังเตรียมรูปภาพ...';
-
-            try {
-                // 2. ดึงไฟล์ฟอนต์ Kanit มาแปลงเป็น Base64 เพื่อฝังลงในรูป (แก้ปัญหาฟอนต์หัวหยักในมือถือ)
-                const fontRes = await fetch('/fonts/Kanit-700.ttf');
-                const fontBlob = await fontRes.blob();
-                const fontBase64 = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result);
-                    reader.readAsDataURL(fontBlob);
-                });
-
-                // 3. ดึงโค้ด SVG ต้นฉบับมาเตรียมวาด
-                const response = await fetch(svgUrl);
-                if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพจาก Server ได้ (SVG Not Found)');
-                let svgText = await response.text();
-
-                // 4. ฉีดฟอนต์ที่แปลงเป็น Base64 เข้าไปในโค้ด SVG (รองรับทั้งชื่อ Kanit และ KanitCustom)
-                const fontStyle = `<style>@font-face { font-family: 'Kanit'; src: url("${fontBase64}"); font-weight: 700; } @font-face { font-family: 'KanitCustom'; src: url("${fontBase64}"); font-weight: 700; }</style>`;
-                svgText = svgText.replace('<defs>', `<defs>${fontStyle}`);
-
-                status.innerText = 'กำลังวาดรูปจัตุรัสพรีเมียม...';
-                canvas.width = 1200;
-                canvas.height = 1200;
-                
-                // ลงสีพื้นหลังเป็นสีดำกันพลาด
-                ctx.fillStyle = "black";
-                ctx.fillRect(0, 0, 1200, 1200);
-
-                // 5. เริ่มกระบวนการวาด SVG ลงบน Canvas
-                if (typeof canvgObj === 'function') {
-                    await canvgObj(canvas, svgText);
-                } else if (canvgObj.Canvg && typeof canvgObj.Canvg.fromString === 'function') {
-                    const v = await canvgObj.Canvg.fromString(ctx, svgText);
-                    await v.render();
-                } else if (typeof canvgObj.fromString === 'function') {
-                    const v = await canvgObj.fromString(ctx, svgText);
-                    await v.render();
-                }
-
-                // 6. แปลงผลลัพธ์เป็นรูป PNG ที่มีความชัดเจนสูง
-                const pngData = canvas.toDataURL('image/png', 0.9);
-                
-                // 7. ส่งรูปที่วาดเสร็จแล้วกลับไปที่ Server เพื่อบันทึกชั่วคราว
-                status.innerText = 'กำลังบันทึกรูป...';
-                const uploadRes = await fetch(uploadUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ image: pngData, type: 'landscape' })
-                });
-
-                const uploadJson = await uploadRes.json();
-                if (!uploadJson.success) throw new Error(uploadJson.error || 'Upload failed');
-
-                // 8. เมื่อบันทึกเสร็จ ให้ส่งฟอร์มเพื่อโพสต์ลง Facebook จริงๆ
-                status.innerText = 'สำเร็จ! กำลังไปที่ Facebook...';
-                setTimeout(() => form.submit(), 1000);
-
-            } catch (err) {
-                handleRenderError(err, overlay, reportUrl);
-            }
-        };
-
-        /**
-         * ฟังก์ชันแชร์ไป LINE (ฉบับพรีเมียม)
-         * ทำงานเหมือน Facebook: วาดรูปใหม่ในเบราว์เซอร์เพื่อให้ฟอนต์สวยที่สุด
-         */
-        window.shareToLine = async function(button, articleId, landscapeUrl, uploadUrl, reportUrl) {
-            const form = document.getElementById('share-line-form-' + articleId);
-            const imageInput = document.getElementById('share-line-image-' + articleId);
-            
+        async function renderAndUploadPremiumImage(landscapeUrl, uploadUrl, loadingText, reportUrl) {
             // 1. เตรียม URL รูปวาดผ่าน Proxy
             const svgPath = landscapeUrl.replace(/\.(png|jpg|jpeg)$/i, '.svg');
             const svgUrl = `{{ route('admin.articles.get-svg-proxy') }}?path=${encodeURIComponent(svgPath)}`;
             
             if (!svgUrl || !svgUrl.toLowerCase().includes('.svg')) {
-                form.submit();
-                return;
+                return null; // ถ้าไม่มีไฟล์รูปวาด ให้ระบบเดิมทำงานต่อ
             }
 
             const canvgObj = window.canvg || window.Canvg;
             if (!canvgObj) {
                 alert('ระบบวาดรูปยังไม่พร้อม กรุณารอ 2 วินาทีแล้วลองใหม่ครับ');
-                return;
+                return null;
             }
 
             overlay.style.display = 'flex';
-            status.innerText = 'กำลังเตรียมรูปภาพสำหรับ LINE...';
+            status.innerText = loadingText;
 
             try {
                 // 2. ดึงและแปลงฟอนต์
@@ -412,16 +317,18 @@
                 // 5. เริ่มการวาดรูป
                 if (typeof canvgObj === 'function') {
                     await canvgObj(canvas, svgText);
-                } else {
+                } else if (canvgObj.Canvg && typeof canvgObj.Canvg.fromString === 'function') {
                     const v = await canvgObj.Canvg.fromString(ctx, svgText);
+                    await v.render();
+                } else {
+                    const v = await canvgObj.fromString(ctx, svgText);
                     await v.render();
                 }
 
-                // 6. แปลงเป็น PNG
+                // 6. แปลงเป็น PNG และอัปโหลด
                 const pngData = canvas.toDataURL('image/png', 0.9);
+                status.innerText = 'กำลังบันทึกรูปพรีเมียม...';
                 
-                // 7. บันทึกรูปที่วาดเสร็จลง Server ชั่วคราว
-                status.innerText = 'กำลังส่งรูปพรีเมียมเข้ากลุ่ม LINE...';
                 const uploadRes = await fetch(uploadUrl, {
                     method: 'POST',
                     headers: {
@@ -434,25 +341,55 @@
                 const uploadJson = await uploadRes.json();
                 if (!uploadJson.success) throw new Error(uploadJson.error || 'Upload failed');
 
-                // 8. นำ Path รูปที่ได้มาใส่ใน Hidden Input แล้วส่งฟอร์มเข้ากลุ่ม LINE
-                imageInput.value = uploadJson.path;
-                setTimeout(() => form.submit(), 1000);
+                return uploadJson;
 
             } catch (err) {
                 handleRenderError(err, overlay, reportUrl);
+                return null;
+            }
+        }
+
+        /**
+         * ฟังก์ชันแชร์ไป Facebook (เรียกใช้ตัวกลาง)
+         */
+        window.shareToFb = async function(button, articleId, landscapeUrl, uploadUrl, reportUrl) {
+            const form = button.closest('form');
+            const result = await renderAndUploadPremiumImage(landscapeUrl, uploadUrl, 'กำลังเตรียมรูปภาพสำหรับ Facebook...', reportUrl);
+            
+            if (result) {
+                status.innerText = 'สำเร็จ! กำลังไปที่ Facebook...';
+                setTimeout(() => form.submit(), 1000);
+            } else {
+                form.submit(); // ถ้าพรีเมียมขัดข้อง ให้ส่งแบบธรรมดาแทน
+            }
+        };
+
+        /**
+         * ฟังก์ชันแชร์ไป LINE (เรียกใช้ตัวกลาง)
+         */
+        window.shareToLine = async function(button, articleId, landscapeUrl, uploadUrl, reportUrl) {
+            const form = document.getElementById('share-line-form-' + articleId);
+            const imageInput = document.getElementById('share-line-image-' + articleId);
+            
+            const result = await renderAndUploadPremiumImage(landscapeUrl, uploadUrl, 'กำลังเตรียมรูปภาพสำหรับ LINE...', reportUrl);
+            
+            if (result) {
+                imageInput.value = result.path;
+                status.innerText = 'สำเร็จ! กำลังส่งเข้ากลุ่ม LINE...';
+                setTimeout(() => form.submit(), 1000);
+            } else {
+                form.submit(); // ถ้าพรีเมียมขัดข้อง ให้ส่งแบบธรรมดาแทน
             }
         };
 
         /**
          * ฟังก์ชันจัดการเมื่อการวาดรูปขัดข้อง
-         * จะปิดหน้าจอโหลด และส่งข้อมูลแบบปกติ (ไม่พรีเมียม) แทน เพื่อให้งานไม่สะดุด
          */
         function handleRenderError(err, overlay, reportUrl) {
             console.error('Render error:', err);
             overlay.style.display = 'none';
             alert('การวาดรูปขัดข้อง ระบบจะส่งข้อมูลแบบปกติให้แทนครับ');
             
-            // ส่งรายงาน Error ไปยังกลุ่ม LINE แจ้งเตือนแอดมิน (ถ้ามีการตั้งค่าไว้)
             if (reportUrl) {
                 fetch(reportUrl, {
                     method: 'POST',
