@@ -21,6 +21,12 @@
       </div>
     @endif
 
+    @if(!config('services.line.group_id') && !config('services.line.groups.lottery'))
+      <div style="background: #fff4f4; border: 1px solid #ffcccc; color: #cc0000; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; display: flex; align-items: center; gap: 10px;">
+        <span>⚠️ ยังไม่ได้ตั้งค่า LINE Group ID! ปุ่มส่ง LINE จะใช้งานไม่ได้จนกว่าจะตั้งค่าในเมนู <a href="{{ route('admin.line-settings') }}" style="color: #1877F2; text-decoration: underline;">ตั้งค่า LINE</a></span>
+      </div>
+    @endif
+
     <div class="admin-card">
       <div style="padding: 20px; border-bottom: 1px solid #e2e8f0;">
         <input type="text" id="article-search" placeholder="ค้นหาหัวข้อบทความ..." class="admin-input" style="max-width: 300px;">

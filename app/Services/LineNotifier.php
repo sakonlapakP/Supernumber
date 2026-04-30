@@ -172,15 +172,22 @@ class LineNotifier
 
     private function resolveDestinationId(?string $destinationKey = null): string
     {
+        $defaultId = trim((string) config('services.line.group_id', ''));
+
         if ($destinationKey !== null) {
             $configured = trim((string) config("services.line.groups.{$destinationKey}", ''));
 
             if ($configured !== '') {
                 return $configured;
             }
+            
+            // Log that we're falling back to default
+            if ($defaultId !== '') {
+                Log::info("LINE: Destination key [{$destinationKey}] not found. Falling back to default Group ID.");
+            }
         }
 
-        return trim((string) config('services.line.group_id', ''));
+        return $defaultId;
     }
 
     private function markPermanentFailure(LineNotificationLog $log, int $attempt, string $message): void
