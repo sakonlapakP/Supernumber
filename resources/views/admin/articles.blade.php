@@ -148,13 +148,14 @@
           @keyframes spin_render { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
           
           /* Pre-load font for rendering bridge */
+          /* Pre-load font for rendering bridge */
           @font-face {
-              font-family: 'KanitCustom';
+              font-family: 'Kanit';
               src: url('/fonts/Kanit-700.ttf') format('truetype');
               font-weight: 700;
           }
           /* Invisible text to force font load */
-          .font-loader { font-family: 'KanitCustom'; position: absolute; visibility: hidden; opacity: 0; }
+          .font-loader { font-family: 'Kanit'; position: absolute; visibility: hidden; opacity: 0; }
       </style>
       <div class="font-loader">Force Load Kanit</div>
     </div>
@@ -190,12 +191,24 @@
             status.innerText = 'กำลังตรวจสอบฟอนต์และระบบวาดรูป...';
 
             try {
-                // Wait for fonts to be ready so they show up correctly in the canvas
-                await document.fonts.ready;
+                status.innerText = 'กำลังตรวจสอบระบบฟอนต์พรีเมียม...';
+                
+                // Fetch the font file and convert to base64 for injection
+                const fontRes = await fetch('/fonts/Kanit-700.ttf');
+                const fontBlob = await fontRes.blob();
+                const fontBase64 = await new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => resolve(reader.result);
+                    reader.readAsDataURL(fontBlob);
+                });
 
                 const response = await fetch(landscapeUrl);
                 if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพจาก Server ได้');
                 let svgText = await response.text();
+
+                // Inject font-face into SVG
+                const fontStyle = `<style>@font-face { font-family: 'Kanit'; src: url("${fontBase64}"); font-weight: 700; }</style>`;
+                svgText = svgText.replace('<defs>', `<defs>${fontStyle}`);
 
                 status.innerText = 'กำลังวาดรูปจัตุรัสพรีเมียม (1200x1200)...';
                 canvas.width = 1200;
