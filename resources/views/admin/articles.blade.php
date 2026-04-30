@@ -1,12 +1,12 @@
 @extends('layouts.admin')
 
 @section('content')
-    <div class="admin-header">
-      <div class="admin-header__title">
+    <div class="admin-page-head">
+      <div>
         <h1>บทความ</h1>
-        <p class="admin-muted">จัดการบทความทั้งหมดแบบลิสต์ พร้อมปุ่มจัดการท้ายแต่ละแถว</p>
+        <p class="admin-subtitle">จัดการบทความทั้งหมดแบบลิสต์ พร้อมปุ่มจัดการท้ายแต่ละแถว</p>
       </div>
-      <div class="admin-header__actions">
+      <div class="admin-page-actions">
         <form action="{{ route('admin.articles.auto-gen-lottery') }}" method="POST" style="display: inline;">
             @csrf
             <button type="submit" class="admin-button" style="background: #1e1b4b; border-color: #1e1b4b;">✨ สร้างบทความหวยอัตโนมัติ</button>
@@ -27,11 +27,106 @@
       </div>
     @endif
 
+<style>
+  @media (max-width: 767px) {
+    .admin-table-wrap {
+      overflow: visible;
+    }
+    .admin-table {
+      min-width: 100% !important;
+      background: transparent;
+      border: none;
+    }
+    .admin-table thead {
+      display: none;
+    }
+    .admin-table tbody {
+      display: grid;
+      gap: 16px;
+      padding: 0;
+    }
+    .admin-table tr {
+      display: block;
+      background: #ffffff;
+      border-radius: 20px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+      padding: 16px;
+      border: 1px solid #e2e8f0;
+    }
+    .admin-table td {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 0;
+      border-bottom: 1px solid #f1f5f9;
+      text-align: right;
+    }
+    .admin-table td:first-child {
+      justify-content: center;
+      border-bottom: none;
+      padding-top: 0;
+    }
+    .admin-table td:nth-child(2) {
+      display: block;
+      text-align: center;
+      border-bottom: 2px solid #f1f5f9;
+      padding-bottom: 15px;
+      margin-bottom: 5px;
+    }
+    .admin-table td:nth-child(2) div:first-child {
+      font-size: 16px;
+    }
+    .admin-table td::before {
+      content: attr(data-label);
+      font-weight: 700;
+      color: #94a3b8;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      text-align: left;
+    }
+    .admin-table td:first-child::before,
+    .admin-table td:nth-child(2)::before {
+      display: none;
+    }
+    .admin-table td:last-child {
+      border-bottom: none;
+      display: block;
+      padding-bottom: 0;
+      text-align: left;
+    }
+    .admin-table td:last-child::before {
+      display: block;
+      margin-bottom: 12px;
+    }
+    .admin-action-group {
+      display: grid !important;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+      width: 100%;
+    }
+    .admin-action-group > *,
+    .admin-action-group form,
+    .admin-action-group .admin-button {
+      width: 100% !important;
+      margin: 0 !important;
+    }
+    .admin-action-group form:last-child {
+      grid-column: span 2;
+    }
+    .admin-action-group .admin-button {
+      height: 44px;
+    }
+  }
+</style>
+
     <div class="admin-card">
-      <div style="padding: 20px; border-bottom: 1px solid #e2e8f0;">
+      <div style="padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <input type="text" id="article-search" placeholder="ค้นหาหัวข้อบทความ..." class="admin-input" style="max-width: 300px;">
+        <div class="admin-muted" style="font-size: 13px; font-weight: 600;">ทั้งหมด {{ number_format($articles->total()) }} รายการ</div>
       </div>
-      <table class="admin-table">
+      <div class="admin-table-wrap">
+        <table class="admin-table">
         <thead>
           <tr>
             <th>รูปหน้าปก</th>
@@ -45,7 +140,7 @@
         <tbody>
           @forelse ($articles as $article)
             <tr class="article-row" data-title="{{ strtolower($article->title) }}" data-slug="{{ strtolower($article->slug) }}">
-              <td>
+              <td data-label="รูปหน้าปก">
                 <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
                   @if($article->cover_image_path)
                     <img src="{{ Storage::disk('public')->url($article->cover_image_path) }}" style="width: 100%; height: 100%; object-fit: cover;">
@@ -54,24 +149,24 @@
                   @endif
                 </div>
               </td>
-              <td>
+              <td data-label="หัวข้อ">
                 <div style="font-weight: 600; color: #1e293b; margin-bottom: 4px;">{{ $article->title }}</div>
                 <div class="admin-muted" style="font-size: 12px;">{{ $article->slug }}</div>
               </td>
-              <td>
+              <td data-label="สถานะ">
                 @if($article->is_published)
                   <span class="admin-status-pill admin-status-pill--active">เผยแพร่แล้ว</span>
                 @else
                   <span class="admin-status-pill admin-status-pill--hold">ฉบับร่าง</span>
                 @endif
               </td>
-              <td>
+              <td data-label="ยอดวิว">
                 <span style="font-weight: 500; color: #475569;">👁️ {{ number_format($article->view_count) }}</span>
               </td>
-              <td class="admin-muted">
+              <td data-label="เวลาเผยแพร่" class="admin-muted">
                 {{ $article->published_at ? $article->published_at->timezone('Asia/Bangkok')->format('d/m/Y H:i') : '-' }}
               </td>
-              <td class="admin-action-cell">
+              <td data-label="จัดการ" class="admin-action-cell">
                 <div class="admin-action-group">
                   <a href="{{ route('admin.articles.preview', $article) }}" target="_blank" class="admin-button admin-button--muted admin-button--compact" title="ดูตัวอย่าง">ดู</a>
                   <a href="{{ route('admin.articles.edit', $article) }}" class="admin-button admin-button--muted admin-button--compact">แก้ไข</a>
@@ -109,7 +204,8 @@
             <td colspan="6" class="admin-muted" style="text-align: center; padding: 40px;">ไม่พบผลลัพธ์การค้นหา</td>
           </tr>
         </tbody>
-      </table>
+        </table>
+      </div>
     </div>
 
     @if ($articles->hasPages())

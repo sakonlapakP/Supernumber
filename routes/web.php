@@ -2689,8 +2689,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             return back()->with('success', 'ส่งข้อมูลเข้า LINE เรียบร้อยแล้ว');
         }
 
-        Log::warning("Manual LINE Share: NO LotteryResult found for Article [{$article->id}]");
-        return back()->with('error', 'ไม่พบข้อมูลหวยที่เกี่ยวข้องกับบทความนี้');
+        return back()->withErrors(['share_line' => 'ไม่พบข้อมูลหวยที่ตรงกับบทความนี้']);
     })->name('articles.share-line');
 
     Route::post('/articles/{article}/share-fb', function (Article $article) use ($ensureAdmin) {
