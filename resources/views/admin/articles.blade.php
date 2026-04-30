@@ -139,7 +139,7 @@
 @endsection
 
 @push('scripts')
-  <!-- Load Canvg and its dependencies for robust rendering -->
+  <!-- Load Canvg v3 (UMD) -->
   <script src="https://cdn.jsdelivr.net/npm/canvg@3.0.10/lib/umd.js"></script>
   
   <script>
@@ -152,16 +152,15 @@
         window.shareToFb = async function(button, articleId, landscapeUrl, uploadUrl) {
             const form = button.closest('form');
             
-            // Only render if it's an SVG
             if (!landscapeUrl || !landscapeUrl.toLowerCase().includes('.svg')) {
                 form.submit();
                 return;
             }
 
-            // Check if canvg is loaded
-            const Canvg = window.canvg || (window.Canvg ? window.Canvg.Canvg : null);
-            if (!Canvg) {
-                alert('ระบบวาดรูปยังโหลดไม่เสร็จ กรุณารอ 2-3 วินาทีแล้วลองใหม่ครับ');
+            // Universal Canvg Detection
+            const canvgObj = window.canvg || window.Canvg;
+            if (!canvgObj) {
+                alert('ระบบวาดรูปยังไม่พร้อม กรุณารอ 2 วินาทีแล้วลองใหม่ครับ');
                 return;
             }
 
@@ -169,30 +168,35 @@
             status.innerText = 'กำลังเตรียมระบบวาดรูป...';
 
             try {
-                // 1. Fetch SVG content directly
-                status.innerText = 'กำลังอ่านข้อมูลต้นฉบับ...';
                 const response = await fetch(landscapeUrl);
                 if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพได้');
                 let svgText = await response.text();
 
-                // 2. Render to PNG
                 status.innerText = 'กำลังวาดรูปความละเอียดสูง (1200x630)...';
-                
-                // Set canvas size
                 canvas.width = 1200;
                 canvas.height = 630;
                 
-                // Clear and background
                 ctx.fillStyle = "black";
                 ctx.fillRect(0, 0, 1200, 630);
 
-                // Use Canvg to draw
-                const v = await Canvg.fromString(ctx, svgText);
-                await v.render();
+                // Version-agnostic rendering call
+                if (typeof canvgObj === 'function') {
+                    // Classic v1/v2/some v3
+                    await canvgObj(canvas, svgText);
+                } else if (canvgObj.Canvg && typeof canvgObj.Canvg.fromString === 'function') {
+                    // Modern v3 UMD
+                    const v = await canvgObj.Canvg.fromString(ctx, svgText);
+                    await v.render();
+                } else if (typeof canvgObj.fromString === 'function') {
+                    // Alternative v3
+                    const v = await canvgObj.fromString(ctx, svgText);
+                    await v.render();
+                } else {
+                    throw new Error('ไม่พบวิธีเรียกใช้ระบบวาดรูปที่รองรับ');
+                }
 
                 const pngData = canvas.toDataURL('image/png', 0.9);
                 
-                // 3. Upload PNG back to Server
                 status.innerText = 'กำลังส่งรูปกลับไปที่ Server...';
                 const uploadRes = await fetch(uploadUrl, {
                     method: 'POST',
@@ -200,10 +204,7 @@
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({
-                        image: pngData,
-                        type: 'landscape'
-                    })
+                    body: JSON.stringify({ image: pngData, type: 'landscape' })
                 });
 
                 const uploadJson = await uploadRes.json();
@@ -230,7 +231,6 @@
         searchInput.addEventListener("input", () => {
           const query = searchInput.value.toLowerCase().trim();
           let visibleCount = 0;
-
           rows.forEach(row => {
             const title = row.dataset.title;
             const slug = row.dataset.slug;
@@ -238,10 +238,7 @@
             row.style.display = match ? "" : "none";
             if (match) visibleCount++;
           });
-
-          if (emptyRow) {
-            emptyRow.style.display = (visibleCount === 0 && rows.length > 0) ? "" : "none";
-          }
+          if (emptyRow) emptyRow.style.display = (visibleCount === 0 && rows.length > 0) ? "" : "none";
         });
       }
     })();
