@@ -175,14 +175,14 @@
                       @csrf
                       <input type="hidden" name="manual_image_url" id="share-line-image-{{ $article->id }}">
                       <button type="button" 
-                              onclick="shareToLine(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-temp-image') }}', '{{ route('admin.articles.report-render-error', $article) }}')"
+                              onclick="renderAndShare('line', this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-temp-image') }}', '{{ route('admin.articles.report-render-error', $article) }}')"
                               class="admin-button admin-button--compact" style="background: #06C755; border-color: #06C755; color: white;">LINE</button>
                     </form>
                     <form action="{{ route('admin.articles.share-fb', $article) }}" method="post" style="display: inline;">
                       @csrf
                       <input type="hidden" name="manual_image_url" id="share-fb-image-{{ $article->id }}">
                       <button type="button" 
-                              onclick="shareToFb(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-temp-image') }}', '{{ route('admin.articles.report-render-error', $article) }}')"
+                              onclick="renderAndShare('fb', this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-temp-image') }}', '{{ route('admin.articles.report-render-error', $article) }}')"
                               class="admin-button admin-button--compact" 
                               style="background: #1877F2; color: #fff; border-color: #1877F2;" 
                               title="แชร์ไป Facebook (รูปจัตุรัสพรีเมียม)">FB</button>
@@ -268,8 +268,10 @@
         const canvas = document.getElementById('render-canvas');
         const ctx = canvas.getContext('2d');
 
-        window.shareToFb = async function(button, articleId, landscapeUrl, uploadUrl, reportUrl) {
-            const form = button.closest('form');
+        window.renderAndShare = async function(type, button, articleId, landscapeUrl, uploadUrl, reportUrl) {
+            const isFb = (type === 'fb');
+            const form = isFb ? button.closest('form') : document.getElementById('share-line-form-' + articleId);
+            const imageInput = document.getElementById((isFb ? 'share-fb-image-' : 'share-line-image-') + articleId);
             
             // Ensure we are fetching the SVG source via Proxy to bypass 403 Forbidden
             const svgPath = landscapeUrl.replace(/\.(png|jpg|jpeg)$/i, '.svg');
@@ -287,7 +289,7 @@
             }
 
             overlay.style.display = 'flex';
-            status.innerText = 'กำลังเตรียมรูปภาพ...';
+            status.innerText = isFb ? 'กำลังเตรียมรูปภาพสำหรับ Facebook...' : 'กำลังเตรียมรูปภาพสำหรับ LINE...';
 
             try {
                 const fontRes = await fetch('/fonts/Kanit-700.ttf');
@@ -320,79 +322,6 @@
                 } else if (canvgObj.Canvg && typeof canvgObj.Canvg.fromString === 'function') {
                     const v = await canvgObj.Canvg.fromString(ctx, svgText);
                     await v.render();
-                } else if (typeof canvgObj.fromString === 'function') {
-                    const v = await canvgObj.fromString(ctx, svgText);
-                    await v.render();
-                }
-
-                const pngData = canvas.toDataURL('image/png', 0.9);
-                
-                status.innerText = 'กำลังบันทึกรูป...';
-                const uploadRes = await fetch(uploadUrl, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify({ image: pngData, type: 'landscape' })
-                });
-
-                const uploadJson = await uploadRes.json();
-                if (!uploadJson.success) throw new Error(uploadJson.error || 'Upload failed');
-
-                const imageInput = document.getElementById('share-fb-image-' + articleId);
-                if (imageInput) imageInput.value = uploadJson.path;
-
-                status.innerText = 'สำเร็จ! กำลังไปที่ Facebook...';
-                setTimeout(() => form.submit(), 1000);
-
-            } catch (err) {
-                handleRenderError(err, overlay, reportUrl);
-            }
-        };
-
-        window.shareToLine = async function(button, articleId, landscapeUrl, uploadUrl, reportUrl) {
-            const form = document.getElementById('share-line-form-' + articleId);
-            const imageInput = document.getElementById('share-line-image-' + articleId);
-            
-            // Ensure we are fetching the SVG source via Proxy to bypass 403 Forbidden
-            const svgPath = landscapeUrl.replace(/\.(png|jpg|jpeg)$/i, '.svg');
-            const svgUrl = `{{ route('admin.articles.get-svg-proxy') }}?path=${encodeURIComponent(svgPath)}`;
-            
-            if (!svgUrl || !svgUrl.toLowerCase().includes('.svg')) {
-                form.submit();
-                return;
-            }
-
-            const canvgObj = window.canvg || window.Canvg;
-            if (!canvgObj) {
-                alert('ระบบวาดรูปยังไม่พร้อม กรุณารอ 2 วินาทีแล้วลองใหม่ครับ');
-                return;
-            }
-
-            overlay.style.display = 'flex';
-            status.innerText = 'กำลังเตรียมรูปภาพสำหรับ LINE...';
-
-            try {
-                const fontRes = await fetch('/fonts/Kanit-700.ttf');
-                const fontBlob = await fontRes.blob();
-                const fontBase64 = await new Promise((resolve) => {
-                    const reader = new FileReader();
-                    reader.onloadend = () => resolve(reader.result);
-                    reader.readAsDataURL(fontBlob);
-                });
-
-                const response = await fetch(svgUrl);
-                if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพจาก Server ได้ (SVG Not Found)');
-                let svgText = await response.text();
-
-                const fontStyle = `<style>@font-face { font-family: 'KanitCustom'; src: url("${fontBase64}"); font-weight: 700; }</style>`;
-                svgText = svgText.replace('<defs>', `<defs>${fontStyle}`);
-
-                canvas.width = 1200;
-                canvas.height = 1200;
-                ctx.fillStyle = "black";
-                ctx.fillRect(0, 0, 1200, 1200);
 
                 if (typeof canvgObj === 'function') {
                     await canvgObj(canvas, svgText);
