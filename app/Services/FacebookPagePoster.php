@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Log;
 
 class FacebookPagePoster
 {
-    public function postArticle(Article $article): array
+    public function postArticle(Article $article, ?string $manualImagePath = null): array
     {
         $pageId = config('services.facebook.page_id');
         $accessToken = config('services.facebook.page_access_token');
@@ -27,7 +27,17 @@ class FacebookPagePoster
 
         // Robust Image Path Resolution (Prefer PNG over SVG)
         $imagePath = null;
-        if (!empty($article->cover_image_landscape_path)) {
+        
+        // Use manual image path if provided
+        if ($manualImagePath) {
+            $path = \Illuminate\Support\Facades\Storage::disk('public')->path($manualImagePath);
+            if (file_exists($path) && is_readable($path)) {
+                $imagePath = $path;
+                Log::info("FB Post: Using manual image override: {$imagePath}");
+            }
+        }
+
+        if (!$imagePath && !empty($article->cover_image_landscape_path)) {
             $relPath = $article->cover_image_landscape_path;
             
             // If the path is SVG, try to find a PNG version first

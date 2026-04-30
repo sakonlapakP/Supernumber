@@ -2718,12 +2718,13 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return back()->withErrors(['share_line' => 'ไม่พบข้อมูลหวยที่ตรงกับบทความนี้']);
     })->name('articles.share-line');
 
-    Route::post('/articles/{article}/share-fb', function (Article $article) use ($ensureAdmin) {
+    Route::post('/articles/{article}/share-fb', function (Illuminate\Http\Request $request, Article $article) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
         
-        $res = app(\App\Services\FacebookPagePoster::class)->postArticle($article);
+        $manualImageUrl = $request->input('manual_image_url');
+        $res = app(\App\Services\FacebookPagePoster::class)->postArticle($article, $manualImageUrl);
         
         if ($res['success']) {
             return back()->with('status_message', 'แชร์บทความไปที่ Facebook Page สำเร็จ ✅');

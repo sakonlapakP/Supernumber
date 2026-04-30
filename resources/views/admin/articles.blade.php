@@ -180,6 +180,7 @@
                     </form>
                     <form action="{{ route('admin.articles.share-fb', $article) }}" method="post" style="display: inline;">
                       @csrf
+                      <input type="hidden" name="manual_image_url" id="share-fb-image-{{ $article->id }}">
                       <button type="button" 
                               onclick="shareToFb(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-temp-image') }}', '{{ route('admin.articles.report-render-error', $article) }}')"
                               class="admin-button admin-button--compact" 
@@ -338,6 +339,9 @@
 
                 const uploadJson = await uploadRes.json();
                 if (!uploadJson.success) throw new Error(uploadJson.error || 'Upload failed');
+
+                const imageInput = document.getElementById('share-fb-image-' + articleId);
+                if (imageInput) imageInput.value = uploadJson.path;
 
                 status.innerText = 'สำเร็จ! กำลังไปที่ Facebook...';
                 setTimeout(() => form.submit(), 1000);
