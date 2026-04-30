@@ -73,7 +73,7 @@
                     <form action="{{ route('admin.articles.share-fb', $article) }}" method="post" style="display: inline;">
                       @csrf
                       <button type="button" 
-                              onclick="shareToFb(this, {{ $article->id }}, '{{ $article->cover_image_landscape_path ? Storage::disk('public')->url($article->cover_image_landscape_path) : '' }}', '{{ route('admin.articles.upload-rendered-image', $article) }}')"
+                              onclick="shareToFb(this, {{ $article->id }}, '{{ $article->cover_image_landscape_path ? '/storage/' . $article->cover_image_landscape_path : '' }}', '{{ route('admin.articles.upload-rendered-image', $article) }}')"
                               class="admin-button admin-button--compact" 
                               style="background: #1877F2; color: #fff; border-color: #1877F2;" 
                               title="แชร์ไป Facebook (วาดรูปสวยอัตโนมัติ)">FB</button>
