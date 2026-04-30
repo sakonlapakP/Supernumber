@@ -2528,7 +2528,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return response()->json(['exists' => $exists, 'slug' => $slug]);
     })->name('articles.check-slug');
 
-    Route::get('/articles/auto-gen-lottery', function () use ($ensureAdmin, $resolveArticleImageMeta) {
+    Route::post('/articles/auto-gen-lottery', function () use ($ensureAdmin, $resolveArticleImageMeta) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
