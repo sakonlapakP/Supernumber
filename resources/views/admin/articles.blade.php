@@ -1,71 +1,59 @@
 @extends('layouts.admin')
 
-@section('title', 'Supernumber Admin | บทความ')
-
 @section('content')
-  <div class="admin-page-head">
-    <div>
-      <h1>บทความ</h1>
-      <p class="admin-subtitle">จัดการบทความทั้งหมดแบบลิสต์ พร้อมปุ่มจัดการด้านท้ายแต่ละแถว</p>
-    </div>
-    <div class="admin-page-actions" style="display: flex; gap: 10px;">
-      <a href="{{ route('admin.articles.auto-gen-lottery') }}" class="admin-button" style="background-color: #6366f1; border-color: #6366f1;">🎰 สร้างบทความหวยอัตโนมัติ</a>
-      <a href="{{ route('admin.articles.create') }}" class="admin-button">เพิ่มบทความ</a>
-    </div>
-  </div>
-
-  @if (session('status_message'))
-    <div class="admin-alert admin-alert--success">{{ session('status_message') }}</div>
-  @endif
-
-  @if ($errors->any())
-    <div class="admin-alert admin-alert--error">{{ $errors->first() }}</div>
-  @endif
-
-  <section class="admin-card admin-table-card">
-    <div class="admin-feature-card__head" style="padding: 18px 20px 0;">
-      <div>
-        <h2 class="admin-feature-card__title">รายการบทความ</h2>
-        <p class="admin-feature-card__hint">ลิสต์บทความทั้งหมดพร้อมปุ่มจัดการด้านท้ายแถว</p>
+    <div class="admin-header">
+      <div class="admin-header__title">
+        <h1>บทความ</h1>
+        <p class="admin-muted">จัดการบทความทั้งหมดแบบลิสต์ พร้อมปุ่มจัดการท้ายแต่ละแถว</p>
       </div>
-      <div class="admin-search-shell" style="min-width: 280px;">
-        <input type="text" id="article-search" class="admin-input" placeholder="🔍 ค้นหาหัวข้อบทความ..." />
+      <div class="admin-header__actions">
+        <form action="{{ route('admin.articles.auto-gen-lottery') }}" method="POST" style="display: inline;">
+            @csrf
+            <button type="submit" class="admin-button" style="background: #1e1b4b; border-color: #1e1b4b;">✨ สร้างบทความหวยอัตโนมัติ</button>
+        </form>
+        <a href="{{ route('admin.articles.create') }}" class="admin-button">เพิ่มบทความ</a>
       </div>
     </div>
 
-    <div class="admin-table-wrap admin-table-wrap--articles">
-      <table class="admin-table admin-table--articles">
+    @if (session('status_message'))
+      <div class="admin-alert admin-alert--success">
+        {{ session('status_message') }}
+      </div>
+    @endif
+
+    <div class="admin-card">
+      <div style="padding: 20px; border-bottom: 1px solid #e2e8f0;">
+        <input type="text" id="article-search" placeholder="ค้นหาหัวข้อบทความ..." class="admin-input" style="max-width: 300px;">
+      </div>
+      <table class="admin-table">
         <thead>
           <tr>
-            <th style="width: 80px;">รูปปก</th>
-          <th>หัวข้อ</th>
+            <th>รูปหน้าปก</th>
+            <th>หัวข้อ</th>
             <th>สถานะ</th>
             <th>ยอดวิว</th>
             <th>เวลาเผยแพร่</th>
             <th>จัดการ</th>
           </tr>
         </thead>
-        <tbody id="articles-table-body">
+        <tbody>
           @forelse ($articles as $article)
             <tr class="article-row" data-title="{{ strtolower($article->title) }}" data-slug="{{ strtolower($article->slug) }}">
-            <td style="padding: 12px;">
-              @php
-                $adminThumb = $article->cover_image_path ?: ($article->cover_image_square_path ?: $article->cover_image_landscape_path);
-              @endphp
-              @if ($adminThumb)
-                <img src="{{ asset('storage/' . $adminThumb) }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #e2e8f0; display: block;" alt="" />
-              @else
-                <div style="width: 50px; height: 50px; background: #f1f5f9; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 20px;">🖼️</div>
-              @endif
-            </td>
-            <td>
-              <div style="font-weight: 500; color: #1e293b;">{{ $article->title }}</div>
-              <div style="font-size: 11px; color: #94a3b8; margin-top: 2px;">{{ $article->slug }}</div>
-            </td>
               <td>
-                @if ($article->is_published && $article->published_at && $article->published_at->isFuture())
-                  <span class="admin-status-pill admin-status-pill--hold" style="background-color: #fef08a; color: #854d0e;">ตั้งเวลาล่วงหน้า</span>
-                @elseif ($article->is_published)
+                <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
+                  @if($article->cover_image_path)
+                    <img src="{{ Storage::disk('public')->url($article->cover_image_path) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                  @else
+                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #94a3b8;">🖼️</div>
+                  @endif
+                </div>
+              </td>
+              <td>
+                <div style="font-weight: 600; color: #1e293b; margin-bottom: 4px;">{{ $article->title }}</div>
+                <div class="admin-muted" style="font-size: 12px;">{{ $article->slug }}</div>
+              </td>
+              <td>
+                @if($article->is_published)
                   <span class="admin-status-pill admin-status-pill--active">เผยแพร่แล้ว</span>
                 @else
                   <span class="admin-status-pill admin-status-pill--hold">ฉบับร่าง</span>
@@ -101,11 +89,11 @@
             </tr>
           @empty
             <tr>
-              <td colspan="5" class="admin-muted" style="text-align: center; padding: 40px;">ไม่พบรายการบทความ</td>
+              <td colspan="6" class="admin-muted" style="text-align: center; padding: 40px;">ไม่พบรายการบทความ</td>
             </tr>
           @endforelse
           <tr id="articles-empty-row" style="display: none;">
-            <td colspan="5" class="admin-muted" style="text-align: center; padding: 40px;">ไม่พบผลลัพธ์การค้นหา</td>
+            <td colspan="6" class="admin-muted" style="text-align: center; padding: 40px;">ไม่พบผลลัพธ์การค้นหา</td>
           </tr>
         </tbody>
       </table>
@@ -139,21 +127,18 @@
         @endif
       </nav>
     @endif
-  </section>
+
+    {{-- Client-side Rendering Bridge --}}
+    <canvas id="render-canvas" style="display: none;"></canvas>
+    <div id="render-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 99999; color: white; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
+        <div style="border: 4px solid #f3f3f3; border-top: 4px solid #1877F2; border-radius: 50%; width: 50px; height: 50px; animation: spin_render 1s linear infinite; margin-bottom: 20px;"></div>
+        <div id="render-status" style="font-size: 18px; font-weight: bold;">กำลังวาดรูปหวยให้สวยงาม...</div>
+        <p style="margin-top: 10px; opacity: 0.8;">กรุณารอครู่เดียว ระบบกำลังใช้เบราว์เซอร์ของคุณวาดรูปให้ชัดเป๊ะ</p>
+        <style>@keyframes spin_render { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+    </div>
 @endsection
 
 @push('scripts')
-  </script>
-
-  {{-- Client-side Rendering Bridge --}}
-  <canvas id="render-canvas" style="display: none;"></canvas>
-  <div id="render-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); z-index: 99999; color: white; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
-      <div style="border: 4px solid #f3f3f3; border-top: 4px solid #1877F2; border-radius: 50%; width: 50px; height: 50px; animation: spin_render 1s linear infinite; margin-bottom: 20px;"></div>
-      <div id="render-status" style="font-size: 18px; font-weight: bold;">กำลังวาดรูปหวยให้สวยงาม...</div>
-      <p style="margin-top: 10px; opacity: 0.8;">กรุณารอครู่เดียว ระบบกำลังใช้เบราว์เซอร์ของคุณวาดรูปให้ชัดเป๊ะ</p>
-      <style>@keyframes spin_render { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
-  </div>
-
   <script>
     (function() {
         const overlay = document.getElementById('render-overlay');
@@ -161,30 +146,31 @@
         const canvas = document.getElementById('render-canvas');
         const ctx = canvas.getContext('2d');
 
-        window.shareToFb = async function(button, articleId, landscapePath, uploadUrl) {
+        window.shareToFb = async function(button, articleId, landscapeUrl, uploadUrl) {
             const form = button.closest('form');
             
             // Only render if it's an SVG
-            if (!landscapePath || !landscapePath.toLowerCase().endsWith('.svg')) {
+            if (!landscapeUrl || !landscapeUrl.toLowerCase().includes('.svg')) {
                 form.submit();
                 return;
             }
 
             overlay.style.display = 'flex';
-            status.innerText = 'กำลังดึงข้อมูล SVG...';
+            status.innerText = 'กำลังเตรียมการวาดรูป...';
 
             try {
-                // 1. Fetch SVG content
-                const response = await fetch(landscapePath);
-                if (!response.ok) throw new Error('ไม่สามารถดึงไฟล์รูปภาพต้นฉบับได้');
+                // 1. Fetch SVG content directly
+                status.innerText = 'กำลังดึงข้อมูลต้นฉบับ...';
+                const response = await fetch(landscapeUrl);
+                if (!response.ok) throw new Error('ไม่สามารถเข้าถึงไฟล์รูปภาพได้ (404/CORS)');
                 let svgText = await response.text();
 
-                // 2. Render to PNG (Landscape 1200x630 for FB)
-                status.innerText = 'กำลังวาดรูปความละเอียดสูง (1200x630)...';
+                // 2. Render to PNG
+                status.innerText = 'กำลังประมวลผลรูปภาพ (1200x630)...';
                 const pngData = await renderSvgToPng(svgText, 1200, 630);
                 
                 // 3. Upload PNG back to Server
-                status.innerText = 'กำลังส่งรูปกลับไปที่ Server...';
+                status.innerText = 'กำลังบันทึกรูปภาพลง Server...';
                 const uploadRes = await fetch(uploadUrl, {
                     method: 'POST',
                     headers: {
@@ -200,12 +186,13 @@
                 const uploadJson = await uploadRes.json();
                 if (!uploadJson.success) throw new Error(uploadJson.error || 'Upload failed');
 
-                status.innerText = 'วาดรูปสำเร็จ! กำลังส่งไป Facebook...';
-                setTimeout(() => form.submit(), 800);
+                status.innerText = 'วาดรูปสำเร็จ! กำลังไปที่ Facebook...';
+                setTimeout(() => form.submit(), 1000);
 
             } catch (err) {
                 console.error('Render error:', err);
-                alert('การวาดรูปอัตโนมัติขัดข้อง: ' + err.message + '\nระบบจะแชร์แบบปกติให้ครับ');
+                overlay.style.display = 'none';
+                alert('การวาดรูปขัดข้อง: ' + err.message + '\nระบบจะแชร์แบบปกติให้ครับ');
                 form.submit();
             }
         };
@@ -213,40 +200,38 @@
         function renderSvgToPng(svgText, width, height) {
             return new Promise((resolve, reject) => {
                 const img = new Image();
-                // Ensure SVG has proper dimensions for rendering
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(svgText, 'image/svg+xml');
-                const svgEl = doc.querySelector('svg');
-                svgEl.setAttribute('width', width);
-                svgEl.setAttribute('height', height);
-                const updatedSvg = new XMLSerializer().serializeToString(doc);
+                
+                // Prepare SVG text: Ensure it has dimensions and strip problematic external fonts for rendering
+                // Note: We strip external fonts ONLY for the PNG generation to avoid browser security blocks
+                let processedSvg = svgText
+                    .replace(/<svg/, `<svg width="${width}" height="${height}"`)
+                    .replace(/@import url\(['"]https:\/\/fonts\.googleapis\.com\/css2.*?['"]\);/g, '');
 
-                const svgBlob = new Blob([updatedSvg], {type: 'image/svg+xml;charset=utf-8'});
-                const url = URL.createObjectURL(svgBlob);
+                const svgBase64 = btoa(unescape(encodeURIComponent(processedSvg)));
+                const dataUrl = 'data:image/svg+xml;base64,' + svgBase64;
                 
                 img.onload = function() {
                     canvas.width = width;
                     canvas.height = height;
                     ctx.clearRect(0, 0, width, height);
                     
-                    // Fill white background just in case
-                    ctx.fillStyle = "white";
+                    // Background
+                    ctx.fillStyle = "black";
                     ctx.fillRect(0, 0, width, height);
                     
                     ctx.drawImage(img, 0, 0, width, height);
-                    URL.revokeObjectURL(url);
-                    resolve(canvas.toDataURL('image/png', 1.0));
+                    resolve(canvas.toDataURL('image/png', 0.9));
                 };
                 
-                img.onerror = function(e) {
-                    URL.revokeObjectURL(url);
-                    reject(new Error('เบราว์เซอร์ไม่สามารถประมวลผล SVG ได้'));
+                img.onerror = function() {
+                    reject(new Error('เบราว์เซอร์ปฏิเสธการประมวลผลไฟล์นี้'));
                 };
                 
-                img.src = url;
+                img.src = dataUrl;
             });
         }
     })();
+
     (() => {
       const searchInput = document.getElementById("article-search");
       const rows = Array.from(document.querySelectorAll(".article-row"));
