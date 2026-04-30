@@ -95,8 +95,6 @@ class FetchLatestLotteryCommand extends Command
             
             DB::commit();
 
-            $this->notifyLineWhenCompleted($result, $wasAlreadyComplete);
-            $this->notifyFacebookWhenCompleted($article, $result, $wasAlreadyComplete);
 
             $this->info("Successfully processed lottery for " . $targetDate->toDateString());
             return self::SUCCESS;
@@ -160,25 +158,7 @@ class FetchLatestLotteryCommand extends Command
         );
     }
 
-    private function notifyLineWhenCompleted(LotteryResult $result, bool $wasAlreadyComplete): void
-    {
-        if ($wasAlreadyComplete || !$result->is_complete) return;
-        try {
-            app(LineLotteryNotifier::class)->sendCompleted($result);
-        } catch (\Throwable $exception) {
-            Log::warning('Lottery LINE notification failed: '.$exception->getMessage());
-        }
-    }
 
-    private function notifyFacebookWhenCompleted(?Article $article, LotteryResult $result, bool $wasAlreadyComplete): void
-    {
-        if ($article === null || $wasAlreadyComplete || !$result->is_complete) return;
-        try {
-            app(FacebookPagePoster::class)->postArticle($article);
-        } catch (\Throwable $exception) {
-            Log::warning('Lottery Facebook notification failed: '.$exception->getMessage());
-        }
-    }
 
     private function syncLotteryArticleCover(LotteryResult $result, Carbon $now): ?Article
     {
