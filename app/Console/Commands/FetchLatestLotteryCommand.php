@@ -436,9 +436,9 @@ SVG;
     <text x="600" y="630" font-family="Kanit" font-size="187" font-weight="700" fill="#2a1a10" text-anchor="middle" letter-spacing="15">$p1</text>
 
     <!-- Small Prize Labels -->
-    <text x="250" y="770" font-family="Kanit" font-size="30" font-weight="700" fill="#ffffff" text-anchor="middle">เลขหน้า 3 ตัว</text>
-    <text x="600" y="770" font-family="Kanit" font-size="30" font-weight="700" fill="#ffffff" text-anchor="middle">เลขท้าย 3 ตัว</text>
-    <text x="950" y="770" font-family="Kanit" font-size="30" font-weight="700" fill="#ffffff" text-anchor="middle">เลขท้าย 2 ตัว</text>
+    <text x="250" y="795" font-family="Kanit" font-size="30" font-weight="700" fill="#ffffff" text-anchor="middle">เลขหน้า 3 ตัว</text>
+    <text x="600" y="795" font-family="Kanit" font-size="30" font-weight="700" fill="#ffffff" text-anchor="middle">เลขท้าย 3 ตัว</text>
+    <text x="950" y="795" font-family="Kanit" font-size="30" font-weight="700" fill="#ffffff" text-anchor="middle">เลขท้าย 2 ตัว</text>
 
     <!-- Small Panels -->
     <rect x="80" y="805" width="337" height="120" rx="10" fill="#fffaf0" />
