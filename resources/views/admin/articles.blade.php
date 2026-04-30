@@ -178,8 +178,9 @@
                               onclick="shareToLine(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-temp-image') }}', '{{ route('admin.articles.report-render-error', $article) }}')"
                               class="admin-button admin-button--compact" style="background: #06C755; border-color: #06C755; color: white;">LINE</button>
                     </form>
-                    <form action="{{ route('admin.articles.share-fb', $article) }}" method="post" style="display: inline;">
+                    <form id="share-fb-form-{{ $article->id }}" action="{{ route('admin.articles.share-fb', $article) }}" method="post" style="display: inline;">
                       @csrf
+                      <input type="hidden" name="manual_image_url" id="share-fb-image-{{ $article->id }}">
                       <button type="button" 
                               onclick="shareToFb(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-temp-image') }}', '{{ route('admin.articles.report-render-error', $article) }}')"
                               class="admin-button admin-button--compact" 
@@ -353,10 +354,13 @@
          * ฟังก์ชันแชร์ไป Facebook (เรียกใช้ตัวกลาง)
          */
         window.shareToFb = async function(button, articleId, landscapeUrl, uploadUrl, reportUrl) {
-            const form = button.closest('form');
+            const form = document.getElementById('share-fb-form-' + articleId);
+            const imageInput = document.getElementById('share-fb-image-' + articleId);
+            
             const result = await renderAndUploadPremiumImage(landscapeUrl, uploadUrl, 'กำลังเตรียมรูปภาพสำหรับ Facebook...', reportUrl);
             
             if (result) {
+                imageInput.value = result.path;
                 status.innerText = 'สำเร็จ! กำลังไปที่ Facebook...';
                 setTimeout(() => form.submit(), 1000);
             } else {

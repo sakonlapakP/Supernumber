@@ -8,7 +8,12 @@ use Illuminate\Support\Facades\Log;
 
 class FacebookPagePoster
 {
-    public function postArticle(Article $article): array
+    /**
+     * โพสต์บทความหวยลง Facebook Page
+     * @param Article $article ข้อมูลบทความ
+     * @param string|null $manualImageUrl URL รูปภาพพรีเมียมที่วาดจากเบราว์เซอร์ (ถ้ามี)
+     */
+    public function postArticle(Article $article, ?string $manualImageUrl = null): array
     {
         $pageId = config('services.facebook.page_id');
         $accessToken = config('services.facebook.page_access_token');
@@ -27,7 +32,20 @@ class FacebookPagePoster
 
         // --- ส่วนการจัดการรูปภาพสำหรับโพสต์ Facebook ---
         $imagePath = null;
-        if (!empty($article->cover_image_landscape_path)) {
+
+        // กรณีที่ 1: มีรูปพรีเมียมจากเบราว์เซอร์ (Manual)
+        if (!empty($manualImageUrl)) {
+            // ดึงชื่อไฟล์จาก URL (เช่น temp_render_123.png)
+            $tempFilename = basename($manualImageUrl);
+            $localTempPath = \Illuminate\Support\Facades\Storage::disk('public')->path('temp_lottery/' . $tempFilename);
+            
+            if (file_exists($localTempPath) && is_readable($localTempPath)) {
+                $imagePath = $localTempPath;
+            }
+        }
+
+        // กรณีที่ 2: ใช้รูปปกติจากระบบ (ถ้าไม่มีรูปพรีเมียมหรือรูปพรีเมียมหาไฟล์ไม่เจอ)
+        if (!$imagePath && !empty($article->cover_image_landscape_path)) {
             $relPath = $article->cover_image_landscape_path;
             
             // 1. ตรวจสอบไฟล์: ถ้าเป็นไฟล์ SVG ให้พยายามหาไฟล์ PNG ชื่อเดียวกันก่อน

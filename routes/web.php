@@ -2725,7 +2725,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             return $redirect;
         }
         
-        $res = app(\App\Services\FacebookPagePoster::class)->postArticle($article);
+        $res = app(\App\Services\FacebookPagePoster::class)->postArticle($article, request('manual_image_url'));
         
         if ($res['success']) {
             return back()->with('status_message', 'แชร์บทความไปที่ Facebook Page สำเร็จ ✅');
