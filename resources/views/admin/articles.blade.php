@@ -247,11 +247,11 @@
           @keyframes spin_render { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
           
           @font-face {
-              font-family: 'Kanit';
+              font-family: 'KanitCustom';
               src: url('/fonts/Kanit-700.ttf') format('truetype');
               font-weight: 700;
           }
-          .font-loader { font-family: 'Kanit'; position: absolute; visibility: hidden; opacity: 0; }
+          .font-loader { font-family: 'KanitCustom'; position: absolute; visibility: hidden; opacity: 0; }
       </style>
       <div class="font-loader">Force Load Kanit</div>
     </div>
@@ -300,7 +300,7 @@
                 if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพจาก Server ได้ (SVG Not Found)');
                 let svgText = await response.text();
 
-                const fontStyle = `<style>@font-face { font-family: 'Kanit'; src: url("${fontBase64}"); font-weight: 700; }</style>`;
+                const fontStyle = `<style>@font-face { font-family: 'Kanit'; src: url("${fontBase64}"); font-weight: 700; } @font-face { font-family: 'KanitCustom'; src: url("${fontBase64}"); font-weight: 700; }</style>`;
                 svgText = svgText.replace('<defs>', `<defs>${fontStyle}`);
 
                 status.innerText = 'กำลังวาดรูปจัตุรัสพรีเมียม...';
@@ -377,7 +377,7 @@
                 if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพจาก Server ได้ (SVG Not Found)');
                 let svgText = await response.text();
 
-                const fontStyle = `<style>@font-face { font-family: 'Kanit'; src: url("${fontBase64}"); font-weight: 700; }</style>`;
+                const fontStyle = `<style>@font-face { font-family: 'KanitCustom'; src: url("${fontBase64}"); font-weight: 700; }</style>`;
                 svgText = svgText.replace('<defs>', `<defs>${fontStyle}`);
 
                 canvas.width = 1200;
