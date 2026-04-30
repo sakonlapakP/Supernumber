@@ -227,7 +227,7 @@ class FetchLatestLotteryCommand extends Command
         $this->info("Synced lottery article: {$articleName}");
 
         try {
-            app(LineLotteryNotifier::class)->notifyAdminArticleReady($article);
+            app(LineLotteryNotifier::class)->notifyAdminArticleReady($article, $drawDate);
         } catch (\Throwable $e) {
             Log::error("Failed to send admin article notification: " . $e->getMessage());
         }

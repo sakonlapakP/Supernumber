@@ -37,24 +37,16 @@ class LineLotteryNotifier
     }
 
     /**
-     * แจ้งเตือนแอดมินพร้อมลิงก์ทางลัด (One-Click Shortcut)
+     * แจ้งเตือนแอดมินพร้อมลิงก์ทางลัดไปยังหน้ารายการบทความ
      */
-    public function notifyAdminArticleReady(Article $article): ?LineNotificationLog
+    public function notifyAdminArticleReady(Article $article, ?Carbon $drawDate = null): ?LineNotificationLog
     {
-        $drawDate = $article->lottery_draw_date ? $article->lottery_draw_date->format('d/m/Y') : '-';
-        
-        // สร้างลิงก์พิเศษพ่วงคำสั่ง Auto-Trigger
-        $adminBaseUrl = route('admin.articles');
-        $fbUrl = "{$adminBaseUrl}?auto_share=fb&article_id={$article->id}";
-        $lineUrl = "{$adminBaseUrl}?auto_share=line&article_id={$article->id}";
-        $viewUrl = route('articles.show', ['slug' => $article->slug]);
+        $dateLabel = ($drawDate ?? now())->format('d/m/Y');
+        $adminUrl = route('admin.articles');
 
         $msg = "📝 [ระบบบทความหวยอัตโนมัติ]\n";
-        $msg .= "บทความงวดวันที่ {$drawDate} เผยแพร่แล้ว!\n\n";
-        $msg .= "เชิญแอดมินเลือกดำเนินการ:\n";
-        $msg .= "🔵 แชร์ FB พรีเมียม: {$fbUrl}\n";
-        $msg .= "🟢 บรอดแคสต์ LINE: {$lineUrl}\n\n";
-        $msg .= "🌐 ดูหน้าเว็บ: {$viewUrl}";
+        $msg .= "บทความงวดวันที่ {$dateLabel} เผยแพร่แล้ว!\n\n";
+        $msg .= "🔵 แชร์ FB พรีเมียม: {$adminUrl}";
 
         return $this->lineNotifier->queueText(
             eventType: 'admin_article_ready',
