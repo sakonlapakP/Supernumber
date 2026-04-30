@@ -427,37 +427,37 @@ SVG;
     <text x="600" y="152" font-family="'Times New Roman', serif" font-size="82" font-weight="900" fill="#f5c76d" text-anchor="middle">S</text>
     <text x="600" y="215" font-family="Kanit" font-size="28" font-weight="900" fill="#f7d58f" text-anchor="middle" letter-spacing="6">SUPERNUMBER</text>
 
-    <text x="600" y="280" font-family="Kanit" font-size="64" font-weight="900" fill="#ffffff" text-anchor="middle">ผลสลากกินแบ่งรัฐบาล</text>
-    <text x="600" y="340" font-family="Kanit" font-size="34" font-weight="900" fill="#f7d58f" text-anchor="middle">งวดประจำวันที่ $thaiDate</text>
+    <text x="600" y="280" font-family="Kanit" font-size="60" font-weight="700" fill="#ffffff" text-anchor="middle">ผลสลากกินแบ่งรัฐบาล</text>
+    <text x="600" y="340" font-family="Kanit" font-size="32" font-weight="700" fill="#f7d58f" text-anchor="middle">งวดประจำวันที่ $thaiDate</text>
 
     <!-- Main Prize Panel -->
     <rect x="100" y="380" width="1000" height="340" rx="15" fill="#fffaf0" />
-    <text x="600" y="460" font-family="Kanit" font-size="64" font-weight="900" fill="#2a1a10" text-anchor="middle">รางวัลที่ 1</text>
-    <text x="600" y="640" font-family="Kanit" font-size="230" font-weight="900" fill="#2a1a10" text-anchor="middle" letter-spacing="15">$p1</text>
+    <text x="600" y="460" font-family="Kanit" font-size="60" font-weight="700" fill="#2a1a10" text-anchor="middle">รางวัลที่ 1</text>
+    <text x="600" y="640" font-family="Kanit" font-size="220" font-weight="700" fill="#2a1a10" text-anchor="middle" letter-spacing="15">$p1</text>
 
     <!-- Small Prize Labels -->
-    <text x="250" y="770" font-family="Kanit" font-size="32" font-weight="900" fill="#ffffff" text-anchor="middle">เลขหน้า 3 ตัว</text>
-    <text x="600" y="770" font-family="Kanit" font-size="32" font-weight="900" fill="#ffffff" text-anchor="middle">เลขท้าย 3 ตัว</text>
-    <text x="950" y="770" font-family="Kanit" font-size="32" font-weight="900" fill="#ffffff" text-anchor="middle">เลขท้าย 2 ตัว</text>
+    <text x="250" y="770" font-family="Kanit" font-size="30" font-weight="700" fill="#ffffff" text-anchor="middle">เลขหน้า 3 ตัว</text>
+    <text x="600" y="770" font-family="Kanit" font-size="30" font-weight="700" fill="#ffffff" text-anchor="middle">เลขท้าย 3 ตัว</text>
+    <text x="950" y="770" font-family="Kanit" font-size="30" font-weight="700" fill="#ffffff" text-anchor="middle">เลขท้าย 2 ตัว</text>
 
     <!-- Small Panels -->
     <rect x="80" y="805" width="337" height="120" rx="10" fill="#fffaf0" />
     <rect x="80" y="940" width="337" height="120" rx="10" fill="#fffaf0" />
-    <text x="250" y="895" font-family="Kanit" font-size="96" font-weight="900" fill="#2a1a10" text-anchor="middle">$f3_1</text>
-    <text x="250" y="1030" font-family="Kanit" font-size="96" font-weight="900" fill="#2a1a10" text-anchor="middle">$f3_2</text>
+    <text x="250" y="895" font-family="Kanit" font-size="90" font-weight="700" fill="#2a1a10" text-anchor="middle">$f3_1</text>
+    <text x="250" y="1030" font-family="Kanit" font-size="90" font-weight="700" fill="#2a1a10" text-anchor="middle">$f3_2</text>
 
     <rect x="431" y="805" width="337" height="120" rx="10" fill="#fffaf0" />
     <rect x="431" y="940" width="337" height="120" rx="10" fill="#fffaf0" />
-    <text x="600" y="895" font-family="Kanit" font-size="96" font-weight="900" fill="#2a1a10" text-anchor="middle">$l3_1</text>
-    <text x="600" y="1030" font-family="Kanit" font-size="96" font-weight="900" fill="#2a1a10" text-anchor="middle">$l3_2</text>
+    <text x="600" y="895" font-family="Kanit" font-size="90" font-weight="700" fill="#2a1a10" text-anchor="middle">$l3_1</text>
+    <text x="600" y="1030" font-family="Kanit" font-size="90" font-weight="700" fill="#2a1a10" text-anchor="middle">$l3_2</text>
 
     <rect x="783" y="805" width="337" height="255" rx="10" fill="#fffaf0" />
-    <text x="950" y="975" font-family="Kanit" font-size="160" font-weight="900" fill="#2a1a10" text-anchor="middle">$l2</text>
+    <text x="950" y="975" font-family="Kanit" font-size="150" font-weight="700" fill="#2a1a10" text-anchor="middle">$l2</text>
 
     <!-- Footer -->
     <rect x="450" y="1090" width="300" height="42" fill="#1a0f08" />
-    <text x="600" y="1121" font-family="Kanit" font-size="32" font-weight="900" fill="#fff6e4" text-anchor="middle">SUPERNUMBER.CO.TH</text>
-    <text x="600" y="1165" font-family="Kanit" font-size="22" font-weight="900" fill="#f5e4c4" text-anchor="middle">Web : www.supernumber.co.th Tel : 0963232656, 0963232665 Line : @supernumber</text>
+    <text x="600" y="1121" font-family="Kanit" font-size="32" font-weight="700" fill="#fff6e4" text-anchor="middle">SUPERNUMBER.CO.TH</text>
+    <text x="600" y="1165" font-family="Kanit" font-size="22" font-weight="700" fill="#f5e4c4" text-anchor="middle">Web : www.supernumber.co.th Tel : 0963232656, 0963232665 Line : @supernumber</text>
 </svg>
 SVG;
     }
