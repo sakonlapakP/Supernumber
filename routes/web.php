@@ -2654,6 +2654,36 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return response()->json(['success' => true]);
     })->name('articles.report-render-error');
 
+    Route::post('/articles/{article}/share-line', function (\App\Models\Article $article) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) return $redirect;
+        
+        // Find lottery result by published_at date or slug pattern
+        $date = $article->published_at ? $article->published_at->toDateString() : null;
+        $lotteryResult = null;
+        
+        if ($date) {
+            $lotteryResult = \App\Models\LotteryResult::where('draw_date', $date)->first();
+        }
+        
+        if (!$lotteryResult) {
+            // Try matching by year/month from slug if possible
+            // thai-government-lottery-202604first
+            if (preg_match('/(\d{4})(\d{2})/', $article->slug, $matches)) {
+                $yearMonth = $matches[1] . '-' . $matches[2];
+                $lotteryResult = \App\Models\LotteryResult::where('draw_date', 'like', $yearMonth . '%')
+                    ->orderBy('draw_date', 'desc')
+                    ->first();
+            }
+        }
+
+        if ($lotteryResult) {
+            app(\App\Services\LineLotteryNotifier::class)->sendCompleted($lotteryResult);
+            return back()->with('success', 'ส่งข้อมูลเข้า LINE เรียบร้อยแล้ว');
+        }
+
+        return back()->with('error', 'ไม่พบข้อมูลหวยที่เกี่ยวข้องกับบทความนี้');
+    })->name('articles.share-line');
+
     Route::post('/articles/{article}/share-fb', function (Article $article) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;

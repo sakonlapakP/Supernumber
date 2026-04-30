@@ -70,6 +70,10 @@
                   <a href="{{ route('admin.articles.preview', $article) }}" target="_blank" class="admin-button admin-button--muted admin-button--compact" title="ดูตัวอย่าง">ดู</a>
                   <a href="{{ route('admin.articles.edit', $article) }}" class="admin-button admin-button--muted admin-button--compact">แก้ไข</a>
                   @if($article->is_published)
+                    <form action="{{ route('admin.articles.share-line', $article) }}" method="post" style="display: inline;">
+                      @csrf
+                      <button type="submit" class="admin-button admin-button--compact" style="background: #06C755; color: #fff; border-color: #06C755;" title="แชร์ไป LINE Group">LINE</button>
+                    </form>
                     <form action="{{ route('admin.articles.share-fb', $article) }}" method="post" style="display: inline;">
                       @csrf
                       <button type="button" 
