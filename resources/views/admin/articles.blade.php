@@ -301,7 +301,10 @@
                 if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพจาก Server ได้ (SVG Not Found)');
                 let svgText = await response.text();
 
-                const fontStyle = `<style>@font-face { font-family: 'Kanit'; src: url("${fontBase64}"); font-weight: 700; } @font-face { font-family: 'KanitCustom'; src: url("${fontBase64}"); font-weight: 700; }</style>`;
+                // Clean up old styles to prevent conflicts
+                svgText = svgText.replace(/<style[\s\S]*?>[\s\S]*?<\/style>/gi, '');
+
+                const fontStyle = `<style>@font-face { font-family: 'Kanit'; src: url("${fontBase64}"); font-weight: 700; } @font-face { font-family: 'KanitCustom'; src: url("${fontBase64}"); font-weight: 700; } text { font-family: 'KanitCustom', 'Kanit', sans-serif !important; }</style>`;
                 svgText = svgText.replace('<defs>', `<defs>${fontStyle}`);
 
                 status.innerText = 'กำลังวาดรูปจัตุรัสพรีเมียม...';
