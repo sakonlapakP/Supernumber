@@ -219,8 +219,25 @@ class FetchLatestLotteryCommand extends Command
         $landscapeSvgContents = $this->buildLotteryLandscapeSvg($result);
         Storage::disk('public')->put($landscapeSvgFilename, $landscapeSvgContents);
 
-        $article->cover_image_square_path = $squareSvgFilename;
-        $article->cover_image_path = $squareSvgFilename;
+        // Generate and save PNG version for social media sharing
+        try {
+            $imageService = app(\App\Services\LineLotteryImageService::class);
+            $pngBinary = $imageService->renderFallbackPng($result);
+            if ($pngBinary) {
+                Storage::disk('public')->put($squareFilename, $pngBinary);
+                $article->cover_image_path = $squareFilename;
+                $article->cover_image_square_path = $squareFilename;
+                $this->info("Generated PNG cover: {$squareFilename}");
+            } else {
+                $article->cover_image_path = $squareSvgFilename;
+                $article->cover_image_square_path = $squareSvgFilename;
+            }
+        } catch (\Throwable $e) {
+            Log::error("Failed to generate PNG lottery image: " . $e->getMessage());
+            $article->cover_image_path = $squareSvgFilename;
+            $article->cover_image_square_path = $squareSvgFilename;
+        }
+
         $article->cover_image_landscape_path = $landscapeSvgFilename;
 
         $article->save();

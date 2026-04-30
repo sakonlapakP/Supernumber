@@ -160,7 +160,9 @@ class LineLotteryImageService
             $footerBg = imagecolorallocate($image, 34, 20, 12);
 
             imagerectangle($image, 6, 6, $width - 7, $height - 7, $goldDark);
+            imagerectangle($image, 7, 7, $width - 8, $height - 8, $goldDark);
             imagerectangle($image, 38, 38, $width - 39, $height - 39, $goldDark);
+            imagerectangle($image, 39, 39, $width - 40, $height - 40, $goldDark);
             imageline($image, 965, 0, 860, 520, imagecolorallocatealpha($image, 140, 103, 55, 64));
 
             $this->drawTopBrand($image, $gold, $goldDark);
@@ -189,10 +191,12 @@ class LineLotteryImageService
             $this->drawCenteredTextWithOutline($image, 'ผลสลากกินแบ่งรัฐบาล', $this->fontPath('Kanit-700.ttf'), 60, 600, 308, $white, $outline, 4);
             $this->drawCenteredTextWithOutline($image, 'งวดประจำวันที่ '.$thaiDate, $this->fontPath('Kanit-700.ttf'), 34, 600, 388, $muted, $outline, 3);
 
+            // Shadow for Prize 1 Panel
+            imagefilledrectangle($image, 75, 405, 1135, 607, imagecolorallocatealpha($image, 0, 0, 0, 80));
             imagefilledrectangle($image, 70, 400, 1130, 602, $panel);
             imagerectangle($image, 70, 400, 1130, 602, $goldDark);
             $this->drawCenteredText($image, 'รางวัลที่ 1', $this->fontPath('Kanit-700.ttf'), 46, 600, 458, $panelDark);
-            $this->drawCenteredText($image, $firstPrize, $this->fontPath('Kanit-700.ttf'), 110, 600, 572, $panelDark);
+            $this->drawCenteredText($image, $firstPrize, $this->fontPath('Kanit-700.ttf'), 124, 600, 580, $panelDark);
 
             $nearFirstText = $nearFirst !== [] ? implode(', ', $nearFirst) : '-';
             $this->drawCenteredText($image, 'ข้างเคียงรางวัลที่ 1 : '.$nearFirstText, $this->fontPath('Kanit-600.ttf'), 20, 600, 666, $muted);
@@ -247,11 +251,11 @@ class LineLotteryImageService
         imagerectangle($image, 548, 78, 652, 182, $gold);
         imagerectangle($image, 549, 79, 651, 181, $goldDark);
 
-        $brandBg = imagecolorallocate($image, 42, 26, 16);
+        $brandBg = imagecolorallocate($image, 26, 18, 12);
         imagefilledrectangle($image, 550, 80, 650, 180, $brandBg);
 
-        $this->drawCenteredText($image, 'S', $this->fontPath('Kanit-700.ttf'), 50, 600, 150, $gold);
-        $this->drawCenteredText($image, 'SUPERNUMBER', $this->fontPath('Kanit-700.ttf'), 18, 600, 212, $gold);
+        $this->drawCenteredText($image, 'S', $this->fontPath('Kanit-700.ttf'), 54, 600, 155, $gold);
+        $this->drawCenteredText($image, 'SUPERNUMBER', $this->fontPath('Kanit-700.ttf'), 20, 600, 215, $gold);
     }
 
     private function drawDoubleNumberPanel($image, int $x, int $y, int $width, int $boxHeight, string $top, string $bottom, int $panelColor, int $borderColor, int $textColor): void
