@@ -175,7 +175,7 @@
                       @csrf
                       <input type="hidden" name="manual_image_url" id="share-line-image-{{ $article->id }}">
                       <button type="button" 
-                              onclick="shareToLine(this, '{{ $article->id }}', '{{ $article->cover_image_landscape_path ? Storage::disk('public')->url($article->cover_image_landscape_path) : '' }}', '{{ route('admin.articles.upload-temp-image') }}', '{{ route('admin.articles.report-render-error', $article) }}')"
+                              onclick="shareToLine(this, '{{ $article->id }}', '{{ $article->cover_image_square_path ? Storage::disk('public')->url($article->cover_image_square_path) : '' }}', '{{ route('admin.articles.upload-temp-image') }}', '{{ route('admin.articles.report-render-error', $article) }}')"
                               class="admin-button admin-button--compact" style="background: #06C755; border-color: #06C755; color: white;">LINE</button>
                     </form>
                     <form action="{{ route('admin.articles.share-fb', $article) }}" method="post" style="display: inline;">
