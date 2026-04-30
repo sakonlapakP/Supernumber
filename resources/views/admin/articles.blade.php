@@ -322,30 +322,34 @@
                 } else if (canvgObj.Canvg && typeof canvgObj.Canvg.fromString === 'function') {
                     const v = await canvgObj.Canvg.fromString(ctx, svgText);
                     await v.render();
-
-                if (typeof canvgObj === 'function') {
-                    await canvgObj(canvas, svgText);
-                } else {
-                    const v = await canvgObj.Canvg.fromString(ctx, svgText);
+                } else if (typeof canvgObj.fromString === 'function') {
+                    const v = await canvgObj.fromString(ctx, svgText);
                     await v.render();
+                } else {
+                    // Fallback for newer Canvg versions
+                    const v = canvgObj.Canvg ? await canvgObj.Canvg.fromCanvas(ctx, svgText) : null;
+                    if (v) await v.render();
+                    else throw new Error('ไม่สามารถเริ่มต้นระบบวาดรูปได้ (Canvg Engine Not Found)');
                 }
 
                 const pngData = canvas.toDataURL('image/png', 0.9);
                 
-                status.innerText = 'กำลังส่งรูปพรีเมียมเข้ากลุ่ม LINE...';
+                status.innerText = 'กำลังส่งรูปพรีเมียม...';
                 const uploadRes = await fetch(uploadUrl, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({ image: pngData, type: 'landscape' })
+                    body: JSON.stringify({ image: pngData, type: type })
                 });
 
                 const uploadJson = await uploadRes.json();
                 if (!uploadJson.success) throw new Error(uploadJson.error || 'Upload failed');
 
-                imageInput.value = uploadJson.path;
+                if (imageInput) imageInput.value = uploadJson.path;
+
+                status.innerText = isFb ? 'สำเร็จ! กำลังไปที่ Facebook...' : 'สำเร็จ! กำลังส่งรูปเข้ากลุ่ม LINE...';
                 setTimeout(() => form.submit(), 1000);
 
             } catch (err) {
