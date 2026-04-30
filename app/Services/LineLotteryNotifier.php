@@ -45,8 +45,8 @@ class LineLotteryNotifier
         $adminUrl = route('admin.articles');
 
         $msg = "📝 [ระบบบทความหวยอัตโนมัติ]\n";
-        $msg .= "บทความงวดวันที่ {$dateLabel} เผยแพร่แล้ว!\n\n";
-        $msg .= "🔵 แชร์ FB พรีเมียม: {$adminUrl}";
+        $msg .= "หวยงวดประจำวันที่ {$dateLabel} เผยแพร่แล้ว Admin กรุณาเข้าสู่ระบบเพื่อแชร์ไปยังแพลตฟอร์มต่างๆ\n\n";
+        $msg .= $adminUrl;
 
         return $this->lineNotifier->queueText(
             eventType: 'admin_article_ready',
