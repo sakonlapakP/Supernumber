@@ -278,6 +278,14 @@ class FetchLatestLotteryCommand extends Command
 
         $article->save();
         $this->info("Synced lottery article: {$articleName}");
+
+        // --- เพิ่มการแจ้งเตือนแอดมินพร้อมลิงก์ทางลัด ---
+        try {
+            app(LineLotteryNotifier::class)->notifyAdminArticleReady($article);
+            $this->info("Sent admin shortcuts for article: {$articleName}");
+        } catch (\Throwable $e) {
+            Log::error("Failed to send admin article notification: " . $e->getMessage());
+        }
         
         return $article;
     }

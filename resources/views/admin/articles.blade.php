@@ -175,6 +175,7 @@
                       @csrf
                       <input type="hidden" name="manual_image_url" id="share-line-image-{{ $article->id }}">
                       <button type="button" 
+                              id="btn-share-line-{{ $article->id }}"
                               onclick="shareToLine(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-temp-image') }}', '{{ route('admin.articles.report-render-error', $article) }}')"
                               class="admin-button admin-button--compact" style="background: #06C755; border-color: #06C755; color: white;">LINE</button>
                     </form>
@@ -182,6 +183,7 @@
                       @csrf
                       <input type="hidden" name="manual_image_url" id="share-fb-image-{{ $article->id }}">
                       <button type="button" 
+                              id="btn-share-fb-{{ $article->id }}"
                               onclick="shareToFb(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-temp-image') }}', '{{ route('admin.articles.report-render-error', $article) }}')"
                               class="admin-button admin-button--compact" 
                               style="background: #1877F2; color: #fff; border-color: #1877F2;" 
@@ -402,6 +404,27 @@
                 });
             }
         }
+
+        /**
+         * ระบบ Auto-Trigger: ตรวจสอบคำสั่งจาก URL เพื่อกดปุ่มแชร์อัตโนมัติ
+         * ตัวอย่างลิงก์: .../admin/articles?auto_share=fb&article_id=123
+         */
+        window.addEventListener('load', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            const autoShare = urlParams.get('auto_share'); // 'fb' หรือ 'line'
+            const articleId = urlParams.get('article_id');
+
+            if (autoShare && articleId) {
+                const buttonId = autoShare === 'fb' ? `btn-share-fb-${articleId}` : `btn-share-line-${articleId}`;
+                const button = document.getElementById(buttonId);
+                
+                if (button) {
+                    console.log(`Auto-triggering ${autoShare} share for article ${articleId}`);
+                    // หน่วงเวลาเล็กน้อยเพื่อให้ระบบ Canvg พร้อมทำงาน
+                    setTimeout(() => button.click(), 1500);
+                }
+            }
+        });
     })();
 
     (() => {

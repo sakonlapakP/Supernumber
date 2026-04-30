@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Article;
 use App\Models\LineNotificationLog;
 use App\Models\LotteryResult;
 use Illuminate\Support\Carbon;
@@ -32,6 +33,34 @@ class LineLotteryNotifier
             messages: $this->buildMessages($result, $manualImageUrl),
             notifiable: $result,
             destinationKey: 'lottery',
+        );
+    }
+
+    /**
+     * แจ้งเตือนแอดมินพร้อมลิงก์ทางลัด (One-Click Shortcut)
+     */
+    public function notifyAdminArticleReady(Article $article): ?LineNotificationLog
+    {
+        $drawDate = $article->lottery_draw_date ? $article->lottery_draw_date->format('d/m/Y') : '-';
+        
+        // สร้างลิงก์พิเศษพ่วงคำสั่ง Auto-Trigger
+        $adminBaseUrl = route('admin.articles');
+        $fbUrl = "{$adminBaseUrl}?auto_share=fb&article_id={$article->id}";
+        $lineUrl = "{$adminBaseUrl}?auto_share=line&article_id={$article->id}";
+        $viewUrl = route('articles.show', ['slug' => $article->slug]);
+
+        $msg = "📝 [ระบบบทความหวยอัตโนมัติ]\n";
+        $msg .= "บทความงวดวันที่ {$drawDate} เผยแพร่แล้ว!\n\n";
+        $msg .= "เชิญแอดมินเลือกดำเนินการ:\n";
+        $msg .= "🔵 แชร์ FB พรีเมียม: {$fbUrl}\n";
+        $msg .= "🟢 บรอดแคสต์ LINE: {$lineUrl}\n\n";
+        $msg .= "🌐 ดูหน้าเว็บ: {$viewUrl}";
+
+        return $this->lineNotifier->queueText(
+            eventType: 'admin_article_ready',
+            message: $msg,
+            notifiable: $article,
+            destinationKey: 'admin',
         );
     }
 
