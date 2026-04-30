@@ -134,7 +134,19 @@
         <div style="border: 4px solid #f3f3f3; border-top: 4px solid #1877F2; border-radius: 50%; width: 50px; height: 50px; animation: spin_render 1s linear infinite; margin-bottom: 20px;"></div>
         <div id="render-status" style="font-size: 18px; font-weight: bold;">กำลังวาดรูปหวยให้สวยงาม...</div>
         <p style="margin-top: 10px; opacity: 0.8;">กำลังใช้ระบบวาดรูปขั้นสูงเพื่อให้ Facebook แสดงผลได้ชัดที่สุด</p>
-        <style>@keyframes spin_render { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }</style>
+        <style>
+          @keyframes spin_render { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+          
+          /* Pre-load font for rendering bridge */
+          @font-face {
+              font-family: 'KanitCustom';
+              src: url('/fonts/Kanit-700.ttf') format('truetype');
+              font-weight: 700;
+          }
+          /* Invisible text to force font load */
+          .font-loader { font-family: 'KanitCustom'; position: absolute; visibility: hidden; opacity: 0; }
+      </style>
+      <div class="font-loader">Force Load Kanit</div>
     </div>
 @endsection
 
@@ -165,9 +177,12 @@
             }
 
             overlay.style.display = 'flex';
-            status.innerText = 'กำลังเตรียมระบบวาดรูป...';
+            status.innerText = 'กำลังตรวจสอบฟอนต์และระบบวาดรูป...';
 
             try {
+                // Wait for fonts to be ready so they show up correctly in the canvas
+                await document.fonts.ready;
+
                 const response = await fetch(landscapeUrl);
                 if (!response.ok) throw new Error('ไม่สามารถดึงข้อมูลรูปภาพจาก Server ได้');
                 let svgText = await response.text();
