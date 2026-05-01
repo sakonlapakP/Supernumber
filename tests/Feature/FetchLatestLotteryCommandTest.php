@@ -230,7 +230,7 @@ class FetchLatestLotteryCommandTest extends TestCase
         ]);
     }
 
-    public function test_it_does_not_retry_automatically_on_the_next_day_when_previous_draw_has_partial_data(): void
+    public function test_it_continues_to_retry_automatically_on_the_next_day_when_previous_draw_is_incomplete(): void
     {
         Carbon::setTestNow(Carbon::create(2026, 4, 2, 15, 45, 0, 'Asia/Bangkok'));
 
@@ -250,15 +250,16 @@ class FetchLatestLotteryCommandTest extends TestCase
         ]);
 
         Http::fake([
-            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response($this->completePrizePayload(), 200),
+            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response($this->completePrizePayload('01/04/2569'), 200),
         ]);
 
         $this->artisan('lottery:fetch-latest')
             ->assertExitCode(0);
 
-        Http::assertNothingSent();
-        $this->assertDatabaseMissing('lottery_results', [
-            'draw_date' => '2026-04-02',
+        Http::assertSentCount(1);
+        $this->assertDatabaseHas('lottery_results', [
+            'draw_date' => '2026-04-01',
+            'is_complete' => 1,
         ]);
     }
 

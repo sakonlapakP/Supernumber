@@ -189,30 +189,23 @@ class FetchLatestLotteryCommand extends Command
         $article->content = $this->buildLotteryArticleContent($result, $drawDate->copy(), $now->copy());
         $article->is_auto_post = false; // Disable automatic publishing for lottery articles
 
-        // Only generate images and publish when complete
-        if ($result->is_complete) {
-            if (!$article->is_published) {
-                $article->is_published = true;
-                $article->published_at = now();
-            }
-
-            $squareSvgContents = $this->buildLotteryCoverSvg($result);
-            Storage::disk('public')->put($squareSvgFilename, $squareSvgContents);
-            $article->cover_image_square_path = $squareSvgFilename;
-            $article->cover_image_path = $squareSvgFilename;
-
-            $landscapeSvgContents = $this->buildLotteryLandscapeSvg($result);
-            Storage::disk('public')->put($landscapeSvgFilename, $landscapeSvgContents);
-            $article->cover_image_landscape_path = $landscapeSvgFilename;
-        } else {
-            // Keep as draft if not complete yet
-            if (!$article->exists) {
-                $article->is_published = false;
-            }
+        // Always publish and generate images to show live updates
+        if (!$article->is_published) {
+            $article->is_published = true;
+            $article->published_at = now('Asia/Bangkok');
         }
 
+        $squareSvgContents = $this->buildLotteryCoverSvg($result);
+        Storage::disk('public')->put($squareSvgFilename, $squareSvgContents);
+        $article->cover_image_square_path = $squareSvgFilename;
+        $article->cover_image_path = $squareSvgFilename;
+
+        $landscapeSvgContents = $this->buildLotteryLandscapeSvg($result);
+        Storage::disk('public')->put($landscapeSvgFilename, $landscapeSvgContents);
+        $article->cover_image_landscape_path = $landscapeSvgFilename;
+
         $article->save();
-        $this->info("Synced lottery article: {$articleName}");
+        $this->info("Synced lottery article (Live): {$articleName}");
 
         if ($result->is_complete && !$wasAlreadyComplete) {
             try {

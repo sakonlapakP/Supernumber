@@ -33,15 +33,15 @@ class LotteryFlowRefinedTest extends TestCase
 
     /**
      * Case: Partial Results (ระหว่างหวยทยอยออก)
-     * - Article: Draft
-     * - Images: None
+     * - Article: Published (เพื่อโชว์เลขสดบนหน้าเว็บ)
+     * - Images: Generated
      * - LINE Admin: None
      */
-    public function test_partial_lottery_results_stay_as_draft_without_images_or_notifications(): void
+    public function test_partial_lottery_results_are_published_immediately_for_live_updates(): void
     {
         Carbon::setTestNow(Carbon::create(2026, 5, 1, 14, 30, 0, 'Asia/Bangkok'));
 
-        // Mock LINE Notifier specifically for this test to assert NOT receive
+        // Mock LINE Notifier
         $this->mock(LineLotteryNotifier::class, function (MockInterface $mock) {
             $mock->shouldNotReceive('notifyAdminArticleReady');
         });
@@ -61,19 +61,18 @@ class LotteryFlowRefinedTest extends TestCase
         $this->artisan('lottery:fetch-latest', ['--force' => true])
             ->assertExitCode(0);
 
-        // Verify Article is Draft
+        // Verify Article is Published
         $this->assertDatabaseHas('articles', [
             'slug' => 'thai-government-lottery-202605first',
-            'is_published' => false,
-            'is_auto_post' => false,
+            'is_published' => true,
         ]);
 
-        // Verify No Images generated
+        // Verify Images ARE generated
         $article = Article::where('slug', 'thai-government-lottery-202605first')->first();
-        $this->assertNull($article->cover_image_square_path);
+        $this->assertNotNull($article->cover_image_square_path);
         
         $files = Storage::disk('public')->allFiles('articles/2026/thai-government-lottery-202605first');
-        $this->assertCount(0, $files);
+        $this->assertGreaterThan(0, $files);
     }
 
     /**
