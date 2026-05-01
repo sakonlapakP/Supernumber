@@ -31,10 +31,11 @@ class PublishScheduledArticles extends Command
     {
         $articles = Article::query()
             ->where('is_published', true)
+            ->where('is_auto_post', true) // Only publish articles allowed for auto-posting
             ->where('notified_at', null)
             ->where(function ($query) {
                 $query->whereNull('published_at')
-                    ->orWhere('published_at', '<=', now());
+                    ->orWhere('published_at', '<=', now('Asia/Bangkok'));
             })
             ->get();
 
@@ -50,7 +51,7 @@ class PublishScheduledArticles extends Command
                     $updated = \Illuminate\Support\Facades\DB::table('articles')
                         ->where('id', $article->id)
                         ->whereNull('notified_at')
-                        ->update(['notified_at' => now(), 'updated_at' => now()]);
+                        ->update(['notified_at' => now('Asia/Bangkok'), 'updated_at' => now('Asia/Bangkok')]);
 
                     if (!$updated) {
                         return; // Another process already handled this article

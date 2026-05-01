@@ -187,6 +187,7 @@ class FetchLatestLotteryCommand extends Command
         $article->title = sprintf('ตรวจหวยรัฐบาล งวดประจำวันที่ %s ผลสลากกินแบ่งรัฐบาล', $thaiDateLabel);
         $article->excerpt = sprintf('สรุปผลสลากกินแบ่งรัฐบาล งวดประจำวันที่ %s', $thaiDateLabel);
         $article->content = $this->buildLotteryArticleContent($result, $drawDate->copy(), $now->copy());
+        $article->is_auto_post = false; // Disable automatic publishing for lottery articles
 
         // Only generate images and publish when complete
         if ($result->is_complete) {

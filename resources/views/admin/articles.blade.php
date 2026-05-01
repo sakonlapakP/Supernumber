@@ -159,6 +159,11 @@
               <td data-label="สถานะ">
                 @if($article->is_published)
                   <span class="admin-status-pill admin-status-pill--active">เผยแพร่แล้ว</span>
+                  @if(!$article->is_auto_post && !$article->notified_at)
+                    <div style="margin-top: 5px;">
+                      <span class="admin-status-pill" style="background: #fff7ed; color: #c2410c; border: 1px solid #fdba74; font-size: 10px;">⏳ รอแชร์รูปพรีเมียม</span>
+                    </div>
+                  @endif
                 @else
                   <span class="admin-status-pill admin-status-pill--hold">ฉบับร่าง</span>
                 @endif

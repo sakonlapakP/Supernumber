@@ -22,6 +22,7 @@ class Article extends Model
         'keywords',
         'lsi_keywords',
         'is_published',
+        'is_auto_post',
         'is_line_broadcasted',
         'published_at',
         'notified_at',
@@ -33,6 +34,7 @@ class Article extends Model
     {
         return [
             'is_published' => 'boolean',
+            'is_auto_post' => 'boolean',
             'is_line_broadcasted' => 'boolean',
             'published_at' => 'datetime',
             'notified_at' => 'datetime',
@@ -46,7 +48,7 @@ class Article extends Model
             ->where(function (Builder $inner): void {
                 $inner
                     ->whereNull('published_at')
-                    ->orWhere('published_at', '<=', now());
+                    ->orWhere('published_at', '<=', now('Asia/Bangkok'));
             });
     }
 

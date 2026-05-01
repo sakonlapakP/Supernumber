@@ -121,7 +121,7 @@ class FetchLatestLotteryCommandTest extends TestCase
         Carbon::setTestNow(Carbon::create(2026, 4, 2, 16, 0, 0, 'Asia/Bangkok'));
 
         Http::fake([
-            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response($this->completePrizePayload(), 200),
+            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response($this->completePrizePayload('02/04/2569'), 200),
         ]);
 
         $this->artisan('lottery:fetch-latest', ['--force' => true])
@@ -131,6 +131,7 @@ class FetchLatestLotteryCommandTest extends TestCase
             'slug' => 'thai-government-lottery-202604first',
             'title' => 'ตรวจหวยรัฐบาล งวดประจำวันที่ 2 เมษายน 2569 ผลสลากกินแบ่งรัฐบาล',
             'is_published' => 1,
+            'is_auto_post' => 0,
         ]);
     }
 
@@ -194,7 +195,7 @@ class FetchLatestLotteryCommandTest extends TestCase
         Carbon::setTestNow(Carbon::create(2026, 4, 2, 15, 45, 0, 'Asia/Bangkok'));
 
         Http::fake([
-            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response($this->completePrizePayload(), 200),
+            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response($this->completePrizePayload('01/04/2569'), 200),
         ]);
 
         $this->artisan('lottery:fetch-latest', ['--force' => true])
@@ -202,8 +203,8 @@ class FetchLatestLotteryCommandTest extends TestCase
 
         Http::assertSentCount(1);
         $this->assertDatabaseHas('lottery_results', [
-            'draw_date' => '2026-04-02',
-            'source_draw_date' => '2026-04-02',
+            'draw_date' => '2026-04-01',
+            'source_draw_date' => '2026-04-01',
             'is_complete' => 1,
         ]);
     }
@@ -252,7 +253,7 @@ class FetchLatestLotteryCommandTest extends TestCase
             'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response($this->completePrizePayload(), 200),
         ]);
 
-        $this->artisan('lottery:fetch-latest', ['--force' => true])
+        $this->artisan('lottery:fetch-latest')
             ->assertExitCode(0);
 
         Http::assertNothingSent();
@@ -301,13 +302,7 @@ class FetchLatestLotteryCommandTest extends TestCase
             'source_payload' => [],
         ]);
 
-        foreach ($this->completePrizePayload() as $index => $prize) {
-            $result->prizes()->create([
-                'position' => $index,
-                'prize_name' => $prize['name'],
-                'prize_number' => $prize['number'],
-            ]);
-        }
+        $this->seedPrizes($result);
 
         Http::fake([
             'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([
@@ -350,13 +345,7 @@ class FetchLatestLotteryCommandTest extends TestCase
             'source_payload' => [],
         ]);
 
-        foreach ($this->completePrizePayload() as $index => $prize) {
-            $result->prizes()->create([
-                'position' => $index,
-                'prize_name' => $prize['name'],
-                'prize_number' => $prize['number'],
-            ]);
-        }
+        $this->seedPrizes($result);
 
         $article = Article::query()->create([
             'title' => 'สลากกินแบ่งรัฐบาล ประจำวันที่ 1 เมษายน 2569',
@@ -390,13 +379,7 @@ class FetchLatestLotteryCommandTest extends TestCase
             'source_payload' => [],
         ]);
 
-        foreach ($this->completePrizePayload() as $index => $prize) {
-            $result->prizes()->create([
-                'position' => $index,
-                'prize_name' => $prize['name'],
-                'prize_number' => $prize['number'],
-            ]);
-        }
+        $this->seedPrizes($result);
 
         $article = Article::query()->create([
             'title' => 'สลากกินแบ่งรัฐบาล ประจำวันที่ 1 เมษายน 2569',
@@ -415,11 +398,11 @@ class FetchLatestLotteryCommandTest extends TestCase
             ->assertSee('onerror=', false);
     }
 
-    private function completePrizePayload(): array
+    private function completePrizePayload(string $date = '01/04/2569'): array
     {
         return [
             'response' => [
-                'date' => '01/04/2569',
+                'date' => $date,
                 'data' => [
                     'first' => ['number' => ['123456']],
                     'last3f' => ['number' => ['123', '456']],
@@ -428,6 +411,26 @@ class FetchLatestLotteryCommandTest extends TestCase
                 ]
             ]
         ];
+    }
+
+    private function seedPrizes(LotteryResult $result): void
+    {
+        $prizes = [
+            ['name' => 'รางวัลที่ 1', 'number' => '123456'],
+            ['name' => 'เลขหน้า 3 ตัว', 'number' => '123'],
+            ['name' => 'เลขหน้า 3 ตัว', 'number' => '456'],
+            ['name' => 'เลขท้าย 3 ตัว', 'number' => '789'],
+            ['name' => 'เลขท้าย 3 ตัว', 'number' => '012'],
+            ['name' => 'เลขท้าย 2 ตัว', 'number' => '12'],
+        ];
+
+        foreach ($prizes as $index => $prize) {
+            $result->prizes()->create([
+                'position' => $index,
+                'prize_name' => $prize['name'],
+                'prize_number' => $prize['number'],
+            ]);
+        }
     }
 
     protected function tearDown(): void

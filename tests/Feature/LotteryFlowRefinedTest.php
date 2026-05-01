@@ -65,6 +65,7 @@ class LotteryFlowRefinedTest extends TestCase
         $this->assertDatabaseHas('articles', [
             'slug' => 'thai-government-lottery-202605first',
             'is_published' => false,
+            'is_auto_post' => false,
         ]);
 
         // Verify No Images generated
@@ -114,6 +115,7 @@ class LotteryFlowRefinedTest extends TestCase
         $this->assertDatabaseHas('articles', [
             'slug' => 'thai-government-lottery-202605first',
             'is_published' => true,
+            'is_auto_post' => false,
         ]);
 
         // Verify Images generated

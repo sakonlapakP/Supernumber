@@ -2826,7 +2826,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             if ($landPath !== '' && $disk->exists($landPath)) {
                 if (str_contains($landPath, 'articles/tmp/')) {
                     $newLandPath = $permDir . '/' . basename($landPath);
-                    $disk->move($landPath, $newLandPath);
+                    $disk->copy($landPath, $newLandPath); // Use copy so content replacement can still find it in tmp
                     $coverImageLandscapePath = $newLandPath;
                 } else {
                     $coverImageLandscapePath = $landPath;
@@ -2837,7 +2837,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             if ($sqPath !== '' && $disk->exists($sqPath)) {
                 if (str_contains($sqPath, 'articles/tmp/')) {
                     $newSqPath = $permDir . '/' . basename($sqPath);
-                    $disk->move($sqPath, $newSqPath);
+                    $disk->copy($sqPath, $newSqPath); // Use copy so content replacement can still find it in tmp
                     $coverImageSquarePath = $newSqPath;
                 } else {
                     $coverImageSquarePath = $sqPath;
@@ -2980,7 +2980,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                         $disk->delete($coverImageLandscapePath);
                     }
                     $newLandPath = $permDir . '/' . basename($landPath);
-                    $disk->move($landPath, $newLandPath);
+                    $disk->copy($landPath, $newLandPath); // Use copy so content replacement can still find it in tmp
                     $coverImageLandscapePath = $newLandPath;
                 } else {
                     $coverImageLandscapePath = $landPath;
@@ -2995,7 +2995,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                         $disk->delete($coverImageSquarePath);
                     }
                     $newSqPath = $permDir . '/' . basename($sqPath);
-                    $disk->move($sqPath, $newSqPath);
+                    $disk->copy($sqPath, $newSqPath); // Use copy so content replacement can still find it in tmp
                     $coverImageSquarePath = $newSqPath;
                 } else {
                     $coverImageSquarePath = $sqPath;
@@ -3523,16 +3523,6 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.activity-logs', compact('logs'));
     })->name('activity-logs');
 
-    Route::get('/force-storage-cleanup', function (Request $request) use ($ensureAdmin) {
-        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
-            return $redirect;
-        }
-
-        Artisan::call('storage:cleanup', ['--force' => true]);
-        $output = Artisan::output();
-
-        return "<h1>Storage Cleanup Successful</h1><pre>{$output}</pre><br><a href='" . route('admin.articles') . "'>กลับหน้า Admin</a>";
-    })->name('force-storage-cleanup');
 });
 
 
