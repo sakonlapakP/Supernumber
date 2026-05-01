@@ -19,13 +19,10 @@ class FetchLatestLotteryCommandTest extends TestCase
         Carbon::setTestNow(Carbon::create(2026, 4, 1, 16, 0, 0, 'Asia/Bangkok'));
 
         Http::fake([
-            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([
-                'date' => '01/04/2026',
-                'data' => $this->completePrizePayload(),
-            ], 200),
+            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response($this->completePrizePayload(), 200),
         ]);
 
-        $this->artisan('lottery:fetch-latest')
+        $this->artisan('lottery:fetch-latest', ['--force' => true])
             ->assertExitCode(0);
 
         $this->assertDatabaseHas('lottery_results', [
@@ -49,23 +46,20 @@ class FetchLatestLotteryCommandTest extends TestCase
         Carbon::setTestNow(Carbon::create(2026, 4, 1, 16, 0, 0, 'Asia/Bangkok'));
 
         Http::fake([
-            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([
-                'date' => '01/04/2026',
-                'data' => $this->completePrizePayload(),
-            ], 200),
+            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response($this->completePrizePayload(), 200),
         ]);
 
-        $this->artisan('lottery:fetch-latest')
+        $this->artisan('lottery:fetch-latest', ['--force' => true])
             ->assertExitCode(0);
 
         $this->assertDatabaseHas('articles', [
-            'slug' => 'thai-goverment-lottery-202604first',
-            'title' => 'สลากกินแบ่งรัฐบาล ประจำวันที่ 1 เมษายน 2569',
+            'slug' => 'thai-government-lottery-202604first',
+            'title' => 'ตรวจหวยรัฐบาล งวดประจำวันที่ 1 เมษายน 2569 ผลสลากกินแบ่งรัฐบาล',
             'is_published' => 1,
         ]);
 
         $article = Article::query()
-            ->where('slug', 'thai-goverment-lottery-202604first')
+            ->where('slug', 'thai-government-lottery-202604first')
             ->firstOrFail();
 
         $this->assertStringContainsString('รางวัลที่ 1: <strong>123456</strong>', (string) $article->content);
@@ -73,7 +67,7 @@ class FetchLatestLotteryCommandTest extends TestCase
 
         $this->get(route('articles.index'))
             ->assertOk()
-            ->assertSee('สลากกินแบ่งรัฐบาล ประจำวันที่ 1 เมษายน 2569');
+            ->assertSee('ตรวจหวยรัฐบาล งวดประจำวันที่ 1 เมษายน 2569');
     }
 
     public function test_it_falls_back_to_svg_cover_files_when_png_rendering_is_unavailable(): void
@@ -82,10 +76,7 @@ class FetchLatestLotteryCommandTest extends TestCase
         Storage::fake('public');
 
         Http::fake([
-            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([
-                'date' => '01/04/2026',
-                'data' => $this->completePrizePayload(),
-            ], 200),
+            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response($this->completePrizePayload(), 200),
         ]);
 
         $originalPath = getenv('PATH');
@@ -103,7 +94,7 @@ class FetchLatestLotteryCommandTest extends TestCase
         }
 
         $article = Article::query()
-            ->where('slug', 'thai-goverment-lottery-202604first')
+            ->where('slug', 'thai-government-lottery-202604first')
             ->firstOrFail();
 
         $this->assertNotNull($article->cover_image_path);
@@ -116,18 +107,15 @@ class FetchLatestLotteryCommandTest extends TestCase
         Carbon::setTestNow(Carbon::create(2026, 4, 2, 16, 0, 0, 'Asia/Bangkok'));
 
         Http::fake([
-            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([
-                'date' => '02/04/2026',
-                'data' => $this->completePrizePayload(),
-            ], 200),
+            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response($this->completePrizePayload(), 200),
         ]);
 
         $this->artisan('lottery:fetch-latest', ['--force' => true])
             ->assertExitCode(0);
 
         $this->assertDatabaseHas('articles', [
-            'slug' => 'thai-goverment-lottery-202604first',
-            'title' => 'สลากกินแบ่งรัฐบาล ประจำวันที่ 2 เมษายน 2569',
+            'slug' => 'thai-government-lottery-202604first',
+            'title' => 'ตรวจหวยรัฐบาล งวดประจำวันที่ 2 เมษายน 2569 ผลสลากกินแบ่งรัฐบาล',
             'is_published' => 1,
         ]);
     }
@@ -157,13 +145,10 @@ class FetchLatestLotteryCommandTest extends TestCase
         Carbon::setTestNow(Carbon::create(2026, 4, 1, 16, 20, 0, 'Asia/Bangkok'));
 
         Http::fake([
-            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([
-                'date' => '01/04/2026',
-                'data' => $this->completePrizePayload(),
-            ], 200),
+            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response($this->completePrizePayload(), 200),
         ]);
 
-        $this->artisan('lottery:fetch-latest')
+        $this->artisan('lottery:fetch-latest', ['--force' => true])
             ->assertExitCode(0);
 
         Http::assertSentCount(1);
@@ -178,10 +163,7 @@ class FetchLatestLotteryCommandTest extends TestCase
         Carbon::setTestNow(Carbon::create(2026, 4, 1, 16, 25, 0, 'Asia/Bangkok'));
 
         Http::fake([
-            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([
-                'date' => '01/04/2026',
-                'data' => $this->completePrizePayload(),
-            ], 200),
+            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response($this->completePrizePayload(), 200),
         ]);
 
         $this->artisan('lottery:fetch-latest')
@@ -198,13 +180,10 @@ class FetchLatestLotteryCommandTest extends TestCase
         Carbon::setTestNow(Carbon::create(2026, 4, 2, 15, 45, 0, 'Asia/Bangkok'));
 
         Http::fake([
-            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([
-                'date' => '02/04/2026',
-                'data' => $this->completePrizePayload(),
-            ], 200),
+            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response($this->completePrizePayload(), 200),
         ]);
 
-        $this->artisan('lottery:fetch-latest')
+        $this->artisan('lottery:fetch-latest', ['--force' => true])
             ->assertExitCode(0);
 
         Http::assertSentCount(1);
@@ -223,7 +202,7 @@ class FetchLatestLotteryCommandTest extends TestCase
             'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([], 200),
         ]);
 
-        $this->artisan('lottery:fetch-latest')
+        $this->artisan('lottery:fetch-latest', ['--force' => true])
             ->assertExitCode(0);
 
         Http::assertSentCount(1);
@@ -243,7 +222,7 @@ class FetchLatestLotteryCommandTest extends TestCase
         $result = LotteryResult::query()->create([
             'draw_date' => '2026-04-01',
             'source_draw_date' => '2026-04-01',
-            'source_draw_date_text' => '01/04/2026',
+            'source_draw_date_text' => '01/04/2569',
             'is_complete' => false,
             'fetched_at' => now(),
             'source_payload' => [],
@@ -256,13 +235,10 @@ class FetchLatestLotteryCommandTest extends TestCase
         ]);
 
         Http::fake([
-            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([
-                'date' => '02/04/2026',
-                'data' => $this->completePrizePayload(),
-            ], 200),
+            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response($this->completePrizePayload(), 200),
         ]);
 
-        $this->artisan('lottery:fetch-latest')
+        $this->artisan('lottery:fetch-latest', ['--force' => true])
             ->assertExitCode(0);
 
         Http::assertNothingSent();
@@ -277,7 +253,7 @@ class FetchLatestLotteryCommandTest extends TestCase
 
         Http::fake([
             'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([
-                'date' => '01/04/2026',
+                'date' => '01/04/2569',
                 'data' => [
                     ['name' => 'รางวัลที่ 1', 'number' => '123456'],
                     ['name' => 'เลขหน้า 3 ตัว', 'number' => '111'],
@@ -289,7 +265,7 @@ class FetchLatestLotteryCommandTest extends TestCase
             ], 200),
         ]);
 
-        $this->artisan('lottery:fetch-latest')
+        $this->artisan('lottery:fetch-latest', ['--force' => true])
             ->assertExitCode(0);
 
         $this->assertDatabaseHas('lottery_results', [
@@ -305,7 +281,7 @@ class FetchLatestLotteryCommandTest extends TestCase
         $result = LotteryResult::query()->create([
             'draw_date' => '2026-04-01',
             'source_draw_date' => '2026-04-01',
-            'source_draw_date_text' => '01/04/2026',
+            'source_draw_date_text' => '01/04/2569',
             'is_complete' => true,
             'fetched_at' => now(),
             'source_payload' => [],
@@ -321,7 +297,7 @@ class FetchLatestLotteryCommandTest extends TestCase
 
         Http::fake([
             'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([
-                'date' => '01/04/2026',
+                'date' => '01/04/2569',
                 'data' => [
                     ['name' => 'รางวัลที่ 1', 'number' => '654321'],
                     ['name' => 'เลขหน้า 3 ตัว', 'number' => '999'],
@@ -354,7 +330,7 @@ class FetchLatestLotteryCommandTest extends TestCase
         $result = LotteryResult::query()->create([
             'draw_date' => '2026-04-01',
             'source_draw_date' => '2026-04-01',
-            'source_draw_date_text' => '01/04/2026',
+            'source_draw_date_text' => '01/04/2569',
             'is_complete' => true,
             'fetched_at' => Carbon::create(2026, 4, 1, 16, 30, 0, 'Asia/Bangkok'),
             'source_payload' => [],
@@ -370,10 +346,10 @@ class FetchLatestLotteryCommandTest extends TestCase
 
         $article = Article::query()->create([
             'title' => 'สลากกินแบ่งรัฐบาล ประจำวันที่ 1 เมษายน 2569',
-            'slug' => 'thai-goverment-lottery-202604first',
+            'slug' => 'thai-government-lottery-202604first',
             'excerpt' => 'test excerpt',
             'content' => '<p>test content</p>',
-            'cover_image_square_path' => 'article/2026/thai-goverment-lottery-202604first/missing.png',
+            'cover_image_square_path' => 'article/2026/thai-government-lottery-202604first/missing.png',
             'is_published' => true,
             'published_at' => Carbon::create(2026, 4, 1, 16, 30, 0, 'Asia/Bangkok'),
         ]);
@@ -389,12 +365,12 @@ class FetchLatestLotteryCommandTest extends TestCase
     public function test_article_detail_embeds_browser_fallback_markup_when_cover_file_exists(): void
     {
         Storage::fake('public');
-        Storage::disk('public')->put('article/2026/thai-goverment-lottery-202604first/broken.png', 'not-a-real-image');
+        Storage::disk('public')->put('article/2026/thai-government-lottery-202604first/broken.png', 'not-a-real-image');
 
         $result = LotteryResult::query()->create([
             'draw_date' => '2026-04-01',
             'source_draw_date' => '2026-04-01',
-            'source_draw_date_text' => '01/04/2026',
+            'source_draw_date_text' => '01/04/2569',
             'is_complete' => true,
             'fetched_at' => Carbon::create(2026, 4, 1, 16, 30, 0, 'Asia/Bangkok'),
             'source_payload' => [],
@@ -410,10 +386,10 @@ class FetchLatestLotteryCommandTest extends TestCase
 
         $article = Article::query()->create([
             'title' => 'สลากกินแบ่งรัฐบาล ประจำวันที่ 1 เมษายน 2569',
-            'slug' => 'thai-goverment-lottery-202604first',
+            'slug' => 'thai-government-lottery-202604first',
             'excerpt' => 'test excerpt',
             'content' => '<p>test content</p>',
-            'cover_image_square_path' => 'article/2026/thai-goverment-lottery-202604first/broken.png',
+            'cover_image_square_path' => 'article/2026/thai-government-lottery-202604first/broken.png',
             'is_published' => true,
             'published_at' => Carbon::create(2026, 4, 1, 16, 30, 0, 'Asia/Bangkok'),
         ]);
@@ -428,12 +404,15 @@ class FetchLatestLotteryCommandTest extends TestCase
     private function completePrizePayload(): array
     {
         return [
-            ['name' => 'รางวัลที่ 1', 'number' => '123456'],
-            ['name' => 'เลขหน้า 3 ตัว', 'number' => '123'],
-            ['name' => 'เลขหน้า 3 ตัว', 'number' => '456'],
-            ['name' => 'เลขท้าย 3 ตัว', 'number' => '789'],
-            ['name' => 'เลขท้าย 3 ตัว', 'number' => '012'],
-            ['name' => 'เลขท้าย 2 ตัว', 'number' => '12'],
+            'response' => [
+                'date' => '01/04/2569',
+                'data' => [
+                    'first' => ['number' => ['123456']],
+                    'last3f' => ['number' => ['123', '456']],
+                    'last3b' => ['number' => ['789', '012']],
+                    'last2' => ['number' => ['12']],
+                ]
+            ]
         ];
     }
 
