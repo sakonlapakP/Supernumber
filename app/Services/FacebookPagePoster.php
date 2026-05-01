@@ -74,51 +74,35 @@ class FacebookPagePoster
 
         Log::info("FB Post Debug: Article {$article->id} - Final Image Path: " . ($imagePath ?: 'NOT_FOUND'));
 
-        if ($imagePath && !str_ends_with(strtolower($imagePath), '.svg')) {
-            $url = "https://graph.facebook.com/v19.0/{$pageId}/photos";
-            
-            try {
-                Log::info("FB Post: Uploading photo from: {$imagePath}");
-                $response = Http::attach('source', file_get_contents($imagePath), basename($imagePath))
-                    ->post($url, [
-                        'message' => $message,
-                        'access_token' => $accessToken,
-                    ]);
-
-                if ($response->successful()) {
-                    Log::info("Successfully posted photo to Facebook Page for article [{$article->id}]. FB ID: " . $response->json('id'));
-                    return ['success' => true, 'id' => $response->json('id')];
-                }
-
-                Log::error("FB Photo Upload API error: " . json_encode($response->json()));
-            } catch (\Throwable $e) {
-                Log::error("FB Photo Upload exception: " . $e->getMessage());
-            }
-        } else {
-            Log::warning("FB Post: Skipping photo upload - File not found, path empty, or still SVG.");
+        if (!$imagePath || str_ends_with(strtolower($imagePath), '.svg')) {
+            Log::error("FB Post: Aborting - Image file not found or is still SVG for article [{$article->id}].");
+            return [
+                'success' => false, 
+                'error' => 'ไม่พบไฟล์รูปภาพที่ถูกต้องบนเซิร์ฟเวอร์ (ต้องการ .png หรือ .jpg) ระบบได้ระงับการโพสต์เพื่อป้องกันความผิดพลาดครับ'
+            ];
         }
 
-        // Fallback to simple link post
-        Log::info("FB Post: Falling back to link post.");
-        $url = "https://graph.facebook.com/v19.0/{$pageId}/feed";
+        $url = "https://graph.facebook.com/v19.0/{$pageId}/photos";
+        
         try {
-            $response = Http::post($url, [
-                'message' => $message,
-                'link' => $articleUrl,
-                'access_token' => $accessToken,
-            ]);
+            Log::info("FB Post: Uploading photo from: {$imagePath}");
+            $response = Http::attach('source', file_get_contents($imagePath), basename($imagePath))
+                ->post($url, [
+                    'message' => $message,
+                    'access_token' => $accessToken,
+                ]);
 
             if ($response->successful()) {
-                Log::info("Successfully posted link to Facebook Page for article [{$article->id}].");
+                Log::info("Successfully posted photo to Facebook Page for article [{$article->id}]. FB ID: " . $response->json('id'));
                 return ['success' => true, 'id' => $response->json('id')];
             }
 
-            $error = $response->json('error')['message'] ?? 'FB API Error';
-            Log::error("FB Link Post API error: " . $error);
-            return ['success' => false, 'error' => $error];
+            $fbError = $response->json('error')['message'] ?? 'Unknown FB API Error';
+            Log::error("FB Photo Upload API error: " . $fbError);
+            return ['success' => false, 'error' => 'Facebook API Error: ' . $fbError];
         } catch (\Throwable $e) {
-            Log::error("FB Link Post exception: " . $e->getMessage());
-            return ['success' => false, 'error' => $e->getMessage()];
+            Log::error("FB Photo Upload exception: " . $e->getMessage());
+            return ['success' => false, 'error' => 'System Exception: ' . $e->getMessage()];
         }
     }
 }

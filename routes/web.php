@@ -2819,7 +2819,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $content = $sanitizeArticleContent(trim($data['content']));
 
         try {
-            $docRoot = $_SERVER['DOCUMENT_ROOT'] ?? public_path();
+            $docRoot = public_path();
             $storageDir = rtrim($docRoot, '/') . '/storage/';
 
             // Use pre-uploaded path from /p/img endpoint (already saved to storage).
@@ -2832,6 +2832,9 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             if ($sqPath !== '' && file_exists($storageDir . $sqPath)) {
                 $coverImageSquarePath = $sqPath;
             }
+
+            // Sync main cover_image_path: Use square as priority, then landscape
+            $coverImagePath = $coverImageSquarePath ?: $coverImageLandscapePath;
 
             $articleData = [
                 'title' => trim($data['title']),
@@ -2945,7 +2948,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $content = $sanitizeArticleContent(trim($data['content']));
 
         try {
-            $docRoot = $_SERVER['DOCUMENT_ROOT'] ?? public_path();
+            $docRoot = public_path();
             $storageDir = rtrim($docRoot, '/') . '/storage/';
 
             // Use pre-uploaded path from /p/img endpoint (already saved to storage).
@@ -2964,6 +2967,9 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 }
                 $coverImageSquarePath = $sqPath;
             }
+
+            // Sync main cover_image_path: Use square as priority, then landscape
+            $coverImagePath = $coverImageSquarePath ?: $coverImageLandscapePath;
 
             // Only reset notified_at when:
             // 1. Article transitions from unpublished → published (new publish)

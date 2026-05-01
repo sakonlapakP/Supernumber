@@ -142,8 +142,11 @@
             <tr class="article-row" data-title="{{ strtolower($article->title) }}" data-slug="{{ strtolower($article->slug) }}">
               <td data-label="รูปหน้าปก">
                 <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
-                  @if($article->cover_image_path)
-                    <img src="{{ Storage::disk('public')->url($article->cover_image_path) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                  @php
+                    $thumbPath = $article->cover_image_path ?: ($article->cover_image_square_path ?: $article->cover_image_landscape_path);
+                  @endphp
+                  @if($thumbPath)
+                    <img src="{{ Storage::disk('public')->url($thumbPath) }}" style="width: 100%; height: 100%; object-fit: cover;">
                   @else
                     <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #94a3b8;">🖼️</div>
                   @endif
@@ -370,6 +373,13 @@
             const form = document.getElementById('share-fb-form-' + articleId);
             const imageInput = document.getElementById('share-fb-image-' + articleId);
             
+            // ตรวจสอบว่าเป็นบทความทั่วไปหรือไม่ (ถ้าไม่ใช่ .svg แสดงว่าเป็นรูปปกติ)
+            if (landscapeUrl && !landscapeUrl.toLowerCase().endsWith('.svg')) {
+                console.log('Standard article detected, sharing directly without rendering.');
+                form.submit();
+                return;
+            }
+
             const result = await renderAndUploadPremiumImage(landscapeUrl, uploadUrl, 'กำลังเตรียมรูปภาพสำหรับ Facebook...', reportUrl);
             
             if (result) {
@@ -377,7 +387,8 @@
                 status.innerText = 'สำเร็จ! กำลังไปที่ Facebook...';
                 setTimeout(() => form.submit(), 1000);
             } else {
-                form.submit(); // ถ้าพรีเมียมขัดข้อง ให้ส่งแบบธรรมดาแทน
+                // สำหรับ Facebook หากพรีเมียมขัดข้อง เราจะไม่แชร์ต่อตามความต้องการของ USER
+                console.log('Premium rendering failed, aborting FB share per user request.');
             }
         };
 
@@ -394,6 +405,13 @@
                     return;
                 }
             }
+
+            // ตรวจสอบว่าเป็นบทความทั่วไปหรือไม่
+            if (landscapeUrl && !landscapeUrl.toLowerCase().endsWith('.svg')) {
+                console.log('Standard article detected, sharing to LINE directly.');
+                form.submit();
+                return;
+            }
             
             const result = await renderAndUploadPremiumImage(landscapeUrl, uploadUrl, 'กำลังเตรียมรูปภาพสำหรับ LINE...', reportUrl);
             
@@ -402,7 +420,7 @@
                 status.innerText = 'สำเร็จ! กำลังส่งเข้า LINE...';
                 setTimeout(() => form.submit(), 1000);
             } else {
-                form.submit(); // ถ้าพรีเมียมขัดข้อง ให้ส่งแบบธรรมดาแทน
+                form.submit(); // สำหรับ LINE ให้ส่งแบบธรรมดาแทนเพื่อความต่อเนื่อง
             }
         };
 

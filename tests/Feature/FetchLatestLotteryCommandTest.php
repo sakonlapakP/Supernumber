@@ -14,6 +14,20 @@ class FetchLatestLotteryCommandTest extends TestCase
 {
     use RefreshDatabase;
 
+    protected function setUp(): void
+    {
+        parent::setUp();
+        
+        // Mock external services to prevent real notifications during tests
+        $this->mock(\App\Services\LineLotteryNotifier::class, function ($mock) {
+            $mock->shouldIgnoreMissing();
+        });
+        
+        $this->mock(\App\Services\FacebookPagePoster::class, function ($mock) {
+            $mock->shouldIgnoreMissing();
+        });
+    }
+
     public function test_it_fetches_and_saves_lottery_result_and_prizes(): void
     {
         Carbon::setTestNow(Carbon::create(2026, 4, 1, 16, 0, 0, 'Asia/Bangkok'));

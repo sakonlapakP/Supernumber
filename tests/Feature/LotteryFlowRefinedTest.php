@@ -20,6 +20,15 @@ class LotteryFlowRefinedTest extends TestCase
     {
         parent::setUp();
         Storage::fake('public');
+        
+        // Mock external services to prevent real notifications during tests
+        $this->mock(LineLotteryNotifier::class, function (MockInterface $mock) {
+            $mock->shouldIgnoreMissing();
+        });
+        
+        $this->mock(\App\Services\FacebookPagePoster::class, function (MockInterface $mock) {
+            $mock->shouldIgnoreMissing();
+        });
     }
 
     /**
@@ -32,7 +41,7 @@ class LotteryFlowRefinedTest extends TestCase
     {
         Carbon::setTestNow(Carbon::create(2026, 5, 1, 14, 30, 0, 'Asia/Bangkok'));
 
-        // Mock LINE Notifier
+        // Mock LINE Notifier specifically for this test to assert NOT receive
         $this->mock(LineLotteryNotifier::class, function (MockInterface $mock) {
             $mock->shouldNotReceive('notifyAdminArticleReady');
         });
@@ -76,7 +85,7 @@ class LotteryFlowRefinedTest extends TestCase
     {
         Carbon::setTestNow(Carbon::create(2026, 5, 1, 16, 0, 0, 'Asia/Bangkok'));
 
-        // Mock LINE Notifier
+        // Mock LINE Notifier specifically for this test
         $this->mock(LineLotteryNotifier::class, function (MockInterface $mock) {
             $mock->shouldReceive('notifyAdminArticleReady')
                 ->once()
