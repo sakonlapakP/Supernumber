@@ -3512,6 +3512,17 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         return view('admin.activity-logs', compact('logs'));
     })->name('activity-logs');
+
+    Route::get('/force-storage-cleanup', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        Artisan::call('storage:cleanup', ['--force' => true]);
+        $output = Artisan::output();
+
+        return "<h1>Storage Cleanup Successful</h1><pre>{$output}</pre><br><a href='" . route('admin.articles') . "'>กลับหน้า Admin</a>";
+    })->name('force-storage-cleanup');
 });
 
 

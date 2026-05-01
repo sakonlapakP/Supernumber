@@ -171,11 +171,11 @@ class FetchLatestLotteryCommand extends Command
         $articleName = sprintf('thai-government-lottery-%s%s%s', $year, $month, $round);
         $articleDir = sprintf('articles/%s/%s', $year, $articleName);
         
-        $ts = time();
-        $squareFilename = sprintf('%s/%s_%s.png', $articleDir, $articleName, $ts);
-        $landscapeFilename = sprintf('%s/%s_cover_%s.png', $articleDir, $articleName, $ts);
-        $squareSvgFilename = sprintf('%s/%s_%s.svg', $articleDir, $articleName, $ts);
-        $landscapeSvgFilename = sprintf('%s/%s_cover_%s.svg', $articleDir, $articleName, $ts);
+        $fileDate = $drawDate->format('Ymd');
+        $squareFilename = sprintf('%s/%s_%s.png', $articleDir, $articleName, $fileDate);
+        $landscapeFilename = sprintf('%s/%s_cover_%s.png', $articleDir, $articleName, $fileDate);
+        $squareSvgFilename = sprintf('%s/%s_%s.svg', $articleDir, $articleName, $fileDate);
+        $landscapeSvgFilename = sprintf('%s/%s_cover_%s.svg', $articleDir, $articleName, $fileDate);
 
         if (!Storage::disk('public')->exists($articleDir)) {
             Storage::disk('public')->makeDirectory($articleDir);

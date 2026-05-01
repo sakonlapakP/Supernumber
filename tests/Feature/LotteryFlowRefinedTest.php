@@ -161,6 +161,44 @@ class LotteryFlowRefinedTest extends TestCase
             ->assertExitCode(0);
     }
 
+    /**
+     * Case: Duplicate Run File Check
+     * - Running multiple times should NOT increase file count
+     */
+    public function test_running_completed_lottery_multiple_times_replaces_files_instead_of_duplicating(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 5, 1, 16, 0, 0, 'Asia/Bangkok'));
+
+        // Mock API with Complete Data
+        $payload = [
+            'response' => [
+                'date' => '01/05/2569',
+                'data' => [
+                    'first' => ['number' => ['123456']],
+                    'last3f' => ['number' => ['123', '456']],
+                    'last3b' => ['number' => ['789', '012']],
+                    'last2' => ['number' => ['12']],
+                ]
+            ]
+        ];
+
+        // Run 1st time
+        Http::fake(['https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response($payload, 200)]);
+        $this->artisan('lottery:fetch-latest', ['--force' => true])->assertExitCode(0);
+        
+        $files1 = Storage::disk('public')->allFiles('articles/2026/thai-government-lottery-202605first');
+        $this->assertGreaterThan(0, count($files1));
+        $count1 = count($files1);
+
+        // Run 2nd time (simulating a later time)
+        Carbon::setTestNow(Carbon::now()->addMinutes(10));
+        Http::fake(['https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response($payload, 200)]);
+        $this->artisan('lottery:fetch-latest', ['--force' => true])->assertExitCode(0);
+
+        $files2 = Storage::disk('public')->allFiles('articles/2026/thai-government-lottery-202605first');
+        $this->assertEquals($count1, count($files2), 'File count should not increase after re-running the command');
+    }
+
     protected function tearDown(): void
     {
         Carbon::setTestNow();

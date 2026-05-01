@@ -40,43 +40,15 @@ class FacebookPagePoster
 
         // --- ส่วนการจัดการรูปภาพสำหรับโพสต์ Facebook ---
         $imagePath = null;
+        $disk = \Illuminate\Support\Facades\Storage::disk('public');
 
-        // กรณีที่ 1: มีรูปพรีเมียมจากเบราว์เซอร์ (Manual)
-        if (!empty($manualImageUrl)) {
-            // ดึงชื่อไฟล์จาก URL (เช่น temp_render_123.png)
-            $tempFilename = basename($manualImageUrl);
-            $localTempPath = \Illuminate\Support\Facades\Storage::disk('public')->path('temp_lottery/' . $tempFilename);
-            
-            if (file_exists($localTempPath) && is_readable($localTempPath)) {
-                $imagePath = $localTempPath;
-            }
-        }
+        // Check provided manual image URL first, then fall back to landscape path
+        $relPath = $manualImageUrl ?: $article->cover_image_landscape_path;
 
-        // กรณีที่ 2: ใช้รูปปกติจากระบบ (ถ้าไม่มีรูปพรีเมียมหรือรูปพรีเมียมหาไฟล์ไม่เจอ)
-        if (!$imagePath && !empty($article->cover_image_landscape_path)) {
-            $relPath = $article->cover_image_landscape_path;
-            
-            // 1. ตรวจสอบไฟล์: ถ้าเป็นไฟล์ SVG ให้พยายามหาไฟล์ PNG ชื่อเดียวกันก่อน
-            // เพราะ Facebook API ไม่รองรับการโพสต์รูปภาพประเภท SVG
-            if (str_ends_with(strtolower($relPath), '.svg')) {
-                $pngRelPath = str_replace('.svg', '.png', $relPath);
-                $pngPath = \Illuminate\Support\Facades\Storage::disk('public')->path($pngRelPath);
-                if (file_exists($pngPath) && is_readable($pngPath)) {
-                    $relPath = $pngRelPath;
-                }
-            }
-
-            // 2. ค้นหาที่อยู่ไฟล์จริงบนเซิร์ฟเวอร์ (Absolute Path)
-            $path1 = \Illuminate\Support\Facades\Storage::disk('public')->path($relPath);
-            if (file_exists($path1) && is_readable($path1)) {
-                $imagePath = $path1;
-            } 
-            else {
-                // ถ้าหาที่จุดแรกไม่เจอ ให้ลองหาที่โฟลเดอร์ public/storage
-                $path2 = public_path('storage/' . $relPath);
-                if (file_exists($path2) && is_readable($path2)) {
-                    $imagePath = $path2;
-                }
+        if ($relPath) {
+            // ระบบใหม่ใช้ Storage เป็นหลัก ดังนั้นเราตรวจสอบความมีอยู่ผ่าน Disk โดยตรง
+            if ($disk->exists($relPath)) {
+                $imagePath = $disk->path($relPath);
             }
         }
 
