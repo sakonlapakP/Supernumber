@@ -2182,6 +2182,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'LINE_CHANNEL_SECRET',
             'LINE_GROUP_ID',
             'LINE_LOTTERY_GROUP_ID',
+            'LINE_NOTIFICATION_TEST_MODE',
+            'LINE_ADMIN_USER_ID',
             'FB_PAGE_ID',
             'FB_PAGE_ACCESS_TOKEN',
         ]);

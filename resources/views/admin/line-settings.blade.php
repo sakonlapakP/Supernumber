@@ -8,6 +8,19 @@
       <h1>ตั้งค่าการเชื่อมต่อ API</h1>
       <p class="admin-subtitle">จัดการตั้งค่า LINE, Facebook และเครื่องมือดูแลรักษาระบบ</p>
     </div>
+    @if (($settings['LINE_NOTIFICATION_TEST_MODE'] ?? '') === 'true' || ($settings['LINE_NOTIFICATION_TEST_MODE'] ?? '') == '1')
+      <div style="background: #fffbeb; border: 1px solid #f59e0b; color: #b45309; padding: 8px 16px; border-radius: 12px; font-weight: 700; display: flex; align-items: center; gap: 8px; font-size: 0.95rem;">
+        <span style="display: inline-block; width: 10px; height: 10px; background: #f59e0b; border-radius: 50%; animation: pulse 2s infinite;"></span>
+        เปิดโหมดทดสอบอยู่ (แจ้งเตือนจะส่งไปที่ {{ $settings['LINE_ADMIN_USER_ID'] ?? 'ID ส่วนตัว' }})
+      </div>
+      <style>
+        @keyframes pulse {
+          0% { opacity: 1; transform: scale(1); }
+          50% { opacity: 0.5; transform: scale(1.2); }
+          100% { opacity: 1; transform: scale(1); }
+        }
+      </style>
+    @endif
   </div>
 
   @if (session('status_message'))
@@ -79,7 +92,7 @@
         <p class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem;">ถ้าตั้งค่านี้ ระบบจะแจ้งผลหวยเข้ากลุ่มนี้โดยเฉพาะ เมื่อผลออกครบแล้วครั้งแรกของงวดนั้น</p>
       </div>
 
-      <div class="admin-field" style="border-top: 1px solid #e2e8f0; padding-top: 18px; margin-top: 18px;">
+      <div class="admin-field" style="border: 2px solid #f59e0b; background: #fffbeb; padding: 18px; border-radius: 14px; margin-top: 18px;">
         <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
           <input
             type="checkbox"
@@ -87,9 +100,9 @@
             value="1"
             {{ (old('line_notification_test_mode', $settings['LINE_NOTIFICATION_TEST_MODE'] ?? '') === 'true' || old('line_notification_test_mode', $settings['line_notification_test_mode'] ?? '') == '1') ? 'checked' : '' }}
           />
-          <strong>เปิดโหมดทดสอบ (ส่งเข้า LINE ส่วนตัวคนเดียว)</strong>
+          <strong style="color: #b45309; font-size: 1.05rem;">เปิดโหมดทดสอบ (ส่งเข้า LINE ส่วนตัวคนเดียว)</strong>
         </label>
-        <p class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem; color: #b45309;">* หากเปิดโหมดนี้ ทุกการแจ้งเตือนจะถูกส่งไปที่ User ID ด้านล่างแทนการส่งเข้ากลุ่ม</p>
+        <p class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem; color: #b45309;">* เมื่อเปิดโหมดนี้ ทุกข้อความ (หวย/ออเดอร์) จะไม่ลงกลุ่ม แต่จะส่งไปที่ User ID ด้านล่างแทน</p>
       </div>
 
       <div class="admin-field">
@@ -236,12 +249,22 @@
               </td>
               <td>
                 @if ($event->group_id)
-                  <form action="{{ route('admin.line-settings.apply-group-id') }}" method="post" style="margin: 0;">
+                  <form action="{{ route('admin.line-settings.apply-group-id') }}" method="post" style="margin: 0; display: inline-block;">
                     @csrf
                     <input type="hidden" name="group_id" value="{{ $event->group_id }}" />
-                    <button type="submit" class="admin-button admin-button--compact">ใช้ค่านี้</button>
+                    <button type="submit" class="admin-button admin-button--compact">ใช้เลขกลุ่ม</button>
                   </form>
-                @else
+                @endif
+
+                @if ($event->user_id)
+                  <button
+                    type="button"
+                    class="admin-button admin-button--compact admin-button--secondary"
+                    onclick="copyToClipboard('{{ $event->user_id }}', this)"
+                  >คัดลอก User ID</button>
+                @endif
+
+                @if (!$event->group_id && !$event->user_id)
                   <span class="admin-muted">-</span>
                 @endif
               </td>
@@ -268,4 +291,18 @@
       <a href="/admin/utils/migrate" class="admin-button admin-button--secondary">🚀 อัปเกรดฐานข้อมูล / แก้ไขโครงสร้าง</a>
     </div>
   </section>
+
+  <script>
+    function copyToClipboard(text, btn) {
+      navigator.clipboard.writeText(text).then(() => {
+        const originalText = btn.innerText;
+        btn.innerText = 'คัดลอกแล้ว!';
+        btn.style.background = '#10b981';
+        setTimeout(() => {
+          btn.innerText = originalText;
+          btn.style.background = '';
+        }, 2000);
+      });
+    }
+  </script>
 @endsection
