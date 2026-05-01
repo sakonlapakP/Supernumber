@@ -78,4 +78,10 @@ return [
         'secret_key' => env('TURNSTILE_SECRET_KEY'),
     ],
 
+    'lottery' => [
+        'article_footer' => env('LOTTERY_MSG_FOOTER', 'อัปเดตล่าสุด {updated_at} น. ข้อความนี้จัดทำขึ้นโดยอัตโนมัติหากข้อมูลผลรางวัลมีการระบุผิดพลาดขอน้อมรับและขออภัยในความไม่สะดวก'),
+        'line_template' => env('LOTTERY_MSG_LINE', "ผลหวยออกแล้ว\nงวดวันที่: {draw_date}\nรางวัลที่ 1: {first_prize}\nเลขหน้า 3 ตัว: {front_three}\nเลขท้าย 3 ตัว: {back_three}\nเลขท้าย 2 ตัว: {last_two}\nข้างเคียงรางวัลที่ 1: {near_first}"),
+        'fb_template' => env('LOTTERY_MSG_FB', "📝 ผลสลากกินแบ่งรัฐบาล: {title}\n\n{excerpt}\n\nอ่านผลรางวัลฉบับเต็มและตรวจเลขอื่นๆ ได้ที่นี่ครับ 👇\n{article_url}"),
+    ],
+
 ];

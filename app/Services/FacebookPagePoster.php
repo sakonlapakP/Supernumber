@@ -24,11 +24,19 @@ class FacebookPagePoster
         }
 
         $articleUrl = route('articles.show', ['slug' => $article->slug]);
-        $message = "📝 ผลสลากกินแบ่งรัฐบาล: {$article->title}\n\n";
-        if ($article->excerpt) {
-            $message .= strip_tags($article->excerpt) . "\n\n";
-        }
-        $message .= "อ่านผลรางวัลฉบับเต็มและตรวจเลขอื่นๆ ได้ที่นี่ครับ 👇\n{$articleUrl}";
+        
+        $template = config('services.lottery.fb_template');
+        
+        $placeholders = [
+            '{title}' => $article->title,
+            '{excerpt}' => $article->excerpt ? strip_tags($article->excerpt) : '',
+            '{article_url}' => $articleUrl,
+        ];
+
+        // If we want to support prize placeholders in FB too, we'd need to load the lottery result.
+        // For now, let's stick to article-based placeholders as defined in the plan.
+        
+        $message = str_replace(array_keys($placeholders), array_values($placeholders), $template);
 
         // --- ส่วนการจัดการรูปภาพสำหรับโพสต์ Facebook ---
         $imagePath = null;

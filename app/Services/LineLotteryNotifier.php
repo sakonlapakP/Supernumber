@@ -95,24 +95,35 @@ class LineLotteryNotifier
         /** @var Collection<int, mixed> $prizes */
         $prizes = $result->prizes;
         $drawDate = $result->source_draw_date ?? $result->draw_date;
-        $drawDateText = $drawDate instanceof Carbon
+        
+        $drawDateShort = $drawDate instanceof Carbon
             ? $drawDate->copy()->timezone('Asia/Bangkok')->format('d/m/Y')
             : ($result->source_draw_date_text ?: '-');
+            
+        $thaiMonths = [1 => 'มกราคม', 2 => 'กุมภาพันธ์', 3 => 'มีนาคม', 4 => 'เมษายน', 5 => 'พฤษภาคม', 6 => 'มิถุนายน', 7 => 'กรกฎาคม', 8 => 'สิงหาคม', 9 => 'กันยายน', 10 => 'ตุลาคม', 11 => 'พฤศจิกายน', 12 => 'ธันวาคม'];
+        $thaiDateFull = $drawDate instanceof Carbon 
+            ? $drawDate->format('j').' '.$thaiMonths[(int) $drawDate->format('n')].' '.((int)$drawDate->format('Y') + 543)
+            : $drawDateShort;
+
         $firstPrize = $this->pickFirstPrizeNumber($prizes, 'รางวัลที่ 1', '-');
         $frontThree = implode(' ', $this->pickPrizeNumbers($prizes, 'เลขหน้า 3 ตัว', 2));
         $backThree = implode(' ', $this->pickPrizeNumbers($prizes, 'เลขท้าย 3 ตัว', 2));
         $lastTwo = $this->pickFirstPrizeNumber($prizes, 'เลขท้าย 2 ตัว', '-');
         $nearFirst = implode(' ', $this->pickPrizeNumbers($prizes, 'ข้างเคียง', 2));
 
-        return implode("\n", array_filter([
-            'ผลหวยออกแล้ว',
-            'งวดวันที่: ' . $drawDateText,
-            'รางวัลที่ 1: ' . $firstPrize,
-            'เลขหน้า 3 ตัว: ' . ($frontThree !== '' ? $frontThree : '-'),
-            'เลขท้าย 3 ตัว: ' . ($backThree !== '' ? $backThree : '-'),
-            'เลขท้าย 2 ตัว: ' . $lastTwo,
-            $nearFirst !== '' ? 'ข้างเคียงรางวัลที่ 1: ' . $nearFirst : null,
-        ]));
+        $template = config('services.lottery.line_template');
+
+        $placeholders = [
+            '{draw_date}' => $drawDateShort,
+            '{thai_draw_date}' => $thaiDateFull,
+            '{first_prize}' => $firstPrize,
+            '{front_three}' => $frontThree ?: '-',
+            '{back_three}' => $backThree ?: '-',
+            '{last_two}' => $lastTwo,
+            '{near_first}' => $nearFirst ?: '-',
+        ];
+
+        return str_replace(array_keys($placeholders), array_values($placeholders), $template);
     }
 
     private function buildUnavailableAfterRetryMessage(Carbon $scheduledDrawDate, Carbon $checkedAt): string

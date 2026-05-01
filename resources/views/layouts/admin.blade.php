@@ -967,6 +967,11 @@
               'url' => route('admin.estimate-leads'),
               'active' => request()->routeIs('admin.estimate-leads*'),
             ],
+            [
+              'label' => 'ตั้งค่าข้อความอัตโนมัติ',
+              'url' => route('admin.auto-messages'),
+              'active' => request()->routeIs('admin.auto-messages*'),
+            ],
           ],
         ],
       ];

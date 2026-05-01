@@ -364,6 +364,13 @@ SVG;
         $nearFirst = implode(' ', $this->pickPrizeNumbers($prizes, 'ข้างเคียง', 2));
         $statusLabel = $result->is_complete ? 'ผลรางวัลออกครบแล้ว' : 'ผลรางวัลยังอยู่ระหว่างการอัปเดต';
 
+        $footerTemplate = config('services.lottery.article_footer');
+        $footerPlaceholders = [
+            '{updated_at}' => $updatedAt,
+            '{draw_date}' => $thaiDate,
+        ];
+        $footer = str_replace(array_keys($footerPlaceholders), array_values($footerPlaceholders), $footerTemplate);
+
         return "
 <p>ตรวจสอบผลสลากกินแบ่งรัฐบาล งวดประจำวันที่ {$thaiDate} {$statusLabel}</p>
 <h2>สรุปผลรางวัล</h2>
@@ -374,7 +381,7 @@ SVG;
   <li>เลขท้าย 2 ตัว: <strong>{$lastTwo}</strong></li>
   <li>ข้างเคียงรางวัลที่ 1: <strong>{$nearFirst}</strong></li>
 </ul>
-<p>อัปเดตล่าสุด {$updatedAt} น. ข้อความนี้จัดทำขึ้นโดยอัตโนมัติหากข้อมูลผลรางวัลมีการระบุผิดพลาดขอน้อมรับและขออภัยในความไม่สะดวก</p>";
+<p>{$footer}</p>";
     }
 
     private function pickFirstPrizeNumber(Collection $prizes, string $nameNeedle, string $fallback): string

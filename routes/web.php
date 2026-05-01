@@ -45,7 +45,6 @@ use Illuminate\Support\Facades\Route;
 // This is called via AJAX before the article form is submitted.
 // The article save route then only receives a stored path string, not file data.
 Route::post('/p/img', function (Request $request) {
-    // Require active admin session (inline — closures not yet defined at this point in the file)
     if (! session('admin_authenticated')) {
         return response()->json(['ok' => false, 'error' => 'Unauthorized'], 403);
     }
@@ -56,7 +55,6 @@ Route::post('/p/img', function (Request $request) {
     }
 
     $file = $request->file('img');
-
     if (! $file || ! $file->isValid()) {
         return response()->json(['ok' => false, 'error' => 'No file received'], 400);
     }
@@ -71,25 +69,12 @@ Route::post('/p/img', function (Request $request) {
     }
 
     try {
-        $docRoot = $_SERVER['DOCUMENT_ROOT'] ?? public_path();
-        $storageDir = rtrim($docRoot, '/') . '/storage';
-
-        // Force a real folder instead of symlink to fix Nginx 404 on DirectAdmin
-        if (is_link($storageDir)) {
-            @unlink($storageDir);
-        }
-
-        $targetDir = $storageDir . '/articles/tmp';
-        if (! is_dir($targetDir)) {
-            @mkdir($targetDir, 0755, true);
-        }
-
-        $ext  = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
+        $ext = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
         $name = 'img_' . uniqid('', true) . '.' . $ext;
-        $file->move($targetDir, $name);
-
-        // Stored path is relative to the storage root, matching asset('storage/'.$path)
-        $storedPath = 'articles/tmp/' . $name;
+        $path = 'articles/tmp';
+        
+        Storage::disk('public')->putFileAs($path, $file, $name);
+        $storedPath = $path . '/' . $name;
 
         return response()->json(['ok' => true, 'path' => $storedPath]);
     } catch (\Throwable $e) {
@@ -97,61 +82,7 @@ Route::post('/p/img', function (Request $request) {
     }
 })->name('img.store');
 
-// Image pre-upload endpoint — neutral URL path to avoid WAF pattern matching.
-// This is called via AJAX before the article form is submitted.
-// The article save route then only receives a stored path string, not file data.
-Route::post('/p/img', function (Request $request) {
-    // Require active admin session (inline — closures not yet defined at this point in the file)
-    if (! session('admin_authenticated')) {
-        return response()->json(['ok' => false, 'error' => 'Unauthorized'], 403);
-    }
-    $userId = session('admin_user_id');
-    $user = is_numeric($userId) ? User::find((int) $userId) : null;
-    if (! $user || ! $user->canAccessAdminPanel()) {
-        return response()->json(['ok' => false, 'error' => 'Unauthorized'], 403);
-    }
 
-    $file = $request->file('img');
-
-    if (! $file || ! $file->isValid()) {
-        return response()->json(['ok' => false, 'error' => 'No file received'], 400);
-    }
-
-    $allowedMimes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (! in_array($file->getMimeType(), $allowedMimes, true)) {
-        return response()->json(['ok' => false, 'error' => 'Invalid file type'], 400);
-    }
-
-    if ($file->getSize() > 5 * 1024 * 1024) {
-        return response()->json(['ok' => false, 'error' => 'File too large (max 5 MB)'], 400);
-    }
-
-    try {
-        $docRoot = $_SERVER['DOCUMENT_ROOT'] ?? public_path();
-        $storageDir = rtrim($docRoot, '/') . '/storage';
-
-        // Force a real folder instead of symlink to fix Nginx 404 on DirectAdmin
-        if (is_link($storageDir)) {
-            @unlink($storageDir);
-        }
-
-        $targetDir = $storageDir . '/articles/tmp';
-        if (! is_dir($targetDir)) {
-            @mkdir($targetDir, 0755, true);
-        }
-
-        $ext  = strtolower($file->getClientOriginalExtension()) ?: 'jpg';
-        $name = 'img_' . uniqid('', true) . '.' . $ext;
-        $file->move($targetDir, $name);
-
-        // Stored path is relative to the storage root, matching asset('storage/'.$path)
-        $storedPath = 'articles/tmp/' . $name;
-
-        return response()->json(['ok' => true, 'path' => $storedPath]);
-    } catch (\Throwable $e) {
-        return response()->json(['ok' => false, 'error' => $e->getMessage()], 500);
-    }
-})->name('img.store');
 
 $currentAdmin = function (): ?User {
     $userId = session('admin_user_id');
@@ -1297,7 +1228,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     $sanitizeArticleContent,
     $articleColumnExists,
     $ensurePublicStorageLink,
-    $decodeBase64Image
+    $decodeBase64Image,
+    $moveTmpImagesToPermanent
 ) {
     Route::get('/login', function (Request $request) use ($currentAdmin) {
         if ($currentAdmin()) {
@@ -2383,6 +2315,56 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->with('status_message', 'อัปเดต LINE_GROUP_ID จาก webhook เรียบร้อยแล้ว');
     })->name('line-settings.apply-group-id');
 
+    Route::get('/auto-messages', function () use ($ensureAdmin, $resolveEnvironmentEditor) {
+        if ($redirect = $ensureAdmin(User::ROLE_ADMIN)) {
+            return $redirect;
+        }
+
+        $environmentEditor = $resolveEnvironmentEditor();
+        $settings = $environmentEditor->getMany([
+            'LOTTERY_MSG_FOOTER',
+            'LOTTERY_MSG_LINE',
+            'LOTTERY_MSG_FB',
+        ]);
+
+        // Fallback to config defaults if env is empty
+        if (empty($settings['LOTTERY_MSG_FOOTER'])) $settings['LOTTERY_MSG_FOOTER'] = config('services.lottery.article_footer');
+        if (empty($settings['LOTTERY_MSG_LINE'])) $settings['LOTTERY_MSG_LINE'] = config('services.lottery.line_template');
+        if (empty($settings['LOTTERY_MSG_FB'])) $settings['LOTTERY_MSG_FB'] = config('services.lottery.fb_template');
+
+        return view('admin.auto-messages', compact('settings'));
+    })->name('auto-messages');
+
+    Route::post('/auto-messages', function (Request $request) use ($ensureAdmin, $resolveEnvironmentEditor) {
+        if ($redirect = $ensureAdmin(User::ROLE_ADMIN)) {
+            return $redirect;
+        }
+
+        $environmentEditor = $resolveEnvironmentEditor();
+
+        $data = $request->validate([
+            'lottery_msg_footer' => ['nullable', 'string', 'max:5000'],
+            'lottery_msg_line' => ['nullable', 'string', 'max:5000'],
+            'lottery_msg_fb' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        try {
+            $environmentEditor->setMany([
+                'LOTTERY_MSG_FOOTER' => $data['lottery_msg_footer'] ?? '',
+                'LOTTERY_MSG_LINE' => $data['lottery_msg_line'] ?? '',
+                'LOTTERY_MSG_FB' => $data['lottery_msg_fb'] ?? '',
+            ]);
+
+            Artisan::call('config:clear');
+        } catch (\Throwable $e) {
+            return back()->withInput()->withErrors(['auto_messages' => $e->getMessage()]);
+        }
+
+        return redirect()
+            ->route('admin.auto-messages')
+            ->with('status_message', 'บันทึกค่าข้อความอัตโนมัติเรียบร้อยแล้ว');
+    })->name('auto-messages.update');
+
 
     Route::get('/utils/migrate', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
@@ -2773,7 +2755,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return back()->withErrors(['fb_share' => 'แชร์ไปที่ Facebook Page ไม่สำเร็จ ❌ : ' . ($res['error'] ?? 'Unknown Error')]);
     })->name('articles.share-fb');
 
-    Route::post('/articles', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink, $decodeBase64Image) {
+    Route::post('/articles', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink, $decodeBase64Image, $moveTmpImagesToPermanent) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
@@ -2823,18 +2805,39 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             $storageDir = rtrim($docRoot, '/') . '/storage/';
 
             // Use pre-uploaded path from /p/img endpoint (already saved to storage).
+            // Move cover images from tmp to permanent directory
+            $disk = Storage::disk('public');
+            $permDir = $imageMeta['directory'];
+            if (!$disk->exists($permDir)) {
+                $disk->makeDirectory($permDir);
+            }
+
             $landPath = trim((string) ($data['land_path'] ?? ''));
-            if ($landPath !== '' && file_exists($storageDir . $landPath)) {
-                $coverImageLandscapePath = $landPath;
+            if ($landPath !== '' && $disk->exists($landPath)) {
+                if (str_contains($landPath, 'articles/tmp/')) {
+                    $newLandPath = $permDir . '/' . basename($landPath);
+                    $disk->move($landPath, $newLandPath);
+                    $coverImageLandscapePath = $newLandPath;
+                } else {
+                    $coverImageLandscapePath = $landPath;
+                }
             }
 
             $sqPath = trim((string) ($data['sq_path'] ?? ''));
-            if ($sqPath !== '' && file_exists($storageDir . $sqPath)) {
-                $coverImageSquarePath = $sqPath;
+            if ($sqPath !== '' && $disk->exists($sqPath)) {
+                if (str_contains($sqPath, 'articles/tmp/')) {
+                    $newSqPath = $permDir . '/' . basename($sqPath);
+                    $disk->move($sqPath, $newSqPath);
+                    $coverImageSquarePath = $newSqPath;
+                } else {
+                    $coverImageSquarePath = $sqPath;
+                }
             }
 
             // Sync main cover_image_path: Use square as priority, then landscape
             $coverImagePath = $coverImageSquarePath ?: $coverImageLandscapePath;
+
+            $content = $moveTmpImagesToPermanent($content, $slug, $imageDate->year);
 
             $articleData = [
                 'title' => trim($data['title']),
@@ -2887,7 +2890,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.article-edit', compact('article', 'comments'));
     })->name('articles.edit');
 
-    Route::post('/content-media/{article}', function (Request $request, Article $article) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink, $decodeBase64Image) {
+    Route::post('/content-media/{article}', function (Request $request, Article $article) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink, $decodeBase64Image, $moveTmpImagesToPermanent) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
@@ -2952,24 +2955,47 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             $storageDir = rtrim($docRoot, '/') . '/storage/';
 
             // Use pre-uploaded path from /p/img endpoint (already saved to storage).
+            // Move cover images from tmp to permanent directory
+            $disk = Storage::disk('public');
+            $permDir = $imageMeta['directory'];
+            if (!$disk->exists($permDir)) {
+                $disk->makeDirectory($permDir);
+            }
+
             $landPath = trim((string) ($data['land_path'] ?? ''));
-            if ($landPath !== '' && file_exists($storageDir . $landPath)) {
-                if ($coverImageLandscapePath && $coverImageLandscapePath !== $landPath) {
-                    @unlink($storageDir . $coverImageLandscapePath);
+            if ($landPath !== '' && $disk->exists($landPath)) {
+                if (str_contains($landPath, 'articles/tmp/')) {
+                    // Remove old physical file if exists
+                    if ($coverImageLandscapePath && $disk->exists($coverImageLandscapePath) && $coverImageLandscapePath !== $landPath) {
+                        $disk->delete($coverImageLandscapePath);
+                    }
+                    $newLandPath = $permDir . '/' . basename($landPath);
+                    $disk->move($landPath, $newLandPath);
+                    $coverImageLandscapePath = $newLandPath;
+                } else {
+                    $coverImageLandscapePath = $landPath;
                 }
-                $coverImageLandscapePath = $landPath;
             }
 
             $sqPath = trim((string) ($data['sq_path'] ?? ''));
-            if ($sqPath !== '' && file_exists($storageDir . $sqPath)) {
-                if ($coverImageSquarePath && $coverImageSquarePath !== $sqPath) {
-                    @unlink($storageDir . $coverImageSquarePath);
+            if ($sqPath !== '' && $disk->exists($sqPath)) {
+                if (str_contains($sqPath, 'articles/tmp/')) {
+                    // Remove old physical file if exists
+                    if ($coverImageSquarePath && $disk->exists($coverImageSquarePath) && $coverImageSquarePath !== $sqPath) {
+                        $disk->delete($coverImageSquarePath);
+                    }
+                    $newSqPath = $permDir . '/' . basename($sqPath);
+                    $disk->move($sqPath, $newSqPath);
+                    $coverImageSquarePath = $newSqPath;
+                } else {
+                    $coverImageSquarePath = $sqPath;
                 }
-                $coverImageSquarePath = $sqPath;
             }
 
             // Sync main cover_image_path: Use square as priority, then landscape
             $coverImagePath = $coverImageSquarePath ?: $coverImageLandscapePath;
+
+            $content = $moveTmpImagesToPermanent($content, $slug, $imageDate->year);
 
             // Only reset notified_at when:
             // 1. Article transitions from unpublished → published (new publish)
@@ -3490,7 +3516,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
 
 // UPDATE
-Route::post('/direct-save-article/{article}', function (Request $request, Article $article) use ($ensureAdmin, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink) {
+Route::post('/direct-save-article/{article}', function (Request $request, Article $article) use ($ensureAdmin, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink, $moveTmpImagesToPermanent) {
     if ($redirect = $ensureAdmin()) return $redirect;
 
     $data = $request->validate([
@@ -3558,7 +3584,7 @@ Route::post('/direct-save-article/{article}', function (Request $request, Articl
 // --- SIMPLIFIED FIREWALL BYPASS ROUTES (NO ADMIN PREFIX) ---
 
 // CREATE
-Route::post('/direct-create-article', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink) {
+Route::post('/direct-create-article', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink, $moveTmpImagesToPermanent) {
     if ($redirect = $ensureAdmin()) return $redirect;
 
     $data = $request->validate([
