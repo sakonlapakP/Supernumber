@@ -40,7 +40,7 @@ return [
 
         'public' => [
             'driver' => 'local',
-            'root' => (is_dir(public_path('public')) ? public_path('public/storage') : public_path('storage')),
+            'root' => (basename(base_path()) === 'public_html') ? base_path('storage') : public_path('storage'),
             'url' => rtrim(env('APP_URL', 'http://localhost'), '/').'/storage',
             'visibility' => 'public',
             'throw' => false,

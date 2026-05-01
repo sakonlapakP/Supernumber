@@ -222,6 +222,16 @@ class LineNotifier
 
     private function resolveDestinationId(?string $destinationKey = null): string
     {
+        if (config('services.line.test_mode', false)) {
+            $adminId = trim((string) config('services.line.admin_user_id', ''));
+            if ($adminId !== '') {
+                Log::info("LINE: Test mode active. Redirecting notification to Admin User ID [{$adminId}].");
+                return $adminId;
+            }
+            
+            Log::warning('LINE: Test mode active but LINE_ADMIN_USER_ID is empty. Falling back to normal routing.');
+        }
+
         $defaultId = trim((string) config('services.line.group_id', ''));
 
         if ($destinationKey !== null) {

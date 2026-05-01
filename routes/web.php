@@ -3521,16 +3521,6 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.activity-logs', compact('logs'));
     })->name('activity-logs');
 
-    Route::get('/debug-paths', function () {
-        return [
-            'base_path' => base_path(),
-            'public_path' => public_path(),
-            'storage_path' => storage_path(),
-            'is_public_dir' => is_dir(public_path()),
-            'parent_dir' => dirname(public_path()),
-        ];
-    });
-
     Route::get('/force-storage-cleanup', function (Request $request) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
             return $redirect;
