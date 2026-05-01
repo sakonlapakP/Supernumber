@@ -52,6 +52,8 @@ return [
         ))),
         'retry_times' => (int) env('LINE_RETRY_TIMES', 3),
         'retry_sleep_ms' => (int) env('LINE_RETRY_SLEEP_MS', 1000),
+        'test_mode' => (bool) env('LINE_NOTIFICATION_TEST_MODE', false),
+        'admin_user_id' => env('LINE_ADMIN_USER_ID'),
     ],
 
     'facebook' => [

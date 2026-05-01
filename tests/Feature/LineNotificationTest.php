@@ -643,6 +643,40 @@ class LineNotificationTest extends TestCase
         $response->assertSessionHasErrors('line');
     }
 
+    public function test_it_redirects_notifications_to_admin_user_id_when_test_mode_is_enabled(): void
+    {
+        config()->set('services.line.channel_access_token', 'line-token');
+        config()->set('services.line.test_mode', true);
+        config()->set('services.line.admin_user_id', 'admin-user-id');
+        config()->set('services.line.group_id', 'group-default');
+        config()->set('services.line.groups.estimate', 'group-estimate');
+        config()->set('services.line.retry_sleep_ms', 0);
+
+        Http::fake([
+            'https://api.line.me/v2/bot/message/push' => Http::response([], 200),
+        ]);
+
+        $this->post('/estimate', [
+            'first_name' => 'สมชาย',
+            'last_name' => 'ใจดี',
+            'gender' => 'male',
+            'birthday' => '1990-01-01',
+            'work_type' => 'sales',
+            'current_phone' => '081-234-5678',
+            'main_phone' => '0899998888',
+            'email' => 'somchai@example.com',
+            'goal' => 'money',
+        ]);
+
+        Http::assertSent(function (HttpRequest $request): bool {
+            return ($request->data()['to'] ?? null) === 'admin-user-id';
+        });
+
+        $this->assertDatabaseHas('line_notification_logs', [
+            'destination_id' => 'admin-user-id',
+        ]);
+    }
+
     /**
      * @return array<string, mixed>
      */

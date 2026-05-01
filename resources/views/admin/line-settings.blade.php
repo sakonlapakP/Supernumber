@@ -79,6 +79,32 @@
         <p class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem;">ถ้าตั้งค่านี้ ระบบจะแจ้งผลหวยเข้ากลุ่มนี้โดยเฉพาะ เมื่อผลออกครบแล้วครั้งแรกของงวดนั้น</p>
       </div>
 
+      <div class="admin-field" style="border-top: 1px solid #e2e8f0; padding-top: 18px; margin-top: 18px;">
+        <label style="display: flex; align-items: center; gap: 10px; cursor: pointer;">
+          <input
+            type="checkbox"
+            name="line_notification_test_mode"
+            value="1"
+            {{ (old('line_notification_test_mode', $settings['LINE_NOTIFICATION_TEST_MODE'] ?? '') === 'true' || old('line_notification_test_mode', $settings['line_notification_test_mode'] ?? '') == '1') ? 'checked' : '' }}
+          />
+          <strong>เปิดโหมดทดสอบ (ส่งเข้า LINE ส่วนตัวคนเดียว)</strong>
+        </label>
+        <p class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem; color: #b45309;">* หากเปิดโหมดนี้ ทุกการแจ้งเตือนจะถูกส่งไปที่ User ID ด้านล่างแทนการส่งเข้ากลุ่ม</p>
+      </div>
+
+      <div class="admin-field">
+        <label for="line_admin_user_id">LINE_ADMIN_USER_ID (สำหรับโหมดทดสอบ)</label>
+        <input
+          id="line_admin_user_id"
+          class="admin-input"
+          type="text"
+          name="line_admin_user_id"
+          value="{{ old('line_admin_user_id', $settings['LINE_ADMIN_USER_ID'] ?? '') }}"
+          placeholder="เช่น Uxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+        />
+        <p class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem;">ไอดีส่วนตัวที่จะรับการแจ้งเตือนเมื่อเปิดโหมดทดสอบ</p>
+      </div>
+
       <div class="admin-muted" style="margin-bottom: 18px; font-size: 0.92rem;">
         หลังบันทึก ระบบจะ clear config cache ให้ทันที
       </div>
@@ -185,7 +211,8 @@
             <th style="width: 170px;">เวลา</th>
             <th style="width: 120px;">เหตุการณ์</th>
             <th style="width: 110px;">แหล่งที่มา</th>
-            <th style="width: 280px;">Group ID</th>
+            <th style="width: 200px;">Group ID</th>
+            <th style="width: 200px;">User ID</th>
             <th style="width: 120px;">ลายเซ็น</th>
             <th>จัดการ</th>
           </tr>
@@ -197,6 +224,7 @@
               <td>{{ $event->event_type ?: '-' }}</td>
               <td>{{ $event->source_type ?: '-' }}</td>
               <td style="word-break: break-all;">{{ $event->group_id ?: '-' }}</td>
+              <td style="word-break: break-all;">{{ $event->user_id ?: '-' }}</td>
               <td>
                 @if ($event->signature_valid === true)
                   ถูกต้อง
@@ -220,7 +248,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="6" class="admin-muted">ยังไม่มี webhook event เข้ามา ให้ตั้ง Webhook URL แล้วส่งข้อความจากกลุ่ม LINE สัก 1 ข้อความ</td>
+              <td colspan="7" class="admin-muted">ยังไม่มี webhook event เข้ามา ให้ตั้ง Webhook URL แล้วส่งข้อความจากกลุ่ม LINE สัก 1 ข้อความ</td>
             </tr>
           @endforelse
         </tbody>

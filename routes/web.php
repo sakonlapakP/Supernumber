@@ -2213,6 +2213,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'line_channel_secret' => ['nullable', 'string', 'max:255'],
             'line_group_id' => ['nullable', 'string', 'max:255'],
             'line_lottery_group_id' => ['nullable', 'string', 'max:255'],
+            'line_notification_test_mode' => ['nullable', 'boolean'],
+            'line_admin_user_id' => ['nullable', 'string', 'max:255'],
             'fb_page_id' => ['nullable', 'string', 'max:255'],
             'fb_page_access_token' => ['nullable', 'string', 'max:4000'],
         ]);
@@ -2222,6 +2224,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             $channelSecret = trim((string) ($data['line_channel_secret'] ?? ''));
             $groupId = trim((string) ($data['line_group_id'] ?? ''));
             $lotteryGroupId = trim((string) ($data['line_lottery_group_id'] ?? ''));
+            $testMode = ($request->has('line_notification_test_mode') && $request->line_notification_test_mode) ? 'true' : 'false';
+            $adminUserId = trim((string) ($data['line_admin_user_id'] ?? ''));
             $fbPageId = trim((string) ($data['fb_page_id'] ?? ''));
             $fbToken = trim((string) ($data['fb_page_access_token'] ?? ''));
 
@@ -2230,6 +2234,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'LINE_CHANNEL_SECRET' => $channelSecret,
                 'LINE_GROUP_ID' => $groupId,
                 'LINE_LOTTERY_GROUP_ID' => $lotteryGroupId,
+                'LINE_NOTIFICATION_TEST_MODE' => $testMode,
+                'LINE_ADMIN_USER_ID' => $adminUserId,
                 'FB_PAGE_ID' => $fbPageId,
                 'FB_PAGE_ACCESS_TOKEN' => $fbToken,
             ]);
@@ -2238,6 +2244,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             config()->set('services.line.channel_secret', $channelSecret);
             config()->set('services.line.group_id', $groupId);
             config()->set('services.line.groups.lottery', $lotteryGroupId);
+            config()->set('services.line.test_mode', $testMode === 'true');
+            config()->set('services.line.admin_user_id', $adminUserId);
             config()->set('services.facebook.page_id', $fbPageId);
             config()->set('services.facebook.page_access_token', $fbToken);
 
@@ -3512,6 +3520,16 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         return view('admin.activity-logs', compact('logs'));
     })->name('activity-logs');
+
+    Route::get('/debug-paths', function () {
+        return [
+            'base_path' => base_path(),
+            'public_path' => public_path(),
+            'storage_path' => storage_path(),
+            'is_public_dir' => is_dir(public_path()),
+            'parent_dir' => dirname(public_path()),
+        ];
+    });
 
     Route::get('/force-storage-cleanup', function (Request $request) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
