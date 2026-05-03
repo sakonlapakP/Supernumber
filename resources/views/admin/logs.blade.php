@@ -24,6 +24,7 @@
     <div class="admin-page-actions" style="margin-left: 0; margin-right: auto;">
       <a href="{{ route('admin.logs', array_filter($filters, fn ($value) => $value !== '')) }}" class="admin-button admin-button--muted admin-button--compact">รีเฟรช</a>
       <a href="{{ route('admin.logs') }}" class="admin-button admin-button--compact">รีเซ็ต</a>
+      <a href="{{ route('admin.logs.download', ['file' => $filters['file']]) }}" class="admin-button admin-button--muted admin-button--compact">📥 ดาวน์โหลดไฟล์</a>
       <form action="{{ route('admin.logs.clear') }}" method="post" style="margin: 0;" onsubmit="return confirm('ล้างไฟล์ log นี้ใช่หรือไม่?');">
         @csrf
         <input type="hidden" name="file" value="{{ $filters['file'] }}" />

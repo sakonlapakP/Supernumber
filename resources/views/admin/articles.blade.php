@@ -111,9 +111,6 @@
       width: 100% !important;
       margin: 0 !important;
     }
-    .admin-action-group form:last-child {
-      grid-column: span 2;
-    }
     .admin-action-group .admin-button {
       height: 44px;
     }
@@ -132,13 +129,23 @@
             <th>รูปหน้าปก</th>
             <th>หัวข้อ</th>
             <th>สถานะ</th>
-            <th>ยอดวิว</th>
-            <th>เวลาเผยแพร่</th>
             <th>จัดการ</th>
           </tr>
         </thead>
         <tbody>
           @forelse ($articles as $article)
+            @php
+              $isLotteryArticle = preg_match('/^thai-govern?ment-lottery-(\d{4})(\d{2})(first|second)$/', (string)$article->slug, $matches) === 1;
+              $lotteryIsComplete = true;
+              if ($isLotteryArticle) {
+                  $year = $matches[1]; $month = $matches[2]; $round = $matches[3];
+                  $lotteryResult = \App\Models\LotteryResult::whereYear('draw_date', $year)->whereMonth('draw_date', $month)->get()->first(function($r) use ($round) {
+                      $d = $r->source_draw_date ?? $r->draw_date;
+                      return $round === 'first' ? (int)$d->format('j') <= 15 : (int)$d->format('j') > 15;
+                  });
+                  $lotteryIsComplete = $lotteryResult ? $lotteryResult->is_complete : false;
+              }
+            @endphp
             <tr class="article-row" data-title="{{ strtolower($article->title) }}" data-slug="{{ strtolower($article->slug) }}">
               <td data-label="รูปหน้าปก">
                 <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
@@ -159,71 +166,55 @@
               <td data-label="สถานะ">
                 @if($article->is_published)
                   <span class="admin-status-pill admin-status-pill--active">เผยแพร่แล้ว</span>
-                  @if(!$article->is_auto_post && !$article->notified_at)
-                    <div style="margin-top: 5px;">
-                      <span class="admin-status-pill" style="background: #fff7ed; color: #c2410c; border: 1px solid #fdba74; font-size: 10px;">⏳ รอแชร์รูปพรีเมียม</span>
-                    </div>
-                  @endif
                 @else
                   <span class="admin-status-pill admin-status-pill--hold">ฉบับร่าง</span>
                 @endif
-              </td>
-              <td data-label="ยอดวิว">
-                <span style="font-weight: 500; color: #475569;">👁️ {{ number_format($article->view_count) }}</span>
-              </td>
-              <td data-label="เวลาเผยแพร่" class="admin-muted">
-                {{ $article->published_at ? $article->published_at->timezone('Asia/Bangkok')->format('d/m/Y H:i') : '-' }}
+                
+                @if($isLotteryArticle && !$lotteryIsComplete)
+                  <div style="margin-top: 4px;">
+                    <span class="admin-status-pill admin-status-pill--hold" style="font-size: 10px; background: #fff7ed; color: #c2410c; border-color: #fdba74;">⏳ รอผลครบ 100%</span>
+                  </div>
+                @endif
+
+                <div class="admin-muted" style="font-size: 12px; margin-top: 6px;">
+                  {{ $article->published_at ? $article->published_at->timezone('Asia/Bangkok')->format('d/m/Y H:i') : '-' }}
+                </div>
               </td>
               <td data-label="จัดการ" class="admin-action-cell">
                 <div class="admin-action-group">
                   <a href="{{ route('admin.articles.preview', $article) }}" target="_blank" class="admin-button admin-button--muted admin-button--compact" title="ดูตัวอย่าง">ดู</a>
                   <a href="{{ route('admin.articles.edit', $article) }}" class="admin-button admin-button--muted admin-button--compact">แก้ไข</a>
-                  @if($article->is_published)
-                    <form id="share-line-form-{{ $article->id }}" action="{{ route('admin.articles.share-line', $article) }}" method="POST" style="display: inline;">
+                  @if($article->is_published && $isLotteryArticle)
+                    <form id="share-social-form-{{ $article->id }}" action="{{ route('admin.articles.share-social', $article) }}" method="POST" style="display: inline;">
                       @csrf
-                      <input type="hidden" name="manual_image_url" id="share-line-image-{{ $article->id }}">
+                      <input type="hidden" name="manual_image_url" id="share-social-image-{{ $article->id }}">
                       <button type="button" 
-                              id="btn-share-line-{{ $article->id }}"
-                              onclick="shareToLine(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-temp-image') }}', '{{ route('admin.articles.report-render-error', $article) }}')"
-                              class="admin-button admin-button--compact" style="background: #06C755; border-color: #06C755; color: white;" title="ส่งเข้ากลุ่ม LINE">กลุ่ม LINE</button>
-                    </form>
-                    @if($article->is_line_broadcasted)
-                       <button type="button" class="admin-button admin-button--compact" style="background: #94a3b8; border-color: #94a3b8; color: white; cursor: not-allowed;" disabled title="Broadcast ไปแล้ว">Broadcast แล้ว</button>
-                    @else
-                      <form id="broadcast-line-form-{{ $article->id }}" action="{{ route('admin.articles.broadcast-line', $article) }}" method="POST" style="display: inline;" onsubmit="return confirm('ยืนยันการ Broadcast บทความนี้ส่งหาผู้ติดตามทุกคน? (หากส่งแล้วจะไม่สามารถดึงกลับได้)')">
-                        @csrf
-                        <input type="hidden" name="manual_image_url" id="broadcast-line-image-{{ $article->id }}">
-                        <button type="button" 
-                                onclick="shareToLine(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-temp-image') }}', '{{ route('admin.articles.report-render-error', $article) }}', 'broadcast')"
-                                class="admin-button admin-button--compact" style="background: #f97316; border-color: #f97316; color: white;" title="Broadcast หาผู้ติดตามทุกคน">Broadcast</button>
-                      </form>
-                    @endif
-                    <form id="share-fb-form-{{ $article->id }}" action="{{ route('admin.articles.share-fb', $article) }}" method="post" style="display: inline;">
-                      @csrf
-                      <input type="hidden" name="manual_image_url" id="share-fb-image-{{ $article->id }}">
-                      <button type="button" 
-                              id="btn-share-fb-{{ $article->id }}"
-                              onclick="shareToFb(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-temp-image') }}', '{{ route('admin.articles.report-render-error', $article) }}')"
+                              id="btn-share-social-{{ $article->id }}"
+                              onclick="renderAndShareSocial(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-rendered-image', $article) }}', '{{ route('admin.articles.report-render-error', $article) }}', {{ $lotteryIsComplete ? 1 : 0 }})"
                               class="admin-button admin-button--compact" 
-                              style="background: #1877F2; color: #fff; border-color: #1877F2;" 
-                              title="แชร์ไป Facebook (รูปจัตุรัสพรีเมียม)">FB</button>
+                              style="background: #1877F2; color: #fff; border-color: #1877F2; {{ !$lotteryIsComplete ? 'opacity: 0.6; cursor: not-allowed;' : '' }}" 
+                              title="{{ !$lotteryIsComplete ? 'รอให้หวยออกครบ 100% ก่อนถึงจะแชร์ได้' : 'แปลงรูปเป็น PNG แล้วแชร์ไป Facebook Page' }}">แปลงรูปและแชร์</button>
+                    </form>
+                  @elseif($article->is_published)
+                    <form action="{{ route('admin.articles.share-social', $article) }}" method="POST" style="display: inline;" onsubmit="return confirm('ยืนยันแชร์บทความนี้ไปที่ Facebook Page?')">
+                      @csrf
+                      <input type="hidden" name="manual_image_url" value="{{ $article->cover_image_landscape_path ?: ($article->cover_image_path ?: $article->cover_image_square_path) }}">
+                      <button type="submit"
+                              class="admin-button admin-button--compact"
+                              style="background: #1877F2; color: #fff; border-color: #1877F2;"
+                              title="แชร์ไป Facebook Page">แชร์</button>
                     </form>
                   @endif
-                  <form action="{{ route('admin.articles.delete', $article) }}" method="post" onsubmit="return confirm('ยืนยันลบบทความ?')">
-                    @csrf
-                    @method('DELETE')
-                    <button type="submit" class="admin-button admin-button--muted admin-button--compact" style="color: var(--admin-danger);">ลบ</button>
-                  </form>
                 </div>
               </td>
             </tr>
           @empty
             <tr>
-              <td colspan="6" class="admin-muted" style="text-align: center; padding: 40px;">ไม่พบรายการบทความ</td>
+              <td colspan="4" class="admin-muted" style="text-align: center; padding: 40px;">ไม่พบรายการบทความ</td>
             </tr>
           @endforelse
           <tr id="articles-empty-row" style="display: none;">
-            <td colspan="6" class="admin-muted" style="text-align: center; padding: 40px;">ไม่พบผลลัพธ์การค้นหา</td>
+            <td colspan="4" class="admin-muted" style="text-align: center; padding: 40px;">ไม่พบผลลัพธ์การค้นหา</td>
           </tr>
         </tbody>
         </table>
@@ -294,9 +285,13 @@
          * ฟังก์ชันกลางสำหรับวาดรูปพรีเมียมและอัปโหลดขึ้น Server
          * คืนค่าเป็นข้อมูลรูปภาพที่อัปโหลดเสร็จแล้ว
          */
-        async function renderAndUploadPremiumImage(landscapeUrl, uploadUrl, loadingText, reportUrl) {
+        async function renderAndUploadPremiumImage(imagePath, uploadUrl, loadingText, reportUrl, type = 'square') {
+            if (!imagePath) {
+                return null;
+            }
+
             // 1. เตรียม URL รูปวาดผ่าน Proxy
-            const svgPath = landscapeUrl.replace(/\.(png|jpg|jpeg)$/i, '.svg');
+            const svgPath = imagePath.replace(/\.(png|jpg|jpeg|webp)$/i, '.svg');
             const svgUrl = `{{ route('admin.articles.get-svg-proxy') }}?path=${encodeURIComponent(svgPath)}`;
             
             if (!svgUrl || !svgUrl.toLowerCase().includes('.svg')) {
@@ -357,7 +352,7 @@
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({ image: pngData, type: 'landscape' })
+                    body: JSON.stringify({ image: pngData, type })
                 });
 
                 const uploadJson = await uploadRes.json();
@@ -372,20 +367,72 @@
         }
 
         /**
-         * ฟังก์ชันแชร์ไป Facebook (เรียกใช้ตัวกลาง)
+         * ฟังก์ชันแปลงรูปและแชร์ไป Facebook Page
          */
-        window.shareToFb = async function(button, articleId, landscapeUrl, uploadUrl, reportUrl) {
+        window.renderAndShareSocial = async function(button, articleId, imagePath, uploadUrl, reportUrl, isComplete = 1) {
+            // ตรวจสอบกรณีเป็นหวยแต่ยังออกไม่ครบ
+            if (isComplete === 0) {
+                alert('⚠️ หวยงวดนี้ยังออกไม่ครบ 100% กรุณารอให้ระบบอัปเดตผลรางวัลให้ครบถ้วนก่อนจึงจะแชร์ได้ครับ');
+                return;
+            }
+
+            const form = document.getElementById('share-social-form-' + articleId);
+            const imageInput = document.getElementById('share-social-image-' + articleId);
+
+            if (!confirm('ยืนยันแปลงรูปเป็น PNG และแชร์ไปที่ Facebook Page?')) {
+                return;
+            }
+
+            button.disabled = true;
+            const originalText = button.innerText;
+            button.innerText = 'กำลังทำงาน...';
+
+            try {
+                if (imagePath && !imagePath.toLowerCase().endsWith('.svg')) {
+                    imageInput.value = imagePath;
+                    form.submit();
+                    return;
+                }
+
+                const result = await renderAndUploadPremiumImage(imagePath, uploadUrl, 'กำลังแปลงรูปและเตรียมแชร์ Facebook...', reportUrl, 'square');
+
+                if (result) {
+                    imageInput.value = result.path;
+                    status.innerText = 'สำเร็จ! กำลังแชร์ไปที่ Facebook...';
+                    setTimeout(() => form.submit(), 1000);
+                } else {
+                    console.log('Premium rendering failed, aborting social share.');
+                    button.disabled = false;
+                    button.innerText = originalText;
+                }
+            } catch (err) {
+                console.error('Share social error:', err);
+                button.disabled = false;
+                button.innerText = originalText;
+                alert('แชร์ไม่สำเร็จ: ' + (err.message || err));
+            }
+        };
+
+        /**
+         * ฟังก์ชันแชร์ไป Facebook (คงไว้สำหรับลิงก์เก่าหรือ auto flow เดิม)
+         */
+        window.shareToFb = async function(button, articleId, imagePath, uploadUrl, reportUrl) {
             const form = document.getElementById('share-fb-form-' + articleId);
             const imageInput = document.getElementById('share-fb-image-' + articleId);
+
+            if (!form || !imageInput) {
+                return window.renderAndShareSocial(button, articleId, imagePath, uploadUrl, reportUrl);
+            }
             
             // ตรวจสอบว่าเป็นบทความทั่วไปหรือไม่ (ถ้าไม่ใช่ .svg แสดงว่าเป็นรูปปกติ)
-            if (landscapeUrl && !landscapeUrl.toLowerCase().endsWith('.svg')) {
+            if (imagePath && !imagePath.toLowerCase().endsWith('.svg')) {
                 console.log('Standard article detected, sharing directly without rendering.');
+                imageInput.value = imagePath;
                 form.submit();
                 return;
             }
 
-            const result = await renderAndUploadPremiumImage(landscapeUrl, uploadUrl, 'กำลังเตรียมรูปภาพสำหรับ Facebook...', reportUrl);
+            const result = await renderAndUploadPremiumImage(imagePath, uploadUrl, 'กำลังเตรียมรูปภาพสำหรับ Facebook...', reportUrl, 'square');
             
             if (result) {
                 imageInput.value = result.path;
@@ -400,9 +447,13 @@
         /**
          * ฟังก์ชันแชร์ไป LINE (เรียกใช้ตัวกลาง)
          */
-        window.shareToLine = async function(button, articleId, landscapeUrl, uploadUrl, reportUrl, prefix = 'share') {
+        window.shareToLine = async function(button, articleId, imagePath, uploadUrl, reportUrl, prefix = 'share') {
             const form = document.getElementById(prefix + '-line-form-' + articleId);
             const imageInput = document.getElementById(prefix + '-line-image-' + articleId);
+
+            if (!form || !imageInput) {
+                return window.renderAndShareSocial(button, articleId, imagePath, uploadUrl, reportUrl);
+            }
             
             // For broadcast, we show confirmation before rendering
             if (prefix === 'broadcast') {
@@ -412,13 +463,14 @@
             }
 
             // ตรวจสอบว่าเป็นบทความทั่วไปหรือไม่
-            if (landscapeUrl && !landscapeUrl.toLowerCase().endsWith('.svg')) {
+            if (imagePath && !imagePath.toLowerCase().endsWith('.svg')) {
                 console.log('Standard article detected, sharing to LINE directly.');
+                imageInput.value = imagePath;
                 form.submit();
                 return;
             }
             
-            const result = await renderAndUploadPremiumImage(landscapeUrl, uploadUrl, 'กำลังเตรียมรูปภาพสำหรับ LINE...', reportUrl);
+            const result = await renderAndUploadPremiumImage(imagePath, uploadUrl, 'กำลังเตรียมรูปภาพสำหรับ LINE...', reportUrl, 'square');
             
             if (result) {
                 imageInput.value = result.path;
@@ -456,8 +508,7 @@
             const articleId = urlParams.get('article_id');
 
             if (autoShare && articleId) {
-                const buttonId = autoShare === 'fb' ? `btn-share-fb-${articleId}` : `btn-share-line-${articleId}`;
-                const button = document.getElementById(buttonId);
+                const buttonId = `btn-share-social-${articleId}`                const button = document.getElementById(buttonId);
                 
                 if (button) {
                     console.log(`Auto-triggering ${autoShare} share for article ${articleId}`);

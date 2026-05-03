@@ -2485,6 +2485,26 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         ]);
     })->name('logs');
 
+    Route::get('/logs/download', function (Request $request) use ($ensureAdmin, $resolveAdminLogViewer) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        if (!in_array(session('admin_user_role'), [User::ROLE_MANAGER, User::ROLE_ADMIN])) {
+            abort(403);
+        }
+
+        $logViewer = $resolveAdminLogViewer();
+        $file = trim((string) $request->query('file', ''));
+        $selectedFile = $logViewer->resolveFile($file);
+
+        if (! $selectedFile['exists'] || ! $selectedFile['readable']) {
+            return back()->withErrors(['file' => 'ไม่พบไฟล์ log หรือไม่สามารถอ่านไฟล์ได้']);
+        }
+
+        return response()->download($selectedFile['path']);
+    })->name('logs.download');
+
     Route::post('/logs/clear', function (Request $request) use ($ensureAdmin, $resolveAdminLogViewer) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
             return $redirect;

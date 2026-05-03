@@ -200,6 +200,49 @@ class LotteryFlowRefinedTest extends TestCase
         $this->assertEquals($count1, count($files2), 'File count should not increase after re-running the command');
     }
 
+    /**
+     * Case: PNG path protection
+     * Verify that if an article already has a .png path and lottery is complete,
+     * the command won't reset it back to .svg
+     */
+    public function test_png_path_is_protected_and_not_reverted_to_svg_when_complete(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 5, 1, 16, 0, 0, 'Asia/Bangkok'));
+
+        // 1. Setup a complete lottery article with a PNG path
+        $article = Article::create([
+            'title' => 'Test Lottery',
+            'slug' => 'thai-government-lottery-202605first',
+            'content' => 'Initial Content',
+            'is_published' => true,
+            'cover_image_path' => 'articles/2026/thai-government-lottery-202605first/premium.png',
+            'cover_image_square_path' => 'articles/2026/thai-government-lottery-202605first/premium.png',
+        ]);
+
+        // 2. Mock API as Complete (must have at least 6 prize entries for isCompletePayload to return true)
+        Http::fake([
+            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response([
+                'response' => [
+                    'date' => '01/05/2569',
+                    'data' => [
+                        'first' => ['number' => ['123456']],
+                        'last3f' => ['number' => ['111', '222']],
+                        'last3b' => ['number' => ['333', '444']],
+                        'last2' => ['number' => ['55']],
+                    ]
+                ]
+            ], 200),
+        ]);
+
+        // 3. Run Command
+        $this->artisan('lottery:fetch-latest', ['--force' => true]);
+
+        // 4. Verify path is STILL PNG
+        $article->refresh();
+        $this->assertStringEndsWith('.png', $article->cover_image_path);
+        $this->assertStringEndsWith('.png', $article->cover_image_square_path);
+    }
+
     protected function tearDown(): void
     {
         Carbon::setTestNow();

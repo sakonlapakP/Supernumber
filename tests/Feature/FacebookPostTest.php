@@ -105,4 +105,66 @@ class FacebookPostTest extends TestCase
         
         Http::assertNothingSent();
     }
+
+    public function test_admin_share_social_route_posts_only_to_facebook_page(): void
+    {
+        Http::fake([
+            'https://graph.facebook.com/*' => Http::response(['id' => 'fb_post_456'], 200),
+        ]);
+
+        $manager = User::factory()->create([
+            'username' => 'manager-facebook-only-share',
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        $article = Article::create([
+            'title' => 'FB Only Route Test',
+            'slug' => 'fb-only-route-test',
+            'excerpt' => 'Short excerpt',
+            'content' => 'Content',
+            'is_published' => true,
+            'is_line_broadcasted' => false,
+            'cover_image_path' => 'articles/2026/fb-only-route-test.png',
+            'cover_image_square_path' => 'articles/2026/fb-only-route-test.png',
+            'cover_image_landscape_path' => 'articles/2026/fb-only-route-test-cover.png',
+        ]);
+
+        Storage::disk('public')->put('articles/2026/fb-only-route-test.png', 'fake square image content');
+        Storage::disk('public')->put('articles/2026/fb-only-route-test-cover.png', 'fake cover image content');
+
+        $response = $this
+            ->withSession($this->managerSession($manager))
+            ->post(route('admin.articles.share-social', $article), [
+                'manual_image_url' => 'articles/2026/fb-only-route-test.png',
+            ]);
+
+        $response
+            ->assertRedirect()
+            ->assertSessionHas('status_message', 'แชร์ไปที่ Facebook Page สำเร็จ ✅');
+
+        $article->refresh();
+
+        $this->assertFalse($article->is_line_broadcasted);
+
+        Http::assertSentCount(1);
+        Http::assertSent(function ($request) {
+            return str_contains($request->url(), '12345/photos')
+                && $request->isMultipart()
+                && str_contains($request->body(), 'FB Only Route Test');
+        });
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function managerSession(User $user): array
+    {
+        return [
+            'admin_authenticated' => true,
+            'admin_user_id' => $user->id,
+            'admin_user_name' => $user->name,
+            'admin_user_role' => $user->role,
+        ];
+    }
 }

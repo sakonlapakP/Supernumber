@@ -195,14 +195,25 @@ class FetchLatestLotteryCommand extends Command
             $article->published_at = now('Asia/Bangkok');
         }
 
+        // Always generate/overwrite the SVG files on disk for live updates or fallback
         $squareSvgContents = $this->buildLotteryCoverSvg($result);
         Storage::disk('public')->put($squareSvgFilename, $squareSvgContents);
-        $article->cover_image_square_path = $squareSvgFilename;
-        $article->cover_image_path = $squareSvgFilename;
-
+        
         $landscapeSvgContents = $this->buildLotteryLandscapeSvg($result);
         Storage::disk('public')->put($landscapeSvgFilename, $landscapeSvgContents);
-        $article->cover_image_landscape_path = $landscapeSvgFilename;
+
+        // Path Protection Logic:
+        // We only update the DB path to SVG if:
+        // 1. It's currently empty OR it's already an SVG path
+        // 2. OR the lottery is NOT complete yet (we want to show live SVG updates)
+        $currentPath = (string) $article->cover_image_path;
+        $isAlreadyPng = str_ends_with(strtolower($currentPath), '.png');
+
+        if (!$isAlreadyPng || !$result->is_complete) {
+            $article->cover_image_square_path = $squareSvgFilename;
+            $article->cover_image_path = $squareSvgFilename;
+            $article->cover_image_landscape_path = $landscapeSvgFilename;
+        }
 
         $article->save();
         $this->info("Synced lottery article (Live): {$articleName}");

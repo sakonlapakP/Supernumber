@@ -3,17 +3,118 @@
 @section('title', 'Supernumber Admin | แก้ไขบทความ')
 
 @section('content')
+  @php
+    $canToggleArticleVisibility = in_array(session('admin_user_role'), [\App\Models\User::ROLE_MANAGER, \App\Models\User::ROLE_ADMIN], true);
+  @endphp
+
   <style>
-    .admin-drop-zone { border: 2px dashed #d8e0ec; border-radius: 12px; padding: 24px; text-align: center; background: #f8fbff; cursor: pointer; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 100px; position: relative; transition: all 0.3s; }
+    .admin-drop-zone { border: 1px dashed #cbd5e1; border-radius: 8px; padding: 16px; text-align: center; background: #f8fafc; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 72px; position: relative; transition: all 0.3s; }
     .admin-drop-zone.is-dragover { border-color: #1d4f9f; background: #f0f7ff; }
     .admin-drop-zone__input { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
-    .admin-drop-zone__button { border: 1px solid #cfd8e7; background: #fff; color: #1e293b; font: inherit; padding: 8px 14px; border-radius: 999px; cursor: pointer; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
-    .admin-preview-img { max-width: 180px; border-radius: 10px; border: 1px solid #d8e0ec; display: block; }
-    .admin-preview-box { margin-top: 12px; }
-    .admin-preview-info { font-size: 12px; color: #94a3b8; margin-top: 6px; }
+    .admin-drop-zone__button { border: 1px solid #cbd5e1; background: #fff; color: #1e293b; font: inherit; font-weight: 700; padding: 8px 14px; border-radius: 8px; cursor: pointer; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
+    .drop-text { color: #64748b; font-weight: 700; text-align: left; }
+    .admin-preview-img { width: 100%; max-width: 220px; border-radius: 8px; border: 1px solid #d8e0ec; display: block; background: #fff; }
+    .admin-preview-box { margin-top: 14px; }
+    .admin-preview-info { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: #64748b; margin: 10px 0 0; font-weight: 600; }
     .admin-image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; }
+    .article-image-card {
+      margin-top: 28px;
+      padding: 18px;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      background: #fff;
+    }
+    .article-image-card__head {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+    .article-image-card__title {
+      margin: 0;
+      color: #1e293b;
+      font-size: 16px;
+      font-weight: 800;
+      line-height: 1.35;
+    }
+    .article-image-card__ratio {
+      flex: 0 0 auto;
+      border: 1px solid #dbeafe;
+      border-radius: 999px;
+      background: #eff6ff;
+      color: #1d4ed8;
+      font-size: 12px;
+      font-weight: 800;
+      padding: 4px 8px;
+    }
+    .article-image-card--square .article-image-card__ratio {
+      border-color: #bbf7d0;
+      background: #ecfdf5;
+      color: #047857;
+    }
+    .article-image-card__preview {
+      display: inline-block;
+      max-width: 100%;
+      padding: 8px;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      background: #f8fafc;
+    }
+    .article-edit-actions {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 10px;
+      margin-top: 28px;
+      padding-top: 18px;
+      border-top: 1px solid #e2e8f0;
+    }
+    .article-edit-action {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 46px;
+      padding: 11px 20px;
+      border: 1px solid transparent;
+      border-radius: 8px;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1.2;
+      box-shadow: 0 2px 5px rgba(15, 23, 42, 0.12);
+      cursor: pointer;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
+    }
+    .article-edit-action:hover {
+      box-shadow: 0 4px 10px rgba(15, 23, 42, 0.16);
+      filter: brightness(0.98);
+      transform: translateY(-1px);
+    }
+    .article-edit-action:active {
+      box-shadow: 0 1px 3px rgba(15, 23, 42, 0.18);
+      transform: translateY(0);
+    }
+    .article-edit-action--primary {
+      background: #1f3f6d;
+      border-color: #1f3f6d;
+      color: #fff;
+    }
+    .article-edit-action--hide {
+      background: #d97706;
+      border-color: #d97706;
+      color: #fff;
+    }
+    .article-edit-action--publish {
+      background: #059669;
+      border-color: #059669;
+      color: #fff;
+    }
     @media (max-width: 768px) {
       .admin-image-grid { grid-template-columns: 1fr; }
+      .admin-drop-zone { display: grid; justify-items: center; text-align: center; }
+      .drop-text { text-align: center; }
+      .article-edit-actions { display: grid; grid-template-columns: 1fr; }
+      .article-edit-action { width: 100%; }
     }
   </style>
 
@@ -139,23 +240,34 @@
         <input type="datetime-local" name="published_at" class="admin-input" value="{{ old('published_at', optional(optional($article->published_at)->timezone('Asia/Bangkok'))->format('Y-m-d\TH:i')) }}" />
       </div>
 
-      <input type="hidden" name="is_published" value="1" />
+      <input type="hidden" name="is_published" value="{{ $article->is_published ? '1' : '0' }}" />
 
-      <div class="admin-actions" style="margin-top:30px;">
-        <button type="submit" class="admin-button" style="font-size: 16px; padding: 12px 24px;">💾 บันทึกการแก้ไขบทความ</button>
-        <a href="{{ route('articles.show', $article->slug) }}?simulate_lottery=1" target="_blank" class="admin-button" style="font-size: 16px; padding: 12px 24px; background: #6366f1; border-color: #6366f1;">👁️ จำลองตัวอย่างพร้อมผลหวย</a>
-        @if($article->is_published)
-          <button type="submit" form="fb-share-form" class="admin-button" style="font-size: 16px; padding: 12px 24px; background: #1877F2; border-color: #1877F2;">🔵 แชร์ไป Facebook</button>
+      <div class="article-edit-actions">
+        <button type="submit" class="admin-button article-edit-action article-edit-action--primary">บันทึกบทความ</button>
+        @if($canToggleArticleVisibility)
+          <button
+            type="submit"
+            form="article-visibility-form"
+            class="admin-button article-edit-action {{ $article->is_published ? 'article-edit-action--hide' : 'article-edit-action--publish' }}"
+          >
+            {{ $article->is_published ? 'ซ่อนบทความ' : 'เผยแพร่บทความ' }}
+          </button>
         @endif
-        <a href="{{ route('admin.articles') }}" class="admin-button admin-button--secondary" style="font-size: 16px; padding: 12px 24px;">กลับหน้ารวม</a>
       </div>
     </form>
-    
-    @if($article->is_published)
-      <form id="fb-share-form" action="{{ route('admin.articles.share-fb', $article) }}" method="post" style="display: none;">
+
+    @if($canToggleArticleVisibility)
+      <form
+        id="article-visibility-form"
+        action="{{ route('admin.articles.toggle-publish', $article) }}"
+        method="post"
+        style="display: none;"
+        onsubmit="return confirm('{{ $article->is_published ? 'ยืนยันซ่อนบทความนี้จากหน้าเว็บ?' : 'ยืนยันเผยแพร่บทความนี้?' }}')"
+      >
         @csrf
       </form>
     @endif
+    
   </section>
 
   <section class="admin-card admin-table-card" style="margin-top: 24px;">
@@ -380,4 +492,3 @@
   });
 </script>
 @endpush
-

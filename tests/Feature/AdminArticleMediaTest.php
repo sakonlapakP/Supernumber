@@ -5,7 +5,6 @@ namespace Tests\Feature;
 use App\Models\Article;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -35,8 +34,10 @@ class AdminArticleMediaTest extends TestCase
 
         $response->assertOk();
         $response->assertSee(route('admin.articles.store'), false);
-        $response->assertSee('name="upload_media_land"', false);
-        $response->assertSee('name="upload_media_sq"', false);
+        $response->assertSee('id="upload_media_land"', false);
+        $response->assertSee('id="upload_media_sq"', false);
+        $response->assertSee('name="land_path"', false);
+        $response->assertSee('name="sq_path"', false);
     }
 
     public function test_edit_page_shows_landscape_preview_and_both_image_inputs(): void
@@ -64,8 +65,10 @@ class AdminArticleMediaTest extends TestCase
 
         $response->assertOk();
         $response->assertSee(route('admin.articles.update', $article), false);
-        $response->assertSee('name="upload_media_land"', false);
-        $response->assertSee('name="upload_media_sq"', false);
+        $response->assertSee('id="upload_media_land"', false);
+        $response->assertSee('id="upload_media_sq"', false);
+        $response->assertSee('name="land_path"', false);
+        $response->assertSee('name="sq_path"', false);
         $response->assertSee('existing-land.jpg', false);
     }
 
@@ -80,6 +83,9 @@ class AdminArticleMediaTest extends TestCase
             'is_active' => true,
         ]);
 
+        Storage::disk('public')->put('articles/tmp/land.jpg', 'fake-landscape-image');
+        Storage::disk('public')->put('articles/tmp/square.jpg', 'fake-square-image');
+
         $createResponse = $this
             ->withSession($this->managerSession($manager))
             ->post(route('admin.articles.store'), [
@@ -91,8 +97,8 @@ class AdminArticleMediaTest extends TestCase
                 'keywords' => 'kw',
                 'lsi_keywords' => 'lsi',
                 'is_published' => '1',
-                'upload_media_land' => UploadedFile::fake()->image('land.jpg', 1600, 900),
-                'upload_media_sq' => UploadedFile::fake()->image('square.jpg', 1200, 1200),
+                'land_path' => 'articles/tmp/land.jpg',
+                'sq_path' => 'articles/tmp/square.jpg',
             ]);
 
         $createResponse->assertRedirect(route('admin.articles'));
@@ -108,12 +114,17 @@ class AdminArticleMediaTest extends TestCase
 
         Storage::disk('public')->assertExists($article->cover_image_landscape_path);
         Storage::disk('public')->assertExists($article->cover_image_square_path);
+        $this->assertStringEndsWith('/land.jpg', (string) $article->cover_image_landscape_path);
+        $this->assertStringEndsWith('/square.jpg', (string) $article->cover_image_square_path);
 
         $showResponse = $this->get(route('articles.show', $article->slug));
 
         $showResponse->assertOk();
         $showResponse->assertSee('Hello', false);
         $showResponse->assertDontSee('alert(1)');
+
+        Storage::disk('public')->put('articles/tmp/land-updated.jpg', 'fake-updated-landscape-image');
+        Storage::disk('public')->put('articles/tmp/square-updated.jpg', 'fake-updated-square-image');
 
         $updateResponse = $this
             ->withSession($this->managerSession($manager))
@@ -126,8 +137,8 @@ class AdminArticleMediaTest extends TestCase
                 'keywords' => 'updated,kw',
                 'lsi_keywords' => 'updated,lsi',
                 'is_published' => '1',
-                'upload_media_land' => UploadedFile::fake()->image('land-updated.jpg', 1400, 788),
-                'upload_media_sq' => UploadedFile::fake()->image('square-updated.jpg', 1024, 1024),
+                'land_path' => 'articles/tmp/land-updated.jpg',
+                'sq_path' => 'articles/tmp/square-updated.jpg',
             ]);
 
         $updateResponse->assertRedirect(route('admin.articles'));
@@ -141,6 +152,8 @@ class AdminArticleMediaTest extends TestCase
         $this->assertNotNull($article->cover_image_square_path);
         Storage::disk('public')->assertExists($article->cover_image_landscape_path);
         Storage::disk('public')->assertExists($article->cover_image_square_path);
+        $this->assertStringEndsWith('/land-updated.jpg', (string) $article->cover_image_landscape_path);
+        $this->assertStringEndsWith('/square-updated.jpg', (string) $article->cover_image_square_path);
 
         $updatedShowResponse = $this->get(route('articles.show', $article->slug));
         $updatedShowResponse->assertOk();
@@ -148,6 +161,57 @@ class AdminArticleMediaTest extends TestCase
         $updatedShowResponse->assertDontSee('alert(2)');
 
         Carbon::setTestNow();
+    }
+
+    public function test_manager_can_save_browser_rendered_square_png_as_article_cover(): void
+    {
+        Storage::fake('public');
+
+        $manager = User::factory()->create([
+            'username' => 'manager-rendered-lottery-image',
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        $article = Article::query()->create([
+            'title' => 'Lottery Render Article',
+            'slug' => 'thai-government-lottery-202605first',
+            'excerpt' => 'Excerpt',
+            'content' => '<p>Lottery content</p>',
+            'is_published' => true,
+            'cover_image_path' => 'articles/2026/thai-government-lottery-202605first/thai-government-lottery-202605first_20260501.svg',
+            'cover_image_square_path' => 'articles/2026/thai-government-lottery-202605first/thai-government-lottery-202605first_20260501.svg',
+            'cover_image_landscape_path' => 'articles/2026/thai-government-lottery-202605first/thai-government-lottery-202605first_cover_20260501.svg',
+        ]);
+
+        Storage::disk('public')->put((string) $article->cover_image_square_path, '<svg></svg>');
+
+        $pngDataUri = 'data:image/png;base64,' . base64_encode('fake-rendered-png');
+
+        $response = $this
+            ->withSession($this->managerSession($manager))
+            ->postJson(route('admin.articles.upload-rendered-image', $article), [
+                'type' => 'square',
+                'image' => $pngDataUri,
+            ]);
+
+        $response
+            ->assertOk()
+            ->assertJson([
+                'success' => true,
+                'path' => 'articles/2026/thai-government-lottery-202605first/thai-government-lottery-202605first_20260501.png',
+            ]);
+
+        $article->refresh();
+
+        $this->assertSame(
+            'articles/2026/thai-government-lottery-202605first/thai-government-lottery-202605first_20260501.png',
+            $article->cover_image_square_path
+        );
+        $this->assertSame($article->cover_image_square_path, $article->cover_image_path);
+        $this->assertStringEndsWith('.svg', (string) $article->cover_image_landscape_path);
+        Storage::disk('public')->assertExists((string) $article->cover_image_square_path);
+        $this->assertSame('fake-rendered-png', Storage::disk('public')->get((string) $article->cover_image_square_path));
     }
 
     /**
