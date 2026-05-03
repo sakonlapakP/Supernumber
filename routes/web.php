@@ -2412,8 +2412,19 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $selectedFile = $logViewer->resolveFile($file);
         $logContent = $logViewer->readTail($selectedFile['path']);
         $allEntries = $logViewer->parseEntries($logContent);
-        $filteredEntries = $logViewer->filterEntries($allEntries, $level, $date, $search);
-        $perPage = 5;
+
+        // If no date is selected, we filter for the last 3 days (72 hours)
+        $filteredEntries = $allEntries;
+        if ($date === '' && $search === '' && $level === '') {
+            $last3Days = collect(range(0, 2))->map(fn($i) => now('Asia/Bangkok')->subDays($i)->format('Y-m-d'))->toArray();
+            $filteredEntries = array_values(array_filter($allEntries, function ($entry) use ($last3Days) {
+                return in_array($entry['date'], $last3Days);
+            }));
+        } else {
+            $filteredEntries = $logViewer->filterEntries($allEntries, $level, $date, $search);
+        }
+
+        $perPage = 50;
         $currentPage = max(1, (int) $request->query('page', 1));
         $pagedEntries = array_slice($filteredEntries, ($currentPage - 1) * $perPage, $perPage);
         $entries = new \Illuminate\Pagination\LengthAwarePaginator(
@@ -2427,6 +2438,16 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ]
         );
 
+        // Group the paged entries by date for the view
+        $groupedEntries = [];
+        foreach ($entries as $entry) {
+            $groupDate = $entry['date'] ?: 'Unknown';
+            if (!isset($groupedEntries[$groupDate])) {
+                $groupedEntries[$groupDate] = [];
+            }
+            $groupedEntries[$groupDate][] = $entry;
+        }
+
         return view('admin.logs', [
             'availableFiles' => $availableFiles,
             'selectedFile' => $selectedFile,
@@ -2434,6 +2455,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'logPath' => $selectedFile['path'],
             'logSize' => $selectedFile['size'],
             'entries' => $entries,
+            'groupedEntries' => $groupedEntries,
             'totalEntryCount' => count($allEntries),
             'displayedEntryCount' => count($filteredEntries),
             'displayedByteCount' => strlen($logContent),
@@ -2593,28 +2615,43 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
     Route::post('/articles/{article}/upload-rendered-image', function (Request $request, Article $article) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) return $redirect;
-        
-        $type = $request->input('type', 'landscape'); // landscape or square
-        $base64Data = $request->input('image');
-        
-        if (!$base64Data || !str_contains($base64Data, 'base64,')) {
+
+        $validated = $request->validate([
+            'type' => ['nullable', 'in:landscape,square'],
+            'image' => ['required', 'string'],
+        ]);
+
+        $type = $validated['type'] ?? 'landscape';
+        $base64Data = $validated['image'];
+
+        if (!preg_match('#^data:image/png;base64,([A-Za-z0-9+/=\s]+)$#', $base64Data, $matches)) {
             return response()->json(['success' => false, 'error' => 'Invalid image data']);
         }
 
         try {
-            $data = explode(',', $base64Data);
-            $decoded = base64_decode($data[1]);
-            
+            $encoded = preg_replace('/\s+/', '', str_replace(' ', '+', $matches[1]));
+            $decoded = base64_decode($encoded, true);
+
+            if ($decoded === false || $decoded === '') {
+                return response()->json(['success' => false, 'error' => 'Invalid image data']);
+            }
+
             $filename = $type === 'landscape' ? $article->cover_image_landscape_path : $article->cover_image_square_path;
-            
-            // If path is still SVG or empty, generate a new PNG path
-            if (!$filename || str_ends_with(strtolower($filename), '.svg')) {
-                $ts = time();
-                $articleDir = dirname($article->cover_image_landscape_path ?: 'articles/rendered');
-                $filename = $articleDir . '/' . $article->slug . ($type === 'landscape' ? '_cover_' : '_') . $ts . '.png';
+
+            if ($filename && preg_match('/\.(svg|png|jpe?g|webp)$/i', $filename)) {
+                $filename = preg_replace('/\.(svg|png|jpe?g|webp)$/i', '.png', $filename);
             } else {
-                // Ensure it ends in .png
-                $filename = str_replace('.svg', '.png', $filename);
+                $sourcePath = $article->cover_image_landscape_path
+                    ?: $article->cover_image_square_path
+                    ?: $article->cover_image_path
+                    ?: 'articles/rendered/' . $article->slug . '.svg';
+
+                $articleDir = trim(dirname($sourcePath), '.');
+                if ($articleDir === '' || $articleDir === '/') {
+                    $articleDir = 'articles/rendered';
+                }
+
+                $filename = $articleDir . '/' . $article->slug . ($type === 'landscape' ? '_cover' : '') . '.png';
             }
 
             Storage::disk('public')->put($filename, $decoded);
@@ -2765,6 +2802,27 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return back()->withErrors(['fb_share' => 'แชร์ไปที่ Facebook Page ไม่สำเร็จ ❌ : ' . ($res['error'] ?? 'Unknown Error')]);
     })->name('articles.share-fb');
 
+    Route::post('/articles/{article}/share-social', function (Request $request, Article $article) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+
+        $manualImagePath = trim((string) $request->input('manual_image_url', ''));
+
+        $fbResult = app(\App\Services\FacebookPagePoster::class)->postArticle(
+            $article->fresh() ?? $article,
+            $manualImagePath !== '' ? $manualImagePath : null
+        );
+
+        if ($fbResult['success'] ?? false) {
+            return back()->with('status_message', 'แชร์ไปที่ Facebook Page สำเร็จ ✅');
+        }
+
+        return back()->withErrors([
+            'share_social' => 'แชร์ไปที่ Facebook Page ไม่สำเร็จ ❌ : ' . ($fbResult['error'] ?? 'Unknown Error'),
+        ]);
+    })->name('articles.share-social');
+
     Route::post('/articles', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink, $decodeBase64Image, $moveTmpImagesToPermanent) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
@@ -2900,6 +2958,25 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.article-edit', compact('article', 'comments'));
     })->name('articles.edit');
 
+    Route::post('/articles/{article}/toggle-publish', function (Article $article) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        if ($article->is_published) {
+            $article->update(['is_published' => false]);
+
+            return back()->with('status_message', 'ซ่อนบทความเรียบร้อย');
+        }
+
+        $article->update([
+            'is_published' => true,
+            'published_at' => $article->published_at ?: now(),
+        ]);
+
+        return back()->with('status_message', 'เผยแพร่บทความเรียบร้อย');
+    })->name('articles.toggle-publish');
+
     Route::post('/content-media/{article}', function (Request $request, Article $article) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink, $decodeBase64Image, $moveTmpImagesToPermanent) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
@@ -2943,7 +3020,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
         
         if (! $isPublished) {
-            $publishedAt = null;
+            $publishedAt = $article->published_at;
         }
         if ($isPublished && $publishedAt === null) {
             $publishedAt = now();
