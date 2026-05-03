@@ -91,7 +91,7 @@
       <div><strong>ขนาดไฟล์:</strong> {{ number_format($logSize) }} ไบต์</div>
       <div><strong>ข้อมูลที่อ่าน:</strong> {{ number_format($displayedByteCount) }} ไบต์ล่าสุด</div>
       <div><strong>จำนวนรายการ:</strong> {{ number_format($displayedEntryCount) }} / {{ number_format($totalEntryCount) }} รายการ</div>
-      <div><strong>ต่อหน้า:</strong> 50 รายการ</div>
+      <div><strong>ต่อหน้า:</strong> {{ ($filters['date'] === '' && $filters['search'] === '' && $filters['level'] === '') ? '1 วัน (แสดงบันทึกย้อนหลังทีละวัน)' : '50 รายการ' }}</div>
     </div>
   </section>
 

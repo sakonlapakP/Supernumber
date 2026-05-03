@@ -2413,30 +2413,45 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $logContent = $logViewer->readTail($selectedFile['path']);
         $allEntries = $logViewer->parseEntries($logContent);
 
-        // If no date is selected, we filter for the last 3 days (72 hours)
-        $filteredEntries = $allEntries;
-        if ($date === '' && $search === '' && $level === '') {
+        $currentPage = max(1, (int) $request->query('page', 1));
+        $isDefaultMode = ($date === '' && $search === '' && $level === '');
+
+        if ($isDefaultMode) {
             $last3Days = collect(range(0, 2))->map(fn($i) => now('Asia/Bangkok')->subDays($i)->format('Y-m-d'))->toArray();
-            $filteredEntries = array_values(array_filter($allEntries, function ($entry) use ($last3Days) {
-                return in_array($entry['date'], $last3Days);
+            $currentPage = min(3, $currentPage);
+            $targetDate = $last3Days[$currentPage - 1];
+            
+            $filteredEntriesForDay = array_values(array_filter($allEntries, function ($entry) use ($targetDate) {
+                return $entry['date'] === $targetDate;
             }));
+            
+            $entries = new \Illuminate\Pagination\LengthAwarePaginator(
+                $filteredEntriesForDay,
+                3, // 3 pages in total
+                1, // 1 page per "day"
+                $currentPage,
+                [
+                    'path' => $request->url(),
+                    'query' => $request->query(),
+                ]
+            );
+            $displayedEntryCount = count($filteredEntriesForDay);
         } else {
             $filteredEntries = $logViewer->filterEntries($allEntries, $level, $date, $search);
+            $perPage = 50;
+            $pagedEntries = array_slice($filteredEntries, ($currentPage - 1) * $perPage, $perPage);
+            $entries = new \Illuminate\Pagination\LengthAwarePaginator(
+                $pagedEntries,
+                count($filteredEntries),
+                $perPage,
+                $currentPage,
+                [
+                    'path' => $request->url(),
+                    'query' => $request->query(),
+                ]
+            );
+            $displayedEntryCount = count($filteredEntries);
         }
-
-        $perPage = 50;
-        $currentPage = max(1, (int) $request->query('page', 1));
-        $pagedEntries = array_slice($filteredEntries, ($currentPage - 1) * $perPage, $perPage);
-        $entries = new \Illuminate\Pagination\LengthAwarePaginator(
-            $pagedEntries,
-            count($filteredEntries),
-            $perPage,
-            $currentPage,
-            [
-                'path' => $request->url(),
-                'query' => $request->query(),
-            ]
-        );
 
         // Group the paged entries by date for the view
         $groupedEntries = [];
@@ -2457,7 +2472,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'entries' => $entries,
             'groupedEntries' => $groupedEntries,
             'totalEntryCount' => count($allEntries),
-            'displayedEntryCount' => count($filteredEntries),
+            'displayedEntryCount' => $displayedEntryCount,
             'displayedByteCount' => strlen($logContent),
             'availableLevels' => $logViewer->availableLevels($allEntries),
             'availableDates' => $logViewer->availableDates($allEntries),
