@@ -179,6 +179,14 @@
               </div>
             </div>
           @endforeach
+          
+          @if ($hasMoreInDay)
+            <div style="background: #fff8eb; border: 1px solid #fedf89; border-radius: 12px; padding: 16px; text-align: center; color: #b54708; font-weight: 600;">
+              ยังมีรายการอื่นๆ ในวันนี้อีกมาก (แสดงเฉพาะ 100 รายการล่าสุดเพื่อป้องกันปัญหาระบบค้าง) 
+              <br>
+              <span style="font-weight: 400; font-size: 0.9rem; margin-top: 4px; display: inline-block;">หากต้องการดูทั้งหมด กรุณาใช้ตัวกรอง "วันที่" ด้านบนแทน</span>
+            </div>
+          @endif
         </div>
       @endif
     </div>

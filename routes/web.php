@@ -2424,8 +2424,12 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             // Deep scan backwards for this specific date
             $filteredEntriesForDay = $logViewer->readEntriesForDate($selectedFile['path'], $targetDate, 20971520); // Scan up to 20MB
             
+            // Limit to latest 100 entries for this day to prevent memory exhaustion in the view
+            $limitedEntries = array_slice($filteredEntriesForDay, 0, 100);
+            $hasMoreInDay = count($filteredEntriesForDay) > 100;
+
             $entries = new \Illuminate\Pagination\LengthAwarePaginator(
-                $filteredEntriesForDay,
+                $limitedEntries,
                 3, // 3 pages in total (3 days)
                 1, // 1 page per day
                 $currentPage,
@@ -2434,7 +2438,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                     'query' => $request->query(),
                 ]
             );
-            $displayedEntryCount = count($filteredEntriesForDay);
+            $displayedEntryCount = count($limitedEntries);
         } else {
             $filteredEntries = $logViewer->filterEntries($allEntries, $level, $date, $search);
             $perPage = 50;
@@ -2473,6 +2477,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'groupedEntries' => $groupedEntries,
             'totalEntryCount' => count($allEntries),
             'displayedEntryCount' => $displayedEntryCount,
+            'hasMoreInDay' => $hasMoreInDay ?? false,
             'displayedByteCount' => strlen($logContent),
             'availableLevels' => $logViewer->availableLevels($allEntries),
             'availableDates' => $logViewer->availableDates($allEntries),
