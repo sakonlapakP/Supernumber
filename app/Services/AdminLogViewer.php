@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\File;
 class AdminLogViewer
 {
     private const DEFAULT_FILE = 'laravel.log';
-    private const MAX_READ_BYTES = 2097152; // 2MB
+    private const MAX_READ_BYTES = 256000;
     private const DISPLAY_TIMEZONE = 'Asia/Bangkok';
 
     /**
@@ -95,91 +95,6 @@ class AdminLogViewer
         }
 
         return $content;
-    }
-
-    /**
-     * Scan the log file backwards in chunks to find entries for a specific date.
-     * 
-     * @return array<int, array{timestamp: string|null, date: string|null, environment: string|null, level: string|null, message: string, raw: string, raw_display: string}>
-     */
-    public function readEntriesForDate(string $path, string $targetDate, int $maxScanBytes = 10485760): array
-    {
-        if (! File::exists($path) || ! File::isReadable($path)) {
-            return [];
-        }
-
-        $size = (int) File::size($path);
-        if ($size <= 0) {
-            return [];
-        }
-
-        $handle = fopen($path, 'rb');
-        if ($handle === false) {
-            return [];
-        }
-
-        $chunkSize = 1048576; // 1MB chunks
-        $offset = $size;
-        $matchingEntries = [];
-        $buffer = '';
-        $foundOlderDate = false;
-        $totalRead = 0;
-
-        while ($offset > 0 && $totalRead < $maxScanBytes && !$foundOlderDate) {
-            $readSize = min($offset, $chunkSize);
-            $offset -= $readSize;
-            $totalRead += $readSize;
-
-            fseek($handle, $offset, SEEK_SET);
-            $chunk = (string) fread($handle, $readSize);
-            $currentContent = $chunk . $buffer;
-
-            // Find the start of the first log entry in this combined content to handle partial lines
-            // Log entries start with [YYYY-MM-DD
-            $firstEntryPos = strpos($currentContent, '[');
-            if ($firstEntryPos === false && $offset > 0) {
-                // No log entry start found in this chunk, prepend it to buffer and continue
-                $buffer = $currentContent;
-                continue;
-            }
-
-            // If not at the very beginning of the file, we should start from the first '['
-            // to ensure we have complete entries.
-            if ($offset > 0) {
-                $remains = substr($currentContent, 0, $firstEntryPos);
-                $processContent = substr($currentContent, $firstEntryPos);
-                $buffer = $remains;
-            } else {
-                $processContent = $currentContent;
-                $buffer = '';
-            }
-
-            $entries = $this->parseEntries($processContent);
-            // parseEntries returns entries in REVERSE order (newest first)
-            
-            foreach ($entries as $entry) {
-                if ($entry['date'] === $targetDate) {
-                    $matchingEntries[] = $entry;
-                } elseif ($entry['date'] !== null && $entry['date'] < $targetDate) {
-                    $foundOlderDate = true;
-                }
-            }
-        }
-
-        fclose($handle);
-
-        // Remove duplicates and sort by timestamp (parseEntries might have overlapping entries due to buffer logic)
-        // Actually, let's just make sure they are unique by 'raw'
-        $uniqueEntries = [];
-        $seenRaw = [];
-        foreach ($matchingEntries as $entry) {
-            if (!isset($seenRaw[$entry['raw']])) {
-                $uniqueEntries[] = $entry;
-                $seenRaw[$entry['raw']] = true;
-            }
-        }
-
-        return $uniqueEntries;
     }
 
     /**

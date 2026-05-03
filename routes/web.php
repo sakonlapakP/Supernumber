@@ -2412,59 +2412,20 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $selectedFile = $logViewer->resolveFile($file);
         $logContent = $logViewer->readTail($selectedFile['path']);
         $allEntries = $logViewer->parseEntries($logContent);
-
+        $filteredEntries = $logViewer->filterEntries($allEntries, $level, $date, $search);
+        $perPage = 5;
         $currentPage = max(1, (int) $request->query('page', 1));
-        $isDefaultMode = ($date === '' && $search === '' && $level === '');
-        $last3Days = collect(range(0, 2))->map(fn($i) => now('Asia/Bangkok')->subDays($i)->format('Y-m-d'))->toArray();
-
-        if ($isDefaultMode) {
-            $currentPage = min(3, $currentPage);
-            $targetDate = $last3Days[$currentPage - 1];
-            
-            // Deep scan backwards for this specific date
-            $filteredEntriesForDay = $logViewer->readEntriesForDate($selectedFile['path'], $targetDate, 20971520); // Scan up to 20MB
-            
-            // Limit to latest 100 entries for this day to prevent memory exhaustion in the view
-            $limitedEntries = array_slice($filteredEntriesForDay, 0, 100);
-            $hasMoreInDay = count($filteredEntriesForDay) > 100;
-
-            $entries = new \Illuminate\Pagination\LengthAwarePaginator(
-                $limitedEntries,
-                3, // 3 pages in total (3 days)
-                1, // 1 page per day
-                $currentPage,
-                [
-                    'path' => $request->url(),
-                    'query' => $request->query(),
-                ]
-            );
-            $displayedEntryCount = count($limitedEntries);
-        } else {
-            $filteredEntries = $logViewer->filterEntries($allEntries, $level, $date, $search);
-            $perPage = 50;
-            $pagedEntries = array_slice($filteredEntries, ($currentPage - 1) * $perPage, $perPage);
-            $entries = new \Illuminate\Pagination\LengthAwarePaginator(
-                $pagedEntries,
-                count($filteredEntries),
-                $perPage,
-                $currentPage,
-                [
-                    'path' => $request->url(),
-                    'query' => $request->query(),
-                ]
-            );
-            $displayedEntryCount = count($filteredEntries);
-        }
-
-        // Group the paged entries by date for the view
-        $groupedEntries = [];
-        foreach ($entries as $entry) {
-            $groupDate = $entry['date'] ?: 'Unknown';
-            if (!isset($groupedEntries[$groupDate])) {
-                $groupedEntries[$groupDate] = [];
-            }
-            $groupedEntries[$groupDate][] = $entry;
-        }
+        $pagedEntries = array_slice($filteredEntries, ($currentPage - 1) * $perPage, $perPage);
+        $entries = new \Illuminate\Pagination\LengthAwarePaginator(
+            $pagedEntries,
+            count($filteredEntries),
+            $perPage,
+            $currentPage,
+            [
+                'path' => $request->url(),
+                'query' => $request->query(),
+            ]
+        );
 
         return view('admin.logs', [
             'availableFiles' => $availableFiles,
@@ -2473,11 +2434,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'logPath' => $selectedFile['path'],
             'logSize' => $selectedFile['size'],
             'entries' => $entries,
-            'paginationDates' => $last3Days,
-            'groupedEntries' => $groupedEntries,
             'totalEntryCount' => count($allEntries),
-            'displayedEntryCount' => $displayedEntryCount,
-            'hasMoreInDay' => $hasMoreInDay ?? false,
+            'displayedEntryCount' => count($filteredEntries),
             'displayedByteCount' => strlen($logContent),
             'availableLevels' => $logViewer->availableLevels($allEntries),
             'availableDates' => $logViewer->availableDates($allEntries),
@@ -2489,26 +2447,6 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ],
         ]);
     })->name('logs');
-
-    Route::get('/logs/download', function (Request $request) use ($ensureAdmin, $resolveAdminLogViewer) {
-        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
-            return $redirect;
-        }
-
-        if (!in_array(session('admin_user_role'), [User::ROLE_MANAGER, User::ROLE_ADMIN])) {
-            abort(403);
-        }
-
-        $logViewer = $resolveAdminLogViewer();
-        $file = trim((string) $request->query('file', ''));
-        $selectedFile = $logViewer->resolveFile($file);
-
-        if (! $selectedFile['exists'] || ! $selectedFile['readable']) {
-            return back()->withErrors(['file' => 'ไม่พบไฟล์ log หรือไม่สามารถอ่านไฟล์ได้']);
-        }
-
-        return response()->download($selectedFile['path']);
-    })->name('logs.download');
 
     Route::post('/logs/clear', function (Request $request) use ($ensureAdmin, $resolveAdminLogViewer) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {

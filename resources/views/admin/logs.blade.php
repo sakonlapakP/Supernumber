@@ -24,7 +24,6 @@
     <div class="admin-page-actions" style="margin-left: 0; margin-right: auto;">
       <a href="{{ route('admin.logs', array_filter($filters, fn ($value) => $value !== '')) }}" class="admin-button admin-button--muted admin-button--compact">รีเฟรช</a>
       <a href="{{ route('admin.logs') }}" class="admin-button admin-button--compact">รีเซ็ต</a>
-      <a href="{{ route('admin.logs.download', ['file' => $filters['file']]) }}" class="admin-button admin-button--muted admin-button--compact">📥 ดาวน์โหลดไฟล์</a>
       <form action="{{ route('admin.logs.clear') }}" method="post" style="margin: 0;" onsubmit="return confirm('ล้างไฟล์ log นี้ใช่หรือไม่?');">
         @csrf
         <input type="hidden" name="file" value="{{ $filters['file'] }}" />
@@ -92,33 +91,14 @@
       <div><strong>ขนาดไฟล์:</strong> {{ number_format($logSize) }} ไบต์</div>
       <div><strong>ข้อมูลที่อ่าน:</strong> {{ number_format($displayedByteCount) }} ไบต์ล่าสุด</div>
       <div><strong>จำนวนรายการ:</strong> {{ number_format($displayedEntryCount) }} / {{ number_format($totalEntryCount) }} รายการ</div>
-      <div><strong>ต่อหน้า:</strong> {{ ($filters['date'] === '' && $filters['search'] === '' && $filters['level'] === '') ? '1 วัน (แสดงบันทึกย้อนหลังทีละวัน)' : '50 รายการ' }}</div>
+      <div><strong>ต่อหน้า:</strong> 5 รายการ</div>
     </div>
   </section>
 
   <section class="admin-card admin-table-card" style="margin-top: 18px;">
-    <div style="padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e7edf5; flex-wrap: wrap; gap: 10px;">
-      <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
-        <div>
-          <h2 style="margin: 0; font-size: 1.1rem;">ผลลัพธ์บันทึกระบบ</h2>
-          <p class="admin-subtitle" style="margin-top: 6px;">แสดงบันทึกย้อนหลัง 3 วันล่าสุด (สแกนไฟล์ย้อนกลับ)</p>
-        </div>
-        
-        @if ($filters['date'] === '' && $filters['search'] === '' && $filters['level'] === '')
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <label for="day-select" style="font-size: 0.9rem; font-weight: 600; color: #475467;">เลือกวันที่:</label>
-            <select id="day-select" class="admin-input" style="padding: 4px 12px; height: 36px; border-radius: 10px; width: auto;" onchange="window.location.href = '{{ route('admin.logs') }}?page=' + (this.selectedIndex + 1)">
-              @foreach ($paginationDates as $index => $dateLabel)
-                <option value="{{ $index + 1 }}" @selected($entries->currentPage() === ($index + 1))>{{ $dateLabel }} @if($index === 0)(วันนี้)@endif</option>
-              @endforeach
-            </select>
-          </div>
-        @endif
-      </div>
-      <div id="bulk-actions" style="display: none; align-items: center; gap: 10px;">
-        <span id="selected-count" style="font-weight: 600; font-size: 0.9rem; color: #175cd3;">เลือกแล้ว 0 รายการ</span>
-        <button type="button" class="admin-button admin-button--compact js-copy-selected">Copy Selected Errors</button>
-      </div>
+    <div style="padding: 18px 20px 0;">
+      <h2 style="margin: 0; font-size: 1.1rem;">ผลลัพธ์บันทึกระบบ</h2>
+      <p class="admin-subtitle" style="margin-top: 6px;">หน้านี้อ่านเฉพาะท้ายไฟล์เพื่อให้เปิดได้เร็วขึ้น แม้ log จะมีขนาดใหญ่ และกรองผลบน entries ล่าสุดที่อ่านมา</p>
     </div>
 
     <div style="padding: 20px;">
@@ -129,65 +109,72 @@
       @elseif ($displayedEntryCount === 0)
         <div class="admin-muted">ไม่พบรายการที่ตรงกับ filter ที่เลือก</div>
       @else
-        <div style="display: grid; gap: 24px;">
-          @foreach ($groupedEntries as $date => $dayEntries)
-            <div class="log-day-group">
-              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 14px; background: #f1f5f9; padding: 10px 16px; border-radius: 12px; border-left: 4px solid #64748b;">
-                <input type="checkbox" class="js-select-all-day" style="width: 18px; height: 18px; cursor: pointer;">
-                <h3 style="margin: 0; font-size: 1rem; color: #334155;">{{ $date }} ({{ count($dayEntries) }} รายการ)</h3>
-              </div>
+        <div style="display: grid; gap: 14px;">
+          @foreach ($entries as $entry)
+            @php
+              $entryLevel = strtoupper((string) ($entry['level'] ?? ''));
+              $levelStyle = $levelStyles[$entryLevel] ?? ['bg' => '#f8f9fc', 'border' => '#d0d5dd', 'text' => '#344054'];
+              $copyPayload = trim((string) ($entry['raw_display'] ?? $entry['raw'] ?? ''));
+            @endphp
 
-              <div style="display: grid; gap: 14px; padding-left: 10px;">
-                @foreach ($dayEntries as $index => $entry)
-                  @php
-                    $entryLevel = strtoupper((string) ($entry['level'] ?? ''));
-                    $levelStyle = $levelStyles[$entryLevel] ?? ['bg' => '#f8f9fc', 'border' => '#d0d5dd', 'text' => '#344054'];
-                    $copyPayload = trim((string) ($entry['raw_display'] ?? $entry['raw'] ?? ''));
-                    $uniqueId = 'log-' . md5($copyPayload . $index . $date);
-                  @endphp
-
-                  <article style="border: 1px solid #dbe4f0; border-radius: 18px; background: #fff; overflow: hidden; position: relative;">
-                    <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 10px 16px; border-bottom: 1px solid #e7edf5; background: #f8fbff;">
-                      <input type="checkbox" class="js-log-checkbox" data-copy-text="{{ $copyPayload }}" style="width: 16px; height: 16px; cursor: pointer;">
-                      
-                      <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; min-width: 0;">
-                        <span style="display: inline-flex; align-items: center; min-height: 26px; padding: 2px 8px; border-radius: 999px; background: {{ $levelStyle['bg'] }}; border: 1px solid {{ $levelStyle['border'] }}; color: {{ $levelStyle['text'] }}; font-size: 0.75rem; font-weight: 700;">
-                          {{ $entryLevel !== '' ? $entryLevel : 'RAW' }}
-                        </span>
-                        <span style="font-size: 0.88rem; color: #475467;">{{ $entry['timestamp'] ?: '-' }}</span>
-                        @if ($entry['environment'])
-                          <span class="admin-muted" style="font-size: 0.82rem;">env: {{ $entry['environment'] }}</span>
-                        @endif
-                      </div>
-                    </div>
-                    <div style="padding: 14px 16px;">
-                      <div style="font-weight: 600; color: #101828; margin-bottom: 10px; white-space: pre-wrap; font-size: 0.95rem;">{{ $entry['message'] !== '' ? $entry['message'] : '(ไม่มีข้อความ)' }}</div>
-                      <div style="display: flex; justify-content: flex-end; margin-bottom: 8px;">
-                        <button
-                          type="button"
-                          class="admin-button admin-button--secondary admin-button--compact js-copy-log-entry"
-                          data-copy-text="{{ $copyPayload }}"
-                          style="min-width: 92px; font-size: 0.75rem;"
-                        >
-                          Copy Error
-                        </button>
-                      </div>
-                      <pre style="margin: 0; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; background: #0f172a; color: #e2e8f0; border-radius: 12px; padding: 14px; font-size: 0.8rem; line-height: 1.5; max-height: 35vh; overflow: auto;">{{ $entry['raw_display'] ?? $entry['raw'] }}</pre>
-                    </div>
-                  </article>
-                @endforeach
+            <article style="border: 1px solid #dbe4f0; border-radius: 18px; background: #fff; overflow: hidden;">
+              <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; padding: 14px 16px; border-bottom: 1px solid #e7edf5; background: #f8fbff;">
+                <div style="display: flex; flex-wrap: wrap; gap: 10px; align-items: center; min-width: 0;">
+                  <span style="display: inline-flex; align-items: center; min-height: 30px; padding: 4px 10px; border-radius: 999px; background: {{ $levelStyle['bg'] }}; border: 1px solid {{ $levelStyle['border'] }}; color: {{ $levelStyle['text'] }}; font-size: 0.8rem; font-weight: 700;">
+                    {{ $entryLevel !== '' ? $entryLevel : 'RAW' }}
+                  </span>
+                  <span style="font-size: 0.92rem; color: #475467;">{{ $entry['timestamp'] ?: '-' }}</span>
+                  @if ($entry['environment'])
+                    <span class="admin-muted" style="font-size: 0.86rem;">สภาพแวดล้อม: {{ $entry['environment'] }}</span>
+                  @endif
+                </div>
               </div>
-            </div>
+              <div style="padding: 16px;">
+                <div style="font-weight: 700; color: #101828; margin-bottom: 10px; white-space: pre-wrap;">{{ $entry['message'] !== '' ? $entry['message'] : '(ไม่มีข้อความ)' }}</div>
+                <div style="display: flex; justify-content: flex-end; margin-bottom: 10px;">
+                  <button
+                    type="button"
+                    class="admin-button admin-button--secondary admin-button--compact js-copy-log-entry"
+                    data-copy-text="{{ $copyPayload }}"
+                    style="min-width: 92px;"
+                  >
+                    Copy Error
+                  </button>
+                </div>
+                <pre style="margin: 0; white-space: pre-wrap; word-break: break-word; overflow-wrap: anywhere; background: #0f172a; color: #e2e8f0; border-radius: 14px; padding: 16px; font-size: 0.84rem; line-height: 1.6; max-height: 45vh; overflow: auto;">{{ $entry['raw_display'] ?? $entry['raw'] }}</pre>
+              </div>
+            </article>
           @endforeach
-          
-          @if ($hasMoreInDay)
-            <div style="background: #fff8eb; border: 1px solid #fedf89; border-radius: 12px; padding: 16px; text-align: center; color: #b54708; font-weight: 600;">
-              ยังมีรายการอื่นๆ ในวันนี้อีกมาก (แสดงเฉพาะ 100 รายการล่าสุดเพื่อป้องกันปัญหาระบบค้าง) 
-              <br>
-              <span style="font-weight: 400; font-size: 0.9rem; margin-top: 4px; display: inline-block;">หากต้องการดูทั้งหมด กรุณาใช้ตัวกรอง "วันที่" ด้านบนแทน</span>
-            </div>
-          @endif
         </div>
+
+        @if ($entries->hasPages())
+          <nav class="admin-pagination" aria-label="เปลี่ยนหน้ารายการ application logs" style="margin-top: 18px;">
+            @if ($entries->onFirstPage())
+              <span>ก่อนหน้า</span>
+            @else
+              <a href="{{ $entries->previousPageUrl() }}">ก่อนหน้า</a>
+            @endif
+
+            @php
+              $startPage = max(1, $entries->currentPage() - 2);
+              $endPage = min($entries->lastPage(), $entries->currentPage() + 2);
+            @endphp
+
+            @for ($page = $startPage; $page <= $endPage; $page++)
+              @if ($page === $entries->currentPage())
+                <span class="is-active">{{ $page }}</span>
+              @else
+                <a href="{{ $entries->url($page) }}">{{ $page }}</a>
+              @endif
+            @endfor
+
+            @if ($entries->hasMorePages())
+              <a href="{{ $entries->nextPageUrl() }}">ถัดไป</a>
+            @else
+              <span>ถัดไป</span>
+            @endif
+          </nav>
+        @endif
       @endif
     </div>
   </section>
@@ -197,11 +184,6 @@
   <script>
     (() => {
       const copyButtons = document.querySelectorAll(".js-copy-log-entry");
-      const logCheckboxes = document.querySelectorAll(".js-log-checkbox");
-      const selectAllDayCheckboxes = document.querySelectorAll(".js-select-all-day");
-      const copySelectedBtn = document.querySelector(".js-copy-selected");
-      const bulkActions = document.getElementById("bulk-actions");
-      const selectedCountLabel = document.getElementById("selected-count");
 
       const fallbackCopy = (text) => {
         const textarea = document.createElement("textarea");
@@ -213,62 +195,9 @@
         textarea.select();
         const isCopied = document.execCommand("copy");
         document.body.removeChild(textarea);
+
         return isCopied;
       };
-
-      const copyToClipboard = async (text) => {
-        try {
-          if (navigator.clipboard && window.isSecureContext) {
-            await navigator.clipboard.writeText(text);
-            return true;
-          } else {
-            return fallbackCopy(text);
-          }
-        } catch (error) {
-          return fallbackCopy(text);
-        }
-      };
-
-      const updateBulkUI = () => {
-        const checked = document.querySelectorAll(".js-log-checkbox:checked");
-        if (checked.length > 0) {
-          bulkActions.style.display = "flex";
-          selectedCountLabel.textContent = `เลือกแล้ว ${checked.length} รายการ`;
-        } else {
-          bulkActions.style.display = "none";
-        }
-      };
-
-      logCheckboxes.forEach(cb => {
-        cb.addEventListener("change", updateBulkUI);
-      });
-
-      selectAllDayCheckboxes.forEach(selectAll => {
-        selectAll.addEventListener("change", (e) => {
-          const dayGroup = selectAll.closest(".log-day-group");
-          const dayCheckboxes = dayGroup.querySelectorAll(".js-log-checkbox");
-          dayCheckboxes.forEach(cb => {
-            cb.checked = e.target.checked;
-          });
-          updateBulkUI();
-        });
-      });
-
-      copySelectedBtn.addEventListener("click", async () => {
-        const checked = document.querySelectorAll(".js-log-checkbox:checked");
-        const texts = Array.from(checked).map(cb => cb.dataset.copyText);
-        const combinedText = texts.join("\n\n" + "=".repeat(50) + "\n\n");
-        
-        if (combinedText === "") return;
-
-        const originalText = copySelectedBtn.textContent;
-        const success = await copyToClipboard(combinedText);
-        
-        copySelectedBtn.textContent = success ? "Copied All!" : "Error!";
-        setTimeout(() => {
-          copySelectedBtn.textContent = originalText;
-        }, 2000);
-      });
 
       copyButtons.forEach((button) => {
         button.addEventListener("click", async () => {
@@ -284,7 +213,20 @@
           }
 
           button.dataset.originalLabel = originalLabel;
-          const isCopied = await copyToClipboard(text);
+
+          let isCopied = false;
+
+          try {
+            if (navigator.clipboard && window.isSecureContext) {
+              await navigator.clipboard.writeText(text);
+              isCopied = true;
+            } else {
+              isCopied = fallbackCopy(text);
+            }
+          } catch (error) {
+            isCopied = fallbackCopy(text);
+          }
+
           button.textContent = isCopied ? "Copied" : "คัดลอกไม่ได้";
 
           setTimeout(() => {
