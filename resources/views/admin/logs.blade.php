@@ -98,9 +98,22 @@
 
   <section class="admin-card admin-table-card" style="margin-top: 18px;">
     <div style="padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #e7edf5; flex-wrap: wrap; gap: 10px;">
-      <div>
-        <h2 style="margin: 0; font-size: 1.1rem;">ผลลัพธ์บันทึกระบบ</h2>
-        <p class="admin-subtitle" style="margin-top: 6px;">แสดงบันทึกย้อนหลัง 3 วันล่าสุด (72 ชม.) แยกตามวัน หากไม่มีการเลือกวันที่</p>
+      <div style="display: flex; align-items: center; gap: 14px; flex-wrap: wrap;">
+        <div>
+          <h2 style="margin: 0; font-size: 1.1rem;">ผลลัพธ์บันทึกระบบ</h2>
+          <p class="admin-subtitle" style="margin-top: 6px;">แสดงบันทึกย้อนหลัง 3 วันล่าสุด (สแกนไฟล์ย้อนกลับ)</p>
+        </div>
+        
+        @if ($filters['date'] === '' && $filters['search'] === '' && $filters['level'] === '')
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <label for="day-select" style="font-size: 0.9rem; font-weight: 600; color: #475467;">เลือกวันที่:</label>
+            <select id="day-select" class="admin-input" style="padding: 4px 12px; height: 36px; border-radius: 10px; width: auto;" onchange="window.location.href = '{{ route('admin.logs') }}?page=' + (this.selectedIndex + 1)">
+              @foreach ($paginationDates as $index => $dateLabel)
+                <option value="{{ $index + 1 }}" @selected($entries->currentPage() === ($index + 1))>{{ $dateLabel }} @if($index === 0)(วันนี้)@endif</option>
+              @endforeach
+            </select>
+          </div>
+        @endif
       </div>
       <div id="bulk-actions" style="display: none; align-items: center; gap: 10px;">
         <span id="selected-count" style="font-weight: 600; font-size: 0.9rem; color: #175cd3;">เลือกแล้ว 0 รายการ</span>
@@ -167,41 +180,6 @@
             </div>
           @endforeach
         </div>
-
-        @if ($entries->hasPages())
-          <nav class="admin-pagination" aria-label="เปลี่ยนหน้ารายการ application logs" style="margin-top: 24px;">
-            @if ($entries->onFirstPage())
-              <span>ก่อนหน้า</span>
-            @else
-              <a href="{{ $entries->previousPageUrl() }}">ก่อนหน้า</a>
-            @endif
-
-            @php
-              $startPage = max(1, $entries->currentPage() - 2);
-              $endPage = min($entries->lastPage(), $entries->currentPage() + 2);
-            @endphp
-
-            @for ($page = $startPage; $page <= $endPage; $page++)
-              @php
-                $label = $page;
-                if (!empty($paginationDates) && isset($paginationDates[$page - 1])) {
-                  $label = $paginationDates[$page - 1];
-                }
-              @endphp
-              @if ($page === $entries->currentPage())
-                <span class="is-active" style="min-width: 100px; padding: 0 15px;">{{ $label }}</span>
-              @else
-                <a href="{{ $entries->url($page) }}" style="min-width: 100px; padding: 0 15px;">{{ $label }}</a>
-              @endif
-            @endfor
-
-            @if ($entries->hasMorePages())
-              <a href="{{ $entries->nextPageUrl() }}">ถัดไป</a>
-            @else
-              <span>ถัดไป</span>
-            @endif
-          </nav>
-        @endif
       @endif
     </div>
   </section>

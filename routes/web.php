@@ -2415,20 +2415,19 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         $currentPage = max(1, (int) $request->query('page', 1));
         $isDefaultMode = ($date === '' && $search === '' && $level === '');
+        $last3Days = collect(range(0, 2))->map(fn($i) => now('Asia/Bangkok')->subDays($i)->format('Y-m-d'))->toArray();
 
         if ($isDefaultMode) {
-            $last3Days = collect(range(0, 2))->map(fn($i) => now('Asia/Bangkok')->subDays($i)->format('Y-m-d'))->toArray();
             $currentPage = min(3, $currentPage);
             $targetDate = $last3Days[$currentPage - 1];
             
-            $filteredEntriesForDay = array_values(array_filter($allEntries, function ($entry) use ($targetDate) {
-                return $entry['date'] === $targetDate;
-            }));
+            // Deep scan backwards for this specific date
+            $filteredEntriesForDay = $logViewer->readEntriesForDate($selectedFile['path'], $targetDate, 20971520); // Scan up to 20MB
             
             $entries = new \Illuminate\Pagination\LengthAwarePaginator(
                 $filteredEntriesForDay,
-                3, // 3 pages in total
-                1, // 1 page per "day"
+                3, // 3 pages in total (3 days)
+                1, // 1 page per day
                 $currentPage,
                 [
                     'path' => $request->url(),
@@ -2470,7 +2469,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'logPath' => $selectedFile['path'],
             'logSize' => $selectedFile['size'],
             'entries' => $entries,
-            'paginationDates' => $isDefaultMode ? $last3Days : [],
+            'paginationDates' => $last3Days,
             'groupedEntries' => $groupedEntries,
             'totalEntryCount' => count($allEntries),
             'displayedEntryCount' => $displayedEntryCount,
