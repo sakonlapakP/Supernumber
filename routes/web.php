@@ -2470,6 +2470,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'logPath' => $selectedFile['path'],
             'logSize' => $selectedFile['size'],
             'entries' => $entries,
+            'paginationDates' => $isDefaultMode ? $last3Days : [],
             'groupedEntries' => $groupedEntries,
             'totalEntryCount' => count($allEntries),
             'displayedEntryCount' => $displayedEntryCount,

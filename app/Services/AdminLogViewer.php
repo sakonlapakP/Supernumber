@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\File;
 class AdminLogViewer
 {
     private const DEFAULT_FILE = 'laravel.log';
-    private const MAX_READ_BYTES = 1048576; // 1MB
+    private const MAX_READ_BYTES = 2097152; // 2MB
     private const DISPLAY_TIMEZONE = 'Asia/Bangkok';
 
     /**

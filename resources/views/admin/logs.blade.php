@@ -182,10 +182,16 @@
             @endphp
 
             @for ($page = $startPage; $page <= $endPage; $page++)
+              @php
+                $label = $page;
+                if (!empty($paginationDates) && isset($paginationDates[$page - 1])) {
+                  $label = $paginationDates[$page - 1];
+                }
+              @endphp
               @if ($page === $entries->currentPage())
-                <span class="is-active">{{ $page }}</span>
+                <span class="is-active" style="min-width: 100px; padding: 0 15px;">{{ $label }}</span>
               @else
-                <a href="{{ $entries->url($page) }}">{{ $page }}</a>
+                <a href="{{ $entries->url($page) }}" style="min-width: 100px; padding: 0 15px;">{{ $label }}</a>
               @endif
             @endfor
 
