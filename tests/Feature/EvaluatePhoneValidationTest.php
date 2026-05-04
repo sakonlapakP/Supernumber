@@ -27,7 +27,7 @@ class EvaluatePhoneValidationTest extends TestCase
         $response->assertSee('0812345678');
         $response->assertSee('ภาพรวมหมวดที่เบอร์นี้ส่งเสริม');
         $response->assertSee('การสื่อสาร');
-        $response->assertSee('ศาสตร์เร้นลับ/ลางสังหรณ์');
+        $response->assertSee('สิ่งศักดิ์สิทธิ์คุ้มครอง/ลางสังหรณ์');
         $response->assertDontSee('10/10');
     }
 

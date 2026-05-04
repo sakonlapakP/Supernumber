@@ -59,6 +59,25 @@
             opacity: 1 !important;
         }
 
+        /* Mobile Friendly Tap Targets (SEO) */
+        @media (max-width: 768px) {
+            .card-btn, 
+            .hero-input button, 
+            .home-filter__submit, 
+            .cta-btn,
+            .numbers-pagination__link,
+            .numbers-view-toggle__button,
+            .nav-mobile__link {
+                min-height: 48px !important;
+                display: flex !important;
+                align-items: center !important;
+                justify-content: center !important;
+            }
+            .numbers-pagination__link {
+                min-width: 44px !important;
+            }
+        }
+
         /* Card Icon Spacing Fix */
         .card-topic-icons {
             display: flex;

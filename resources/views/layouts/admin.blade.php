@@ -1005,6 +1005,11 @@
               'url' => route('admin.activity-logs'),
               'active' => request()->routeIs('admin.activity-logs'),
             ],
+            [
+              'label' => 'การทดสอบระบบ',
+              'url' => route('admin.tests'),
+              'active' => request()->routeIs('admin.tests*'),
+            ],
           ],
         ];
       }

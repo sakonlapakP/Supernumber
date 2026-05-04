@@ -133,7 +133,7 @@ class LineNotifier
 
     public function deliverLog(int $logId, int $attempt): void
     {
-        if (! Schema::hasTable('line_notification_logs')) {
+        if (! Schema::hasTable('line_notification_logs') || (app()->isLocal() && !app()->runningUnitTests())) {
             return;
         }
 

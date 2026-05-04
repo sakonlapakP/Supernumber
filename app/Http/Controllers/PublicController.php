@@ -415,7 +415,7 @@ class PublicController extends Controller
 
         $rules = [
             'name' => ['required', 'string', 'max:120'],
-            'phone' => ['required', 'string', 'max:20'],
+            'phone' => ['required', 'string', 'regex:/^[0-9]{10}$/'],
             'message' => ['required', 'string', 'max:2000'],
         ];
 
@@ -427,23 +427,22 @@ class PublicController extends Controller
         $data = $request->validate($rules);
 
         if ($token !== '') {
-            $verification = $turnstileVerifier->verify($token, $request->ip());
+            $isVerified = $turnstileVerifier->verify($token, $request->ip());
 
-            if (! $verification['success']) {
+            if (! $isVerified) {
                 return back()
                     ->withInput()
                     ->withErrors(['cf-turnstile-response' => 'การยืนยันตัวตนไม่สำเร็จ กรุณาลองใหม่อีกครั้ง']);
             }
         }
 
-        $isSpam = $spamFilter->check([
-            'name' => $data['name'],
-            'phone' => $data['phone'],
-            'message' => $data['message'],
-            'ip_address' => $request->ip(),
-        ]);
+        $spamResult = $spamFilter->inspect(
+            $data['name'],
+            $data['phone'],
+            $data['message']
+        );
 
-        if ($isSpam) {
+        if ($spamResult['blocked']) {
             return redirect()
                 ->route('contact')
                 ->with('contact_status_message', 'ส่งข้อความเรียบร้อยแล้ว ทีมงานจะติดต่อกลับตามข้อมูลที่แจ้งไว้');
@@ -454,7 +453,8 @@ class PublicController extends Controller
             'phone' => trim($data['phone']),
             'message' => trim($data['message']),
             'ip_address' => $request->ip(),
-            'status' => ContactMessage::STATUS_NEW,
+            'user_agent' => $request->userAgent(),
+            'submitted_at' => now(),
         ]);
 
         app(LineOrderNotifier::class)->notifyContactMessage(
@@ -527,6 +527,8 @@ class PublicController extends Controller
         // Main pages
         $urls[] = ['url' => route('home'), 'priority' => '1.0', 'changefreq' => 'daily'];
         $urls[] = ['url' => route('numbers.index'), 'priority' => '0.9', 'changefreq' => 'daily'];
+        $urls[] = ['url' => route('numbers.index', ['service_type' => 'prepaid']), 'priority' => '0.85', 'changefreq' => 'daily'];
+        $urls[] = ['url' => route('numbers.index', ['service_type' => 'postpaid']), 'priority' => '0.85', 'changefreq' => 'daily'];
         $urls[] = ['url' => route('articles.index'), 'priority' => '0.8', 'changefreq' => 'weekly'];
         $urls[] = ['url' => route('contact'), 'priority' => '0.6', 'changefreq' => 'monthly'];
         $urls[] = ['url' => route('privacy'), 'priority' => '0.3', 'changefreq' => 'monthly'];

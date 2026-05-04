@@ -1,9 +1,9 @@
 @extends('layouts.app')
 
-@section('title', 'บทความ | Supernumber')
+@section('title', 'บทความเบอร์มงคล ความรู้เรื่องตัวเลขและเสริมดวง | Supernumber')
 @section('meta_description', 'บทความและความรู้เรื่องเบอร์มงคล การเลือกเบอร์ให้เหมาะกับคุณ และเทคนิคเสริมพลังชีวิตจาก Supernumber')
 @section('canonical', route('articles.index'))
-@section('og_title', 'บทความ | Supernumber')
+@section('og_title', 'บทความเบอร์มงคล ความรู้เรื่องตัวเลขและเสริมดวง | Supernumber')
 @section('og_description', 'รวมบทความความรู้เรื่องเบอร์มงคล และเทคนิคการเลือกเบอร์ให้ตอบโจทย์ชีวิต')
 @section('og_url', route('articles.index'))
 

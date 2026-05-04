@@ -54,6 +54,22 @@ class LineOrderNotifier
         );
     }
 
+    public function notifyContactMessage(string $name, string $phone, string $message): ?LineNotificationLog
+    {
+        $text = implode("\n", [
+            'มีข้อความติดต่อใหม่',
+            'ชื่อ: ' . $name,
+            'โทร: ' . $phone,
+            'ข้อความ: ' . $message,
+        ]);
+
+        return $this->lineNotifier->queueText(
+            eventType: 'contact_message',
+            message: $text,
+            destinationKey: 'contact_message',
+        );
+    }
+
     public function shouldNotifyStatus(?string $status): bool
     {
         $normalizedStatus = $this->normalizeStatus($status);

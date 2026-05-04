@@ -188,6 +188,68 @@
           @endforeach
         </div>
       @endif
+      
+      @php
+        // Strategic SEO: Fetch relevant numbers based on article keywords
+        $searchQuery = null;
+        $title = $article->title;
+        $slug = $article->slug;
+        $fullText = $title . ' ' . $slug;
+
+        if (Str::contains($fullText, ['มังกร', '789'])) {
+            $searchQuery = '789';
+        } elseif (Str::contains($fullText, ['หงส์', '289'])) {
+            $searchQuery = '289';
+        } elseif (Str::contains($fullText, ['กวนอู', '639'])) {
+            $searchQuery = '639';
+        } elseif (Str::contains($fullText, ['เสน่ห์', 'เมตตา', '232', '323', '24', '42'])) {
+            $searchQuery = '42'; // Sample logic for charm
+        }
+
+        $relevantNumbers = \App\Models\PhoneNumber::query()
+            ->available()
+            ->when($searchQuery, function($q) use ($searchQuery) {
+                return $q->where('phone_number', 'like', '%' . $searchQuery . '%');
+            })
+            ->inRandomOrder()
+            ->limit(4)
+            ->get();
+            
+        // Fallback to random high quality if not enough relevant numbers
+        if ($relevantNumbers->count() < 4) {
+            $extra = \App\Models\PhoneNumber::query()
+                ->available()
+                ->whereNotIn('id', $relevantNumbers->pluck('id'))
+                ->inRandomOrder()
+                ->limit(4 - $relevantNumbers->count())
+                ->get();
+            $relevantNumbers = $relevantNumbers->concat($extra);
+        }
+      @endphp
+
+      @if($relevantNumbers->count() > 0)
+        <section class="article-related-numbers">
+            <div class="article-related-numbers__header">
+                <h2>เบอร์มงคลแนะนำสำหรับคุณ</h2>
+                <p>เลือกเบอร์ที่ใช่เพื่อเสริมพลังตามคำทำนายในบทความนี้</p>
+            </div>
+            <div class="article-related-numbers__grid">
+                @foreach($relevantNumbers as $num)
+                    <div class="article-number-card">
+                        <div class="article-number-card__phone">{{ $num->display_phone }}</div>
+                        <div class="article-number-card__meta">
+                            <span class="article-number-card__price">฿{{ number_format($num->sale_price) }}</span>
+                            <span class="article-number-card__network">{{ strtoupper($num->network_code) }}</span>
+                        </div>
+                        <a href="{{ route('evaluate', ['phone' => $num->phone_number]) }}" class="article-number-card__btn">ดูรายละเอียด</a>
+                    </div>
+                @endforeach
+            </div>
+            <div class="article-related-numbers__footer">
+                <a href="{{ route('numbers.index', $searchQuery ? ['q' => $searchQuery] : []) }}" class="btn-view-all">ดูเบอร์หมวดนี้ทั้งหมด</a>
+            </div>
+        </section>
+      @endif
 
       <section class="article-comments article-comments--readers">
         <h2>คอมเมนต์จากผู้อ่าน</h2>

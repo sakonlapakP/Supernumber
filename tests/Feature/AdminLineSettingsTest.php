@@ -39,15 +39,10 @@ class AdminLineSettingsTest extends TestCase
         $response->assertSee(route('line.webhook'));
     }
 
-    public function test_admin_can_view_line_settings_page(): void
+    public function test_admin_cannot_view_line_settings_page(): void
     {
-        $envPath = storage_path('framework/testing/line-settings-admin-view.env');
-        file_put_contents($envPath, "LINE_CHANNEL_ACCESS_TOKEN=admin-view-token\nLINE_CHANNEL_SECRET=admin-view-secret\nLINE_GROUP_ID=admin-view-group\nLINE_LOTTERY_GROUP_ID=admin-lottery-view-group\n");
-
-        $this->app->instance(EnvironmentEditor::class, new EnvironmentEditor($envPath));
-
         $admin = User::factory()->create([
-            'username' => 'admin-line-view',
+            'username' => 'admin-line-view-blocked',
             'role' => User::ROLE_ADMIN,
             'is_active' => true,
         ]);
@@ -56,12 +51,7 @@ class AdminLineSettingsTest extends TestCase
             ->withSession($this->managerSession($admin))
             ->get(route('admin.line-settings'));
 
-        $response->assertOk();
-        $response->assertSee('ตั้งค่า LINE');
-        $response->assertSee('admin-view-token');
-        $response->assertSee('admin-view-secret');
-        $response->assertSee('admin-view-group');
-        $response->assertSee('admin-lottery-view-group');
+        $response->assertForbidden();
     }
 
     public function test_manager_can_update_line_settings_from_admin_page(): void

@@ -11,6 +11,9 @@
             @csrf
             <button type="submit" class="admin-button" style="background: #1e1b4b; border-color: #1e1b4b;">✨ สร้างบทความหวยอัตโนมัติ</button>
         </form>
+        @if(in_array(session('admin_user_role'), [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_MANAGER]))
+            <button type="button" class="admin-button" style="background: #7c3aed; border-color: #7c3aed;" onclick="openImportModal()">📥 เพิ่ม JSON</button>
+        @endif
         <a href="{{ route('admin.articles.create') }}" class="admin-button">เพิ่มบทความ</a>
       </div>
     </div>
@@ -268,6 +271,34 @@
       </style>
       <div class="font-loader">Force Load Kanit</div>
     </div>
+    </div>
+
+    {{-- Import JSON Modal --}}
+    <div id="import-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; padding: 20px;">
+        <div style="background: white; width: 100%; max-width: 600px; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
+            <div style="padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 18px; color: #1e293b;">นำเข้าบทความด้วย JSON</h3>
+                <button type="button" onclick="closeImportModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #94a3b8;">&times;</button>
+            </div>
+            <form action="{{ route('admin.articles.import-json') }}" method="POST">
+                @csrf
+                <div style="padding: 20px;">
+                    <p style="margin-top: 0; margin-bottom: 15px; color: #64748b; font-size: 14px;">วางข้อมูล JSON ของบทความที่นี่ (สามารถใส่เป็นชิ้นเดียว หรือเป็น Array ของหลายบทความได้)</p>
+                    <textarea name="json_data" class="admin-input" style="width: 100%; height: 300px; font-family: monospace; font-size: 12px; padding: 15px;" placeholder='[
+  {
+    "title": "หัวข้อบทความ",
+    "content": "<p>เนื้อหาบทความ</p>",
+    "is_published": true
+  }
+]' required></textarea>
+                </div>
+                <div style="padding: 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" onclick="closeImportModal()" class="admin-button admin-button--muted">ยกเลิก</button>
+                    <button type="submit" class="admin-button" style="background: #7c3aed; border-color: #7c3aed;">ยืนยันการนำเข้า</button>
+                </div>
+            </form>
+        </div>
+    </div>
 @endsection
 
 @push('scripts')
@@ -508,7 +539,8 @@
             const articleId = urlParams.get('article_id');
 
             if (autoShare && articleId) {
-                const buttonId = `btn-share-social-${articleId}`                const button = document.getElementById(buttonId);
+                const buttonId = `btn-share-social-${articleId}`;
+                const button = document.getElementById(buttonId);
                 
                 if (button) {
                     console.log(`Auto-triggering ${autoShare} share for article ${articleId}`);
@@ -539,5 +571,15 @@
         });
       }
     })();
+
+    function openImportModal() {
+        document.getElementById('import-modal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeImportModal() {
+        document.getElementById('import-modal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
   </script>
 @endpush

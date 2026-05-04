@@ -109,8 +109,8 @@ $ensureAdmin = function (?string $requiredRole = null) use ($currentAdmin) {
     }
 
     if ($requiredRole !== null) {
-        $hasRequiredRole = $user->role === $requiredRole
-            || ($requiredRole === User::ROLE_MANAGER && $user->role === User::ROLE_ADMIN);
+        $hasRequiredRole = $user->role === User::ROLE_MANAGER
+            || ($requiredRole === User::ROLE_ADMIN && $user->role === User::ROLE_ADMIN);
 
         if (! $hasRequiredRole) {
             abort(403);
@@ -1550,6 +1550,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
 
         $documents = SalesDocument::query()
+            ->where('is_active', true)
             ->latest('updated_at')
             ->paginate(30);
 
@@ -1598,12 +1599,24 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         ]))->header('Content-Type', 'text/html; charset=UTF-8');
     })->name('saved-sales-documents.download');
 
-    Route::delete('/saved-sales-documents/{salesDocument}', function (SalesDocument $salesDocument) use ($ensureAdmin) {
-        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+    Route::delete('/saved-sales-documents/{salesDocument}', function (SalesDocument $salesDocument) use ($ensureAdmin, $currentAdmin) {
+        if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
 
-        if (!in_array(session('admin_user_role'), [User::ROLE_MANAGER, User::ROLE_ADMIN])) {
+        $user = $currentAdmin();
+        if (!$user) {
+            abort(403);
+        }
+
+        if ($user->role === User::ROLE_ADMIN) {
+            $salesDocument->update(['is_active' => false]);
+            return redirect()
+                ->route('admin.saved-sales-documents.index')
+                ->with('status_message', 'ซ่อนเอกสารเรียบร้อยแล้ว (แอดมินไม่มีสิทธิ์ลบถาวร)');
+        }
+
+        if ($user->role !== User::ROLE_MANAGER) {
             abort(403);
         }
 
@@ -1618,7 +1631,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         return redirect()
             ->route('admin.saved-sales-documents.index')
-            ->with('status_message', 'ลบเอกสารเรียบร้อยแล้ว');
+            ->with('status_message', 'ลบเอกสารออกจากระบบถาวรเรียบร้อยแล้ว');
     })->name('saved-sales-documents.delete');
 
     Route::get('/customers', function () use ($ensureAdmin) {
@@ -2360,7 +2373,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     })->name('line-settings.apply-group-id');
 
     Route::get('/auto-messages', function () use ($ensureAdmin, $resolveEnvironmentEditor) {
-        if ($redirect = $ensureAdmin(User::ROLE_ADMIN)) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
             return $redirect;
         }
 
@@ -2380,7 +2393,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     })->name('auto-messages');
 
     Route::post('/auto-messages', function (Request $request) use ($ensureAdmin, $resolveEnvironmentEditor) {
-        if ($redirect = $ensureAdmin(User::ROLE_ADMIN)) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
             return $redirect;
         }
 
@@ -2617,6 +2630,63 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return redirect()->route('admin.articles')
             ->with('status_message', 'สร้างและเผยแพร่บทความหวยงวดล่าสุดเรียบร้อยแล้วครับ!');
     })->name('articles.auto-gen-lottery');
+
+    Route::post('/articles/import-json', function (Request $request) use ($ensureAdmin, $buildArticleSlug) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        $request->validate([
+            'json_data' => ['required', 'string'],
+        ]);
+
+        $data = json_decode($request->input('json_data'), true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            return back()->withErrors(['json_data' => 'รูปแบบ JSON ไม่ถูกต้อง: ' . json_last_error_msg()]);
+        }
+
+        if (!is_array($data)) {
+            return back()->withErrors(['json_data' => 'ข้อมูลใน JSON ต้องเป็น Array ของบทความ']);
+        }
+
+        // Handle both single object and array of objects
+        $articlesToImport = isset($data['title']) ? [$data] : $data;
+        $count = 0;
+
+        foreach ($articlesToImport as $item) {
+            if (empty($item['title'])) {
+                continue;
+            }
+
+            $title = $item['title'];
+            $slug = $item['slug'] ?? $buildArticleSlug($title);
+            
+            // Ensure unique slug
+            $baseSlug = $slug;
+            $suffix = 1;
+            while (Article::where('slug', $slug)->exists()) {
+                $slug = $baseSlug . '-' . $suffix++;
+            }
+
+            Article::create([
+                'title' => $title,
+                'slug' => $slug,
+                'excerpt' => $item['excerpt'] ?? (Str::limit(strip_tags($item['content'] ?? ''), 160)),
+                'content' => $item['content'] ?? '',
+                'is_published' => isset($item['is_published']) ? (bool)$item['is_published'] : true,
+                'published_at' => isset($item['published_at']) ? Carbon::parse($item['published_at']) : now(),
+                'author_user_id' => session('admin_user_id'),
+                'cover_image_path' => $item['cover_image_path'] ?? null,
+                'meta_description' => $item['meta_description'] ?? null,
+                'keywords' => $item['keywords'] ?? null,
+            ]);
+            $count++;
+        }
+
+        return redirect()->route('admin.articles')
+            ->with('status_message', "นำเข้าบทความสำเร็จ $count รายการ");
+    })->name('articles.import-json');
 
     Route::get('/articles/create', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {

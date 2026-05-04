@@ -20,6 +20,7 @@ class SalesDocument extends Model
         'pdf_path',
         'saved_by_user_id',
         'payload',
+        'is_active',
     ];
 
     protected function casts(): array
@@ -28,6 +29,7 @@ class SalesDocument extends Model
             'document_date' => 'date',
             'due_date' => 'date',
             'payload' => 'array',
+            'is_active' => 'boolean',
         ];
     }
 

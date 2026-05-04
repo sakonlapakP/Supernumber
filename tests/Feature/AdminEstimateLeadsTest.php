@@ -68,7 +68,7 @@ class AdminEstimateLeadsTest extends TestCase
             'main_phone' => '0866667777',
             'current_phone' => '0888889999',
             'email' => 'lead@example.com',
-            'goal' => 'balance',
+            'goal' => 'health',
             'ip_address' => '127.0.0.1',
             'user_agent' => 'PHPUnit Browser',
             'submitted_at' => now(),

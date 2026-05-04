@@ -1,8 +1,8 @@
 @extends('layouts.app')
 
-@section('title', 'Supernumber | วิเคราะห์เบอร์ควรระวัง')
+@section('title', 'วิเคราะห์เบอร์มือถือ ควรระวังเบอร์เสีย ทำนายแม่นยำ | Supernumber')
 @section('meta_description', 'ผลการวิเคราะห์เบอร์ที่มีคู่เลขควรระวังระดับสูง พร้อมคำแนะนำเพื่อหลีกเลี่ยงความเสี่ยง')
-@section('og_title', 'Supernumber | วิเคราะห์เบอร์ควรระวัง')
+@section('og_title', 'วิเคราะห์เบอร์มือถือ ควรระวังเบอร์เสีย ทำนายแม่นยำ | Supernumber')
 @section('og_description', 'ผลการวิเคราะห์เบอร์ที่มีคู่เลขควรระวังระดับสูง พร้อมคำแนะนำเพื่อหลีกเลี่ยงความเสี่ยง')
 @section('canonical', url('/evaluateBadNumber'))
 @section('og_url', url('/evaluateBadNumber'))
@@ -10,6 +10,16 @@
 @section('preload_image', asset('images/evaluate_banner.jpg'))
 
 @section('content')
+  <style>
+    @media (min-width: 992px) {
+      .evaluate-hero__text {
+        max-width: 900px !important;
+      }
+      .evaluate-hero__text h1 {
+        white-space: nowrap !important;
+      }
+    }
+  </style>
   @php
     $lastSeven = substr($phone, -7);
     $pairs = [];
@@ -102,8 +112,8 @@
     <div class="evaluate-overlay"></div>
     <div class="container evaluate-hero__content">
       <div class="evaluate-hero__text">
+        <h1 id="evaluate-title">โปรแกรมวิเคราะห์เบอร์มงคล (เลขควรระวัง)</h1>
         <p class="evaluate-kicker">รายงานความเสี่ยง</p>
-        <h1 id="evaluate-title">ผลการวิเคราะห์เบอร์ที่ต้องระวังเป็นพิเศษ</h1>
         <p>
           ระบบตรวจพบคู่เลขที่มีความเสี่ยงสูง แนะนำให้อ่านคำเตือนให้ครบและปรึกษาทีม Supernumber
         </p>

@@ -145,12 +145,12 @@ class AdminSavedSalesDocumentTest extends TestCase
         Storage::disk('local')->assertMissing($document->pdf_path);
     }
 
-    public function test_admin_cannot_delete_saved_sales_document(): void
+    public function test_admin_hides_instead_of_deleting_sales_document(): void
     {
         Storage::fake('local');
 
         $admin = User::factory()->create([
-            'username' => 'admin-saved-documents-delete',
+            'username' => 'admin-hides-document',
             'role' => User::ROLE_ADMIN,
             'is_active' => true,
         ]);
@@ -164,6 +164,7 @@ class AdminSavedSalesDocumentTest extends TestCase
             'pdf_disk' => 'local',
             'pdf_path' => 'quotation/2026/Quotation QT-260404-002.pdf',
             'payload' => [],
+            'is_active' => true,
         ]);
 
         Storage::disk('local')->put($document->pdf_path, 'pdf');
@@ -172,10 +173,15 @@ class AdminSavedSalesDocumentTest extends TestCase
             ->withSession($this->adminSession($admin))
             ->delete(route('admin.saved-sales-documents.delete', $document));
 
-        $response->assertForbidden();
+        $response->assertRedirect(route('admin.saved-sales-documents.index'));
+        $response->assertSessionHas('status_message', 'ซ่อนเอกสารเรียบร้อยแล้ว (แอดมินไม่มีสิทธิ์ลบถาวร)');
+        
         $this->assertDatabaseHas('sales_documents', [
             'id' => $document->id,
+            'is_active' => false,
         ]);
+        
+        // File should still exist because it was only hidden
         Storage::disk('local')->assertExists($document->pdf_path);
     }
 

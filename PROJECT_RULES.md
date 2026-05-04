@@ -1,5 +1,8 @@
 # Project Rules: Supernumber (Tarot & Articles System)
 
+> [!IMPORTANT]
+> **AI Context Reference:** ศึกษาภาพรวมโปรเจกต์และเทคนิคเชิงลึกได้ที่ [llms.txt](llms.txt) และ [ai-context.md](ai-context.md)
+
 ## 1. Communication Protocol (บังคับใช้ทุกครั้ง)
 *   **Acknowledge & Plan:** สรุปความเข้าใจและแจ้งแผนงาน (Step-by-step) เป็น **"ภาษาไทย"** ทุกครั้งก่อนเริ่มงานเสมอ
 *   **Wait for Approval:** ห้าม Execute จนกว่าผู้ใช้จะพิมพ์ "ตกลง", "เริ่มได้", "Confirm" หรือ "ได้จ้า"

@@ -1,8 +1,24 @@
 @extends('layouts.app')
 
-@section('title', 'Supernumber | เบอร์ทั้งหมด')
+@php
+  $seoTitle = 'ขายเบอร์มงคลออนไลน์ เบอร์มงคลราคาถูก';
+  if ($selectedServiceType === \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID) {
+      $seoTitle = 'ขายเบอร์มงคล แบบเติมเงิน ราคาพิเศษ';
+  } elseif ($selectedServiceType === \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID) {
+      $seoTitle = 'ขายเบอร์มงคล แบบรายเดือน โปรโมชั่นคุ้มค่า';
+  }
+  if ($selectedPlan) {
+      $seoTitle .= ' ' . $selectedPlan;
+  }
+  if ($search) {
+      $seoTitle .= ' ชุดเลข ' . $search;
+  }
+  $seoTitle .= ' | Supernumber';
+@endphp
+
+@section('title', $seoTitle)
 @section('meta_description', 'รวมเบอร์พร้อมขายทั้งหมด ค้นหาเบอร์ตามตำแหน่งที่ต้องการและเลือกโปรโมชั่นที่เหมาะกับคุณ')
-@section('og_title', 'Supernumber | เบอร์ทั้งหมด')
+@section('og_title', $seoTitle)
 @section('og_description', 'รวมเบอร์พร้อมขายทั้งหมด ค้นหาเบอร์ตามตำแหน่งที่ต้องการและเลือกโปรโมชั่นที่เหมาะกับคุณ')
 @section('canonical', url('/numbers'))
 @section('og_url', url('/numbers'))
@@ -236,6 +252,13 @@
         justify-content: center !important;
         gap: 12px !important;
       }
+
+      body.numbers-scale-soft .numbers-hero__text {
+        max-width: 900px !important;
+      }
+      body.numbers-scale-soft .numbers-hero__text h1 {
+        white-space: nowrap !important;
+      }
     }
 
     @media (max-width: 1024px) {
@@ -284,8 +307,8 @@
     <div class="numbers-hero-overlay"></div>
     <div class="container numbers-hero__content">
       <div class="numbers-hero__text">
+        <h1 id="numbers-hero-title">คลังเบอร์มงคลคุณภาพ เลือกเบอร์ที่ใช่สำหรับคุณ</h1>
         <p class="hero-kicker">ค้นหาเบอร์มงคล</p>
-        <h1 id="numbers-hero-title">รวมเบอร์มงคลทั้งหมดที่พร้อมขาย</h1>
         <p>เลือกเบอร์ที่ตรงใจจากคลังเบอร์คุณภาพ พร้อมตัวกรองที่ช่วยค้นหาได้ไวขึ้น</p>
       </div>
     </div>

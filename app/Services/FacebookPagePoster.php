@@ -18,6 +18,13 @@ class FacebookPagePoster
         $pageId = config('services.facebook.page_id');
         $accessToken = config('services.facebook.page_access_token');
 
+
+        // ป้องกันการโพสต์ Facebook จากเครื่อง Local (ยกเว้นตอนรันเทสต์ซึ่งมีการ Fake อยู่แล้ว)
+        if (app()->isLocal() && !app()->runningUnitTests()) {
+            Log::info("FB Post: Bypassing real post because environment is local development.");
+            return ['success' => true, 'id' => 'local-test-id', 'testing' => true];
+        }
+
         if (empty($pageId) || empty($accessToken)) {
             Log::error("FB Post: Missing config - ID: " . ($pageId ? 'OK' : 'MISSING') . ", Token: " . ($accessToken ? 'OK' : 'MISSING'));
             return ['success' => false, 'error' => 'Missing Facebook Page ID or Access Token in configuration.'];

@@ -17,9 +17,18 @@
       <ul>
         <li><a href="{{ route('home') }}">หน้าหลัก</a></li>
         <li><a href="{{ route('numbers.index') }}">เบอร์ทั้งหมด</a></li>
-        <li><a href="#">คำทำนายละเอียด</a></li>
-        <li><a href="{{ route('estimate') }}">เลือกเบอร์ให้เหมาะกับคุณ</a></li>
+        <li><a href="{{ route('estimate') }}">เลือกเบอร์ให้คุณ</a></li>
         <li><a href="{{ route('contact') }}">ติดต่อเรา</a></li>
+      </ul>
+    </div>
+    <div class="footer-links">
+      <h3>หมวดหมู่ยอดนิยม</h3>
+      <ul>
+        <li><a href="{{ route('numbers.index', ['service_type' => 'prepaid']) }}">เบอร์มงคล เติมเงิน</a></li>
+        <li><a href="{{ route('numbers.index', ['service_type' => 'postpaid']) }}">เบอร์มงคล รายเดือน</a></li>
+        <li><a href="{{ route('numbers.index', ['q' => '789']) }}">เบอร์มังกร (เลข 789)</a></li>
+        <li><a href="{{ route('numbers.index', ['q' => '289']) }}">เบอร์หงส์ (เลข 289)</a></li>
+        <li><a href="{{ route('articles.index') }}">บทความความรู้เบอร์มงคล</a></li>
       </ul>
     </div>
     <div class="footer-links">
@@ -41,7 +50,7 @@
       <p>อีเมล: <a href="mailto:contact@supernumber.co.th">contact@supernumber.co.th</a></p>
       <p>เวลาทำการ: จันทร์ - ศุกร์ (09:00 - 18:00 น.)</p>
       <p>ที่อยู่: 1414 ถนน พระราม 4 แขวง คลองเตย เขตคลองเตย กรุงเทพมหานคร</p>
-      <p class="footer-copy">www.supernumber.co.th All rights reserved.</p>
+      <p class="footer-copy">www.supernumber.co.th All rights reserved. | <a href="{{ url('/sitemap.xml') }}" style="color: inherit; text-decoration: underline; opacity: 0.7;">Sitemap</a></p>
     </div>
     <div class="footer-social">
       <h3>ติดตามเรา</h3>

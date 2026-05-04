@@ -1,13 +1,117 @@
 @extends('layouts.app')
 
-@section('title', 'Supernumber | ผลการวิเคราะห์เบอร์')
+@php
+    $rawPhone = $phone ?? request('phone');
+    $number = preg_replace('/[^0-9]/', '', $rawPhone ?? '');
+    
+    // Fallback if empty or too short
+    if ($number === '' || strlen($number) < 7) {
+        $number = '0645391429';
+    }
+    
+    $phone = $number;
+    $displayPhone = preg_replace('/(\d{3})(\d{3})(\d{4})/', '$1-$2-$3', $number);
+
+    // Analysis Logic for SEO
+    $lastSeven = substr($number, -7);
+    $pairs = [];
+    for ($i = 0; $i < 6; $i++) {
+        $pairs[] = substr($lastSeven, $i, 2);
+    }
+    
+    $pairMeaningMap = \App\Models\PairMeaning::whereIn('pair', $pairs)
+        ->get()
+        ->keyBy('pair');
+
+    $rawScore = 0;
+    foreach ($pairs as $p) {
+        $meaning = $pairMeaningMap->get($p) ?? $pairMeaningMap->get(strrev($p));
+        $status = $meaning?->status ?? 'neutral';
+        if ($status === 'good') {
+            $rawScore += (100 / 6);
+        } elseif ($status === 'bad') {
+            // No points for bad
+        } else {
+            $rawScore += (100 / 12); // Half points for neutral/conditional
+        }
+    }
+    $score = min(100, (int) round($rawScore));
+
+    $currentNumberModel = \App\Models\PhoneNumber::query()->where('phone_number', $number)->first();
+    $hasManualAnalysis = $currentNumberModel && !empty($currentNumberModel->description);
+
+    $isHighQuality = $score >= 75 || $hasManualAnalysis;
+
+    if ($isHighQuality) {
+        $robots = 'index, follow';
+        $canonicalUrl = route('evaluate', ['phone' => $number]);
+        $seoTitle = "วิเคราะห์เบอร์ $displayPhone ได้คะแนน $score% เบอร์มงคลเกรด A | Supernumber";
+    } else {
+        $robots = 'noindex, follow';
+        $canonicalUrl = route('evaluate');
+        $seoTitle = "วิเคราะห์เบอร์ $displayPhone ผลทำนายแม่นยำ 100% | Supernumber";
+    }
+@endphp
+
+@section('title', $seoTitle)
 @section('meta_description', 'สรุปความหมายเบอร์มงคลแบบเข้าใจง่าย พร้อมจุดเด่นและคำแนะนำการใช้งาน')
-@section('og_title', 'Supernumber | ผลการวิเคราะห์เบอร์')
+@section('og_title', $seoTitle)
 @section('og_description', 'สรุปความหมายเบอร์มงคลแบบเข้าใจง่าย พร้อมจุดเด่นและคำแนะนำการใช้งาน')
-@section('canonical', url('/evaluate'))
-@section('og_url', url('/evaluate'))
+@section('canonical', $canonicalUrl)
+@section('og_url', route('evaluate', ['phone' => $number]))
+@section('robots', $robots)
 @section('og_image', asset('images/evaluate_banner.jpg'))
 @section('preload_image', asset('images/evaluate_banner.jpg'))
+
+@section('seo_schema')
+<script type="application/ld+json">
+{
+  "@@context": "https://schema.org/",
+  "@@type": "Product",
+  "name": "เบอร์มงคล {{ $displayPhone }}",
+  "image": [
+    "{{ asset('images/og-image.jpg') }}",
+    "{{ asset('images/logo.png') }}"
+  ],
+  "description": "วิเคราะห์เบอร์ {{ $displayPhone }} ผลทำนายแม่นยำ 100% ได้คะแนนความมงคล {{ $score }}% เสริมดวงด้านการเงิน การงาน และความรัก",
+  "brand": {
+    "@type": "Brand",
+    "name": "Supernumber"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": "{{ route('evaluate', ['phone' => $number]) }}",
+    "priceCurrency": "THB",
+    "price": "{{ $currentNumberModel ? (int)$currentNumberModel->sale_price : 0 }}",
+    "availability": "{{ ($currentNumberModel && $currentNumberModel->status === \App\Models\PhoneNumber::STATUS_ACTIVE) ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock' }}",
+    "itemCondition": "https://schema.org/NewCondition"
+  }
+}
+</script>
+
+<script type="application/ld+json">
+{
+  "@@context": "https://schema.org",
+  "@@type": "BreadcrumbList",
+  "itemListElement": [{
+    "@@type": "ListItem",
+    "position": 1,
+    "name": "หน้าหลัก",
+    "item": "{{ url('/') }}"
+  },{
+    "@@type": "ListItem",
+    "position": 2,
+    "name": "วิเคราะห์เบอร์มงคล",
+    "item": "{{ route('evaluate') }}"
+  },{
+    "@@type": "ListItem",
+    "position": 3,
+    "name": "{{ $displayPhone }}",
+    "item": "{{ route('evaluate', ['phone' => $number]) }}"
+  }]
+}
+</script>
+@endsection
 
 @section('content')
   <style>
@@ -66,20 +170,17 @@
         grid-template-columns: 1fr !important;
       }
     }
+
+    @media (min-width: 992px) {
+      .good-number-hero__text {
+        max-width: 900px !important;
+      }
+      .good-number-hero__text h1 {
+        white-space: nowrap !important;
+      }
+    }
   </style>
   @php
-    $rawPhone = $phone ?? request('phone');
-    $number = preg_replace('/[^0-9]/', '', $rawPhone ?? '');
-    if ($number === '') {
-        $number = '0645391429';
-    }
-    if (strlen($number) < 7) {
-        $number = '0645391429';
-    }
-    $phone = $number;
-    $currentNumberModel = \App\Models\PhoneNumber::query()
-        ->where('phone_number', $number)
-        ->first();
     $currentServiceType = $currentNumberModel?->service_type ?? \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID;
     $currentPackage = $currentNumberModel?->is_prepaid
         ? ((int) ($currentNumberModel->sale_price ?? 0))
@@ -117,11 +218,6 @@
         $recommendedNumbers = $recommendedNumbers->concat($extraNumbers);
     }
 
-    $lastSeven = substr($number, -7);
-    $pairs = [];
-    for ($i = 0; $i < 6; $i++) {
-        $pairs[] = substr($lastSeven, $i, 2);
-    }
     $groupedPairs = [];
     foreach ($pairs as $index => $pair) {
         $chars = str_split($pair);
@@ -192,9 +288,6 @@
         'conditional' => 'คู่เลขดีกับคู่เลขเสีย',
         'neutral' => 'คู่เลขดีกับคู่เลขเสีย',
     ];
-    $pairMeaningMap = \App\Models\PairMeaning::whereIn('pair', $pairs)
-        ->get()
-        ->keyBy('pair');
 
     $topMeaningRecord = \App\Models\PairMeaning::where('pair', $topGroupKey)->first();
     $topMeaning = [
@@ -266,7 +359,7 @@
             'bad' => ['00', '01', '03', '09', '10', '11', '12', '13', '17', '18', '21', '30', '31', '38', '71', '81', '83', '88', '90'],
             'conditional' => ['33'],
         ],
-        'ศาสตร์เร้นลับ/ลางสังหรณ์' => [
+        'สิ่งศักดิ์สิทธิ์คุ้มครอง/ลางสังหรณ์' => [
             'good' => ['49', '59', '79', '89', '94', '95', '97', '98', '99'],
             'bad' => ['00', '09', '90'],
             'conditional' => [],
@@ -281,7 +374,7 @@
         'ความคิดสร้างสรรค์/ไอเดีย',
         'สติปัญญา/การเรียนรู้',
         'สุขภาพ/ความเครียด',
-        'ศาสตร์เร้นลับ/ลางสังหรณ์',
+        'สิ่งศักดิ์สิทธิ์คุ้มครอง/ลางสังหรณ์',
     ];
     $topicIconMap = [
         'การสื่อสาร' => '💬',
@@ -292,7 +385,7 @@
         'ความคิดสร้างสรรค์/ไอเดีย' => '💡',
         'สติปัญญา/การเรียนรู้' => '🧠',
         'สุขภาพ/ความเครียด' => '🌿',
-        'ศาสตร์เร้นลับ/ลางสังหรณ์' => '✨',
+        'สิ่งศักดิ์สิทธิ์คุ้มครอง/ลางสังหรณ์' => '✨',
     ];
     $buildPairVariants = static function (string $pair): array {
         $chars = str_split($pair);
@@ -429,11 +522,9 @@
     <div class="evaluate-overlay"></div>
     <div class="container evaluate-hero__content">
       <div class="good-number-hero__text">
+        <h1 id="evaluate-title" style="font-size: 42px; margin-bottom: 15px;">โปรแกรมวิเคราะห์เบอร์มงคล</h1>
         <p class="evaluate-kicker">{{ $heroKicker }}</p>
-        <h1 id="evaluate-title">
-          <span class="good-number-hero__title-text">ความหมายของหมายเลข</span>
-          <span class="good-number-hero__title-number">{{ $number }}</span>
-        </h1>
+        <p class="good-number-hero__title-subnumber" style="font-size: 24px; opacity: 0.9;">วิเคราะห์ความหมายของหมายเลข <strong>{{ $number }}</strong></p>
         <p class="good-number-hero__lead">
           อ่านความหมายของเบอร์ พร้อมคำแนะนำการใช้งานของตัวเลขให้เหมาะกับจังหวะของชีวิตและความต้องการของคุณ
         </p>

@@ -5,9 +5,9 @@
   $homeBannerUrl = asset('images/home_banner.jpg') . '?v=' . $homeBannerVersion;
 @endphp
 
-@section('title', 'Supernumber | เบอร์มงคลที่ใช่สำหรับคุณ')
+@section('title', 'Supernumber ศูนย์รวมเบอร์มงคลอันดับ 1')
 @section('meta_description', 'ดูดวงเบอร์มือถือฟรี วิเคราะห์เสริมพลัง ดึงดูดโอกาส และปลดล็อกเส้นทางสำเร็จด้วยเบอร์มงคลที่ใช่สำหรับคุณ')
-@section('og_title', 'Supernumber | เบอร์มงคลที่ใช่สำหรับคุณ')
+@section('og_title', 'Supernumber ศูนย์รวมเบอร์มงคลอันดับ 1')
 @section('og_description', 'ดูดวงเบอร์มือถือฟรี วิเคราะห์เสริมพลัง ดึงดูดโอกาส และปลดล็อกเส้นทางสำเร็จด้วยเบอร์มงคลที่ใช่สำหรับคุณ')
 @section('canonical', url('/'))
 @section('og_url', url('/'))
@@ -59,6 +59,13 @@
         justify-content: center !important;
         align-items: stretch !important;
         gap: 16px !important;
+      }
+
+      body.home-scale-soft .hero-left {
+        max-width: 900px !important;
+      }
+      body.home-scale-soft .hero-title {
+        white-space: nowrap !important;
       }
     }
 
@@ -385,10 +392,10 @@
     <div class="hero-overlay"></div>
     <div class="container hero-content">
       <div class="hero-left">
-        <p class="hero-kicker">แค่เปลี่ยนเบอร์ชีวิตคุณก็เปลี่ยน</p>
         <h1 class="hero-title" id="hero-title">
-          เบอร์มงคล วิเคราะห์เบอร์เสริมพลังชีวิต และ คัดสรรเบอร์พิเศษสุดเพื่อคุณ | Supernumber
+          Supernumber ศูนย์รวมเบอร์มงคลอันดับ 1
         </h1>
+        <p class="hero-kicker">แค่เปลี่ยนเบอร์ชีวิตคุณก็เปลี่ยน</p>
         <p class="hero-subtitle">
           ดูดวงเบอร์มือถือฟรี วิเคราะห์เสริมพลัง ดึงดูดโอกาส และปลดล็อกเส้นทางสำเร็จ
         </p>

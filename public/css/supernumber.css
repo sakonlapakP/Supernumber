@@ -1637,8 +1637,8 @@ a[href^="tel"] {
 
 .footer-grid {
   display: grid;
-  grid-template-columns: minmax(200px, 260px) minmax(180px, 220px) minmax(180px, 220px) minmax(260px, 1fr) minmax(200px, 240px);
-  gap: 28px;
+  grid-template-columns: 1.2fr 0.8fr 1fr 0.8fr 1.2fr 0.8fr;
+  gap: 24px;
   align-items: start;
 }
 

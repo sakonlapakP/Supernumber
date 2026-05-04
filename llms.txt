@@ -1,0 +1,22 @@
+# Supernumber Project Context
+
+## Overview
+- **Project Name:** Supernumber
+- **Core Business:** Lucky Phone Number Sales (เบอร์มงคล), Numerology Analysis (ทำนายดวง), and SEO Article System.
+- **Main Tech Stack:** PHP 8.2+, Laravel 11, MySQL, Tailwind CSS.
+
+## Core Modules
+1. **PhoneNumber Inventory:** Managing and selling prepaid/postpaid numbers. Includes CSV import and status tracking.
+2. **Numerology (Tarot):** Logic for analyzing phone numbers based on pair meanings (`PairMeaning` model).
+3. **Articles & SEO:** High-performance content system designed for SEO. Integrated with Gemini AI for auto-generation.
+4. **Order System:** Customer bookings, payment slip verification, and automated status syncing.
+
+## AI Content Guidelines (บทความ)
+- Articles are often AI-generated or AI-assisted.
+- SEO Fields: title, slug, meta_description, keywords, lsi_keywords.
+- Automation: supports auto-posting (`is_auto_post`) and LINE broadcasting.
+
+## Development Patterns
+- Use Laravel Migrations for DB changes.
+- Tailwind CSS in Blade components.
+- Automated testing with PHPUnit for core logic.
