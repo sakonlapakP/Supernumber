@@ -30,24 +30,9 @@ class LineEstimateLeadNotifier
             $lead->last_name,
         ]))) ?: '-';
 
-        $genderLabels = [
-            'male' => 'ชาย',
-            'female' => 'หญิง',
-        ];
-
-        $workTypeLabels = [
-            'sales' => 'งานขาย / เจรจา',
-            'service' => 'งานบริการ / ดูแลลูกค้า',
-            'office' => 'งานออฟฟิศ / บริหาร',
-            'online' => 'งานออนไลน์ / คอนเทนต์',
-        ];
-
-        $goalLabels = [
-            'work' => 'เน้นการงาน / โอกาสใหม่',
-            'money' => 'เน้นการเงิน / ปิดการขาย',
-            'love' => 'เน้นความรัก / ความสัมพันธ์',
-            'balance' => 'เน้นสมดุลชีวิต',
-        ];
+        $genderLabels = EstimateLead::genderLabels();
+        $workTypeLabels = EstimateLead::workTypeLabels();
+        $goalLabels = EstimateLead::goalLabels();
 
         $submittedAt = $lead->submitted_at ?? $lead->created_at;
         $submittedAtText = $submittedAt instanceof Carbon

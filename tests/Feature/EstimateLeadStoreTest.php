@@ -24,8 +24,8 @@ class EstimateLeadStoreTest extends TestCase
             'goal' => 'money',
         ]);
 
-        $response->assertRedirect('/estimate');
-        $response->assertSessionHas('estimate_status_message');
+        $response->assertRedirect();
+        $this->assertStringContainsString('/estimate/results/', (string) $response->headers->get('Location'));
 
         $this->assertDatabaseHas('estimate_leads', [
             'first_name' => 'สมชาย',
@@ -44,8 +44,10 @@ class EstimateLeadStoreTest extends TestCase
         $response = $this->from('/estimate')->post('/estimate', [
             'first_name' => 'สมหญิง',
             'last_name' => 'สุขใจ',
+            'work_type' => 'owner',
             'main_phone' => '12345',
             'email' => 'somying@example.com',
+            'goal' => 'work',
         ]);
 
         $response->assertRedirect('/estimate');

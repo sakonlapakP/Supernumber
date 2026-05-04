@@ -16,6 +16,7 @@ use App\Services\ContactSpamFilter;
 use App\Services\EnvironmentEditor;
 use App\Services\AdminLogViewer;
 use App\Services\ArticleContentSanitizer;
+use App\Services\EstimateRecommendationService;
 use App\Services\Ga4AnalyticsService;
 use App\Services\LineEstimateLeadNotifier;
 use App\Services\LineLotteryImageService;
@@ -761,8 +762,14 @@ Route::get('/evaluateBadNumber', [PublicController::class, 'evaluateBad'])->name
 Route::get('/tiers', [PublicController::class, 'tiers'])->name('tiers');
 
 Route::get('/estimate', function () {
-    return view('under-construction');
+    return view('estimate');
 })->name('estimate');
+
+Route::get('/estimate/results/{estimateLead}', function (EstimateLead $estimateLead) {
+    $result = app(EstimateRecommendationService::class)->buildResult($estimateLead);
+
+    return view('estimate-results', $result);
+})->middleware('signed')->name('estimate.results');
 
 Route::get('/sales-documents', function () {
     return redirect()->route('admin.sales-documents');
@@ -779,11 +786,11 @@ Route::post('/estimate', function (Request $request) use ($safelyRunLineNotifica
         'last_name' => ['required', 'string', 'max:120'],
         'gender' => ['nullable', Rule::in(['male', 'female'])],
         'birthday' => ['nullable', 'date'],
-        'work_type' => ['nullable', Rule::in(['sales', 'service', 'office', 'online'])],
+        'work_type' => ['required', Rule::in(array_keys(EstimateLead::workTypeLabels()))],
         'current_phone' => ['nullable', 'string', 'max:20'],
         'main_phone' => ['required', 'string', 'max:20'],
         'email' => ['required', 'email', 'max:255'],
-        'goal' => ['nullable', Rule::in(['work', 'money', 'love', 'balance'])],
+        'goal' => ['required', Rule::in(array_keys(EstimateLead::goalLabels()))],
     ]);
 
     $digitsOnly = static fn (?string $value): string => preg_replace('/\D+/', '', (string) $value) ?? '';
@@ -819,8 +826,7 @@ Route::post('/estimate', function (Request $request) use ($safelyRunLineNotifica
     );
 
     return redirect()
-        ->route('estimate')
-        ->with('estimate_status_message', 'บันทึกข้อมูลเรียบร้อยแล้ว ทีมงานจะใช้ข้อมูลนี้เพื่อแนะนำเบอร์ที่เหมาะกับคุณ');
+        ->to(URL::signedRoute('estimate.results', $lead));
 })->name('estimate.store');
 
 Route::redirect('/good-number', '/numbers');
@@ -1209,7 +1215,12 @@ Route::get('/line/lottery-results/{lotteryResult}/image', function (Request $req
     return app(LineLotteryImageService::class)->toResponse($lotteryResult->loadMissing('prizes'));
 })->name('line.lottery-result-image');
 
+$resolveTestDiscovery = function () {
+    return app(\App\Services\TestDiscoveryService::class);
+};
+
 Route::prefix('admin')->name('admin.')->group(function () use (
+
     $currentAdmin,
     $ensureAdmin,
     $buildArticleSlug,
@@ -1229,7 +1240,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     $articleColumnExists,
     $ensurePublicStorageLink,
     $decodeBase64Image,
-    $moveTmpImagesToPermanent
+    $moveTmpImagesToPermanent,
+    $resolveTestDiscovery
 ) {
     Route::get('/login', function (Request $request) use ($currentAdmin) {
         if ($currentAdmin()) {
@@ -1292,6 +1304,28 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         return redirect()->route('admin.login');
     })->name('logout');
+
+    Route::get('/tests', function (Request $request) use ($ensureAdmin, $resolveTestDiscovery) {
+        if ($redirect = $ensureAdmin('manager')) {
+            return $redirect;
+        }
+        $tests = $resolveTestDiscovery()->discoverTests();
+        return view('admin.tests', compact('tests'));
+    })->name('tests');
+
+    Route::post('/tests/run', function (Request $request) use ($ensureAdmin, $resolveTestDiscovery) {
+        if ($redirect = $ensureAdmin('manager')) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+        set_time_limit(0);
+        $filter = $request->input('filter');
+        if (!$filter) {
+            return response()->json(['error' => 'No filter provided'], 400);
+        }
+        $result = $resolveTestDiscovery()->runTest($filter);
+        return response()->json($result);
+    })->name('tests.run');
+
 
     Route::get('/numbers', function (Request $request) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {

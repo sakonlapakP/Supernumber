@@ -46,9 +46,19 @@ class EstimateLead extends Model
     public static function workTypeLabels(): array
     {
         return [
+            'owner' => 'เจ้าของธุรกิจ / ผู้ประกอบการ',
+            'manager' => 'ผู้บริหาร / หัวหน้างาน',
+            'freelance' => 'ฟรีแลนซ์ / อาชีพอิสระ',
+            'finance' => 'บัญชี / การเงิน / ธนาคาร',
+            'real_estate' => 'อสังหา / นายหน้า',
+            'government' => 'งานราชการ / รัฐวิสาหกิจ',
+            'health_beauty' => 'แพทย์ / สุขภาพ / ความงาม',
+            'technical' => 'ช่าง / วิศวกรรม / เทคนิค',
+            'logistics' => 'ขนส่ง / โลจิสติกส์',
+            'student' => 'นักเรียน / นักศึกษา',
             'sales' => 'งานขาย / เจรจา',
             'service' => 'งานบริการ / ดูแลลูกค้า',
-            'office' => 'งานออฟฟิศ / บริหาร',
+            'office' => 'งานออฟฟิศ / ธุรการ',
             'online' => 'งานออนไลน์ / คอนเทนต์',
         ];
     }
@@ -56,10 +66,10 @@ class EstimateLead extends Model
     public static function goalLabels(): array
     {
         return [
-            'work' => 'เน้นการงาน / โอกาสใหม่',
-            'money' => 'เน้นการเงิน / ปิดการขาย',
-            'love' => 'เน้นความรัก / ความสัมพันธ์',
-            'balance' => 'เน้นสมดุลชีวิต',
+            'work' => 'การงาน',
+            'money' => 'การเงิน',
+            'love' => 'ความรัก',
+            'health' => 'สุขภาพ',
         ];
     }
 

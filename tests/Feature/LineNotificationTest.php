@@ -46,8 +46,8 @@ class LineNotificationTest extends TestCase
             'goal' => 'money',
         ]);
 
-        $response->assertRedirect('/estimate');
-        $response->assertSessionHas('estimate_status_message');
+        $response->assertRedirect();
+        $this->assertStringContainsString('/estimate/results/', (string) $response->headers->get('Location'));
 
         Http::assertSent(function (HttpRequest $request): bool {
             $payload = $request->data();
@@ -59,7 +59,7 @@ class LineNotificationTest extends TestCase
                 && ($payload['messages'][0]['type'] ?? null) === 'text'
                 && str_contains($message, 'มีลูกค้าใหม่กรอกแบบฟอร์มเลือกเบอร์')
                 && str_contains($message, 'เบอร์หลัก: 0899998888')
-                && str_contains($message, 'เป้าหมาย: เน้นการเงิน / ปิดการขาย');
+                && str_contains($message, 'เป้าหมาย: การเงิน');
         });
 
         Http::assertSentCount(1);
@@ -220,7 +220,7 @@ class LineNotificationTest extends TestCase
             'main_phone' => '0899998888',
             'email' => 'somchai@example.com',
             'goal' => 'money',
-        ])->assertRedirect('/estimate');
+        ])->assertRedirect();
 
         Http::assertSentCount(2);
 
