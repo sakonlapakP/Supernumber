@@ -57,6 +57,10 @@ class AdminArticleMediaTest extends TestCase
             'cover_image_path' => null,
             'cover_image_landscape_path' => 'articles/2026/existing-land.jpg',
             'cover_image_square_path' => null,
+            'image_guidelines' => [
+                'landscape_prompt' => 'Existing landscape prompt',
+                'square_prompt' => 'Existing square prompt',
+            ],
         ]);
 
         $response = $this
@@ -70,6 +74,10 @@ class AdminArticleMediaTest extends TestCase
         $response->assertSee('name="land_path"', false);
         $response->assertSee('name="sq_path"', false);
         $response->assertSee('existing-land.jpg', false);
+        $response->assertSee('name="image_guidelines[landscape_prompt]"', false);
+        $response->assertSee('name="image_guidelines[square_prompt]"', false);
+        $response->assertSee('Existing landscape prompt', false);
+        $response->assertSee('Existing square prompt', false);
         $response->assertSee(route('admin.articles.delete', $article), false);
         $response->assertSee('ลบบทความ', false);
     }
@@ -144,8 +152,8 @@ class AdminArticleMediaTest extends TestCase
             'cover_image_landscape_path' => 'articles/2026/imported-article/land.jpg',
             'cover_image_square_path' => 'articles/2026/imported-article/square.jpg',
             'image_guidelines' => [
-                'landscape_prompt' => 'ignored because articles table has no prompt column',
-                'square_prompt' => 'ignored because articles table has no prompt column',
+                'landscape_prompt' => 'Cinematic wide article cover prompt',
+                'square_prompt' => 'Square article cover prompt',
             ],
         ]];
 
@@ -166,6 +174,10 @@ class AdminArticleMediaTest extends TestCase
         $this->assertSame('articles/2026/imported-article/square.jpg', $article->cover_image_path);
         $this->assertSame('articles/2026/imported-article/land.jpg', $article->cover_image_landscape_path);
         $this->assertSame('articles/2026/imported-article/square.jpg', $article->cover_image_square_path);
+        $this->assertSame([
+            'landscape_prompt' => 'Cinematic wide article cover prompt',
+            'square_prompt' => 'Square article cover prompt',
+        ], $article->image_guidelines);
         $this->assertTrue((bool) $article->is_auto_post);
         $this->assertFalse((bool) $article->is_published);
     }
@@ -197,6 +209,10 @@ class AdminArticleMediaTest extends TestCase
                 'is_published' => '1',
                 'land_path' => 'articles/tmp/land.jpg',
                 'sq_path' => 'articles/tmp/square.jpg',
+                'image_guidelines' => [
+                    'landscape_prompt' => 'Create landscape prompt',
+                    'square_prompt' => 'Create square prompt',
+                ],
             ]);
 
         $createResponse->assertRedirect(route('admin.articles'));
@@ -209,6 +225,10 @@ class AdminArticleMediaTest extends TestCase
         $this->assertStringContainsString('<strong>world</strong>', $article->content);
         $this->assertNotNull($article->cover_image_landscape_path);
         $this->assertNotNull($article->cover_image_square_path);
+        $this->assertSame([
+            'landscape_prompt' => 'Create landscape prompt',
+            'square_prompt' => 'Create square prompt',
+        ], $article->image_guidelines);
 
         Storage::disk('public')->assertExists($article->cover_image_landscape_path);
         Storage::disk('public')->assertExists($article->cover_image_square_path);
@@ -237,6 +257,10 @@ class AdminArticleMediaTest extends TestCase
                 'is_published' => '1',
                 'land_path' => 'articles/tmp/land-updated.jpg',
                 'sq_path' => 'articles/tmp/square-updated.jpg',
+                'image_guidelines' => [
+                    'landscape_prompt' => 'Updated landscape prompt',
+                    'square_prompt' => 'Updated square prompt',
+                ],
             ]);
 
         $updateResponse->assertRedirect(route('admin.articles'));
@@ -248,6 +272,10 @@ class AdminArticleMediaTest extends TestCase
         $this->assertStringContainsString('<em>body</em>', $article->content);
         $this->assertNotNull($article->cover_image_landscape_path);
         $this->assertNotNull($article->cover_image_square_path);
+        $this->assertSame([
+            'landscape_prompt' => 'Updated landscape prompt',
+            'square_prompt' => 'Updated square prompt',
+        ], $article->image_guidelines);
         Storage::disk('public')->assertExists($article->cover_image_landscape_path);
         Storage::disk('public')->assertExists($article->cover_image_square_path);
         $this->assertStringEndsWith('/land-updated.jpg', (string) $article->cover_image_landscape_path);

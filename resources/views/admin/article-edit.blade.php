@@ -5,6 +5,9 @@
 @section('content')
   @php
     $canToggleArticleVisibility = in_array(session('admin_user_role'), [\App\Models\User::ROLE_MANAGER, \App\Models\User::ROLE_ADMIN], true);
+    $imageGuidelines = old('image_guidelines', $article->image_guidelines ?? []);
+    $landscapePrompt = is_array($imageGuidelines) ? ($imageGuidelines['landscape_prompt'] ?? '') : '';
+    $squarePrompt = is_array($imageGuidelines) ? ($imageGuidelines['square_prompt'] ?? '') : '';
   @endphp
 
   <style>
@@ -217,6 +220,10 @@
               {{ $article->cover_image_landscape_path ?: ($article->cover_image_path ? 'รูปปัจจุบัน: ' . $article->cover_image_path : '') }}
             </p>
           </div>
+          <div class="admin-field" style="margin-top:16px;">
+            <label for="landscape_prompt">Prompt รูปหน้ารวมบทความ 16:9</label>
+            <textarea id="landscape_prompt" name="image_guidelines[landscape_prompt]" class="admin-input" style="min-height: 96px; padding-top: 12px;" placeholder="Prompt สำหรับรูป 16:9">{{ $landscapePrompt }}</textarea>
+          </div>
         </div>
 
         <div class="admin-field" style="margin-top:30px; border-left: 4px solid #10b981; padding-left: 15px;">
@@ -236,6 +243,10 @@
             <p class="admin-preview-info" data-preview-info style="color: #059669; font-weight: bold;">
               {{ $article->cover_image_square_path ?: ($article->cover_image_path ? 'รูปปัจจุบัน: ' . $article->cover_image_path : '') }}
             </p>
+          </div>
+          <div class="admin-field" style="margin-top:16px;">
+            <label for="square_prompt">Prompt รูปภาพบทความ 1:1</label>
+            <textarea id="square_prompt" name="image_guidelines[square_prompt]" class="admin-input" style="min-height: 96px; padding-top: 12px;" placeholder="Prompt สำหรับรูป 1:1">{{ $squarePrompt }}</textarea>
           </div>
         </div>
       </div>

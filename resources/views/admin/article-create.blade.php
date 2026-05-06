@@ -100,6 +100,10 @@
             <img src="" class="admin-preview-img" data-preview-img style="aspect-ratio:16/9; object-fit:cover; border: 2px solid #2563eb;" />
             <p class="admin-preview-info" data-preview-info style="color: #2563eb; font-weight: bold;"></p>
           </div>
+          <div class="admin-field" style="margin-top:16px;">
+            <label for="landscape_prompt">Prompt รูปหน้ารวมบทความ 16:9</label>
+            <textarea id="landscape_prompt" name="image_guidelines[landscape_prompt]" class="admin-input" style="min-height: 96px; padding-top: 12px;" placeholder="Prompt สำหรับรูป 16:9">{{ old('image_guidelines.landscape_prompt') }}</textarea>
+          </div>
         </div>
 
         <div class="admin-field" style="margin-top:30px; border-left: 4px solid #10b981; padding-left: 15px;">
@@ -112,6 +116,10 @@
           <div class="admin-preview-box" data-preview-box style="display:none;">
             <img src="" class="admin-preview-img" data-preview-img style="aspect-ratio:1/1; object-fit:cover; border: 2px solid #10b981;" />
             <p class="admin-preview-info" data-preview-info style="color: #059669; font-weight: bold;"></p>
+          </div>
+          <div class="admin-field" style="margin-top:16px;">
+            <label for="square_prompt">Prompt รูปภาพบทความ 1:1</label>
+            <textarea id="square_prompt" name="image_guidelines[square_prompt]" class="admin-input" style="min-height: 96px; padding-top: 12px;" placeholder="Prompt สำหรับรูป 1:1">{{ old('image_guidelines.square_prompt') }}</textarea>
           </div>
         </div>
       </div>

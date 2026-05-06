@@ -2678,6 +2678,19 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? $default;
         };
 
+        $imageGuidelinesValue = static function (mixed $value) use ($stringValue): ?array {
+            if (! is_array($value)) {
+                return null;
+            }
+
+            $guidelines = [
+                'landscape_prompt' => $stringValue($value['landscape_prompt'] ?? null),
+                'square_prompt' => $stringValue($value['square_prompt'] ?? null),
+            ];
+
+            return array_filter($guidelines, static fn (?string $prompt): bool => $prompt !== null) ?: null;
+        };
+
         // Handle both single object and array of objects
         $articlesToImport = isset($data['title']) ? [$data] : $data;
         $count = 0;
@@ -2714,6 +2727,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'cover_image_path' => $stringValue($item['cover_image_path'] ?? null),
                 'cover_image_landscape_path' => $stringValue($item['cover_image_landscape_path'] ?? null),
                 'cover_image_square_path' => $stringValue($item['cover_image_square_path'] ?? null),
+                'image_guidelines' => $imageGuidelinesValue($item['image_guidelines'] ?? null),
                 'meta_description' => $stringValue($item['meta_description'] ?? null),
                 'keywords' => $stringValue($item['keywords'] ?? null),
                 'lsi_keywords' => $stringValue($item['lsi_keywords'] ?? null),
@@ -2958,6 +2972,9 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'published_at' => ['nullable', 'date'],
             'land_path' => ['nullable', 'string', 'max:500'],
             'sq_path' => ['nullable', 'string', 'max:500'],
+            'image_guidelines' => ['nullable', 'array'],
+            'image_guidelines.landscape_prompt' => ['nullable', 'string'],
+            'image_guidelines.square_prompt' => ['nullable', 'string'],
             'is_published' => ['nullable', 'boolean'],
         ]);
 
@@ -2984,6 +3001,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $coverImagePath = null;
         $coverImageLandscapePath = null;
         $coverImageSquarePath = null;
+        $imageGuidelines = array_filter([
+            'landscape_prompt' => trim((string) ($data['image_guidelines']['landscape_prompt'] ?? '')) ?: null,
+            'square_prompt' => trim((string) ($data['image_guidelines']['square_prompt'] ?? '')) ?: null,
+        ]);
 
         $content = $sanitizeArticleContent(trim($data['content']));
 
@@ -3035,6 +3056,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'is_published' => $isPublished,
                 'published_at' => $isPublished ? $publishedAt : null,
                 'cover_image_path' => $coverImagePath,
+                'image_guidelines' => $imageGuidelines ?: null,
                 'author_user_id' => is_numeric(session('admin_user_id')) ? (int) session('admin_user_id') : null,
             ];
 
@@ -3122,6 +3144,9 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'published_at' => ['nullable', 'date'],
             'land_path' => ['nullable', 'string', 'max:500'],
             'sq_path' => ['nullable', 'string', 'max:500'],
+            'image_guidelines' => ['nullable', 'array'],
+            'image_guidelines.landscape_prompt' => ['nullable', 'string'],
+            'image_guidelines.square_prompt' => ['nullable', 'string'],
             'is_published' => ['nullable', 'boolean'],
         ]);
 
@@ -3153,6 +3178,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $coverImagePath = $article->cover_image_path;
         $coverImageLandscapePath = $article->cover_image_landscape_path;
         $coverImageSquarePath = $article->cover_image_square_path;
+        $imageGuidelines = array_filter([
+            'landscape_prompt' => trim((string) ($data['image_guidelines']['landscape_prompt'] ?? '')) ?: null,
+            'square_prompt' => trim((string) ($data['image_guidelines']['square_prompt'] ?? '')) ?: null,
+        ]);
 
         $content = $sanitizeArticleContent(trim($data['content']));
 
@@ -3225,6 +3254,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'is_published' => $isPublished,
                 'published_at' => $isPublished ? $publishedAt : null,
                 'cover_image_path' => $coverImagePath,
+                'image_guidelines' => $imageGuidelines ?: null,
             ];
 
             if ($shouldResetNotification) {

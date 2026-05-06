@@ -18,6 +18,7 @@ class Article extends Model
         'cover_image_path',
         'cover_image_landscape_path',
         'cover_image_square_path',
+        'image_guidelines',
         'meta_description',
         'keywords',
         'lsi_keywords',
@@ -36,6 +37,7 @@ class Article extends Model
             'is_published' => 'boolean',
             'is_auto_post' => 'boolean',
             'is_line_broadcasted' => 'boolean',
+            'image_guidelines' => 'array',
             'published_at' => 'datetime',
             'notified_at' => 'datetime',
         ];
