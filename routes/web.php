@@ -771,6 +771,13 @@ Route::get('/estimate/results/{estimateLead}', function (EstimateLead $estimateL
     return view('estimate-results', $result);
 })->middleware('signed')->name('estimate.results');
 
+Route::get('/estimate/processing/{estimateLead}', function (EstimateLead $estimateLead) {
+    return view('estimate-processing', [
+        'lead' => $estimateLead,
+        'resultsUrl' => URL::signedRoute('estimate.results', $estimateLead),
+    ]);
+})->middleware('signed')->name('estimate.processing');
+
 Route::get('/sales-documents', function () {
     return redirect()->route('admin.sales-documents');
 })->name('sales-documents');
@@ -826,7 +833,7 @@ Route::post('/estimate', function (Request $request) use ($safelyRunLineNotifica
     );
 
     return redirect()
-        ->to(URL::signedRoute('estimate.results', $lead));
+        ->to(URL::signedRoute('estimate.processing', $lead));
 })->name('estimate.store');
 
 Route::redirect('/good-number', '/numbers');
@@ -2650,17 +2657,43 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             return back()->withErrors(['json_data' => 'ข้อมูลใน JSON ต้องเป็น Array ของบทความ']);
         }
 
+        $stringValue = static function (mixed $value): ?string {
+            if (is_array($value)) {
+                $value = implode(', ', array_filter(array_map(
+                    static fn (mixed $item): string => trim((string) $item),
+                    $value
+                )));
+            }
+
+            $value = trim((string) ($value ?? ''));
+
+            return $value !== '' ? $value : null;
+        };
+
+        $booleanValue = static function (mixed $value, bool $default): bool {
+            if ($value === null) {
+                return $default;
+            }
+
+            return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? $default;
+        };
+
         // Handle both single object and array of objects
         $articlesToImport = isset($data['title']) ? [$data] : $data;
         $count = 0;
 
         foreach ($articlesToImport as $item) {
-            if (empty($item['title'])) {
+            if (! is_array($item) || empty($item['title'])) {
                 continue;
             }
 
-            $title = $item['title'];
-            $slug = $item['slug'] ?? $buildArticleSlug($title);
+            $title = trim((string) $item['title']);
+            $content = (string) ($item['content'] ?? '');
+            $slugInput = $stringValue($item['slug'] ?? null);
+            $slug = $slugInput ? Str::slug($slugInput) : $buildArticleSlug($title);
+            if ($slug === '') {
+                $slug = $buildArticleSlug($title);
+            }
             
             // Ensure unique slug
             $baseSlug = $slug;
@@ -2672,14 +2705,18 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             Article::create([
                 'title' => $title,
                 'slug' => $slug,
-                'excerpt' => $item['excerpt'] ?? (Str::limit(strip_tags($item['content'] ?? ''), 160)),
-                'content' => $item['content'] ?? '',
-                'is_published' => isset($item['is_published']) ? (bool)$item['is_published'] : true,
-                'published_at' => isset($item['published_at']) ? Carbon::parse($item['published_at']) : now(),
+                'excerpt' => $stringValue($item['excerpt'] ?? null) ?? Str::limit(strip_tags($content), 160),
+                'content' => $content,
+                'is_published' => $booleanValue($item['is_published'] ?? null, true),
+                'published_at' => isset($item['published_at']) ? Carbon::parse($item['published_at'], 'Asia/Bangkok')->setTimezone(config('app.timezone')) : now(),
+                'is_auto_post' => $booleanValue($item['is_auto_post'] ?? null, false),
                 'author_user_id' => session('admin_user_id'),
-                'cover_image_path' => $item['cover_image_path'] ?? null,
-                'meta_description' => $item['meta_description'] ?? null,
-                'keywords' => $item['keywords'] ?? null,
+                'cover_image_path' => $stringValue($item['cover_image_path'] ?? null),
+                'cover_image_landscape_path' => $stringValue($item['cover_image_landscape_path'] ?? null),
+                'cover_image_square_path' => $stringValue($item['cover_image_square_path'] ?? null),
+                'meta_description' => $stringValue($item['meta_description'] ?? null),
+                'keywords' => $stringValue($item['keywords'] ?? null),
+                'lsi_keywords' => $stringValue($item['lsi_keywords'] ?? null),
             ]);
             $count++;
         }

@@ -70,6 +70,104 @@ class AdminArticleMediaTest extends TestCase
         $response->assertSee('name="land_path"', false);
         $response->assertSee('name="sq_path"', false);
         $response->assertSee('existing-land.jpg', false);
+        $response->assertSee(route('admin.articles.delete', $article), false);
+        $response->assertSee('ลบบทความ', false);
+    }
+
+    public function test_manager_can_see_and_delete_article(): void
+    {
+        Storage::fake('public');
+
+        $manager = User::factory()->create([
+            'username' => 'manager-article-delete',
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        Storage::disk('public')->put('articles/2026/delete-me/cover.jpg', 'fake-cover');
+        Storage::disk('public')->put('articles/2026/delete-me/land.jpg', 'fake-land');
+        Storage::disk('public')->put('articles/2026/delete-me/square.jpg', 'fake-square');
+
+        $article = Article::query()->create([
+            'title' => 'Delete Me',
+            'slug' => 'delete-me',
+            'excerpt' => 'Excerpt',
+            'content' => '<p>Delete content</p>',
+            'is_published' => false,
+            'cover_image_path' => 'articles/2026/delete-me/cover.jpg',
+            'cover_image_landscape_path' => 'articles/2026/delete-me/land.jpg',
+            'cover_image_square_path' => 'articles/2026/delete-me/square.jpg',
+        ]);
+
+        $indexResponse = $this
+            ->withSession($this->managerSession($manager))
+            ->get(route('admin.articles'));
+
+        $indexResponse->assertOk();
+        $indexResponse->assertSee(route('admin.articles.delete', $article), false);
+        $indexResponse->assertSee('ลบ', false);
+
+        $deleteResponse = $this
+            ->withSession($this->managerSession($manager))
+            ->delete(route('admin.articles.delete', $article));
+
+        $deleteResponse->assertRedirect(route('admin.articles'));
+
+        $this->assertDatabaseMissing('articles', [
+            'id' => $article->id,
+        ]);
+        Storage::disk('public')->assertMissing('articles/2026/delete-me/cover.jpg');
+        Storage::disk('public')->assertMissing('articles/2026/delete-me/land.jpg');
+        Storage::disk('public')->assertMissing('articles/2026/delete-me/square.jpg');
+    }
+
+    public function test_manager_json_import_persists_lsi_keywords_and_auto_post_flag(): void
+    {
+        $manager = User::factory()->create([
+            'username' => 'manager-article-json-import',
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        $payload = [[
+            'title' => 'Imported Article',
+            'slug' => 'imported-article',
+            'excerpt' => 'Imported excerpt',
+            'content' => '<p>Imported content</p>',
+            'meta_description' => 'Imported meta',
+            'keywords' => ['keyword one', 'keyword two'],
+            'lsi_keywords' => ['lsi one', 'lsi two'],
+            'is_published' => false,
+            'published_at' => '2024-05-22 09:00:00',
+            'is_auto_post' => true,
+            'cover_image_path' => 'articles/2026/imported-article/square.jpg',
+            'cover_image_landscape_path' => 'articles/2026/imported-article/land.jpg',
+            'cover_image_square_path' => 'articles/2026/imported-article/square.jpg',
+            'image_guidelines' => [
+                'landscape_prompt' => 'ignored because articles table has no prompt column',
+                'square_prompt' => 'ignored because articles table has no prompt column',
+            ],
+        ]];
+
+        $response = $this
+            ->withSession($this->managerSession($manager))
+            ->post(route('admin.articles.import-json'), [
+                'json_data' => json_encode($payload),
+            ]);
+
+        $response->assertRedirect(route('admin.articles'));
+
+        $article = Article::query()
+            ->where('slug', 'imported-article')
+            ->firstOrFail();
+
+        $this->assertSame('keyword one, keyword two', $article->keywords);
+        $this->assertSame('lsi one, lsi two', $article->lsi_keywords);
+        $this->assertSame('articles/2026/imported-article/square.jpg', $article->cover_image_path);
+        $this->assertSame('articles/2026/imported-article/land.jpg', $article->cover_image_landscape_path);
+        $this->assertSame('articles/2026/imported-article/square.jpg', $article->cover_image_square_path);
+        $this->assertTrue((bool) $article->is_auto_post);
+        $this->assertFalse((bool) $article->is_published);
     }
 
     public function test_manager_can_create_update_media_and_public_content_is_sanitized(): void

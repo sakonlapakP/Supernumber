@@ -109,6 +109,11 @@
       border-color: #059669;
       color: #fff;
     }
+    .article-edit-action--delete {
+      background: #dc2626;
+      border-color: #dc2626;
+      color: #fff;
+    }
     @media (max-width: 768px) {
       .admin-image-grid { grid-template-columns: 1fr; }
       .admin-drop-zone { display: grid; justify-items: center; text-align: center; }
@@ -253,6 +258,15 @@
             {{ $article->is_published ? 'ซ่อนบทความ' : 'เผยแพร่บทความ' }}
           </button>
         @endif
+        @if($canToggleArticleVisibility)
+          <button
+            type="submit"
+            form="article-delete-form"
+            class="admin-button article-edit-action article-edit-action--delete"
+          >
+            ลบบทความ
+          </button>
+        @endif
       </div>
     </form>
 
@@ -265,6 +279,17 @@
         onsubmit="return confirm('{{ $article->is_published ? 'ยืนยันซ่อนบทความนี้จากหน้าเว็บ?' : 'ยืนยันเผยแพร่บทความนี้?' }}')"
       >
         @csrf
+      </form>
+
+      <form
+        id="article-delete-form"
+        action="{{ route('admin.articles.delete', $article) }}"
+        method="post"
+        style="display: none;"
+        onsubmit="return confirm('ยืนยันลบบทความนี้? การลบจะลบไฟล์รูปและคอมเมนต์ที่เกี่ยวข้องด้วย')"
+      >
+        @csrf
+        @method('DELETE')
       </form>
     @endif
     

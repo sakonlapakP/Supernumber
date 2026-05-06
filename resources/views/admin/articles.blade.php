@@ -208,6 +208,18 @@
                               title="แชร์ไป Facebook Page">แชร์</button>
                     </form>
                   @endif
+                  @if(in_array(session('admin_user_role'), [\App\Models\User::ROLE_MANAGER, \App\Models\User::ROLE_ADMIN], true))
+                    <form action="{{ route('admin.articles.delete', $article) }}" method="POST" style="display: inline;" onsubmit="return confirm('ยืนยันลบบทความนี้? การลบจะลบไฟล์รูปและคอมเมนต์ที่เกี่ยวข้องด้วย')">
+                      @csrf
+                      @method('DELETE')
+                      <button
+                        type="submit"
+                        class="admin-button admin-button--compact"
+                        style="background: #dc2626; color: #fff; border-color: #dc2626;"
+                        title="ลบบทความ"
+                      >ลบ</button>
+                    </form>
+                  @endif
                 </div>
               </td>
             </tr>
