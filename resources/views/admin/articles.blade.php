@@ -140,6 +140,15 @@
             @php
               $isLotteryArticle = preg_match('/^thai-govern?ment-lottery-(\d{4})(\d{2})(first|second)$/', (string)$article->slug, $matches) === 1;
               $lotteryIsComplete = true;
+              $publishStatusLabel = 'ฉบับร่าง';
+              $publishStatusClass = 'admin-status-pill--hold';
+              $publishStatusStyle = '';
+              if ($article->is_published) {
+                  $isScheduled = $article->published_at && $article->published_at->gt(now('Asia/Bangkok'));
+                  $publishStatusLabel = $isScheduled ? 'ตั้งเวลาเผยแพร่' : 'เผยแพร่แล้ว';
+                  $publishStatusClass = $isScheduled ? 'admin-status-pill--hold' : 'admin-status-pill--active';
+                  $publishStatusStyle = $isScheduled ? 'background: #eef6ff; color: #2563eb; border-color: #bfdbfe;' : '';
+              }
               if ($isLotteryArticle) {
                   $year = $matches[1]; $month = $matches[2]; $round = $matches[3];
                   $lotteryResult = \App\Models\LotteryResult::whereYear('draw_date', $year)->whereMonth('draw_date', $month)->get()->first(function($r) use ($round) {
@@ -167,11 +176,7 @@
                 <div class="admin-muted" style="font-size: 12px;">{{ $article->slug }}</div>
               </td>
               <td data-label="สถานะ">
-                @if($article->is_published)
-                  <span class="admin-status-pill admin-status-pill--active">เผยแพร่แล้ว</span>
-                @else
-                  <span class="admin-status-pill admin-status-pill--hold">ฉบับร่าง</span>
-                @endif
+                <span class="admin-status-pill {{ $publishStatusClass }}" @if($publishStatusStyle) style="{{ $publishStatusStyle }}" @endif>{{ $publishStatusLabel }}</span>
                 
                 @if($isLotteryArticle && !$lotteryIsComplete)
                   <div style="margin-top: 4px;">

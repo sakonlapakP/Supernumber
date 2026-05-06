@@ -125,8 +125,9 @@
       </div>
 
       <div class="admin-field" style="margin-top:30px;">
-        <label for="published_at">เวลาเผยแพร่ (เว้นว่างไว้เพื่อเผยแพร่ตอนนี้เลย)</label>
+        <label for="published_at">เวลาเผยแพร่</label>
         <input type="datetime-local" name="published_at" class="admin-input" value="{{ old('published_at') }}" />
+        <p class="admin-muted" style="margin: 8px 0 0; font-size: 12px;">เลือกเวลาอนาคตเพื่อตั้งเวลาเผยแพร่ ถ้าไม่เลือก ระบบจะใช้เวลาปัจจุบัน</p>
       </div>
 
       <input type="hidden" name="is_published" value="1" />

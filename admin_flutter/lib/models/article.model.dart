@@ -46,11 +46,28 @@ class Article {
       metaDescription: json['meta_description'],
       keywords: json['keywords'],
       lsiKeywords: json['lsi_keywords'],
-      imageGuidelines: json['image_guidelines'] is Map ? json['image_guidelines'] : null,
+      imageGuidelines: json['image_guidelines'] is Map
+          ? json['image_guidelines']
+          : null,
       isPublished: json['is_published'] == 1 || json['is_published'] == true,
-      publishedAt: json['published_at'] != null ? DateTime.parse(json['published_at']) : null,
-      createdAt: json['created_at'] != null ? DateTime.parse(json['created_at']) : null,
+      publishedAt: _parseDateTime(json['published_at']),
+      createdAt: _parseDateTime(json['created_at']),
     );
+  }
+
+  static DateTime? _parseDateTime(dynamic value) {
+    if (value == null) return null;
+    return DateTime.parse(value.toString()).toLocal();
+  }
+
+  bool get isScheduled =>
+      isPublished &&
+      publishedAt != null &&
+      publishedAt!.isAfter(DateTime.now());
+
+  String get publishStatusLabel {
+    if (!isPublished) return 'ฉบับร่าง';
+    return isScheduled ? 'ตั้งเวลาเผยแพร่' : 'เผยแพร่แล้ว';
   }
 
   Map<String, dynamic> toJson() {

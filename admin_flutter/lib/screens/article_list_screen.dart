@@ -38,7 +38,9 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
   Future<void> _openArticleEditor([Article? article]) async {
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => ArticleEditScreen(article: article)),
+      MaterialPageRoute(
+        builder: (context) => ArticleEditScreen(article: article),
+      ),
     );
 
     if (!mounted) return;
@@ -59,7 +61,9 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                   colors: [Color(0xFF1D1816), Color(0xFF46372B)],
                 ),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFD8A34A).withValues(alpha: 0.5)),
+                border: Border.all(
+                  color: const Color(0xFFD8A34A).withValues(alpha: 0.5),
+                ),
               ),
               alignment: Alignment.center,
               child: Text(
@@ -85,7 +89,10 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
         ),
         actions: [
           IconButton(
-            icon: const Icon(Icons.data_object_rounded, color: Color(0xFF7C3AED)),
+            icon: const Icon(
+              Icons.data_object_rounded,
+              color: Color(0xFF7C3AED),
+            ),
             tooltip: 'เพิ่มบทความด้วย JSON',
             onPressed: _openJsonImport,
           ),
@@ -107,9 +114,16 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.article_outlined, size: 64, color: Colors.grey[400]),
+                  Icon(
+                    Icons.article_outlined,
+                    size: 64,
+                    color: Colors.grey[400],
+                  ),
                   const SizedBox(height: 16),
-                  const Text('ยังไม่มีบทความในระบบ', style: TextStyle(color: Colors.grey)),
+                  const Text(
+                    'ยังไม่มีบทความในระบบ',
+                    style: TextStyle(color: Colors.grey),
+                  ),
                   const SizedBox(height: 16),
                   ElevatedButton(
                     onPressed: () => provider.fetchArticles(),
@@ -192,11 +206,21 @@ class _ArticleItem extends StatelessWidget {
               const Spacer(),
               Row(
                 children: [
-                  _StatusPill(isPublished: article.isPublished),
+                  _StatusPill(article: article),
                   const Spacer(),
                   Text(
-                    article.createdAt != null ? DateFormat('dd MMM yyyy').format(article.createdAt!) : '',
-                    style: const TextStyle(fontSize: 11, color: Color(0xFF7488A8), fontWeight: FontWeight.w600),
+                    article.publishedAt != null
+                        ? DateFormat('dd MMM yyyy').format(article.publishedAt!)
+                        : (article.createdAt != null
+                              ? DateFormat(
+                                  'dd MMM yyyy',
+                                ).format(article.createdAt!)
+                              : ''),
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF7488A8),
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
                 ],
               ),
@@ -209,26 +233,42 @@ class _ArticleItem extends StatelessWidget {
 }
 
 class _StatusPill extends StatelessWidget {
-  final bool isPublished;
-  const _StatusPill({required this.isPublished});
+  final Article article;
+  const _StatusPill({required this.article});
 
   @override
   Widget build(BuildContext context) {
+    final Color backgroundColor;
+    final Color borderColor;
+    final Color textColor;
+
+    if (!article.isPublished) {
+      backgroundColor = const Color(0xFFFFF8E8);
+      borderColor = const Color(0xFFF0DBAD);
+      textColor = const Color(0xFFA66A14);
+    } else if (article.isScheduled) {
+      backgroundColor = const Color(0xFFEEF6FF);
+      borderColor = const Color(0xFFBFDBFE);
+      textColor = const Color(0xFF2563EB);
+    } else {
+      backgroundColor = const Color(0xFFEDF9F5);
+      borderColor = const Color(0xFFCBE9DE);
+      textColor = const Color(0xFF1B8B6F);
+    }
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: isPublished ? const Color(0xFFEDF9F5) : const Color(0xFFFFF8E8),
+        color: backgroundColor,
         borderRadius: BorderRadius.circular(99),
-        border: Border.all(
-          color: isPublished ? const Color(0xFFCBE9DE) : const Color(0xFFF0DBAD),
-        ),
+        border: Border.all(color: borderColor),
       ),
       child: Text(
-        isPublished ? 'เผยแพร่แล้ว' : 'ฉบับร่าง',
+        article.publishStatusLabel,
         style: TextStyle(
           fontSize: 10,
           fontWeight: FontWeight.bold,
-          color: isPublished ? const Color(0xFF1B8B6F) : const Color(0xFFA66A14),
+          color: textColor,
         ),
       ),
     );

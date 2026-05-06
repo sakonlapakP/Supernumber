@@ -117,13 +117,16 @@ class ArticleController extends Controller
         if (isset($data['image_guidelines'])) {
             $data['image_guidelines'] = json_decode($data['image_guidelines'], true);
         }
+        if (! empty($data['published_at'])) {
+            $data['published_at'] = Carbon::parse($data['published_at'], 'Asia/Bangkok')->setTimezone(config('app.timezone'));
+        }
         $this->removeMissingArticleColumns($data);
 
         $article = Article::create([
             ...$data,
             'slug' => Str::slug($data['title']) . '-' . time(),
             'author_user_id' => $request->user()->id,
-            'published_at' => $data['published_at'] ?? ($request->is_published ? now() : null),
+            'published_at' => $data['published_at'] ?? ($request->boolean('is_published') ? now() : null),
         ]);
 
         return response()->json($article, 201);
@@ -171,9 +174,12 @@ class ArticleController extends Controller
         if (isset($data['image_guidelines'])) {
             $data['image_guidelines'] = json_decode($data['image_guidelines'], true);
         }
+        if (! empty($data['published_at'])) {
+            $data['published_at'] = Carbon::parse($data['published_at'], 'Asia/Bangkok')->setTimezone(config('app.timezone'));
+        }
         $this->removeMissingArticleColumns($data);
 
-        if ($request->is_published && !$article->is_published && !$request->published_at) {
+        if ($request->boolean('is_published') && !$article->is_published && !$request->published_at) {
             $data['published_at'] = now();
         }
 

@@ -90,6 +90,8 @@ class _ArticleEditScreenState extends State<ArticleEditScreen> {
         final guidelines = fullArticle.imageGuidelines;
         _promptLandscapeController.text = guidelines?['landscape_prompt'] ?? '';
         _promptSquareController.text = guidelines?['square_prompt'] ?? '';
+        _isPublished = fullArticle.isPublished;
+        _publishedAt = fullArticle.publishedAt;
 
         _isFetchingDetail = false;
       });
@@ -153,6 +155,14 @@ class _ArticleEditScreenState extends State<ArticleEditScreen> {
         content: Text('คัดลอก $label เรียบร้อยแล้ว'),
       ),
     );
+  }
+
+  String get _publishStatusLabel {
+    if (!_isPublished) return 'ฉบับร่าง';
+    if (_publishedAt != null && _publishedAt!.isAfter(DateTime.now())) {
+      return 'ตั้งเวลาเผยแพร่';
+    }
+    return 'เผยแพร่แล้ว';
   }
 
   Future<void> _save() async {
@@ -550,8 +560,12 @@ class _ArticleEditScreenState extends State<ArticleEditScreen> {
       ),
       child: SwitchListTile(
         title: const Text(
-          'เผยแพร่แล้ว',
+          'เปิดเผยแพร่',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        subtitle: Text(
+          _publishStatusLabel,
+          style: const TextStyle(fontSize: 12, color: Color(0xFF7488A8)),
         ),
         value: _isPublished,
         activeThumbColor: const Color(0xFF1B8B6F),

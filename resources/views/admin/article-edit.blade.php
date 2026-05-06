@@ -252,8 +252,9 @@
       </div>
 
       <div class="admin-field" style="margin-top:30px;">
-        <label for="published_at">เวลาเผยแพร่ (เว้นว่างไว้เพื่อเผยแพร่ตอนนี้เลย)</label>
+        <label for="published_at">เวลาเผยแพร่</label>
         <input type="datetime-local" name="published_at" class="admin-input" value="{{ old('published_at', optional(optional($article->published_at)->timezone('Asia/Bangkok'))->format('Y-m-d\TH:i')) }}" />
+        <p class="admin-muted" style="margin: 8px 0 0; font-size: 12px;">ถ้าเป็นเวลาอนาคต สถานะจะแสดงเป็นตั้งเวลาเผยแพร่จนกว่าจะถึงเวลานี้</p>
       </div>
 
       <input type="hidden" name="is_published" value="{{ $article->is_published ? '1' : '0' }}" />
