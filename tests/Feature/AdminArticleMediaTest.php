@@ -148,9 +148,6 @@ class AdminArticleMediaTest extends TestCase
             'is_published' => false,
             'published_at' => '2024-05-22 09:00:00',
             'is_auto_post' => true,
-            'cover_image_path' => 'articles/2026/imported-article/square.jpg',
-            'cover_image_landscape_path' => 'articles/2026/imported-article/land.jpg',
-            'cover_image_square_path' => 'articles/2026/imported-article/square.jpg',
             'image_guidelines' => [
                 'landscape_prompt' => 'Cinematic wide article cover prompt',
                 'square_prompt' => 'Square article cover prompt',
@@ -171,9 +168,9 @@ class AdminArticleMediaTest extends TestCase
 
         $this->assertSame('keyword one, keyword two', $article->keywords);
         $this->assertSame('lsi one, lsi two', $article->lsi_keywords);
-        $this->assertSame('articles/2026/imported-article/square.jpg', $article->cover_image_path);
-        $this->assertSame('articles/2026/imported-article/land.jpg', $article->cover_image_landscape_path);
-        $this->assertSame('articles/2026/imported-article/square.jpg', $article->cover_image_square_path);
+        $this->assertNull($article->cover_image_path);
+        $this->assertNull($article->cover_image_landscape_path);
+        $this->assertNull($article->cover_image_square_path);
         $this->assertSame([
             'landscape_prompt' => 'Cinematic wide article cover prompt',
             'square_prompt' => 'Square article cover prompt',
