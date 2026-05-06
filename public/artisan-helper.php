@@ -28,8 +28,13 @@ if (isset($_GET['action']) && $_GET['action'] === 'clear') {
 
 // 2. Run Migrations
 echo "<strong>Running migrate --force...</strong><br>";
-$result = $kernel->call('migrate', ['--force' => true]);
-echo "Migration Status: " . ($result === 0 ? 'Success' : 'Failed') . "<br>";
+try {
+    $result = $kernel->call('migrate', ['--force' => true]);
+    echo "Migration Result Code: " . $result . "<br>";
+} catch (\Exception $e) {
+    echo "<div style='color:red'>Error: " . $e->getMessage() . "</div>";
+    echo "<pre>" . $e->getTraceAsString() . "</pre>";
+}
 
 echo "<hr>✅ Process finished. Try logging in now!";
 echo "<br><br><a href='?key=$secret_key&action=clear'>Click here to try clearing cache again</a>";
