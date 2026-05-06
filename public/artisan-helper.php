@@ -20,13 +20,16 @@ $statusOutput = new \Symfony\Component\Console\Output\BufferedOutput();
 echo "<h2>Laravel Artisan Helper</h2>";
 
 // 1. Clear All Caches
-echo "<strong>1. Running optimize:clear...</strong><br>";
-$kernel->call('optimize:clear', [], $statusOutput);
-echo "<pre>" . $statusOutput->fetch() . "</pre>";
+if (isset($_GET['action']) && $_GET['action'] === 'clear') {
+    echo "<strong>Running optimize:clear...</strong><br>";
+    $kernel->call('optimize:clear');
+    echo "Done.<br>";
+}
 
 // 2. Run Migrations
-echo "<strong>2. Running migrate --force...</strong><br>";
-$kernel->call('migrate', ['--force' => true], $statusOutput);
-echo "<pre>" . $statusOutput->fetch() . "</pre>";
+echo "<strong>Running migrate --force...</strong><br>";
+$result = $kernel->call('migrate', ['--force' => true]);
+echo "Migration Status: " . ($result === 0 ? 'Success' : 'Failed') . "<br>";
 
-echo "<hr>✅ All commands executed successfully.";
+echo "<hr>✅ Process finished. Try logging in now!";
+echo "<br><br><a href='?key=$secret_key&action=clear'>Click here to try clearing cache again</a>";
