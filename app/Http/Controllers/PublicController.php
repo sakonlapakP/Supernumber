@@ -529,7 +529,7 @@ class PublicController extends Controller
         $urls[] = ['url' => route('numbers.index'), 'priority' => '0.9', 'changefreq' => 'daily'];
         $urls[] = ['url' => route('numbers.index', ['service_type' => 'prepaid']), 'priority' => '0.85', 'changefreq' => 'daily'];
         $urls[] = ['url' => route('numbers.index', ['service_type' => 'postpaid']), 'priority' => '0.85', 'changefreq' => 'daily'];
-        $urls[] = ['url' => route('articles.index'), 'priority' => '0.8', 'changefreq' => 'weekly'];
+        $urls[] = ['url' => url('/articles'), 'priority' => '0.8', 'changefreq' => 'weekly'];
         $urls[] = ['url' => route('contact'), 'priority' => '0.6', 'changefreq' => 'monthly'];
         $urls[] = ['url' => route('privacy'), 'priority' => '0.3', 'changefreq' => 'monthly'];
 

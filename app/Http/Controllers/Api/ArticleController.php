@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\ValidationException;
 
 class ArticleController extends Controller
@@ -53,7 +54,7 @@ class ArticleController extends Controller
             $slugInput = $this->stringValue($item['slug'] ?? null);
             $slug = $this->uniqueArticleSlug($slugInput ? Str::slug($slugInput) : $title);
 
-            Article::create([
+            $articleData = [
                 'title' => $title,
                 'slug' => $slug,
                 'excerpt' => $this->stringValue($item['excerpt'] ?? null) ?? Str::limit(strip_tags($content), 160),
@@ -64,11 +65,16 @@ class ArticleController extends Controller
                     : now(),
                 'is_auto_post' => $this->booleanValue($item['is_auto_post'] ?? null, false),
                 'author_user_id' => $request->user()->id,
-                'image_guidelines' => $this->imageGuidelinesValue($item['image_guidelines'] ?? null),
                 'meta_description' => $this->stringValue($item['meta_description'] ?? null),
                 'keywords' => $this->stringValue($item['keywords'] ?? null),
                 'lsi_keywords' => $this->stringValue($item['lsi_keywords'] ?? null),
-            ]);
+            ];
+
+            if ($this->articleColumnExists('image_guidelines')) {
+                $articleData['image_guidelines'] = $this->imageGuidelinesValue($item['image_guidelines'] ?? null);
+            }
+
+            Article::create($articleData);
 
             $imported++;
         }
@@ -111,6 +117,7 @@ class ArticleController extends Controller
         if (isset($data['image_guidelines'])) {
             $data['image_guidelines'] = json_decode($data['image_guidelines'], true);
         }
+        $this->removeMissingArticleColumns($data);
 
         $article = Article::create([
             ...$data,
@@ -164,6 +171,7 @@ class ArticleController extends Controller
         if (isset($data['image_guidelines'])) {
             $data['image_guidelines'] = json_decode($data['image_guidelines'], true);
         }
+        $this->removeMissingArticleColumns($data);
 
         if ($request->is_published && !$article->is_published && !$request->published_at) {
             $data['published_at'] = now();
@@ -221,6 +229,26 @@ class ArticleController extends Controller
         ];
 
         return array_filter($guidelines, static fn (?string $prompt): bool => $prompt !== null) ?: null;
+    }
+
+    private function removeMissingArticleColumns(array &$data): void
+    {
+        foreach (['image_guidelines'] as $column) {
+            if (array_key_exists($column, $data) && ! $this->articleColumnExists($column)) {
+                unset($data[$column]);
+            }
+        }
+    }
+
+    private function articleColumnExists(string $column): bool
+    {
+        static $columns = null;
+
+        if ($columns === null) {
+            $columns = array_flip(Schema::getColumnListing('articles'));
+        }
+
+        return isset($columns[$column]);
     }
 
     private function uniqueArticleSlug(string $value): string

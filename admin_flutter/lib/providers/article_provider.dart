@@ -35,8 +35,8 @@ class ArticleProvider with ChangeNotifier {
     try {
       final response = await ApiService.dio.get('/articles/$id');
       if (response.statusCode == 200) {
-        final data = response.data is Map && response.data.containsKey('data') 
-            ? response.data['data'] 
+        final data = response.data is Map && response.data.containsKey('data')
+            ? response.data['data']
             : response.data;
         return Article.fromJson(data);
       }
@@ -46,38 +46,52 @@ class ArticleProvider with ChangeNotifier {
     return null;
   }
 
-  Future<bool> saveArticle(Article article, {String? landscapePath, String? squarePath}) async {
+  Future<bool> saveArticle(
+    Article article, {
+    String? landscapePath,
+    String? squarePath,
+  }) async {
     _isLoading = true;
     _lastErrorMessage = null;
     notifyListeners();
 
     try {
       final Map<String, dynamic> data = article.toJson();
-      
+      data['is_published'] = article.isPublished ? '1' : '0';
+
       // แปลง Map เป็น FormData เพื่อส่งไฟล์
       final formData = FormData.fromMap(data);
-      
+
       // ลบฟิลด์ที่เป็น null ออก
       formData.fields.removeWhere((field) => field.value == 'null');
 
       // แนบไฟล์รูปภาพถ้ามีการเลือกใหม่
       if (landscapePath != null) {
-        formData.files.add(MapEntry(
-          'cover_landscape',
-          await MultipartFile.fromFile(landscapePath, filename: 'landscape.jpg'),
-        ));
+        formData.files.add(
+          MapEntry(
+            'cover_landscape',
+            await MultipartFile.fromFile(
+              landscapePath,
+              filename: 'landscape.jpg',
+            ),
+          ),
+        );
       }
       if (squarePath != null) {
-        formData.files.add(MapEntry(
-          'cover_square',
-          await MultipartFile.fromFile(squarePath, filename: 'square.jpg'),
-        ));
+        formData.files.add(
+          MapEntry(
+            'cover_square',
+            await MultipartFile.fromFile(squarePath, filename: 'square.jpg'),
+          ),
+        );
       }
-      
+
       // แปลง imageGuidelines เป็น JSON string
       if (article.imageGuidelines != null) {
         formData.fields.removeWhere((f) => f.key == 'image_guidelines');
-        formData.fields.add(MapEntry('image_guidelines', jsonEncode(article.imageGuidelines)));
+        formData.fields.add(
+          MapEntry('image_guidelines', jsonEncode(article.imageGuidelines)),
+        );
       }
 
       Response response;
@@ -86,13 +100,18 @@ class ArticleProvider with ChangeNotifier {
       } else {
         // สำหรับ Update ใน Laravel เมื่อใช้ FormData ต้องใช้ POST และใส่ _method: PUT
         formData.fields.add(const MapEntry('_method', 'PUT'));
-        response = await ApiService.dio.post('/articles/${article.id}', data: formData);
+        response = await ApiService.dio.post(
+          '/articles/${article.id}',
+          data: formData,
+        );
       }
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         await fetchArticles();
         return true;
       }
+
+      _lastErrorMessage = 'บันทึกบทความไม่สำเร็จ (${response.statusCode})';
     } catch (e) {
       debugPrint('Save Article Error: $e');
       if (e is DioException) {
@@ -114,9 +133,10 @@ class ArticleProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await ApiService.dio.post('/articles/import-json', data: {
-        'json_data': jsonData,
-      });
+      final response = await ApiService.dio.post(
+        '/articles/import-json',
+        data: {'json_data': jsonData},
+      );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final imported = response.data['imported'];

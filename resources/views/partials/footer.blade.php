@@ -28,7 +28,7 @@
         <li><a href="{{ route('numbers.index', ['service_type' => 'postpaid']) }}">เบอร์มงคล รายเดือน</a></li>
         <li><a href="{{ route('numbers.index', ['q' => '789']) }}">เบอร์มังกร (เลข 789)</a></li>
         <li><a href="{{ route('numbers.index', ['q' => '289']) }}">เบอร์หงส์ (เลข 289)</a></li>
-        <li><a href="{{ route('articles.index') }}">บทความความรู้เบอร์มงคล</a></li>
+        <li><a href="/articles">บทความความรู้เบอร์มงคล</a></li>
       </ul>
     </div>
     <div class="footer-links">

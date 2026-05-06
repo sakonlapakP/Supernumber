@@ -12,8 +12,8 @@ Route::middleware(ApiTokenAuth::class)->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
     
-    Route::post('articles/import-json', [ArticleController::class, 'importJson']);
-    Route::apiResource('articles', ArticleController::class);
+    Route::post('articles/import-json', [ArticleController::class, 'importJson'])->name('api.articles.import-json');
+    Route::apiResource('articles', ArticleController::class)->names('api.articles');
 });
 
 Route::middleware('throttle:tarot-ai')->group(function (): void {

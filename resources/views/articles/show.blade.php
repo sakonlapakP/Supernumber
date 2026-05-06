@@ -72,7 +72,7 @@
   <article class="article-detail container">
     <div class="article-detail__shell">
       <header class="article-detail__header">
-        <a href="{{ route('articles.index') }}" class="article-detail__back">กลับไปหน้าบทความ</a>
+        <a href="/articles" class="article-detail__back">กลับไปหน้าบทความ</a>
         <div class="article-detail__meta-row">
           <span class="article-detail__meta-pill">เผยแพร่ {{ $publishedAt }}</span>
           <span class="article-detail__meta-pill article-detail__meta-pill--soft">👁️ ยอดเข้าชม {{ number_format($article->view_count) }} ครั้ง</span>

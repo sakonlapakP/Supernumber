@@ -2638,7 +2638,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->with('status_message', 'สร้างและเผยแพร่บทความหวยงวดล่าสุดเรียบร้อยแล้วครับ!');
     })->name('articles.auto-gen-lottery');
 
-    Route::post('/articles/import-json', function (Request $request) use ($ensureAdmin, $buildArticleSlug) {
+    Route::post('/articles/import-json', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $articleColumnExists) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
             return $redirect;
         }
@@ -2715,7 +2715,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 $slug = $baseSlug . '-' . $suffix++;
             }
 
-            Article::create([
+            $articleData = [
                 'title' => $title,
                 'slug' => $slug,
                 'excerpt' => $stringValue($item['excerpt'] ?? null) ?? Str::limit(strip_tags($content), 160),
@@ -2724,11 +2724,16 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'published_at' => isset($item['published_at']) ? Carbon::parse($item['published_at'], 'Asia/Bangkok')->setTimezone(config('app.timezone')) : now(),
                 'is_auto_post' => $booleanValue($item['is_auto_post'] ?? null, false),
                 'author_user_id' => session('admin_user_id'),
-                'image_guidelines' => $imageGuidelinesValue($item['image_guidelines'] ?? null),
                 'meta_description' => $stringValue($item['meta_description'] ?? null),
                 'keywords' => $stringValue($item['keywords'] ?? null),
                 'lsi_keywords' => $stringValue($item['lsi_keywords'] ?? null),
-            ]);
+            ];
+
+            if ($articleColumnExists('image_guidelines')) {
+                $articleData['image_guidelines'] = $imageGuidelinesValue($item['image_guidelines'] ?? null);
+            }
+
+            Article::create($articleData);
             $count++;
         }
 
@@ -3053,9 +3058,12 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'is_published' => $isPublished,
                 'published_at' => $isPublished ? $publishedAt : null,
                 'cover_image_path' => $coverImagePath,
-                'image_guidelines' => $imageGuidelines ?: null,
                 'author_user_id' => is_numeric(session('admin_user_id')) ? (int) session('admin_user_id') : null,
             ];
+
+            if ($articleColumnExists('image_guidelines')) {
+                $articleData['image_guidelines'] = $imageGuidelines ?: null;
+            }
 
             if ($articleColumnExists('keywords')) {
                 $articleData['keywords'] = trim((string) ($data['keywords'] ?? '')) ?: null;
@@ -3251,8 +3259,11 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'is_published' => $isPublished,
                 'published_at' => $isPublished ? $publishedAt : null,
                 'cover_image_path' => $coverImagePath,
-                'image_guidelines' => $imageGuidelines ?: null,
             ];
+
+            if ($articleColumnExists('image_guidelines')) {
+                $articleData['image_guidelines'] = $imageGuidelines ?: null;
+            }
 
             if ($shouldResetNotification) {
                 $articleData['notified_at'] = null;
