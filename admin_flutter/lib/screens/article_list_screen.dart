@@ -6,6 +6,7 @@ import '../providers/article_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/article.model.dart';
 import 'article_edit_screen.dart';
+import 'article_json_import_screen.dart';
 
 class ArticleListScreen extends StatefulWidget {
   const ArticleListScreen({super.key});
@@ -24,6 +25,26 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
     });
   }
 
+  Future<void> _openJsonImport() async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const ArticleJsonImportScreen()),
+    );
+
+    if (!mounted) return;
+    await context.read<ArticleProvider>().fetchArticles();
+  }
+
+  Future<void> _openArticleEditor([Article? article]) async {
+    await Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => ArticleEditScreen(article: article)),
+    );
+
+    if (!mounted) return;
+    await context.read<ArticleProvider>().fetchArticles();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -38,7 +59,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                   colors: [Color(0xFF1D1816), Color(0xFF46372B)],
                 ),
                 borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: const Color(0xFFD8A34A).withOpacity(0.5)),
+                border: Border.all(color: const Color(0xFFD8A34A).withValues(alpha: 0.5)),
               ),
               alignment: Alignment.center,
               child: Text(
@@ -63,6 +84,11 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
           ],
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.data_object_rounded, color: Color(0xFF7C3AED)),
+            tooltip: 'เพิ่มบทความด้วย JSON',
+            onPressed: _openJsonImport,
+          ),
           IconButton(
             icon: const Icon(Icons.logout_rounded, color: Color(0xFFC54B3D)),
             onPressed: () => context.read<AuthProvider>().logout(),
@@ -108,7 +134,10 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                     mainAxisSpacing: 12,
                   ),
                   itemCount: provider.articles.length,
-                  itemBuilder: (context, index) => _ArticleItem(article: provider.articles[index]),
+                  itemBuilder: (context, index) => _ArticleItem(
+                    article: provider.articles[index],
+                    onTap: () => _openArticleEditor(provider.articles[index]),
+                  ),
                 ),
               );
             },
@@ -116,12 +145,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
         },
       ),
       floatingActionButton: FloatingActionButton.extended(
-        onPressed: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => const ArticleEditScreen()),
-          ).then((_) => context.read<ArticleProvider>().fetchArticles());
-        },
+        onPressed: () => _openArticleEditor(),
         backgroundColor: const Color(0xFF223A63),
         foregroundColor: Colors.white,
         icon: const Icon(Icons.add_rounded),
@@ -133,20 +157,16 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
 
 class _ArticleItem extends StatelessWidget {
   final Article article;
+  final VoidCallback onTap;
 
-  const _ArticleItem({required this.article});
+  const _ArticleItem({required this.article, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     return Card(
       child: InkWell(
         borderRadius: BorderRadius.circular(24),
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute(builder: (context) => ArticleEditScreen(article: article)),
-          ).then((_) => context.read<ArticleProvider>().fetchArticles());
-        },
+        onTap: onTap,
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(

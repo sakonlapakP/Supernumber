@@ -4,15 +4,80 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Article;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Validation\ValidationException;
 
 class ArticleController extends Controller
 {
     public function index()
     {
         return Article::latest()->paginate(20);
+    }
+
+    public function importJson(Request $request): JsonResponse
+    {
+        $request->validate([
+            'json_data' => ['required', 'string'],
+        ]);
+
+        $data = json_decode($request->input('json_data'), true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw ValidationException::withMessages([
+                'json_data' => ['รูปแบบ JSON ไม่ถูกต้อง: ' . json_last_error_msg()],
+            ]);
+        }
+
+        if (! is_array($data)) {
+            throw ValidationException::withMessages([
+                'json_data' => ['ข้อมูลใน JSON ต้องเป็น Object หรือ Array ของบทความ'],
+            ]);
+        }
+
+        $articlesToImport = isset($data['title']) ? [$data] : $data;
+        $imported = 0;
+        $skipped = 0;
+
+        foreach ($articlesToImport as $item) {
+            if (! is_array($item) || empty($item['title'])) {
+                $skipped++;
+                continue;
+            }
+
+            $title = trim((string) $item['title']);
+            $content = (string) ($item['content'] ?? '');
+            $slugInput = $this->stringValue($item['slug'] ?? null);
+            $slug = $this->uniqueArticleSlug($slugInput ? Str::slug($slugInput) : $title);
+
+            Article::create([
+                'title' => $title,
+                'slug' => $slug,
+                'excerpt' => $this->stringValue($item['excerpt'] ?? null) ?? Str::limit(strip_tags($content), 160),
+                'content' => $content,
+                'is_published' => $this->booleanValue($item['is_published'] ?? null, true),
+                'published_at' => isset($item['published_at'])
+                    ? Carbon::parse($item['published_at'], 'Asia/Bangkok')->setTimezone(config('app.timezone'))
+                    : now(),
+                'is_auto_post' => $this->booleanValue($item['is_auto_post'] ?? null, false),
+                'author_user_id' => $request->user()->id,
+                'image_guidelines' => $this->imageGuidelinesValue($item['image_guidelines'] ?? null),
+                'meta_description' => $this->stringValue($item['meta_description'] ?? null),
+                'keywords' => $this->stringValue($item['keywords'] ?? null),
+                'lsi_keywords' => $this->stringValue($item['lsi_keywords'] ?? null),
+            ]);
+
+            $imported++;
+        }
+
+        return response()->json([
+            'imported' => $imported,
+            'skipped' => $skipped,
+            'message' => "นำเข้าบทความสำเร็จ {$imported} รายการ",
+        ], 201);
     }
 
     public function store(Request $request)
@@ -119,5 +184,57 @@ class ArticleController extends Controller
         }
         $article->delete();
         return response()->json(['message' => 'Article deleted']);
+    }
+
+    private function stringValue(mixed $value): ?string
+    {
+        if (is_array($value)) {
+            $value = implode(', ', array_filter(array_map(
+                static fn (mixed $item): string => trim((string) $item),
+                $value
+            )));
+        }
+
+        $value = trim((string) ($value ?? ''));
+
+        return $value !== '' ? $value : null;
+    }
+
+    private function booleanValue(mixed $value, bool $default): bool
+    {
+        if ($value === null) {
+            return $default;
+        }
+
+        return filter_var($value, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE) ?? $default;
+    }
+
+    private function imageGuidelinesValue(mixed $value): ?array
+    {
+        if (! is_array($value)) {
+            return null;
+        }
+
+        $guidelines = [
+            'landscape_prompt' => $this->stringValue($value['landscape_prompt'] ?? null),
+            'square_prompt' => $this->stringValue($value['square_prompt'] ?? null),
+        ];
+
+        return array_filter($guidelines, static fn (?string $prompt): bool => $prompt !== null) ?: null;
+    }
+
+    private function uniqueArticleSlug(string $value): string
+    {
+        $base = Str::slug(trim($value));
+        $base = $base !== '' ? $base : 'article';
+        $slug = $base;
+        $suffix = 2;
+
+        while (Article::query()->where('slug', $slug)->exists()) {
+            $slug = $base . '-' . $suffix;
+            $suffix++;
+        }
+
+        return $slug;
     }
 }

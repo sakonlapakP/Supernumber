@@ -12,6 +12,7 @@ Route::middleware(ApiTokenAuth::class)->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
     
+    Route::post('articles/import-json', [ArticleController::class, 'importJson']);
     Route::apiResource('articles', ArticleController::class);
 });
 
