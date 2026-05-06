@@ -17,16 +17,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleLogin() async {
     if (_formKey.currentState!.validate()) {
-      final success = await context.read<AuthProvider>().login(
-            _emailController.text,
+      final auth = context.read<AuthProvider>();
+      final success = await auth.login(
+            _emailController.text.trim(),
             _passwordController.text,
           );
       if (!mounted) return;
       if (!success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            backgroundColor: Color(0xFFC54B3D),
-            content: Text('เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบข้อมูลอีกครั้ง'),
+          SnackBar(
+            backgroundColor: const Color(0xFFC54B3D),
+            content: Text(auth.lastErrorMessage ?? 'เข้าสู่ระบบไม่สำเร็จ กรุณาตรวจสอบข้อมูลอีกครั้ง'),
           ),
         );
       }
@@ -83,7 +84,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               colors: [Color(0xFF1D1816), Color(0xFF46372B)],
                             ),
                             borderRadius: BorderRadius.circular(12),
-                            border: Border.all(color: const Color(0xFFD8A34A).withOpacity(0.5)),
+                            border: Border.all(color: const Color(0xFFD8A34A).withValues(alpha: 0.5)),
                           ),
                           alignment: Alignment.center,
                           child: Text(
@@ -111,7 +112,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             Text(
                               'ADMIN PANEL',
                               style: GoogleFonts.kanit(
-                                color: const Color(0xFFD8A34A).withOpacity(0.8),
+                                color: const Color(0xFFD8A34A).withValues(alpha: 0.8),
                                 fontSize: 10,
                                 fontWeight: FontWeight.w600,
                                 letterSpacing: 1,
