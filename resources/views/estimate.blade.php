@@ -134,23 +134,6 @@
 
             <button class="estimate-submit" type="submit">ทำนายดวง</button>
           </form>
-
-          <aside class="estimate-video">
-            <div class="estimate-video__copy">
-              <p>วิดีโอแนะนำ</p>
-              <h3>วิธีใช้งานระบบ ENS บนเว็บ</h3>
-            </div>
-            <div class="estimate-video__frame">
-              <iframe
-                src="https://www.youtube.com/embed/M7lc1UVf-VE"
-                title="ENS guide"
-                loading="lazy"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                referrerpolicy="strict-origin-when-cross-origin"
-                allowfullscreen
-              ></iframe>
-            </div>
-          </aside>
         </div>
       </div>
     </div>
