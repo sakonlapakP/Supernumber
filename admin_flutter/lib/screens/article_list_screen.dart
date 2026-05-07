@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../providers/article_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/article.model.dart';
@@ -45,6 +46,107 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
 
     if (!mounted) return;
     await context.read<ArticleProvider>().fetchArticles();
+  }
+
+  Future<void> _openArticlePreview(Article article) async {
+    final url = article.publicUrl;
+    if (url == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('บทความนี้ยังไม่มี slug สำหรับเปิดดู')),
+      );
+      return;
+    }
+
+    final launched = await launchUrl(
+      Uri.parse(url),
+      mode: LaunchMode.externalApplication,
+    );
+
+    if (!mounted || launched) return;
+
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('เปิด Safari ไม่สำเร็จ')));
+  }
+
+  Future<void> _shareArticle(Article article) async {
+    final platform = await showModalBottomSheet<String>(
+      context: context,
+      showDragHandle: true,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.facebook_rounded),
+              title: const Text('Facebook Page'),
+              onTap: () => Navigator.pop(context, 'facebook'),
+            ),
+            ListTile(
+              leading: const Icon(Icons.chat_bubble_outline_rounded),
+              title: const Text('LINE'),
+              onTap: () => Navigator.pop(context, 'line'),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (platform == null || !mounted) return;
+
+    final provider = context.read<ArticleProvider>();
+    final shared = await provider.shareArticle(article, platform);
+    if (!mounted) return;
+
+    final label = platform == 'facebook' ? 'Facebook Page' : 'LINE';
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          shared
+              ? 'แชร์ไปที่ $label สำเร็จ'
+              : provider.lastErrorMessage ?? 'แชร์ไปที่ $label ไม่สำเร็จ',
+        ),
+      ),
+    );
+  }
+
+  Future<void> _confirmDeleteArticle(Article article) async {
+    final shouldDelete = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('ลบบทความ'),
+        content: Text('ต้องการลบ "${article.title}" ใช่ไหม'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: const Text('ยกเลิก'),
+          ),
+          FilledButton(
+            style: FilledButton.styleFrom(
+              backgroundColor: const Color(0xFFC54B3D),
+            ),
+            onPressed: () => Navigator.pop(context, true),
+            child: const Text('ลบ'),
+          ),
+        ],
+      ),
+    );
+
+    if (shouldDelete != true || !mounted) return;
+
+    final provider = context.read<ArticleProvider>();
+    final deleted = await provider.deleteArticle(article);
+    if (!mounted) return;
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          deleted
+              ? 'ลบบทความแล้ว'
+              : provider.lastErrorMessage ?? 'ลบบทความไม่สำเร็จ',
+        ),
+      ),
+    );
   }
 
   @override
@@ -151,6 +253,11 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                   itemBuilder: (context, index) => _ArticleItem(
                     article: provider.articles[index],
                     onTap: () => _openArticleEditor(provider.articles[index]),
+                    onView: () => _openArticlePreview(provider.articles[index]),
+                    onEdit: () => _openArticleEditor(provider.articles[index]),
+                    onShare: () => _shareArticle(provider.articles[index]),
+                    onDelete: () =>
+                        _confirmDeleteArticle(provider.articles[index]),
                   ),
                 ),
               );
@@ -172,17 +279,35 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
 class _ArticleItem extends StatelessWidget {
   final Article article;
   final VoidCallback onTap;
+  final VoidCallback onView;
+  final VoidCallback onEdit;
+  final VoidCallback onShare;
+  final VoidCallback onDelete;
 
-  const _ArticleItem({required this.article, required this.onTap});
+  const _ArticleItem({
+    required this.article,
+    required this.onTap,
+    required this.onView,
+    required this.onEdit,
+    required this.onShare,
+    required this.onDelete,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Card(
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+        side: BorderSide(color: const Color(0xFFE5EAF2), width: 1),
+      ),
+      color: Colors.white,
+      shadowColor: const Color(0xFF1E2D45).withValues(alpha: 0.1),
+      clipBehavior: Clip.antiAlias,
       child: InkWell(
-        borderRadius: BorderRadius.circular(24),
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(20),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -190,10 +315,10 @@ class _ArticleItem extends StatelessWidget {
                 article.title,
                 style: GoogleFonts.kanit(
                   fontWeight: FontWeight.bold,
-                  fontSize: 16,
+                  fontSize: 17,
                   color: const Color(0xFF1E2D45),
                 ),
-                maxLines: 1,
+                maxLines: 2,
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 4),
@@ -207,24 +332,85 @@ class _ArticleItem extends StatelessWidget {
               Row(
                 children: [
                   _StatusPill(article: article),
-                  const Spacer(),
+                  const SizedBox(width: 8),
                   Text(
-                    article.publishedAt != null
-                        ? DateFormat('dd MMM yyyy').format(article.publishedAt!)
-                        : (article.createdAt != null
-                              ? DateFormat(
-                                  'dd MMM yyyy',
-                                ).format(article.createdAt!)
-                              : ''),
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF7488A8),
-                      fontWeight: FontWeight.w600,
+                    _formatArticleDate(article),
+                    style: GoogleFonts.kanit(
+                      fontSize: 12,
+                      color: const Color(0xFF94A3B8),
+                      fontWeight: FontWeight.w500,
                     ),
+                  ),
+                  const Spacer(),
+                  Wrap(
+                    spacing: 6,
+                    children: [
+                      _ArticleActionButton(
+                        icon: Icons.visibility_outlined,
+                        tooltip: 'ดูบทความ',
+                        onPressed: onView,
+                      ),
+                      _ArticleActionButton(
+                        icon: Icons.edit_outlined,
+                        tooltip: 'แก้ไข',
+                        onPressed: onEdit,
+                      ),
+                      _ArticleActionButton(
+                        icon: Icons.ios_share_outlined,
+                        tooltip: 'แชร์',
+                        onPressed: onShare,
+                      ),
+                      _ArticleActionButton(
+                        icon: Icons.delete_rounded,
+                        tooltip: 'ลบ',
+                        color: const Color(0xFFC54B3D),
+                        onPressed: onDelete,
+                      ),
+                    ],
                   ),
                 ],
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+String _formatArticleDate(Article article) {
+  final date = article.publishedAt ?? article.createdAt;
+  return date != null ? DateFormat('dd MMM yyyy').format(date) : '';
+}
+
+class _ArticleActionButton extends StatelessWidget {
+  final IconData icon;
+  final String tooltip;
+  final Color color;
+  final VoidCallback onPressed;
+
+  const _ArticleActionButton({
+    required this.icon,
+    required this.tooltip,
+    required this.onPressed,
+    this.color = const Color(0xFF223A63),
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: color.withValues(alpha: 0.1),
+        shape: const CircleBorder(),
+        child: InkWell(
+          onPressed: onPressed,
+          customBorder: const CircleBorder(),
+          child: Container(
+            width: 32,
+            height: 32,
+            alignment: Alignment.center,
+            child: Icon(icon, size: 18, color: color),
           ),
         ),
       ),

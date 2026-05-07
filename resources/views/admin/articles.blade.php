@@ -4,15 +4,10 @@
     <div class="admin-page-head">
       <div>
         <h1>บทความ</h1>
-        <p class="admin-subtitle">จัดการบทความทั้งหมดแบบลิสต์ พร้อมปุ่มจัดการท้ายแต่ละแถว</p>
       </div>
       <div class="admin-page-actions article-admin-actions">
-        <form class="article-admin-actions__auto" action="{{ route('admin.articles.auto-gen-lottery') }}" method="POST" style="display: inline;">
-            @csrf
-            <button type="submit" class="admin-button" style="background: #1e1b4b; border-color: #1e1b4b;">✨ สร้างบทความหวยอัตโนมัติ</button>
-        </form>
         @if(in_array(session('admin_user_role'), [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_MANAGER]))
-            <button type="button" class="admin-button article-admin-actions__import" style="background: #7c3aed; border-color: #7c3aed;" onclick="openImportModal()">📥 เพิ่ม JSON</button>
+@php // Moved to bottom FAB group @endphp
         @endif
         <a href="{{ route('admin.articles.create') }}" class="admin-button article-admin-actions__create">เพิ่มบทความ</a>
       </div>
@@ -32,20 +27,25 @@
 
 <style>
   @media (max-width: 767px) {
+    .admin-page-head {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: center;
+      gap: 10px;
+    }
+    .admin-page-head h1 {
+      font-size: 30px;
+    }
     .article-admin-actions {
       display: grid;
-      grid-template-columns: 1fr 1fr;
-      width: 100%;
-      gap: 10px;
+      grid-template-columns: auto auto;
+      width: auto;
+      gap: 4px;
+      justify-content: end;
     }
     .article-admin-actions form,
     .article-admin-actions .admin-button {
       width: 100%;
     }
-    .article-admin-actions__auto {
-      grid-column: 1 / -1;
-    }
-    .article-admin-actions__auto .admin-button,
     .article-admin-actions__import,
     .article-admin-actions__create {
       min-height: 48px;
@@ -55,6 +55,15 @@
       line-height: 1.25;
       white-space: normal;
       text-align: center;
+    }
+    .article-admin-actions__import {
+      width: 52px !important;
+      min-width: 52px;
+      padding-left: 10px;
+      padding-right: 10px;
+    }
+    .article-admin-actions__create {
+      min-width: 118px;
     }
     .article-admin-card {
       border-radius: 22px;
@@ -104,6 +113,7 @@
       background: #ffffff;
       border-radius: 14px;
       box-shadow: 0 10px 24px rgba(30, 45, 69, 0.06);
+      box-shadow: 0 4px 12px rgba(30, 45, 69, 0.08);
       padding: 8px 8px;
       border: 1px solid #dce6f3;
     }
@@ -221,6 +231,16 @@
     .admin-action-group:has(button[title="แชร์ไป Facebook Page"]) {
       grid-template-columns: repeat(4, minmax(0, 1fr));
     }
+    .admin-action-group .admin-button:disabled,
+    .admin-action-group .admin-button.is-disabled {
+      color: #94a3b8 !important;
+      background: rgba(148, 163, 184, 0.1) !important;
+      cursor: not-allowed;
+    }
+    .admin-action-group .admin-button:disabled svg,
+    .admin-action-group .admin-button.is-disabled svg {
+      opacity: 0.5;
+    }
     .admin-action-group:has(button[id^="btn-share-social"]) .admin-button,
     .admin-action-group:has(button[title="แชร์ไป Facebook Page"]) .admin-button {
       font-size: 12px;
@@ -246,6 +266,225 @@
     }
     .admin-status-pill {
       white-space: nowrap;
+    }
+    .admin-page-head {
+      margin: 0 -16px 0;
+      padding: 18px 16px;
+      background: #ffffff;
+      border-bottom: 1px solid #dbe5f2;
+    }
+    .admin-page-head h1 {
+      font-size: 0;
+      line-height: 1;
+      display: inline-flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .admin-page-head h1::before {
+      content: "S";
+      width: 30px;
+      height: 30px;
+      border-radius: 9px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: linear-gradient(135deg, #1d1816 0%, #46372b 100%);
+      border: 1px solid rgba(216, 163, 74, 0.5);
+      color: #d8a34a;
+      font-family: "Cinzel", serif;
+      font-size: 19px;
+      font-weight: 700;
+    }
+    .admin-page-head h1::after {
+      content: "ARTICLES";
+      color: #111827;
+      font-size: 20px;
+      font-weight: 800;
+      letter-spacing: 0;
+    }
+    .article-admin-actions__create {
+      display: none;
+    }
+    .article-admin-actions__import {
+      width: 44px !important;
+      min-width: 44px;
+      min-height: 44px;
+      border-radius: 14px;
+      background: transparent !important;
+      border-color: transparent !important;
+      color: #7c3aed !important;
+      font-size: 24px;
+      font-weight: 800;
+      padding: 0;
+    }
+    .admin-card.article-admin-card {
+      margin: 0 -16px;
+      border: 0;
+      border-radius: 0;
+      box-shadow: none;
+      background: #eef4fb;
+    }
+    .article-admin-toolbar {
+      display: none !important;
+    }
+    .admin-table tbody {
+      display: flex !important;
+      flex-direction: column;
+      gap: 36px;
+      padding: 14px 16px 160px;
+    }
+    .admin-table tr.article-row {
+      display: block;
+      padding: 20px;
+      margin: 0 4px;
+      border-radius: 24px;
+      box-shadow: 0 10px 30px rgba(30, 45, 69, 0.05);
+      border: 1px solid #e2eaf5;
+      background: #ffffff;
+    }
+    .admin-table td:first-child,
+    .admin-table td:nth-child(3) {
+      display: none;
+    }
+    .admin-table td:nth-child(2) {
+      border-bottom: 0;
+      padding: 0;
+    }
+    .admin-table td:nth-child(2) div:first-child {
+      font-size: 20px;
+      line-height: 1.25;
+      font-weight: 800 !important;
+      color: #1e2d45 !important;
+    }
+    .article-mobile-excerpt {
+      display: block !important;
+      margin-top: 8px;
+      color: #7488a8;
+      font-size: 14px;
+      font-weight: 600;
+      line-height: 1.35;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .admin-table td:last-child {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-top: 18px;
+      padding: 0;
+    }
+    .article-mobile-meta {
+      flex: 1 1 auto;
+      min-width: 0;
+      gap: 10px;
+    }
+    .article-mobile-meta .admin-status-pill {
+      width: auto;
+      height: auto;
+      min-width: 0;
+      min-height: 0;
+      padding: 4px 12px;
+      border-radius: 999px;
+      color: #a86d17 !important;
+      font-size: 13px;
+      line-height: 1.2;
+      background: #fffaf0;
+      border-color: #f3d894;
+    }
+    .article-mobile-meta .admin-status-pill--active {
+      color: #16876d !important;
+      background: #effbf6;
+      border-color: #c7eadf;
+    }
+    .article-mobile-meta__date {
+      font-size: 13px;
+      color: #7488a8;
+    }
+    .admin-action-group {
+      flex: 0 0 auto;
+      display: inline-grid !important;
+      grid-template-columns: repeat(4, 32px) !important;
+      gap: 10px;
+      width: auto;
+    }
+    .admin-action-group .admin-button {
+      min-height: 32px;
+      width: 32px !important;
+      padding: 0;
+      border: 0;
+      background: transparent !important;
+      color: #223a63 !important;
+      font-size: 0;
+      border-radius: 8px;
+    }
+    .admin-action-group form {
+      width: 32px !important;
+    }
+    .article-action-preview svg,
+    .article-action-edit svg,
+    .article-action-share svg,
+    .article-action-delete svg {
+      width: 18px;
+      height: 18px;
+    }
+    .article-action-delete {
+      color: #c54b3d !important;
+    }
+    .article-bottom-actions {
+      position: fixed;
+      right: 16px;
+      bottom: 18px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .article-mobile-fab {
+      min-height: 56px;
+      padding: 0 20px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: #223a63;
+      color: #ffffff;
+      text-decoration: none;
+      box-shadow: 0 10px 25px rgba(34, 58, 99, 0.3);
+      font-size: 16px;
+      font-weight: 700;
+      transition: transform 0.2s;
+    }
+    .article-mobile-fab:active {
+      transform: scale(0.95);
+    }
+    .article-mobile-fab::before {
+      content: "+";
+      font-size: 30px;
+      line-height: 1;
+      font-weight: 300;
+    }
+    .article-import-fab {
+      width: 56px;
+      height: 56px;
+      border-radius: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #7c3aed;
+      color: #ffffff;
+      border: none;
+      box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3);
+      cursor: pointer;
+      transition: transform 0.2s;
+    }
+    .article-import-fab:active {
+      transform: scale(0.95);
+    }
+    .article-import-fab svg {
+      width: 24px;
+      height: 24px;
+      opacity: 0.9;
     }
   }
 
@@ -287,9 +526,6 @@
     .article-admin-actions {
       grid-template-columns: 1fr;
     }
-    .article-admin-actions__auto {
-      grid-column: auto;
-    }
     .admin-action-group {
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
@@ -298,6 +534,134 @@
     }
     .admin-table td:last-child::before {
       margin-bottom: 10px;
+    }
+  }
+
+  @media (max-width: 767px) {
+    .admin-table,
+    .admin-table tbody {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+    }
+    .admin-page-head {
+      margin: 0 -16px;
+      padding: 10px 16px 0;
+      border-bottom: 0;
+      background: #eef4fb;
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+    }
+    .admin-page-head h1 {
+      display: none;
+    }
+    .article-admin-actions {
+      display: flex;
+      justify-content: flex-end;
+      width: 100%;
+    }
+    .article-admin-actions__import {
+      width: 44px !important;
+      min-width: 44px;
+      min-height: 44px;
+      border-radius: 14px;
+      background: transparent !important;
+      border-color: transparent !important;
+      color: #7c3aed !important;
+      font-size: 24px;
+      font-weight: 800;
+      padding: 0;
+    }
+    .article-admin-actions__create {
+      display: none;
+    }
+    .admin-table tr.article-row {
+      display: block;
+      width: 100%;
+      max-width: 100%;
+      padding: 16px;
+      border-radius: 24px;
+    }
+    .admin-table td {
+      width: 100%;
+      max-width: 100%;
+    }
+    .admin-table td:first-child,
+    .admin-table td:nth-child(3) {
+      display: none;
+    }
+    .admin-table td:nth-child(2) {
+      display: block;
+      border-bottom: 0;
+      padding: 0;
+      width: 100%;
+      max-width: 100%;
+      overflow: hidden;
+    }
+    .admin-table td:nth-child(2) div:first-child {
+      display: block;
+      max-width: 100%;
+      font-size: 20px;
+      line-height: 1.25;
+    }
+    .admin-table td:last-child {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      justify-content: space-between;
+      margin-top: 18px;
+      padding: 0;
+    }
+    .article-mobile-meta {
+      flex: 0 1 auto;
+      min-width: 0;
+    }
+    .admin-action-group,
+    .admin-action-group:has(button[id^="btn-share-social"]),
+    .admin-action-group:has(button[title="แชร์ไป Facebook Page"]) {
+      flex: 0 0 auto;
+      margin-left: auto !important;
+      display: inline-grid !important;
+      grid-template-columns: repeat(4, 28px) !important;
+      gap: 8px;
+      width: auto;
+    }
+    .admin-action-group .admin-button {
+      min-height: 32px;
+      width: 32px !important;
+      padding: 0;
+      font-size: 0 !important;
+      color: #223a63 !important;
+      background: rgba(34, 58, 99, 0.08) !important;
+      border: 0 !important;
+      border-radius: 999px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+    }
+    .admin-action-group .article-action-delete {
+      color: #dc2626 !important;
+      background: rgba(220, 38, 38, 0.08) !important;
+    }
+    .admin-action-group .article-action-share {
+      color: #1877F2 !important;
+      background: rgba(24, 119, 242, 0.08) !important;
+    }
+    .admin-action-group .admin-button svg {
+      display: block !important;
+      width: 18px;
+      height: 18px;
+    }
+    .article-action-preview svg,
+    .article-action-edit svg,
+    .article-action-share svg,
+    .article-action-delete svg {
+      display: block;
+    }
+    .article-mobile-meta__date {
+      white-space: nowrap;
     }
   }
 </style>
@@ -356,6 +720,7 @@
               <td data-label="หัวข้อ">
                 <div style="font-weight: 600; color: #1e293b; margin-bottom: 4px;">{{ $article->title }}</div>
                 <div class="admin-muted" style="font-size: 12px;">{{ $article->slug }}</div>
+                <div class="article-mobile-excerpt" style="display: none;">{{ $article->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($article->sanitizedContent()), 120) }}</div>
               </td>
               <td data-label="สถานะ">
                 <span class="admin-status-pill {{ $publishStatusClass }}" @if($publishStatusStyle) style="{{ $publishStatusStyle }}" @endif>{{ $publishStatusLabel }}</span>
@@ -376,11 +741,17 @@
                   @if($isLotteryArticle && !$lotteryIsComplete)
                     <span class="admin-status-pill admin-status-pill--hold" style="font-size: 10px; background: #fff7ed; color: #c2410c; border-color: #fdba74;">รอผลครบ</span>
                   @endif
-                  <span class="article-mobile-meta__date">{{ $article->published_at ? $article->published_at->timezone('Asia/Bangkok')->format('d/m/y') : '-' }}</span>
+                  <span class="article-mobile-meta__date">{{ $article->published_at ? $article->published_at->timezone('Asia/Bangkok')->format('d M Y') : '-' }}</span>
                 </div>
                 <div class="admin-action-group">
-                  <a href="{{ route('admin.articles.preview', $article) }}" target="_blank" class="admin-button admin-button--muted admin-button--compact article-action-preview" title="ดูตัวอย่าง" aria-label="ดูตัวอย่าง">ดู</a>
-                  <a href="{{ route('admin.articles.edit', $article) }}" class="admin-button admin-button--muted admin-button--compact article-action-edit" title="แก้ไข" aria-label="แก้ไข">แก้ไข</a>
+                  <a href="{{ route('admin.articles.preview', $article) }}" target="_blank" class="admin-button admin-button--muted admin-button--compact article-action-preview" title="ดูตัวอย่าง" aria-label="ดูตัวอย่าง">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.644C3.399 8.049 7.31 5 12 5s8.601 3.049 9.964 6.678c.07.234.07.468 0 .702-1.364 3.629-5.275 6.678-9.964 6.678s-8.601-3.049-9.964-6.678z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    ดู
+                  </a>
+                  <a href="{{ route('admin.articles.edit', $article) }}" class="admin-button admin-button--muted admin-button--compact article-action-edit" title="แก้ไข" aria-label="แก้ไข">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                    แก้ไข
+                  </a>
                   @if($article->is_published && $isLotteryArticle)
                     <form id="share-social-form-{{ $article->id }}" action="{{ route('admin.articles.share-social', $article) }}" method="POST" style="display: inline;">
                       @csrf
@@ -391,7 +762,10 @@
                               class="admin-button admin-button--compact article-action-share" 
                               style="background: #1877F2; color: #fff; border-color: #1877F2; {{ !$lotteryIsComplete ? 'opacity: 0.6; cursor: not-allowed;' : '' }}" 
                               title="{{ !$lotteryIsComplete ? 'รอให้หวยออกครบ 100% ก่อนถึงจะแชร์ได้' : 'แปลงรูปเป็น PNG แล้วแชร์ไป Facebook Page' }}"
-                              aria-label="แชร์">แปลงรูปและแชร์</button>
+                              aria-label="แชร์">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185zm3.933 12.814a2.25 2.25 0 10-3.933-2.185 2.25 2.25 0 003.933 2.185z" /></svg>
+                        แชร์
+                      </button>
                     </form>
                   @elseif($article->is_published)
                     <form action="{{ route('admin.articles.share-social', $article) }}" method="POST" style="display: inline;" onsubmit="return confirm('ยืนยันแชร์บทความนี้ไปที่ Facebook Page?')">
@@ -401,8 +775,20 @@
                               class="admin-button admin-button--compact article-action-share"
                               style="background: #1877F2; color: #fff; border-color: #1877F2;"
                               title="แชร์ไป Facebook Page"
-                              aria-label="แชร์">แชร์</button>
+                              aria-label="แชร์">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185zm3.933 12.814a2.25 2.25 0 10-3.933-2.185 2.25 2.25 0 003.933 2.185z" /></svg>
+                        แชร์
+                      </button>
                     </form>
+                  @else
+                    <button type="button"
+                            class="admin-button admin-button--compact article-action-share is-disabled"
+                            style="background: #f1f5f9; color: #94a3b8; border-color: #e2e8f0; cursor: not-allowed;"
+                            title="กรุณาเผยแพร่บทความก่อนจึงจะแชร์ได้"
+                            disabled>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185zm3.933 12.814a2.25 2.25 0 10-3.933-2.185 2.25 2.25 0 003.933 2.185z" /></svg>
+                      แชร์
+                    </button>
                   @endif
                   @if(in_array(session('admin_user_role'), [\App\Models\User::ROLE_MANAGER, \App\Models\User::ROLE_ADMIN], true))
                     <form action="{{ route('admin.articles.delete', $article) }}" method="POST" style="display: inline;" onsubmit="return confirm('ยืนยันลบบทความนี้? การลบจะลบไฟล์รูปและคอมเมนต์ที่เกี่ยวข้องด้วย')">
@@ -414,7 +800,10 @@
                         style="background: #dc2626; color: #fff; border-color: #dc2626;"
                         title="ลบบทความ"
                         aria-label="ลบบทความ"
-                      >ลบ</button>
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                        ลบ
+                      </button>
                     </form>
                   @endif
                 </div>
@@ -461,6 +850,17 @@
         @endif
       </nav>
     @endif
+
+    <div class="article-bottom-actions">
+      @if(in_array(session('admin_user_role'), [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_MANAGER]))
+        <button type="button" class="article-import-fab" onclick="openImportModal()" title="นำเข้า JSON">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+          </svg>
+        </button>
+      @endif
+      <a href="{{ route('admin.articles.create') }}" class="article-mobile-fab">เขียนบทความ</a>
+    </div>
 
     {{-- Client-side Rendering Bridge --}}
     <canvas id="render-canvas" style="display: none;"></canvas>
