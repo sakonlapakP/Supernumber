@@ -6,15 +6,15 @@
         <h1>บทความ</h1>
         <p class="admin-subtitle">จัดการบทความทั้งหมดแบบลิสต์ พร้อมปุ่มจัดการท้ายแต่ละแถว</p>
       </div>
-      <div class="admin-page-actions">
-        <form action="{{ route('admin.articles.auto-gen-lottery') }}" method="POST" style="display: inline;">
+      <div class="admin-page-actions article-admin-actions">
+        <form class="article-admin-actions__auto" action="{{ route('admin.articles.auto-gen-lottery') }}" method="POST" style="display: inline;">
             @csrf
             <button type="submit" class="admin-button" style="background: #1e1b4b; border-color: #1e1b4b;">✨ สร้างบทความหวยอัตโนมัติ</button>
         </form>
         @if(in_array(session('admin_user_role'), [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_MANAGER]))
-            <button type="button" class="admin-button" style="background: #7c3aed; border-color: #7c3aed;" onclick="openImportModal()">📥 เพิ่ม JSON</button>
+            <button type="button" class="admin-button article-admin-actions__import" style="background: #7c3aed; border-color: #7c3aed;" onclick="openImportModal()">📥 เพิ่ม JSON</button>
         @endif
-        <a href="{{ route('admin.articles.create') }}" class="admin-button">เพิ่มบทความ</a>
+        <a href="{{ route('admin.articles.create') }}" class="admin-button article-admin-actions__create">เพิ่มบทความ</a>
       </div>
     </div>
 
@@ -32,6 +32,54 @@
 
 <style>
   @media (max-width: 767px) {
+    .article-admin-actions {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      width: 100%;
+      gap: 10px;
+    }
+    .article-admin-actions form,
+    .article-admin-actions .admin-button {
+      width: 100%;
+    }
+    .article-admin-actions__auto {
+      grid-column: 1 / -1;
+    }
+    .article-admin-actions__auto .admin-button,
+    .article-admin-actions__import,
+    .article-admin-actions__create {
+      min-height: 48px;
+      padding: 10px 12px;
+      border-radius: 16px;
+      font-size: 14px;
+      line-height: 1.25;
+      white-space: normal;
+      text-align: center;
+    }
+    .article-admin-card {
+      border-radius: 22px;
+      overflow: hidden;
+    }
+    .article-admin-toolbar {
+      padding: 14px;
+      display: grid !important;
+      grid-template-columns: 1fr;
+      gap: 10px;
+      align-items: stretch;
+      border-bottom: 1px solid #e6edf8;
+    }
+    .article-admin-toolbar .admin-input {
+      max-width: none !important;
+      min-height: 46px;
+      border-radius: 16px;
+      font-size: 14px;
+    }
+    .article-admin-toolbar__count {
+      justify-self: start;
+      padding: 6px 10px;
+      border-radius: 999px;
+      background: #f4f7fb;
+    }
     .admin-table-wrap {
       overflow: visible;
     }
@@ -45,68 +93,139 @@
     }
     .admin-table tbody {
       display: grid;
-      gap: 16px;
+      gap: 8px;
       padding: 0;
     }
     .admin-table tr {
-      display: block;
+      display: grid;
+      grid-template-columns: 46px minmax(0, 1fr);
+      column-gap: 8px;
+      align-items: start;
       background: #ffffff;
-      border-radius: 20px;
-      box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-      padding: 16px;
-      border: 1px solid #e2e8f0;
+      border-radius: 14px;
+      box-shadow: 0 10px 24px rgba(30, 45, 69, 0.06);
+      padding: 8px 8px;
+      border: 1px solid #dce6f3;
     }
     .admin-table td {
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding: 10px 0;
+      gap: 12px;
+      padding: 5px 0;
       border-bottom: 1px solid #f1f5f9;
       text-align: right;
     }
     .admin-table td:first-child {
-      justify-content: center;
-      border-bottom: none;
+      grid-row: 1 / 4;
+      justify-content: flex-start;
+      border-bottom: 0;
       padding-top: 0;
+      padding-bottom: 0;
+      display: grid;
+      justify-items: center;
+      align-content: start;
+      gap: 0;
+    }
+    .admin-table td:first-child > div {
+      width: 46px !important;
+      height: 46px !important;
+      border-radius: 10px !important;
+    }
+    .article-mobile-meta {
+      display: inline-flex !important;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 6px;
+      width: auto;
+      text-align: center;
+      margin-top: 0;
+    }
+    .article-mobile-meta .admin-status-pill {
+      width: 10px;
+      height: 10px;
+      min-width: 10px;
+      min-height: 10px;
+      padding: 0;
+      border-radius: 999px;
+      overflow: hidden;
+      color: transparent !important;
+      font-size: 0;
+      line-height: 0;
+    }
+    .article-mobile-meta__date {
+      color: #7488a8;
+      font-size: 8px;
+      font-weight: 700;
+      line-height: 1.2;
+      word-break: keep-all;
     }
     .admin-table td:nth-child(2) {
       display: block;
-      text-align: center;
-      border-bottom: 2px solid #f1f5f9;
-      padding-bottom: 15px;
-      margin-bottom: 5px;
+      text-align: left;
+      border-bottom: 1px solid #edf2f8;
+      padding-top: 0;
+      padding-bottom: 3px;
+      margin-bottom: 0;
+      min-width: 0;
     }
     .admin-table td:nth-child(2) div:first-child {
-      font-size: 16px;
+      font-size: 13px;
+      line-height: 1.25;
+      margin-bottom: 0 !important;
+      text-align: left;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .admin-table td:nth-child(2) .admin-muted {
+      display: none;
     }
     .admin-table td::before {
       content: attr(data-label);
       font-weight: 700;
       color: #94a3b8;
-      font-size: 11px;
+      font-size: 12px;
       text-transform: uppercase;
       letter-spacing: 0.05em;
       text-align: left;
+      flex: 0 0 auto;
     }
     .admin-table td:first-child::before,
-    .admin-table td:nth-child(2)::before {
+    .admin-table td:nth-child(2)::before,
+    .admin-table td:nth-child(3)::before {
+      display: none;
+    }
+    .admin-table td:nth-child(3) {
       display: none;
     }
     .admin-table td:last-child {
       border-bottom: none;
-      display: block;
+      display: grid;
+      grid-template-columns: 50px minmax(0, 1fr);
+      column-gap: 6px;
+      align-items: center;
       padding-bottom: 0;
       text-align: left;
     }
     .admin-table td:last-child::before {
-      display: block;
-      margin-bottom: 12px;
+      display: none;
     }
     .admin-action-group {
       display: grid !important;
-      grid-template-columns: repeat(2, 1fr);
-      gap: 8px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 5px;
       width: 100%;
+    }
+    .admin-action-group:has(button[id^="btn-share-social"]),
+    .admin-action-group:has(button[title="แชร์ไป Facebook Page"]) {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+    }
+    .admin-action-group:has(button[id^="btn-share-social"]) .admin-button,
+    .admin-action-group:has(button[title="แชร์ไป Facebook Page"]) .admin-button {
+      font-size: 12px;
+      padding-left: 4px;
+      padding-right: 4px;
     }
     .admin-action-group > *,
     .admin-action-group form,
@@ -115,15 +234,78 @@
       margin: 0 !important;
     }
     .admin-action-group .admin-button {
-      height: 44px;
+      min-height: 31px;
+      border-radius: 9px;
+      font-size: 12px;
+      line-height: 1.2;
+      text-align: center;
+      padding: 5px 4px;
+    }
+    .admin-action-group form:has(button[title="ลบบทความ"]) {
+      grid-column: span 1;
+    }
+    .admin-status-pill {
+      white-space: nowrap;
+    }
+  }
+
+  @media (max-width: 430px) {
+    .admin-table tr {
+      grid-template-columns: 44px minmax(0, 1fr);
+      column-gap: 7px;
+    }
+    .admin-table td:first-child > div {
+      width: 44px !important;
+      height: 44px !important;
+    }
+    .admin-table td:nth-child(2) div:first-child {
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .admin-table td {
+      gap: 6px;
+      padding: 3px 0;
+    }
+    .admin-table td:last-child {
+      display: grid;
+      grid-template-columns: 48px minmax(0, 1fr);
+      column-gap: 5px;
+    }
+    .admin-action-group {
+      gap: 5px;
+    }
+    .admin-action-group .admin-button {
+      min-height: 31px;
+      font-size: 12px;
+      padding: 5px 4px;
+    }
+  }
+
+  @media (max-width: 360px) {
+    .article-admin-actions {
+      grid-template-columns: 1fr;
+    }
+    .article-admin-actions__auto {
+      grid-column: auto;
+    }
+    .admin-action-group {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .admin-table td:last-child {
+      display: block;
+    }
+    .admin-table td:last-child::before {
+      margin-bottom: 10px;
     }
   }
 </style>
 
-    <div class="admin-card">
-      <div style="padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+    <div class="admin-card article-admin-card">
+      <div class="article-admin-toolbar" style="padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <input type="text" id="article-search" placeholder="ค้นหาหัวข้อบทความ..." class="admin-input" style="max-width: 300px;">
-        <div class="admin-muted" style="font-size: 13px; font-weight: 600;">ทั้งหมด {{ number_format($articles->total()) }} รายการ</div>
+        <div class="admin-muted article-admin-toolbar__count" style="font-size: 13px; font-weight: 600;">ทั้งหมด {{ number_format($articles->total()) }} รายการ</div>
       </div>
       <div class="admin-table-wrap">
         <table class="admin-table">
@@ -189,9 +371,16 @@
                 </div>
               </td>
               <td data-label="จัดการ" class="admin-action-cell">
+                <div class="article-mobile-meta" style="display: none;">
+                  <span class="admin-status-pill {{ $publishStatusClass }}" aria-label="{{ $publishStatusLabel }}" title="{{ $publishStatusLabel }}" @if($publishStatusStyle) style="{{ $publishStatusStyle }}" @endif>{{ $publishStatusLabel }}</span>
+                  @if($isLotteryArticle && !$lotteryIsComplete)
+                    <span class="admin-status-pill admin-status-pill--hold" style="font-size: 10px; background: #fff7ed; color: #c2410c; border-color: #fdba74;">รอผลครบ</span>
+                  @endif
+                  <span class="article-mobile-meta__date">{{ $article->published_at ? $article->published_at->timezone('Asia/Bangkok')->format('d/m/y') : '-' }}</span>
+                </div>
                 <div class="admin-action-group">
-                  <a href="{{ route('admin.articles.preview', $article) }}" target="_blank" class="admin-button admin-button--muted admin-button--compact" title="ดูตัวอย่าง">ดู</a>
-                  <a href="{{ route('admin.articles.edit', $article) }}" class="admin-button admin-button--muted admin-button--compact">แก้ไข</a>
+                  <a href="{{ route('admin.articles.preview', $article) }}" target="_blank" class="admin-button admin-button--muted admin-button--compact article-action-preview" title="ดูตัวอย่าง" aria-label="ดูตัวอย่าง">ดู</a>
+                  <a href="{{ route('admin.articles.edit', $article) }}" class="admin-button admin-button--muted admin-button--compact article-action-edit" title="แก้ไข" aria-label="แก้ไข">แก้ไข</a>
                   @if($article->is_published && $isLotteryArticle)
                     <form id="share-social-form-{{ $article->id }}" action="{{ route('admin.articles.share-social', $article) }}" method="POST" style="display: inline;">
                       @csrf
@@ -199,18 +388,20 @@
                       <button type="button" 
                               id="btn-share-social-{{ $article->id }}"
                               onclick="renderAndShareSocial(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-rendered-image', $article) }}', '{{ route('admin.articles.report-render-error', $article) }}', {{ $lotteryIsComplete ? 1 : 0 }})"
-                              class="admin-button admin-button--compact" 
+                              class="admin-button admin-button--compact article-action-share" 
                               style="background: #1877F2; color: #fff; border-color: #1877F2; {{ !$lotteryIsComplete ? 'opacity: 0.6; cursor: not-allowed;' : '' }}" 
-                              title="{{ !$lotteryIsComplete ? 'รอให้หวยออกครบ 100% ก่อนถึงจะแชร์ได้' : 'แปลงรูปเป็น PNG แล้วแชร์ไป Facebook Page' }}">แปลงรูปและแชร์</button>
+                              title="{{ !$lotteryIsComplete ? 'รอให้หวยออกครบ 100% ก่อนถึงจะแชร์ได้' : 'แปลงรูปเป็น PNG แล้วแชร์ไป Facebook Page' }}"
+                              aria-label="แชร์">แปลงรูปและแชร์</button>
                     </form>
                   @elseif($article->is_published)
                     <form action="{{ route('admin.articles.share-social', $article) }}" method="POST" style="display: inline;" onsubmit="return confirm('ยืนยันแชร์บทความนี้ไปที่ Facebook Page?')">
                       @csrf
                       <input type="hidden" name="manual_image_url" value="{{ $article->cover_image_landscape_path ?: ($article->cover_image_path ?: $article->cover_image_square_path) }}">
                       <button type="submit"
-                              class="admin-button admin-button--compact"
+                              class="admin-button admin-button--compact article-action-share"
                               style="background: #1877F2; color: #fff; border-color: #1877F2;"
-                              title="แชร์ไป Facebook Page">แชร์</button>
+                              title="แชร์ไป Facebook Page"
+                              aria-label="แชร์">แชร์</button>
                     </form>
                   @endif
                   @if(in_array(session('admin_user_role'), [\App\Models\User::ROLE_MANAGER, \App\Models\User::ROLE_ADMIN], true))
@@ -219,9 +410,10 @@
                       @method('DELETE')
                       <button
                         type="submit"
-                        class="admin-button admin-button--compact"
+                        class="admin-button admin-button--compact article-action-delete"
                         style="background: #dc2626; color: #fff; border-color: #dc2626;"
                         title="ลบบทความ"
+                        aria-label="ลบบทความ"
                       >ลบ</button>
                     </form>
                   @endif
