@@ -3082,7 +3082,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'content' => $content,
                 'meta_description' => trim((string) ($data['meta_description'] ?? '')) ?: null,
                 'is_published' => $isPublished,
-                'published_at' => $isPublished ? $publishedAt : null,
+                'published_at' => $publishedAt,
                 'cover_image_path' => $coverImagePath,
                 'author_user_id' => is_numeric(session('admin_user_id')) ? (int) session('admin_user_id') : null,
             ];

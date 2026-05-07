@@ -171,6 +171,39 @@ class AdminArticleMediaTest extends TestCase
         );
     }
 
+    public function test_manager_create_keeps_draft_publish_time(): void
+    {
+        $manager = User::factory()->create([
+            'username' => 'manager-create-draft-publish-time',
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        $response = $this
+            ->withSession($this->managerSession($manager))
+            ->post(route('admin.articles.store'), [
+                'title' => 'Created Draft Article',
+                'slug' => 'created-draft-article',
+                'excerpt' => 'Draft excerpt',
+                'content' => '<p>Created draft content</p>',
+                'meta_description' => 'Draft meta',
+                'is_published' => '0',
+                'published_at' => '2026-05-31T16:00',
+            ]);
+
+        $response->assertRedirect(route('admin.articles'));
+
+        $article = Article::query()
+            ->where('slug', 'created-draft-article')
+            ->firstOrFail();
+
+        $this->assertFalse((bool) $article->is_published);
+        $this->assertSame(
+            '2026-05-31 16:00',
+            $article->published_at?->timezone('Asia/Bangkok')->format('Y-m-d H:i')
+        );
+    }
+
     public function test_manager_json_import_persists_lsi_keywords_and_auto_post_flag(): void
     {
         $manager = User::factory()->create([
