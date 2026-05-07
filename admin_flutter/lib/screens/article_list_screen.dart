@@ -186,7 +186,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
             ),
             const SizedBox(width: 12),
             Text(
-              'AI Prompt Generator',
+              'Generate prompt AI',
               style: GoogleFonts.kanit(fontWeight: FontWeight.bold),
             ),
           ],
@@ -347,21 +347,73 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
           ],
         ),
         actions: [
-          IconButton(
-            icon: const Icon(
-              Icons.data_object_rounded,
-              color: Color(0xFF7C3AED),
-            ),
-            tooltip: 'เพิ่มบทความด้วย JSON',
-            onPressed: _openJsonImport,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = MediaQuery.of(context).size.width > 600;
+              if (isWide) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: FilledButton.icon(
+                    onPressed: _openJsonImport,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF7C3AED).withValues(alpha: 0.1),
+                      foregroundColor: const Color(0xFF7C3AED),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.data_object_rounded, size: 20),
+                    label: Text(
+                      'Import JSON',
+                      style: GoogleFonts.kanit(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                );
+              }
+              return IconButton(
+                icon: const Icon(
+                  Icons.data_object_rounded,
+                  color: Color(0xFF7C3AED),
+                ),
+                tooltip: 'Import JSON',
+                onPressed: _openJsonImport,
+              );
+            },
           ),
-          IconButton(
-            icon: const Icon(
-              Icons.auto_awesome_rounded,
-              color: Color(0xFF6366F1),
-            ),
-            tooltip: 'AI Prompt Generator',
-            onPressed: _showAiPromptDialog,
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final isWide = MediaQuery.of(context).size.width > 600;
+              if (isWide) {
+                return Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: FilledButton.icon(
+                    onPressed: _showAiPromptDialog,
+                    style: FilledButton.styleFrom(
+                      backgroundColor: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                      foregroundColor: const Color(0xFF6366F1),
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    icon: const Icon(Icons.auto_awesome_rounded, size: 20),
+                    label: Text(
+                      'Generate prompt AI',
+                      style: GoogleFonts.kanit(fontWeight: FontWeight.w600),
+                    ),
+                  ),
+                );
+              }
+              return IconButton(
+                icon: const Icon(
+                  Icons.auto_awesome_rounded,
+                  color: Color(0xFF6366F1),
+                ),
+                tooltip: 'Generate prompt AI',
+                onPressed: _showAiPromptDialog,
+              );
+            },
           ),
           IconButton(
             icon: const Icon(Icons.logout_rounded, color: Color(0xFFC54B3D)),

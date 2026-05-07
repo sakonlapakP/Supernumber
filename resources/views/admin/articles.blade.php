@@ -1,6 +1,98 @@
 @extends('layouts.admin')
 
 @section('content')
+    @php
+      $planData = [
+          ['month' => 'พฤษภาคม 69', 'items' => [
+              ['d' => 11, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันพืชมงคล: เลขมงคลการเงินและความมั่งคั่ง', 'date' => '2026-05-11'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย (สถิติ/วิเคราะห์)', 'date' => '2026-05-16', 'is_lottery' => true],
+              ['d' => 22, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(Pillar Content เติมช่องว่างปลายเดือน)', 'date' => '2026-05-22'],
+              ['d' => 27, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(Pillar Content เลี้ยงกระแสก่อยวันพระใหญ่)', 'date' => '2026-05-27'],
+              ['d' => 31, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันวิสาขบูชา: เลขสติปัญญาและการเริ่มต้นใหม่', 'date' => '2026-05-31'],
+          ]],
+          ['month' => 'มิถุนายน 69', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-06-01', 'is_lottery' => true],
+              ['d' => 8, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางต้นเดือน)', 'date' => '2026-06-08'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-06-16', 'is_lottery' => true],
+              ['d' => 21, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางปลายเดือน)', 'date' => '2026-06-21'],
+              ['d' => 26, 't' => '09:00', 'type' => 'วันมู', 'topic' => 'วันสุนทรภู่: เลขมงคลสายวาทศิลป์และการเจรจา', 'date' => '2026-06-26'],
+          ]],
+          ['month' => 'กรกฎาคม 69', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-07-01', 'is_lottery' => true],
+              ['d' => 8, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางต้นเดือน)', 'date' => '2026-07-08'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-07-16', 'is_lottery' => true],
+              ['d' => 23, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางปลายเดือน)', 'date' => '2026-07-23'],
+              ['d' => 28, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'คอนเทนต์มงคลรวมใจ (ร.10)', 'date' => '2026-07-28'],
+              ['d' => 29, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันอาสาฬหบูชา: ปรับพลังงานตัวเลข', 'date' => '2026-07-29'],
+          ]],
+          ['month' => 'สิงหาคม 69', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-08-01', 'is_lottery' => true],
+              ['d' => 8, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางต้นเดือน)', 'date' => '2026-08-08'],
+              ['d' => 12, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันแม่: เลขมงคลสุขภาพ', 'date' => '2026-08-12'],
+              ['d' => 15, 't' => '09:00', 'type' => 'วันมู', 'topic' => 'วันคเณศจตุรถี: เลขมงคลประทานพร', 'date' => '2026-08-15'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-08-16', 'is_lottery' => true],
+              ['d' => 25, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางปลายเดือน เพราะวันสำคัญกระจุกต้นเดือน)', 'date' => '2026-08-25'],
+          ]],
+          ['month' => 'กันยายน 69', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-09-01', 'is_lottery' => true],
+              ['d' => 8, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางต้นเดือน)', 'date' => '2026-09-08'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-09-16', 'is_lottery' => true],
+              ['d' => 21, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางปลายเดือน)', 'date' => '2026-09-21'],
+              ['d' => 25, 't' => '09:00', 'type' => 'วันมู', 'topic' => 'วันไหว้พระจันทร์: เลขเมตตามหานิยม', 'date' => '2026-09-25'],
+              ['d' => 30, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(ปิดท้ายเดือน)', 'date' => '2026-09-30'],
+          ]],
+          ['month' => 'ตุลาคม 69', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-10-01', 'is_lottery' => true],
+              ['d' => 8, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางต้นเดือน)', 'date' => '2026-10-08'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-10-16', 'is_lottery' => true],
+              ['d' => 20, 't' => '09:00', 'type' => 'วันมู', 'topic' => 'เทศกาลกินเจ: เลขสายขาว (เลือกลงวันที่ 20)', 'date' => '2026-10-20'],
+              ['d' => 23, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันปิยมหาราช: เลขมงคลการงาน', 'date' => '2026-10-23'],
+          ]],
+          ['month' => 'พฤศจิกายน 69', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-11-01', 'is_lottery' => true],
+              ['d' => 8, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางต้นเดือน)', 'date' => '2026-11-08'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-11-16', 'is_lottery' => true],
+              ['d' => 24, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันลอยกระทง: เลขขอพรโชคลาภ', 'date' => '2026-11-24'],
+              ['d' => 29, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางปลายเดือน)', 'date' => '2026-11-29'],
+          ]],
+          ['month' => 'ธันวาคม 69', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-12-01', 'is_lottery' => true],
+              ['d' => 5, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันพ่อ: เลขมงคลความมั่นคง', 'date' => '2026-12-05'],
+              ['d' => 10, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันรัฐธรรมนูญ: เลขมงคลระเบียบวินัย', 'date' => '2026-12-10'],
+              ['d' => 16, 't' => '09:00', 'type': 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-12-16', 'is_lottery' => true],
+              ['d' => 24, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางก่อนปีใหม่)', 'date' => '2026-12-24'],
+              ['d' => 31, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันสิ้นปี: สรุปเลขปี 69', 'date' => '2026-12-31'],
+          ]],
+          ['month' => 'มกราคม 70', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย/สำคัญ', 'topic' => 'วันขึ้นปีใหม่: เปิดดวงตัวเลขปี 70 + หวย', 'date' => '2027-01-01', 'is_lottery' => true],
+              ['d' => 9, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันเด็ก: เลขมงคลเสริม IQ', 'date' => '2027-01-09'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2027-01-16', 'is_lottery' => true],
+              ['d' => 23, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(อุดช่องว่างปลายเดือน)', 'date' => '2027-01-23'],
+          ]],
+          ['month' => 'กุมภาพันธ์ 70', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2027-02-01', 'is_lottery' => true],
+              ['d' => 6, 't' => '09:00', 'type' => 'วันมู', 'topic' => 'วันตรุษจีน: เลขรับทรัพย์', 'date' => '2027-02-06'],
+              ['d' => 14, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันวาเลนไทน์: คู่เลขความรัก', 'date' => '2027-02-14'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2027-02-16', 'is_lottery' => true],
+              ['d' => 21, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันมาฆบูชา: เลขสายบุญ', 'date' => '2027-02-21'],
+              ['d' => 26, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(อุดช่องว่างปลายเดือน)', 'date' => '2027-02-26'],
+          ]],
+          ['month' => 'มีนาคม 70', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2027-03-01', 'is_lottery' => true],
+              ['d' => 8, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางต้นเดือน - เดือนนี้ไม่มีเทศกาล)', 'date' => '2027-03-08'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2027-03-16', 'is_lottery' => true],
+              ['d' => 24, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางปลายเดือน)', 'date' => '2027-03-24'],
+              ['d' => 30, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(ปิดท้ายเดือน)', 'date' => '2027-03-30'],
+          ]],
+          ['month' => 'เมษายน 70', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2027-04-01', 'is_lottery' => true],
+              ['d' => 6, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันจักรี: เลขเสริมอำนาจ', 'date' => '2027-04-06'],
+              ['d' => 13, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันสงกรานต์: เลขปลอดภัยในการเดินทาง', 'date' => '2027-04-13'],
+              ['d' => 16, 't' => '09:00', 'type': 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2027-04-16', 'is_lottery' => true],
+              ['d' => 24, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(อุดช่องว่างปลายเดือน)', 'date' => '2027-04-24'],
+          ]],
+      ];
+    @endphp
     <div class="admin-page-head">
       <div>
         <h1>บทความ</h1>
@@ -11,7 +103,7 @@
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px; height: 20px;">
               <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.456-2.455l.259-1.036.259 1.036a3.375 3.375 0 002.455 2.456l1.036.259-1.036.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
             </svg>
-            <span>AI ช่วยเขียน</span>
+            <span>Generate prompt AI</span>
           </button>
           <button type="button" class="admin-button admin-button--import-top" onclick="openImportModal()" title="นำเข้า JSON">
             <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px; height: 20px;">
@@ -787,7 +879,15 @@
 
     <div class="admin-card article-admin-card">
       <div class="article-admin-toolbar" style="padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <input type="text" id="article-search" placeholder="ค้นหาหัวข้อบทความ..." class="admin-input" style="max-width: 300px;">
+        <div style="display: flex; gap: 12px; align-items: center; flex: 1; max-width: 600px;">
+          <input type="text" id="article-search" placeholder="ค้นหาหัวข้อบทความ..." class="admin-input" style="flex: 1;">
+          <select id="plan-month-filter" class="admin-input" style="width: 180px; background-color: #fff; cursor: pointer; border-color: #e2e8f0; font-weight: 600; color: #1e293b;">
+            <option value="">ทั้งหมด (แผนงาน)</option>
+            @foreach($planData as $month)
+              <option value="{{ $month['month'] }}">{{ $month['month'] }}</option>
+            @endforeach
+          </select>
+        </div>
         <div class="admin-muted article-admin-toolbar__count" style="font-size: 13px; font-weight: 600;">ทั้งหมด {{ number_format($articles->total()) }} รายการ</div>
       </div>
       <div class="admin-table-wrap">
@@ -992,25 +1092,230 @@
       <a href="{{ route('admin.articles.create') }}" class="article-mobile-fab">เขียนบทความ</a>
     </div>
 
-    {{-- Client-side Rendering Bridge --}}
-    <canvas id="render-canvas" style="display: none;"></canvas>
-    <div id="render-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 99999; color: white; flex-direction: column; align-items: center; justify-content: center; font-family: sans-serif;">
-        <div style="border: 4px solid #f3f3f3; border-top: 4px solid #1877F2; border-radius: 50%; width: 50px; height: 50px; animation: spin_render 1s linear infinite; margin-bottom: 20px;"></div>
-        <div id="render-status" style="font-size: 18px; font-weight: bold;">กำลังวาดรูปหวยให้สวยงาม...</div>
-        <p style="margin-top: 10px; opacity: 0.8;">กำลังใช้ระบบวาดรูปขั้นสูงเพื่อให้แสดงผลได้ชัดที่สุด</p>
-        <style>
-          @keyframes spin_render { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-          
-          @font-face {
-              font-family: 'KanitCustom';
-              src: url('/fonts/Kanit-700.ttf') format('truetype');
-              font-weight: 700;
+    <style>
+      .content-plan-card { margin-top: 40px; border-top: 2px solid #7c3aed; padding: 30px; }
+      .plan-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
+      .plan-title { margin: 0; font-size: 20px; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 10px; }
+      .plan-status-summary { font-size: 14px; font-weight: 700; background: #f1f5f9; padding: 6px 14px; border-radius: 99px; color: #475569; }
+      .plan-table-wrap { background: white; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
+      .plan-table { width: 100%; border-collapse: collapse; font-family: 'Kanit', sans-serif; }
+      .plan-table th { background: #f8fafc; text-align: left; padding: 14px 18px; font-size: 13px; font-weight: 700; color: #64748b; border-bottom: 2px solid #f1f5f9; }
+      .plan-table td { padding: 14px 18px; font-size: 14px; color: #334155; border-bottom: 1px solid #f1f5f9; }
+      .plan-table tr:last-child td { border-bottom: none; }
+      .plan-table tr:hover td { background: #fcfdff; }
+      .plan-row--checked { background: #f0fdf4 !important; }
+      .plan-row--checked td { color: #065f46; }
+      .month-divider { background: #f1f5f9; font-weight: 800; color: #475569; padding: 10px 18px; font-size: 13px; }
+      .check-icon { color: #10b981; font-weight: 900; margin-right: 8px; font-size: 16px; }
+      .type-pill { display: inline-block; padding: 2px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
+      .type-pill--หวย { background: #fef2f2; color: #ef4444; }
+      .type-pill--วันสำคัญ { background: #eff6ff; color: #3b82f6; }
+      .type-pill--วันมู { background: #faf5ff; color: #9333ea; }
+      .type-pill--evergreen { background: #f0fdf4; color: #16a34a; }
+      @media (max-width: 768px) {
+        .plan-table th:nth-child(1), .plan-table td:nth-child(1) { display: none; }
+      }
+    </style>
+
+    @php
+      $planData = [
+          ['month' => 'พฤษภาคม 69', 'items' => [
+              ['d' => 11, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันพืชมงคล: เลขมงคลการเงินและความมั่งคั่ง', 'date' => '2026-05-11'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย (สถิติ/วิเคราะห์)', 'date' => '2026-05-16', 'is_lottery' => true],
+              ['d' => 22, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(Pillar Content เติมช่องว่างปลายเดือน)', 'date' => '2026-05-22'],
+              ['d' => 27, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(Pillar Content เลี้ยงกระแสก่อยวันพระใหญ่)', 'date' => '2026-05-27'],
+              ['d' => 31, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันวิสาขบูชา: เลขสติปัญญาและการเริ่มต้นใหม่', 'date' => '2026-05-31'],
+          ]],
+          ['month' => 'มิถุนายน 69', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-06-01', 'is_lottery' => true],
+              ['d' => 8, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางต้นเดือน)', 'date' => '2026-06-08'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-06-16', 'is_lottery' => true],
+              ['d' => 21, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางปลายเดือน)', 'date' => '2026-06-21'],
+              ['d' => 26, 't' => '09:00', 'type' => 'วันมู', 'topic' => 'วันสุนทรภู่: เลขมงคลสายวาทศิลป์และการเจรจา', 'date' => '2026-06-26'],
+          ]],
+          ['month' => 'กรกฎาคม 69', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-07-01', 'is_lottery' => true],
+              ['d' => 8, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางต้นเดือน)', 'date' => '2026-07-08'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-07-16', 'is_lottery' => true],
+              ['d' => 23, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางปลายเดือน)', 'date' => '2026-07-23'],
+              ['d' => 28, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'คอนเทนต์มงคลรวมใจ (ร.10)', 'date' => '2026-07-28'],
+              ['d' => 29, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันอาสาฬหบูชา: ปรับพลังงานตัวเลข', 'date' => '2026-07-29'],
+          ]],
+          ['month' => 'สิงหาคม 69', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-08-01', 'is_lottery' => true],
+              ['d' => 8, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางต้นเดือน)', 'date' => '2026-08-08'],
+              ['d' => 12, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันแม่: เลขมงคลสุขภาพ', 'date' => '2026-08-12'],
+              ['d' => 15, 't' => '09:00', 'type' => 'วันมู', 'topic' => 'วันคเณศจตุรถี: เลขมงคลประทานพร', 'date' => '2026-08-15'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-08-16', 'is_lottery' => true],
+              ['d' => 25, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางปลายเดือน เพราะวันสำคัญกระจุกต้นเดือน)', 'date' => '2026-08-25'],
+          ]],
+          ['month' => 'กันยายน 69', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-09-01', 'is_lottery' => true],
+              ['d' => 8, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางต้นเดือน)', 'date' => '2026-09-08'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-09-16', 'is_lottery' => true],
+              ['d' => 21, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางปลายเดือน)', 'date' => '2026-09-21'],
+              ['d' => 25, 't' => '09:00', 'type' => 'วันมู', 'topic' => 'วันไหว้พระจันทร์: เลขเมตตามหานิยม', 'date' => '2026-09-25'],
+              ['d' => 30, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(ปิดท้ายเดือน)', 'date' => '2026-09-30'],
+          ]],
+          ['month' => 'ตุลาคม 69', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-10-01', 'is_lottery' => true],
+              ['d' => 8, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางต้นเดือน)', 'date' => '2026-10-08'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-10-16', 'is_lottery' => true],
+              ['d' => 20, 't' => '09:00', 'type' => 'วันมู', 'topic' => 'เทศกาลกินเจ: เลขสายขาว (เลือกลงวันที่ 20)', 'date' => '2026-10-20'],
+              ['d' => 23, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันปิยมหาราช: เลขมงคลการงาน', 'date' => '2026-10-23'],
+          ]],
+          ['month' => 'พฤศจิกายน 69', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-11-01', 'is_lottery' => true],
+              ['d' => 8, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางต้นเดือน)', 'date' => '2026-11-08'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-11-16', 'is_lottery' => true],
+              ['d' => 24, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันลอยกระทง: เลขขอพรโชคลาภ', 'date' => '2026-11-24'],
+              ['d' => 29, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางปลายเดือน)', 'date' => '2026-11-29'],
+          ]],
+          ['month' => 'ธันวาคม 69', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-12-01', 'is_lottery' => true],
+              ['d' => 5, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันพ่อ: เลขมงคลความมั่นคง', 'date' => '2026-12-05'],
+              ['d' => 10, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันรัฐธรรมนูญ: เลขมงคลระเบียบวินัย', 'date' => '2026-12-10'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-12-16', 'is_lottery' => true],
+              ['d' => 24, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางก่อนปีใหม่)', 'date' => '2026-12-24'],
+              ['d' => 31, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันสิ้นปี: สรุปเลขปี 69', 'date' => '2026-12-31'],
+          ]],
+          ['month' => 'มกราคม 70', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย/สำคัญ', 'topic' => 'วันขึ้นปีใหม่: เปิดดวงตัวเลขปี 70 + หวย', 'date' => '2027-01-01', 'is_lottery' => true],
+              ['d' => 9, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันเด็ก: เลขมงคลเสริม IQ', 'date' => '2027-01-09'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2027-01-16', 'is_lottery' => true],
+              ['d' => 23, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(อุดช่องว่างปลายเดือน)', 'date' => '2027-01-23'],
+          ]],
+          ['month' => 'กุมภาพันธ์ 70', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2027-02-01', 'is_lottery' => true],
+              ['d' => 6, 't' => '09:00', 'type' => 'วันมู', 'topic' => 'วันตรุษจีน: เลขรับทรัพย์', 'date' => '2027-02-06'],
+              ['d' => 14, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันวาเลนไทน์: คู่เลขความรัก', 'date' => '2027-02-14'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2027-02-16', 'is_lottery' => true],
+              ['d' => 21, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันมาฆบูชา: เลขสายบุญ', 'date' => '2027-02-21'],
+              ['d' => 26, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(อุดช่องว่างปลายเดือน)', 'date' => '2027-02-26'],
+          ]],
+          ['month' => 'มีนาคม 70', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2027-03-01', 'is_lottery' => true],
+              ['d' => 8, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางต้นเดือน - เดือนนี้ไม่มีเทศกาล)', 'date' => '2027-03-08'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2027-03-16', 'is_lottery' => true],
+              ['d' => 24, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางปลายเดือน)', 'date' => '2027-03-24'],
+              ['d' => 30, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(ปิดท้ายเดือน)', 'date' => '2027-03-30'],
+          ]],
+          ['month' => 'เมษายน 70', 'items' => [
+              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2027-04-01', 'is_lottery' => true],
+              ['d' => 6, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันจักรี: เลขเสริมอำนาจ', 'date' => '2027-04-06'],
+              ['d' => 13, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันสงกรานต์: เลขปลอดภัยในการเดินทาง', 'date' => '2027-04-13'],
+              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2027-04-16', 'is_lottery' => true],
+              ['d' => 24, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(อุดช่องว่างปลายเดือน)', 'date' => '2027-04-24'],
+          ]],
+      ];
+
+      $totalPlanned = 0;
+      $totalDone = 0;
+      foreach ($planData as $month) {
+          $totalPlanned += count($month['items']);
+      }
+      
+      // Helper function to check if article exists for date or lottery
+      $checkDone = function($item) use ($existingArticlesInfo, &$totalDone) {
+          $exists = false;
+          foreach ($existingArticlesInfo as $article) {
+              // Check by date
+              if ($article['date'] === $item['date']) {
+                  $exists = true; break;
+              }
+              // Special check for Lottery
+              if (!empty($item['is_lottery'])) {
+                  $dateObj = \Carbon\Carbon::parse($item['date']);
+                  $isRound1 = (int)$dateObj->format('j') <= 15;
+                  $pattern = '/^thai-govern?ment-lottery-' . $dateObj->format('Ym') . ($isRound1 ? 'first' : 'second') . '$/';
+                  if (preg_match($pattern, (string)$article['slug'])) {
+                      $exists = true; break;
+                  }
+              }
           }
-          .font-loader { font-family: 'KanitCustom'; position: absolute; visibility: hidden; opacity: 0; }
-      </style>
-      <div class="font-loader">Force Load Kanit</div>
+          if ($exists) $totalDone++;
+          return $exists;
+      };
+    @endphp
+
+    <section class="admin-card content-plan-card">
+      <div class="plan-header">
+        <h3 class="plan-title">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 24px; height: 24px; color: #7c3aed;"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z" /></svg>
+          ตารางแผนการเผยแพร่บทความ (พ.ค. 69 - เม.ย. 70)
+        </h3>
+        <div class="plan-status-summary">
+          เตรียมแล้ว <span style="color: #10b981;">{{ $totalDone }}</span> / ทั้งหมด {{ $totalPlanned }}
+        </div>
+      </div>
+
+      <div class="plan-table-wrap">
+        <table class="plan-table">
+          <thead>
+            <tr>
+              <th style="width: 50px;"></th>
+              <th style="width: 140px;">เดือน</th>
+              <th style="width: 120px;">วันที่ / เวลา</th>
+              <th style="width: 110px;">ประเภท</th>
+              <th>หัวข้อ / แนวทางคอนเทนต์</th>
+            </tr>
+          </thead>
+          <tbody>
+            @foreach($planData as $month)
+              <tr class="month-divider" data-month-divider="{{ $month['month'] }}">
+                <td colspan="5">{{ $month['month'] }}</td>
+              </tr>
+              @foreach($month['items'] as $item)
+                @php $isDone = $checkDone($item); @endphp
+                <tr class="{{ $isDone ? 'plan-row--checked' : '' }} plan-item-row" data-month="{{ $month['month'] }}">
+                  <td style="text-align: center;">@if($isDone) <span class="check-icon" style="margin-right: 0;">✅</span> @endif</td>
+                  <td>{{ $month['month'] }}</td>
+                  <td style="font-weight: 700;">{{ $item['d'] }} | {{ $item['t'] }}</td>
+                  <td><span class="type-pill type-pill--{{ strtolower($item['type']) }}">{{ $item['type'] }}</span></td>
+                  <td>{{ $item['topic'] }}</td>
+                </tr>
+              @endforeach
+            @endforeach
+          </tbody>
+        </table>
+      </div>
+    </section>
     </div>
-    </div>
+
+    <script>
+      document.addEventListener('DOMContentLoaded', function() {
+        const monthFilter = document.getElementById('plan-month-filter');
+        const planRows = document.querySelectorAll('.plan-item-row');
+        const dividers = document.querySelectorAll('.month-divider');
+
+        monthFilter.addEventListener('change', function() {
+          const selectedMonth = this.value;
+          
+          if (!selectedMonth) {
+            // Show all
+            planRows.forEach(row => row.style.display = '');
+            dividers.forEach(div => div.style.display = '');
+          } else {
+            // Filter by month
+            planRows.forEach(row => {
+              if (row.getAttribute('data-month') === selectedMonth) {
+                row.style.display = '';
+              } else {
+                row.style.display = 'none';
+              }
+            });
+            
+            dividers.forEach(div => {
+              if (div.getAttribute('data-month-divider') === selectedMonth) {
+                div.style.display = '';
+              } else {
+                div.style.display = 'none';
+              }
+            });
+          }
+        });
+      });
+    </script>
 
     {{-- AI Prompt Modal --}}
     <div id="ai-prompt-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10001; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px);">

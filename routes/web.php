@@ -2568,7 +2568,19 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->latest('created_at')
             ->paginate(20);
 
-        return view('admin.articles', compact('articles'));
+        // Fetch all article dates and titles for the content plan checklist
+        $existingArticlesInfo = Article::query()
+            ->select('id', 'title', 'published_at', 'is_published', 'slug')
+            ->get()
+            ->map(function($a) {
+                return [
+                    'date' => $a->published_at ? $a->published_at->timezone('Asia/Bangkok')->format('Y-m-d') : null,
+                    'title' => strtolower($a->title),
+                    'slug' => strtolower($a->slug),
+                ];
+            });
+
+        return view('admin.articles', compact('articles', 'existingArticlesInfo'));
     })->name('articles');
 
     Route::post('/articles/check-slug', function (Request $request) use ($ensureAdmin) {
