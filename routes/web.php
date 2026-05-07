@@ -3023,7 +3023,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'meta_description' => ['nullable', 'string', 'max:2000'],
             'keywords' => ['nullable', 'string'],
             'lsi_keywords' => ['nullable', 'string'],
-            'published_at' => ['nullable', 'date'],
+            'published_at' => ['nullable'],
             'land_path' => ['nullable', 'string', 'max:500'],
             'sq_path' => ['nullable', 'string', 'max:500'],
             'image_guidelines' => ['nullable', 'array'],
@@ -3043,7 +3043,11 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $isPublished = $request->boolean('is_published');
         $publishedAt = $data['published_at'] ?? null;
         if ($publishedAt) {
-            $publishedAt = Carbon::parse($publishedAt, 'Asia/Bangkok')->setTimezone(config('app.timezone'));
+            if (is_numeric($publishedAt)) {
+                $publishedAt = \Illuminate\Support\Carbon::createFromTimestamp($publishedAt);
+            } else {
+                $publishedAt = \Illuminate\Support\Carbon::parse($publishedAt, 'Asia/Bangkok')->setTimezone(config('app.timezone'));
+            }
         }
         if ($publishedAt === null) {
             $publishedAt = $resolvePlannedArticlePublishedAt($slug, $data['title']);
@@ -3205,7 +3209,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'meta_description' => ['nullable', 'string', 'max:2000'],
             'keywords' => ['nullable', 'string'],
             'lsi_keywords' => ['nullable', 'string'],
-            'published_at' => ['nullable', 'date'],
+            'published_at' => ['nullable'],
             'land_path' => ['nullable', 'string', 'max:500'],
             'sq_path' => ['nullable', 'string', 'max:500'],
             'image_guidelines' => ['nullable', 'array'],
@@ -3227,7 +3231,11 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         // 1. Get from Form, 2. Fallback to DB
         $publishedAt = $data['published_at'] ?? null;
         if ($publishedAt) {
-            $publishedAt = Carbon::parse($publishedAt, 'Asia/Bangkok')->setTimezone(config('app.timezone'));
+            if (is_numeric($publishedAt)) {
+                $publishedAt = \Illuminate\Support\Carbon::createFromTimestamp($publishedAt);
+            } else {
+                $publishedAt = \Illuminate\Support\Carbon::parse($publishedAt, 'Asia/Bangkok')->setTimezone(config('app.timezone'));
+            }
         } else {
             $publishedAt = $article->published_at;
         }

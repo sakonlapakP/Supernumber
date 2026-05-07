@@ -60,6 +60,10 @@ class Article {
 
   static DateTime? _parseDateTime(dynamic value) {
     if (value == null) return null;
+    if (value is int) {
+      return DateTime.fromMillisecondsSinceEpoch(value * 1000).toLocal();
+    }
+    // Fallback if it's still a string
     return DateTime.parse(value.toString()).toLocal();
   }
 
@@ -99,7 +103,7 @@ class Article {
       'image_guidelines': imageGuidelines,
       'is_published': isPublished,
       'is_auto_post': isAutoPost,
-      'published_at': publishedAt != null ? "${publishedAt!.year.toString().padLeft(4, '0')}-${publishedAt!.month.toString().padLeft(2, '0')}-${publishedAt!.day.toString().padLeft(2, '0')} ${publishedAt!.hour.toString().padLeft(2, '0')}:${publishedAt!.minute.toString().padLeft(2, '0')}:00" : null,
+      'published_at': publishedAt != null ? (publishedAt!.millisecondsSinceEpoch ~/ 1000).toString() : null,
     };
   }
 }

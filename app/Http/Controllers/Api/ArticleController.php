@@ -100,7 +100,7 @@ class ArticleController extends Controller
             'lsi_keywords' => 'nullable|string',
             'is_published' => 'boolean',
             'is_auto_post' => 'boolean',
-            'published_at' => 'nullable|date',
+            'published_at' => 'nullable',
             'image_guidelines' => 'nullable|string', // รับเป็น JSON string จาก FormData
             'cover_landscape' => 'nullable|image|max:2048',
             'cover_square' => 'nullable|image|max:2048',
@@ -122,7 +122,11 @@ class ArticleController extends Controller
             $data['image_guidelines'] = json_decode($data['image_guidelines'], true);
         }
         if (! empty($data['published_at'])) {
-            $data['published_at'] = Carbon::parse($data['published_at'], 'Asia/Bangkok')->setTimezone(config('app.timezone'));
+            if (is_numeric($data['published_at'])) {
+                $data['published_at'] = \Illuminate\Support\Carbon::createFromTimestamp($data['published_at']);
+            } else {
+                $data['published_at'] = \Illuminate\Support\Carbon::parse($data['published_at'], 'Asia/Bangkok')->setTimezone(config('app.timezone'));
+            }
         }
         $this->removeMissingArticleColumns($data);
 
@@ -233,7 +237,7 @@ class ArticleController extends Controller
             'lsi_keywords' => 'nullable|string',
             'is_published' => 'boolean',
             'is_auto_post' => 'boolean',
-            'published_at' => 'nullable|date',
+            'published_at' => 'nullable',
             'image_guidelines' => 'nullable|string',
             'cover_landscape' => 'nullable|image|max:2048',
             'cover_square' => 'nullable|image|max:2048',
@@ -261,7 +265,11 @@ class ArticleController extends Controller
             $data['image_guidelines'] = json_decode($data['image_guidelines'], true);
         }
         if (! empty($data['published_at'])) {
-            $data['published_at'] = Carbon::parse($data['published_at'], 'Asia/Bangkok')->setTimezone(config('app.timezone'));
+            if (is_numeric($data['published_at'])) {
+                $data['published_at'] = \Illuminate\Support\Carbon::createFromTimestamp($data['published_at']);
+            } else {
+                $data['published_at'] = \Illuminate\Support\Carbon::parse($data['published_at'], 'Asia/Bangkok')->setTimezone(config('app.timezone'));
+            }
         }
         $this->removeMissingArticleColumns($data);
 
