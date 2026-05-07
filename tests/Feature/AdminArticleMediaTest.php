@@ -114,6 +114,9 @@ class AdminArticleMediaTest extends TestCase
         $indexResponse->assertOk();
         $indexResponse->assertSee(route('admin.articles.delete', $article), false);
         $indexResponse->assertSee('ลบ', false);
+        $indexResponse->assertSee('article-action-share is-disabled', false);
+        $indexResponse->assertSee('title="กรุณาเผยแพร่บทความก่อนจึงจะแชร์ได้"', false);
+        $indexResponse->assertSee('disabled', false);
 
         $deleteResponse = $this
             ->withSession($this->managerSession($manager))

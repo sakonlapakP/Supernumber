@@ -221,6 +221,17 @@
       box-shadow: 0 6px 14px rgba(24, 119, 242, 0.3);
       opacity: 0.9;
     }
+    .article-action-share:disabled,
+    .article-action-share.is-disabled,
+    .article-action-share.is-disabled:hover {
+      background: #f1f5f9 !important;
+      color: #94a3b8 !important;
+      border-color: #e2e8f0 !important;
+      box-shadow: none !important;
+      cursor: not-allowed !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
     
     .article-action-delete {
       box-shadow: 0 4px 10px rgba(220, 38, 38, 0.15);
@@ -859,6 +870,11 @@
     .admin-action-group .article-action-share {
       color: #1877F2 !important;
       background: rgba(24, 119, 242, 0.08) !important;
+    }
+    .admin-action-group .article-action-share:disabled,
+    .admin-action-group .article-action-share.is-disabled {
+      color: #94a3b8 !important;
+      background: rgba(148, 163, 184, 0.12) !important;
     }
     .admin-action-group .admin-button svg {
       display: block !important;
