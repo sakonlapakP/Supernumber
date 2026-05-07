@@ -129,6 +129,45 @@ class AdminArticleMediaTest extends TestCase
         Storage::disk('public')->assertMissing('articles/2026/delete-me/square.jpg');
     }
 
+    public function test_manager_update_keeps_draft_publish_time(): void
+    {
+        $manager = User::factory()->create([
+            'username' => 'manager-draft-publish-time',
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        $article = Article::query()->create([
+            'title' => 'Draft Article',
+            'slug' => 'draft-article',
+            'excerpt' => 'Excerpt',
+            'content' => '<p>Draft content</p>',
+            'is_published' => false,
+        ]);
+
+        $response = $this
+            ->withSession($this->managerSession($manager))
+            ->post(route('admin.articles.update', $article), [
+                'title' => 'Draft Article Updated',
+                'slug' => 'draft-article',
+                'excerpt' => 'Updated excerpt',
+                'content' => '<p>Updated draft content</p>',
+                'meta_description' => 'Updated meta',
+                'is_published' => '0',
+                'published_at' => '2026-05-31T16:00',
+            ]);
+
+        $response->assertRedirect(route('admin.articles'));
+
+        $article->refresh();
+
+        $this->assertFalse((bool) $article->is_published);
+        $this->assertSame(
+            '2026-05-31 16:00',
+            $article->published_at?->timezone('Asia/Bangkok')->format('Y-m-d H:i')
+        );
+    }
+
     public function test_manager_json_import_persists_lsi_keywords_and_auto_post_flag(): void
     {
         $manager = User::factory()->create([

@@ -3194,9 +3194,6 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             $publishedAt = Carbon::parse($publishedAt, 'Asia/Bangkok')->setTimezone(config('app.timezone'));
         }
         
-        if (! $isPublished) {
-            $publishedAt = $article->published_at;
-        }
         if ($isPublished && $publishedAt === null) {
             $publishedAt = now();
         }
@@ -3283,7 +3280,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'content' => $content,
                 'meta_description' => trim((string) ($data['meta_description'] ?? '')) ?: null,
                 'is_published' => $isPublished,
-                'published_at' => $isPublished ? $publishedAt : null,
+                'published_at' => $publishedAt,
                 'cover_image_path' => $coverImagePath,
             ];
 
