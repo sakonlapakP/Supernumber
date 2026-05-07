@@ -30,6 +30,7 @@ class _ArticleEditScreenState extends State<ArticleEditScreen> {
   late TextEditingController _promptSquareController;
 
   late HtmlEditorController _htmlController;
+  final GlobalKey _editorKey = GlobalKey();
 
   late bool _isPublished;
   DateTime? _publishedAt;
@@ -168,12 +169,25 @@ class _ArticleEditScreenState extends State<ArticleEditScreen> {
   Future<void> _save() async {
     if (_isSaving) return;
 
+    // 1. ปิดคีย์บอร์ดก่อนเพื่อให้ WebView นิ่ง
+    FocusScope.of(context).unfocus();
+
     if (_formKey.currentState!.validate()) {
       final provider = context.read<ArticleProvider>();
+
+      String content = '';
+      try {
+        // 2. ดึงเนื้อหา HTML มาเก็บไว้ก่อนที่จะสั่ง setState (Loading)
+        // วิธีนี้จะช่วยเลี่ยงปัญหา Controller ถูก Dispose ระหว่างทาง
+        content = await _htmlController.getText();
+      } catch (e) {
+        debugPrint('Error getting HTML content: $e');
+        // ถ้าดึงไม่ได้จริงๆ ให้ลองใช้ค่าเริ่มต้นหรือแจ้งเตือน
+      }
+
       setState(() => _isSaving = true);
 
       try {
-        final content = await _htmlController.getText();
         final article = Article(
           id: widget.article?.id,
           title: _titleController.text,
@@ -291,6 +305,7 @@ class _ArticleEditScreenState extends State<ArticleEditScreen> {
                   ),
                   clipBehavior: Clip.antiAlias,
                   child: HtmlEditor(
+                    key: _editorKey,
                     controller: _htmlController,
                     htmlEditorOptions: HtmlEditorOptions(
                       hint: 'เขียนเนื้อหาบทความที่นี่...',

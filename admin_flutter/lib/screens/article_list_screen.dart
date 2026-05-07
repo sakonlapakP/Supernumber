@@ -573,8 +573,8 @@ class _ArticleItem extends StatelessWidget {
                                 child: Text(
                                   _formatArticleDate(article),
                                   style: GoogleFonts.kanit(
-                                    fontSize: 10,
-                                    color: const Color(0xFF94A3B8),
+                                    fontSize: 12,
+                                    color: const Color(0xFF64748B),
                                     fontWeight: FontWeight.w500,
                                   ),
                                   overflow: TextOverflow.ellipsis,
@@ -626,8 +626,15 @@ class _ArticleItem extends StatelessWidget {
 }
 
 String _formatArticleDate(Article article) {
-  final date = article.publishedAt ?? article.createdAt;
-  return date != null ? DateFormat('dd MMM yyyy').format(date) : '';
+  // ให้ความสำคัญกับวันเผยแพร่ (Published At) ก่อนเสมอ
+  final date = article.publishedAt;
+  if (date != null) {
+    return DateFormat('dd MMM yyyy | HH:mm').format(date);
+  }
+  
+  // ถ้ายังไม่มีวันเผยแพร่ (เป็นฉบับร่างที่ยังไม่ได้กำหนดวัน) ให้ใช้วันที่สร้างแทน
+  final created = article.createdAt;
+  return created != null ? DateFormat('dd MMM yyyy | HH:mm').format(created) : '-';
 }
 
 class _ArticleActionButton extends StatelessWidget {

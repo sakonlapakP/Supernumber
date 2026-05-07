@@ -446,22 +446,26 @@ class _ContentPlanTable extends StatelessWidget {
                       ),
                       child: Row(
                         children: [
-                          if (isDone)
-                            const Padding(
-                              padding: EdgeInsets.only(right: 8.0),
-                              child: Text('✅', style: TextStyle(fontSize: 14)),
-                            )
-                          else
-                            const SizedBox(width: 26), // Placeholder for checkmark width
                           SizedBox(
-                            width: 80,
-                            child: Text(
-                              '${item['d']} | ${item['t']}',
-                              style: const TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 13,
-                                color: Color(0xFF475569),
-                              ),
+                            width: 100,
+                            child: Row(
+                              children: [
+                                if (isDone)
+                                  const Padding(
+                                    padding: EdgeInsets.only(right: 4.0),
+                                    child: Text('✅', style: TextStyle(fontSize: 14)),
+                                  )
+                                else
+                                  const SizedBox(width: 22),
+                                Text(
+                                  '${item['d']} | ${item['t']}',
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                    color: Color(0xFF475569),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                           _TypePill(type: item['type'] as String),

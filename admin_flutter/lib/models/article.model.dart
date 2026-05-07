@@ -95,7 +95,7 @@ class Article {
       'lsi_keywords': lsiKeywords,
       'image_guidelines': imageGuidelines,
       'is_published': isPublished,
-      'published_at': publishedAt?.toIso8601String(),
+      'published_at': publishedAt?.toIso8601String(), 
     };
   }
 }

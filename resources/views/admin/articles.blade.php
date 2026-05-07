@@ -976,7 +976,7 @@
                   @if($isLotteryArticle && !$lotteryIsComplete)
                     <span class="admin-status-pill admin-status-pill--hold" style="font-size: 10px; background: #fff7ed; color: #c2410c; border-color: #fdba74;">รอผลครบ</span>
                   @endif
-                  <span class="article-mobile-meta__date">{{ $article->published_at ? $article->published_at->timezone('Asia/Bangkok')->format('d M Y') : '-' }}</span>
+                  <span class="article-mobile-meta__date">{{ $article->published_at ? $article->published_at->timezone('Asia/Bangkok')->format('d M Y | H:i') : '-' }}</span>
                 </div>
                 <div class="admin-action-group">
                   @php
@@ -1269,9 +1269,8 @@
         <table class="plan-table">
           <thead>
             <tr>
-              <th style="width: 50px;"></th>
               <th style="width: 140px;">เดือน</th>
-              <th style="width: 120px;">วันที่ / เวลา</th>
+              <th style="width: 140px;">วันที่ / เวลา</th>
               <th style="width: 110px;">ประเภท</th>
               <th>หัวข้อ / แนวทางคอนเทนต์</th>
             </tr>
@@ -1279,14 +1278,16 @@
           <tbody>
             @foreach($planData as $month)
               <tr class="month-divider" data-month-divider="{{ $month['month'] }}">
-                <td colspan="5">{{ $month['month'] }}</td>
+                <td colspan="4">{{ $month['month'] }}</td>
               </tr>
               @foreach($month['items'] as $item)
                 @php $isDone = $checkDone($item); @endphp
                 <tr class="{{ $isDone ? 'plan-row--checked' : '' }} plan-item-row" data-month="{{ $month['month'] }}">
-                  <td style="text-align: center;">@if($isDone) <span class="check-icon" style="margin-right: 0;">✅</span> @endif</td>
                   <td>{{ $month['month'] }}</td>
-                  <td style="font-weight: 700;">{{ $item['d'] }} | {{ $item['t'] }}</td>
+                  <td style="font-weight: 700;">
+                    @if($isDone) <span class="check-icon">✅</span> @endif
+                    {{ $item['d'] }} | {{ $item['t'] }}
+                  </td>
                   <td><span class="type-pill type-pill--{{ strtolower($item['type']) }}">{{ $item['type'] }}</span></td>
                   <td>{{ $item['topic'] }}</td>
                 </tr>
