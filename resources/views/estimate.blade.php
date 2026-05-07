@@ -29,11 +29,6 @@
 </script>
 @endsection
 
-@php
-  $workTypeOptions = \App\Models\EstimateLead::workTypeLabels();
-  $goalOptions = \App\Models\EstimateLead::goalLabels();
-@endphp
-
 @section('content')
   <section class="estimate-hero" aria-labelledby="estimate-title">
     <div class="estimate-hero__overlay"></div>
@@ -61,7 +56,6 @@
         <div class="estimate-alert estimate-alert--error">{{ $errors->first() }}</div>
       @endif
 
-      <div class="estimate-card">
       <div class="estimate-card">
         <form class="estimate-form" action="{{ route('estimate.store') }}" method="post">
           @csrf
@@ -136,7 +130,6 @@
             <button class="estimate-submit" type="submit">ส่งข้อมูลเพื่อวิเคราะห์เบอร์ที่เหมาะกับคุณ</button>
           </div>
         </form>
-      </div>
       </div>
     </div>
   </section>
@@ -243,6 +236,12 @@
         font-weight: 800 !important;
         color: #2f261f;
         margin-bottom: 8px;
+        text-align: center;
+    }
+    
+    .estimate-head p {
+        text-align: center;
+        margin-bottom: 30px;
     }
 
     /* SEO Content Styles */
@@ -311,7 +310,7 @@
         font-size: 17px;
         color: #6d5d50;
         text-align: left;
-        margin: 0;
+        margin: 0 !important;
     }
     @media (max-width: 768px) {
         .estimate-seo-card {
