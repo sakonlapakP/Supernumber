@@ -455,6 +455,17 @@ class _ContentPlanTable extends StatelessWidget {
                                     padding: EdgeInsets.only(right: 4.0),
                                     child: Text('✅', style: TextStyle(fontSize: 14)),
                                   )
+                                else if (item['type'] == 'หวย')
+                                  const Padding(
+                                    padding: EdgeInsets.only(right: 8.0),
+                                    child: Text('!', 
+                                      style: TextStyle(
+                                        fontSize: 16, 
+                                        fontWeight: FontWeight.black, 
+                                        color: Color(0xFFEAB308)
+                                      )
+                                    ),
+                                  )
                                 else
                                   const SizedBox(width: 22),
                                 Text(

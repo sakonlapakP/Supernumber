@@ -1285,7 +1285,11 @@
                 <tr class="{{ $isDone ? 'plan-row--checked' : '' }} plan-item-row" data-month="{{ $month['month'] }}">
                   <td>{{ $month['month'] }}</td>
                   <td style="font-weight: 700;">
-                    @if($isDone) <span class="check-icon">✅</span> @endif
+                    @if($isDone) 
+                      <span class="check-icon">✅</span> 
+                    @elseif($item['type'] === 'หวย')
+                      <span style="color: #EAB308; margin-right: 4px; font-weight: 900;">!</span>
+                    @endif
                     {{ $item['d'] }} | {{ $item['t'] }}
                   </td>
                   <td><span class="type-pill type-pill--{{ strtolower($item['type']) }}">{{ $item['type'] }}</span></td>
