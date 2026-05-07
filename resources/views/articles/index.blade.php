@@ -34,7 +34,7 @@
               </a>
             @endif
             <div class="article-card__body">
-              <p class="article-card__meta">{{ optional($article->published_at)->format('d/m/Y') ?: optional($article->created_at)->format('d/m/Y') }}</p>
+              <p class="article-card__meta">{{ optional(optional($article->published_at)->timezone('Asia/Bangkok'))->format('d/m/Y') ?: optional(optional($article->created_at)->timezone('Asia/Bangkok'))->format('d/m/Y') }}</p>
               <h2 class="article-card__title">
                 <a href="{{ route('articles.show', $article->slug) }}">{{ $article->title }}</a>
               </h2>

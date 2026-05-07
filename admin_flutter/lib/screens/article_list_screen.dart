@@ -7,6 +7,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../providers/article_provider.dart';
 import '../providers/auth_provider.dart';
 import '../models/article.model.dart';
+import '../utils/date_formatter.dart';
 import 'article_edit_screen.dart';
 import 'article_json_import_screen.dart';
 
@@ -629,12 +630,12 @@ String _formatArticleDate(Article article) {
   // ให้ความสำคัญกับวันเผยแพร่ (Published At) ก่อนเสมอ
   final date = article.publishedAt;
   if (date != null) {
-    return DateFormat('dd MMM yyyy | HH:mm').format(date);
+    return DateFormatter.formatArticleList(date);
   }
   
   // ถ้ายังไม่มีวันเผยแพร่ (เป็นฉบับร่างที่ยังไม่ได้กำหนดวัน) ให้ใช้วันที่สร้างแทน
   final created = article.createdAt;
-  return created != null ? DateFormat('dd MMM yyyy | HH:mm').format(created) : '-';
+  return created != null ? DateFormatter.formatArticleList(created) : '-';
 }
 
 class _ArticleActionButton extends StatelessWidget {

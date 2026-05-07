@@ -23,8 +23,10 @@ class LotteryResult extends Model
     {
         return [
             'is_complete' => 'boolean',
-            'fetched_at' => 'datetime',
+            'fetched_at' => 'datetime:U',
             'source_payload' => 'array',
+            'created_at' => 'datetime:U',
+            'updated_at' => 'datetime:U',
         ];
     }
 

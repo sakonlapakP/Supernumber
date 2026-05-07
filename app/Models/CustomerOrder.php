@@ -46,6 +46,8 @@ class CustomerOrder extends Model
             'service_type' => 'string',
             'selected_package' => 'integer',
             'appointment_date' => 'date',
+            'created_at' => 'datetime:U',
+            'updated_at' => 'datetime:U',
         ];
     }
 

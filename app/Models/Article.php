@@ -38,16 +38,12 @@ class Article extends Model
             'is_auto_post' => 'boolean',
             'is_line_broadcasted' => 'boolean',
             'image_guidelines' => 'array',
-            'published_at' => 'datetime',
-            'notified_at' => 'datetime',
+            'published_at' => 'datetime:U',
+            'notified_at' => 'datetime:U',
+            'created_at' => 'datetime:U',
+            'updated_at' => 'datetime:U',
         ];
     }
-
-    protected function serializeDate(\DateTimeInterface $date)
-    {
-        return $date->getTimestamp();
-    }
-
 
     public function scopePublished(Builder $query): Builder
     {

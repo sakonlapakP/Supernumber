@@ -23,7 +23,7 @@
 
 @section('content')
   @php
-    $publishedAt = optional($article->published_at)->format('d/m/Y H:i') ?: optional($article->created_at)->format('d/m/Y H:i');
+    $publishedAt = optional(optional($article->published_at)->timezone('Asia/Bangkok'))->format('d/m/Y H:i') ?: optional(optional($article->created_at)->timezone('Asia/Bangkok'))->format('d/m/Y H:i');
     $contentRaw = trim((string) $article->sanitizedContent());
     $hasHtml = \Illuminate\Support\Str::contains($contentRaw, ['<p', '<div', '<br', '<ul', '<ol', '<li', '<strong', '<em', '<a', '<h1', '<h2', '<h3']);
     $contentForPattern = $contentRaw;

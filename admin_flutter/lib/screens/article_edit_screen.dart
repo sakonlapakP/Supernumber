@@ -9,6 +9,7 @@ import 'dart:io';
 import '../models/article.model.dart';
 import '../providers/article_provider.dart';
 import '../services/api_service.dart';
+import '../utils/date_formatter.dart';
 
 class ArticleEditScreen extends StatefulWidget {
   final Article? article;
@@ -646,7 +647,7 @@ class _ArticleEditScreenState extends State<ArticleEditScreen> {
                 ),
                 Text(
                   _publishedAt != null
-                      ? DateFormat('dd/MM/yyyy, HH:mm').format(_publishedAt!)
+                      ? DateFormatter.formatBangkok(_publishedAt!)
                       : 'เผยแพร่ทันที',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,

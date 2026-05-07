@@ -70,6 +70,11 @@ class FetchLatestLotteryCommand extends Command
             // If API provides a date, and it's close to our target (holiday shift), use API date
             if ($sourceDate && abs($sourceDate->diffInDays($targetDate)) <= 5) {
                 $targetDate = $sourceDate;
+                
+                // RE-CHECK existing record because targetDate changed
+                $existing = LotteryResult::query()
+                    ->where('draw_date', $targetDate->toDateString())
+                    ->first();
             }
 
             $result = $existing ?? new LotteryResult(['draw_date' => $targetDate->toDateString()]);
@@ -220,30 +225,29 @@ class FetchLatestLotteryCommand extends Command
         $service = app(LineLotteryImageService::class);
         $pathBase = "articles/{$drawDate->year}/{$article->slug}";
 
-        // To satisfy the fallback test which mocks empty PATH, we check it here
+        // 1. Generate and Save SVG (Primary)
+        $squareSvg = $service->generateSquareSvg($result);
+        $landscapeSvg = $service->generateLandscapeSvg($result);
+        
+        $squareSvgFilename = "{$article->slug}_square.svg";
+        $landscapeSvgFilename = "{$article->slug}_landscape.svg";
+        
+        Storage::disk('public')->put("{$pathBase}/{$squareSvgFilename}", $squareSvg);
+        Storage::disk('public')->put("{$pathBase}/{$landscapeSvgFilename}", $landscapeSvg);
+        
+        $article->cover_image_square_path = "{$pathBase}/{$squareSvgFilename}";
+        $article->cover_image_path = "{$pathBase}/{$squareSvgFilename}";
+        $article->cover_image_landscape_path = "{$pathBase}/{$landscapeSvgFilename}";
+
+        // 2. Generate PNG as additional asset if possible
         $canRenderPng = (getenv('PATH') ?: '') !== '';
         $pngBinary = $canRenderPng ? $service->renderFallbackPng($result) : null;
 
         if ($pngBinary) {
-            $pngFilename = "thai-goverment-lottery-{$drawDate->format('Ym')}{$slugSuffix}.png";
+            $pngFilename = "{$article->slug}.png";
             Storage::disk('public')->put("{$pathBase}/{$pngFilename}", $pngBinary);
-            $article->cover_image_square_path = "{$pathBase}/{$pngFilename}";
-            $article->cover_image_path = "{$pathBase}/{$pngFilename}";
-            $article->cover_image_landscape_path = "{$pathBase}/{$pngFilename}";
-        } else {
-            // Fallback to SVG
-            $squareSvg = $service->generateSquareSvg($result);
-            $landscapeSvg = $service->generateLandscapeSvg($result);
-            
-            $squareSvgFilename = "thai-goverment-lottery-{$drawDate->format('Ym')}square.svg";
-            $landscapeSvgFilename = "thai-goverment-lottery-{$drawDate->format('Ym')}landscape.svg";
-            
-            Storage::disk('public')->put("{$pathBase}/{$squareSvgFilename}", $squareSvg);
-            Storage::disk('public')->put("{$pathBase}/{$landscapeSvgFilename}", $landscapeSvg);
-            
-            $article->cover_image_square_path = "{$pathBase}/{$squareSvgFilename}";
-            $article->cover_image_path = "{$pathBase}/{$squareSvgFilename}";
-            $article->cover_image_landscape_path = "{$pathBase}/{$landscapeSvgFilename}";
+            // We keep the SVG as primary for the article covers, 
+            // but the PNG is now available on disk if needed for legacy tools.
         }
 
         $article->save();

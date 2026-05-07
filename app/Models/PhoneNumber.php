@@ -43,6 +43,14 @@ class PhoneNumber extends Model
         'status',
     ];
 
+    protected function casts(): array
+    {
+        return [
+            'created_at' => 'datetime:U',
+            'updated_at' => 'datetime:U',
+        ];
+    }
+
     protected static function booted(): void
     {
         static::saving(function (self $phoneNumber): void {
