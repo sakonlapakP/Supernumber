@@ -114,6 +114,7 @@ class ArticleProvider with ChangeNotifier {
     try {
       final Map<String, dynamic> data = article.toJson();
       data['is_published'] = article.isPublished ? '1' : '0';
+      data['is_auto_post'] = article.isAutoPost ? '1' : '0';
 
       // แปลง Map เป็น FormData เพื่อส่งไฟล์
       final formData = FormData.fromMap(data);

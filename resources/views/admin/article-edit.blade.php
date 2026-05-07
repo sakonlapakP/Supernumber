@@ -252,6 +252,14 @@
       </div>
 
       <div class="admin-field" style="margin-top:30px;">
+        <label style="display: flex; align-items: center; cursor: pointer;">
+          <input type="hidden" name="is_auto_post" value="0">
+          <input type="checkbox" name="is_auto_post" value="1" {{ old('is_auto_post', $article->is_auto_post ?? true) ? 'checked' : '' }} style="width: 20px; height: 20px; margin-right: 10px;">
+          <span style="font-size: 16px; font-weight: bold;">แชร์ไป Social (Facebook/LINE) อัตโนมัติเมื่อเผยแพร่</span>
+        </label>
+      </div>
+
+      <div class="admin-field" style="margin-top:20px;">
         <label for="published_at">เวลาเผยแพร่</label>
         <input type="datetime-local" name="published_at" class="admin-input" value="{{ old('published_at', optional(optional($article->published_at)->timezone('Asia/Bangkok'))->format('Y-m-d\TH:i')) }}" />
         <p class="admin-muted" style="margin: 8px 0 0; font-size: 12px;">ถ้าเป็นเวลาอนาคต สถานะจะแสดงเป็นตั้งเวลาเผยแพร่จนกว่าจะถึงเวลานี้</p>

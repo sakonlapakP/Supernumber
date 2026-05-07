@@ -582,6 +582,31 @@ $buildArticleSlug = function (string $title, ?int $ignoreId = null): string {
     return $slug;
 };
 
+$resolvePlannedArticlePublishedAt = function (?string $slug, ?string $title): ?Carbon {
+    $slug = Str::lower(trim((string) $slug));
+    $title = trim((string) $title);
+
+    $plannedArticles = [
+        [
+            'slug' => 'thai-royal-ploughing-ceremony-history-and-significance',
+            'title_contains' => 'วันพืชมงคล',
+            'published_at' => '2026-05-11 09:00:00',
+        ],
+    ];
+
+    foreach ($plannedArticles as $plannedArticle) {
+        $matchesSlug = $slug !== '' && $slug === $plannedArticle['slug'];
+        $matchesTitle = $title !== '' && str_contains($title, $plannedArticle['title_contains']);
+
+        if ($matchesSlug || $matchesTitle) {
+            return Carbon::parse($plannedArticle['published_at'], 'Asia/Bangkok')
+                ->setTimezone(config('app.timezone'));
+        }
+    }
+
+    return null;
+};
+
 $resolveArticleImageMeta = function (string $slug, ?Carbon $date = null): array {
     $resolvedDate = ($date?->copy() ?? Carbon::now('Asia/Bangkok'))->timezone('Asia/Bangkok');
     $year = $resolvedDate->format('Y');
@@ -2984,7 +3009,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         ]);
     })->name('articles.share-social');
 
-    Route::post('/articles', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink, $decodeBase64Image, $moveTmpImagesToPermanent) {
+    Route::post('/articles', function (Request $request) use ($ensureAdmin, $buildArticleSlug, $resolvePlannedArticlePublishedAt, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink, $decodeBase64Image, $moveTmpImagesToPermanent) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
@@ -3018,6 +3043,9 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $publishedAt = $data['published_at'] ?? null;
         if ($publishedAt) {
             $publishedAt = Carbon::parse($publishedAt, 'Asia/Bangkok')->setTimezone(config('app.timezone'));
+        }
+        if ($publishedAt === null) {
+            $publishedAt = $resolvePlannedArticlePublishedAt($slug, $data['title']);
         }
         if ($isPublished && $publishedAt === null) {
             $publishedAt = now();
@@ -3117,7 +3145,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->with('status_message', 'สร้างบทความเรียบร้อย');
     })->name('articles.store');
 
-    Route::get('/articles/{article}/edit', function (Article $article) use ($ensureAdmin) {
+    Route::get('/articles/{article}/edit', function (Article $article) use ($ensureAdmin, $resolvePlannedArticlePublishedAt) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
@@ -3127,7 +3155,11 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->latest('id')
             ->get();
 
-        return view('admin.article-edit', compact('article', 'comments'));
+        $plannedPublishedAt = $article->published_at
+            ? null
+            : $resolvePlannedArticlePublishedAt($article->slug, $article->title);
+
+        return view('admin.article-edit', compact('article', 'comments', 'plannedPublishedAt'));
     })->name('articles.edit');
 
     Route::post('/articles/{article}/toggle-publish', function (Article $article) use ($ensureAdmin) {
@@ -3149,7 +3181,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return back()->with('status_message', 'เผยแพร่บทความเรียบร้อย');
     })->name('articles.toggle-publish');
 
-    Route::post('/content-media/{article}', function (Request $request, Article $article) use ($ensureAdmin, $buildArticleSlug, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink, $decodeBase64Image, $moveTmpImagesToPermanent) {
+    Route::post('/content-media/{article}', function (Request $request, Article $article) use ($ensureAdmin, $buildArticleSlug, $resolvePlannedArticlePublishedAt, $resolveArticleImageMeta, $sanitizeArticleContent, $articleColumnExists, $ensurePublicStorageLink, $decodeBase64Image, $moveTmpImagesToPermanent) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
@@ -3179,6 +3211,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'image_guidelines.landscape_prompt' => ['nullable', 'string'],
             'image_guidelines.square_prompt' => ['nullable', 'string'],
             'is_published' => ['nullable', 'boolean'],
+            'is_auto_post' => ['nullable', 'boolean'],
         ]);
 
         $slugInput = trim((string) ($data['slug'] ?? ''));
@@ -3189,13 +3222,21 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         $isCurrentlyPublished = (bool) $article->is_published;
         $isPublished = $request->boolean('is_published');
+        
+        // 1. Get from Form, 2. Fallback to DB
         $publishedAt = $data['published_at'] ?? null;
         if ($publishedAt) {
             $publishedAt = Carbon::parse($publishedAt, 'Asia/Bangkok')->setTimezone(config('app.timezone'));
+        } else {
+            $publishedAt = $article->published_at;
         }
-        
-        if ($isPublished && $publishedAt === null) {
-            $publishedAt = now();
+
+        // If it's still null (new article being published), check planned or use now
+        if ($publishedAt === null) {
+            $publishedAt = $resolvePlannedArticlePublishedAt($slug, $data['title']);
+            if ($isPublished && $publishedAt === null) {
+                $publishedAt = now();
+            }
         }
 
         $imageDate = $publishedAt
@@ -3280,6 +3321,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'content' => $content,
                 'meta_description' => trim((string) ($data['meta_description'] ?? '')) ?: null,
                 'is_published' => $isPublished,
+                'is_auto_post' => $request->boolean('is_auto_post'),
                 'published_at' => $publishedAt,
                 'cover_image_path' => $coverImagePath,
             ];
@@ -3828,6 +3870,7 @@ Route::post('/direct-save-article/{article}', function (Request $request, Articl
         'content' => $content,
         'meta_description' => trim((string)($data['meta_description'] ?? '')) ?: null,
         'is_published' => $isPublished,
+        'is_auto_post' => $request->boolean('is_auto_post'),
         'published_at' => $publishedAt,
     ];
 

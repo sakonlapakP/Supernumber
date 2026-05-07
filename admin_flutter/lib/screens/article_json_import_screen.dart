@@ -461,7 +461,7 @@ class _ContentPlanTable extends StatelessWidget {
                                     child: Text('!', 
                                       style: TextStyle(
                                         fontSize: 16, 
-                                        fontWeight: FontWeight.black, 
+                                        fontWeight: FontWeight.w900, 
                                         color: Color(0xFFEAB308)
                                       )
                                     ),

@@ -12,6 +12,7 @@ class Article {
   final String? lsiKeywords;
   final Map<String, dynamic>? imageGuidelines;
   final bool isPublished;
+  final bool isAutoPost;
   final DateTime? publishedAt;
   final DateTime? createdAt;
 
@@ -29,6 +30,7 @@ class Article {
     this.lsiKeywords,
     this.imageGuidelines,
     this.isPublished = false,
+    this.isAutoPost = true,
     this.publishedAt,
     this.createdAt,
   });
@@ -50,6 +52,7 @@ class Article {
           ? json['image_guidelines']
           : null,
       isPublished: json['is_published'] == 1 || json['is_published'] == true,
+      isAutoPost: json['is_auto_post'] == 1 || json['is_auto_post'] == true,
       publishedAt: _parseDateTime(json['published_at']),
       createdAt: _parseDateTime(json['created_at']),
     );
@@ -95,7 +98,9 @@ class Article {
       'lsi_keywords': lsiKeywords,
       'image_guidelines': imageGuidelines,
       'is_published': isPublished,
+      'is_auto_post': isAutoPost,
       'published_at': publishedAt?.toIso8601String(), 
     };
   }
 }
+

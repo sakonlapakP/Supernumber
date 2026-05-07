@@ -33,6 +33,7 @@ class _ArticleEditScreenState extends State<ArticleEditScreen> {
   final GlobalKey _editorKey = GlobalKey();
 
   late bool _isPublished;
+  late bool _isAutoPost;
   DateTime? _publishedAt;
   bool _isFetchingDetail = false;
   bool _isSaving = false;
@@ -71,6 +72,7 @@ class _ArticleEditScreenState extends State<ArticleEditScreen> {
     );
 
     _isPublished = widget.article?.isPublished ?? false;
+    _isAutoPost = widget.article?.isAutoPost ?? true;
     _publishedAt = widget.article?.publishedAt;
 
     if (widget.article?.id != null) {
@@ -92,6 +94,7 @@ class _ArticleEditScreenState extends State<ArticleEditScreen> {
         _promptLandscapeController.text = guidelines?['landscape_prompt'] ?? '';
         _promptSquareController.text = guidelines?['square_prompt'] ?? '';
         _isPublished = fullArticle.isPublished;
+        _isAutoPost = fullArticle.isAutoPost;
         _publishedAt = fullArticle.publishedAt;
 
         _isFetchingDetail = false;
@@ -201,6 +204,7 @@ class _ArticleEditScreenState extends State<ArticleEditScreen> {
             'square_prompt': _promptSquareController.text,
           },
           isPublished: _isPublished,
+          isAutoPost: _isAutoPost,
           publishedAt: _publishedAt,
         );
 
@@ -423,6 +427,7 @@ class _ArticleEditScreenState extends State<ArticleEditScreen> {
                 const Divider(height: 40),
                 _buildSectionTitle('การเผยแพร่'),
                 _buildPublishToggle(),
+                _buildAutoPostToggle(),
                 _buildDateTimePicker(),
 
                 const SizedBox(height: 40),
@@ -586,6 +591,33 @@ class _ArticleEditScreenState extends State<ArticleEditScreen> {
         value: _isPublished,
         activeThumbColor: const Color(0xFF1B8B6F),
         onChanged: (v) => setState(() => _isPublished = v),
+      ),
+    );
+  }
+
+    );
+  }
+
+  Widget _buildAutoPostToggle() {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFD7E1F0)),
+      ),
+      child: SwitchListTile(
+        title: const Text(
+          'แชร์อัตโนมัติ (Auto Social Post)',
+          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+        ),
+        subtitle: const Text(
+          'แชร์ไป Facebook/LINE อัตโนมัติเมื่อถึงเวลา',
+          style: TextStyle(fontSize: 12, color: Color(0xFF7488A8)),
+        ),
+        value: _isAutoPost,
+        activeThumbColor: const Color(0xFF6366F1),
+        onChanged: (v) => setState(() => _isAutoPost = v),
       ),
     );
   }
