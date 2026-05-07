@@ -237,6 +237,7 @@ class _ArticleEditScreenState extends State<ArticleEditScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
         title: Text(
           widget.article == null ? 'เขียนบทความใหม่' : 'แก้ไขบทความ',
           style: GoogleFonts.kanit(fontWeight: FontWeight.bold, fontSize: 18),

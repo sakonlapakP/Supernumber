@@ -115,6 +115,7 @@ class _ArticleJsonImportScreenState extends State<ArticleJsonImportScreen> {
 
     return Scaffold(
       appBar: AppBar(
+        centerTitle: true,
         title: Text(
           'เพิ่มบทความด้วย JSON',
           style: GoogleFonts.kanit(fontWeight: FontWeight.bold, fontSize: 18),

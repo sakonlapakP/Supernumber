@@ -142,11 +142,15 @@ class ArticleController extends Controller
 
     public function previewUrl(Article $article): JsonResponse
     {
-        $url = $article->is_published && $article->slug
+        $isCurrentlyPublic = $article->is_published 
+            && $article->slug 
+            && ($article->published_at === null || $article->published_at->lte(now('Asia/Bangkok')));
+
+        $url = $isCurrentlyPublic
             ? route('articles.show', $article->slug)
             : URL::temporarySignedRoute(
                 'articles.signed-preview',
-                now()->addHours(6),
+                now()->addHours(24),
                 ['article' => $article]
             );
 

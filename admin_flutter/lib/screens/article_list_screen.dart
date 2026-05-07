@@ -30,7 +30,10 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
   Future<void> _openJsonImport() async {
     await Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => const ArticleJsonImportScreen()),
+      MaterialPageRoute(
+        builder: (context) => const ArticleJsonImportScreen(),
+        fullscreenDialog: true,
+      ),
     );
 
     if (!mounted) return;
@@ -50,10 +53,22 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
   }
 
   Future<void> _openArticlePreview(Article article) async {
-    final url = article.publicUrl;
+    final provider = context.read<ArticleProvider>();
+    
+    // Show loading indicator
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('กำลังเตรียมลิงก์สำหรับดูบทความ...'),
+        duration: Duration(seconds: 1),
+      ),
+    );
+
+    final url = await provider.fetchPreviewUrl(article);
+    
     if (url == null) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('บทความนี้ยังไม่มี slug สำหรับเปิดดู')),
+        SnackBar(content: Text(provider.lastErrorMessage ?? 'บทความนี้ยังไม่มี slug สำหรับเปิดดู')),
       );
       return;
     }
@@ -67,7 +82,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
 
     ScaffoldMessenger.of(
       context,
-    ).showSnackBar(const SnackBar(content: Text('เปิด Safari ไม่สำเร็จ')));
+    ).showSnackBar(const SnackBar(content: Text('เปิดเบราว์เซอร์ไม่สำเร็จ')));
   }
 
   Future<void> _shareArticle(Article article) async {

@@ -261,6 +261,13 @@
 
       <div class="article-edit-actions">
         <button type="submit" class="admin-button article-edit-action article-edit-action--primary">บันทึกบทความ</button>
+        @php
+          $isPreview = !$article->is_published || ($article->published_at && $article->published_at->gt(now('Asia/Bangkok')));
+          $viewUrl = $isPreview 
+              ? URL::temporarySignedRoute('articles.signed-preview', now()->addHours(24), ['article' => $article])
+              : route('articles.show', $article->slug);
+        @endphp
+        <a href="{{ $viewUrl }}" target="_blank" class="admin-button article-edit-action" style="background: #eef2f7; color: #1e293b; border-color: #cbd5e1; text-decoration: none;">ดูตัวอย่าง</a>
         @if($canToggleArticleVisibility)
           <button
             type="submit"

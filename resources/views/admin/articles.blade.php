@@ -7,7 +7,18 @@
       </div>
       <div class="admin-page-actions article-admin-actions">
         @if(in_array(session('admin_user_role'), [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_MANAGER]))
-@php // Moved to bottom FAB group @endphp
+          <button type="button" class="admin-button admin-button--ai-top" onclick="openAiPromptModal()" title="AI Prompt">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px; height: 20px;">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.456-2.455l.259-1.036.259 1.036a3.375 3.375 0 002.455 2.456l1.036.259-1.036.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+            </svg>
+            <span>AI ช่วยเขียน</span>
+          </button>
+          <button type="button" class="admin-button admin-button--import-top" onclick="openImportModal()" title="นำเข้า JSON">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 20px; height: 20px;">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+            </svg>
+            <span>นำเข้า</span>
+          </button>
         @endif
         <a href="{{ route('admin.articles.create') }}" class="admin-button article-admin-actions__create">เพิ่มบทความ</a>
       </div>
@@ -26,7 +37,114 @@
     @endif
 
 <style>
+  /* Desktop styles for bottom actions */
+  .article-bottom-actions {
+    display: none;
+  }
+
+  /* Desktop styles for top buttons */
+  .admin-button--ai-top {
+    background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%) !important;
+    color: white !important;
+    border: none !important;
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.2);
+    transition: all 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: 'Kanit', sans-serif;
+  }
+  .admin-button--ai-top:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 15px rgba(124, 58, 237, 0.3);
+    opacity: 0.9;
+  }
+  
+  .admin-button--import-top {
+    background: #f1f5f9 !important;
+    color: #475569 !important;
+    border: 1px solid #e2e8f0 !important;
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px !important;
+    border-radius: 12px !important;
+    font-weight: 600 !important;
+    transition: all 0.2s;
+    cursor: pointer;
+    text-decoration: none;
+    font-family: 'Kanit', sans-serif;
+  }
+  .admin-button--import-top:hover {
+    background: #e2e8f0 !important;
+    color: #1e293b !important;
+  }
+
+  @media (min-width: 768px) {
+    .article-admin-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    
+    .admin-action-cell .admin-action-group {
+      display: flex !important;
+      gap: 8px;
+      width: auto;
+    }
+    
+    .admin-action-cell .admin-button {
+      border-radius: 10px !important;
+      padding: 7px 14px !important;
+      font-size: 13px !important;
+      font-weight: 700 !important;
+      display: inline-flex !important;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      border: 1px solid transparent !important;
+    }
+    
+    .article-action-preview, .article-action-edit {
+      background: #f1f5f9 !important;
+      color: #334155 !important;
+      border-color: #e2e8f0 !important;
+    }
+    
+    .article-action-preview:hover, .article-action-edit:hover {
+      background: #e2e8f0 !important;
+      transform: translateY(-1px);
+    }
+    
+    .article-action-share {
+      box-shadow: 0 4px 10px rgba(24, 119, 242, 0.2);
+    }
+    .article-action-share:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(24, 119, 242, 0.3);
+      opacity: 0.9;
+    }
+    
+    .article-action-delete {
+      box-shadow: 0 4px 10px rgba(220, 38, 38, 0.15);
+    }
+    .article-action-delete:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 14px rgba(220, 38, 38, 0.25);
+      opacity: 0.9;
+    }
+  }
+
   @media (max-width: 767px) {
+    .admin-button--ai-top,
+    .admin-button--import-top {
+      display: none !important;
+    }
     .admin-page-head {
       grid-template-columns: minmax(0, 1fr) auto;
       align-items: center;
@@ -432,6 +550,7 @@
       color: #c54b3d !important;
     }
     .article-bottom-actions {
+      display: flex;
       position: fixed;
       right: 16px;
       bottom: 18px;
@@ -744,7 +863,13 @@
                   <span class="article-mobile-meta__date">{{ $article->published_at ? $article->published_at->timezone('Asia/Bangkok')->format('d M Y') : '-' }}</span>
                 </div>
                 <div class="admin-action-group">
-                  <a href="{{ route('admin.articles.preview', $article) }}" target="_blank" class="admin-button admin-button--muted admin-button--compact article-action-preview" title="ดูตัวอย่าง" aria-label="ดูตัวอย่าง">
+                  @php
+                    $isPreview = !$article->is_published || ($article->published_at && $article->published_at->gt(now('Asia/Bangkok')));
+                    $viewUrl = $isPreview 
+                        ? URL::temporarySignedRoute('articles.signed-preview', now()->addHours(24), ['article' => $article])
+                        : route('articles.show', $article->slug);
+                  @endphp
+                  <a href="{{ $viewUrl }}" target="_blank" class="admin-button admin-button--muted admin-button--compact article-action-preview" title="{{ $isPreview ? 'ดูตัวอย่าง' : 'ดูบนเว็บไซต์' }}" aria-label="ดูตัวอย่าง">
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.644C3.399 8.049 7.31 5 12 5s8.601 3.049 9.964 6.678c.07.234.07.468 0 .702-1.364 3.629-5.275 6.678-9.964 6.678s-8.601-3.049-9.964-6.678z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
                     ดู
                   </a>
