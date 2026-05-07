@@ -56,7 +56,7 @@ class EstimateRecommendationServiceTest extends TestCase
 
         $result = app(EstimateRecommendationService::class)->buildResult($lead);
 
-        $this->assertSame(
+        $this->assertEqualsCanonicalizing(
             ['0649591111', '0645191111'],
             $result['numbers']->pluck('phone_number')->all()
         );
@@ -81,7 +81,7 @@ class EstimateRecommendationServiceTest extends TestCase
 
         $result = app(EstimateRecommendationService::class)->buildResult($lead);
 
-        $this->assertSame(
+        $this->assertEqualsCanonicalizing(
             ['0641511111', '0646311111'],
             $result['numbers']->pluck('phone_number')->all()
         );
@@ -150,7 +150,8 @@ class EstimateRecommendationServiceTest extends TestCase
             'submitted_at' => now(),
         ]);
 
-        $this->createNumber('0817899999');
+        $this->createNumber('0817899999', PhoneNumber::SERVICE_TYPE_POSTPAID);
+        $this->createNumber('0897899999', PhoneNumber::SERVICE_TYPE_PREPAID);
 
         $response = $this->get(URL::signedRoute('estimate.results', $lead));
 
@@ -159,16 +160,18 @@ class EstimateRecommendationServiceTest extends TestCase
         $response->assertSee('เจ้าของธุรกิจ / ผู้ประกอบการ');
         $response->assertSee('เป้าหมายการเงิน');
         $response->assertSee('081-789-9999');
+        $response->assertSee('สุ่มเบอร์เติมเงิน');
+        $response->assertSee('089-789-9999');
     }
 
-    private function createNumber(string $phoneNumber): void
+    private function createNumber(string $phoneNumber, string $serviceType = PhoneNumber::SERVICE_TYPE_PREPAID): void
     {
         PhoneNumber::query()->create([
             'phone_number' => $phoneNumber,
             'display_number' => substr($phoneNumber, 0, 3) . '-' . substr($phoneNumber, 3, 3) . '-' . substr($phoneNumber, 6),
-            'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
+            'service_type' => $serviceType,
             'network_code' => 'true_dtac',
-            'plan_name' => 'เติมเงิน',
+            'plan_name' => $serviceType === PhoneNumber::SERVICE_TYPE_PREPAID ? 'เติมเงิน' : PhoneNumber::PACKAGE_NAME,
             'sale_price' => 19900,
             'status' => PhoneNumber::STATUS_ACTIVE,
         ]);

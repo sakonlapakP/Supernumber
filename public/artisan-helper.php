@@ -26,14 +26,24 @@ if (isset($_GET['action']) && $_GET['action'] === 'clear') {
     echo "Done.<br>";
 }
 
-// 2. Run Migrations
+// 2. Database Connection Check
+echo "<strong>Checking Database Connection...</strong><br>";
+try {
+    \DB::connection()->getPdo();
+    echo "✅ Database connection is OK.<br>";
+} catch (\Exception $e) {
+    die("<div style='color:red'>Database Error: " . $e->getMessage() . "</div>");
+}
+
+// 3. Run Migrations
 echo "<strong>Running migrate --force...</strong><br>";
 try {
+    // Try to increase execution time
+    set_time_limit(60);
     $result = $kernel->call('migrate', ['--force' => true]);
     echo "Migration Result Code: " . $result . "<br>";
 } catch (\Exception $e) {
     echo "<div style='color:red'>Error: " . $e->getMessage() . "</div>";
-    echo "<pre>" . $e->getTraceAsString() . "</pre>";
 }
 
 echo "<hr>✅ Process finished. Try logging in now!";

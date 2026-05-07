@@ -25,7 +25,8 @@ class EstimateLeadStoreTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $this->assertStringContainsString('/estimate/results/', (string) $response->headers->get('Location'));
+        $processingUrl = (string) $response->headers->get('Location');
+        $this->assertStringContainsString('/estimate/processing/', $processingUrl);
 
         $this->assertDatabaseHas('estimate_leads', [
             'first_name' => 'สมชาย',
@@ -37,6 +38,13 @@ class EstimateLeadStoreTest extends TestCase
             'email' => 'somchai@example.com',
             'goal' => 'money',
         ]);
+
+        $processingResponse = $this->get($processingUrl);
+
+        $processingResponse->assertOk();
+        $processingResponse->assertSee('กำลังประมวณผล...');
+        $processingResponse->assertSee('กำลังวิเคราะห์และคัดเบอร์ที่เหมาะกับคุณ...');
+        $processingResponse->assertSee('estimate\/results', false);
     }
 
     public function test_it_rejects_main_phone_when_not_10_digits(): void

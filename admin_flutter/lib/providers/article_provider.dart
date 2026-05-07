@@ -46,6 +46,62 @@ class ArticleProvider with ChangeNotifier {
     return null;
   }
 
+  Future<String?> fetchPreviewUrl(Article article) async {
+    if (article.isPublished && article.publicUrl != null) {
+      return article.publicUrl;
+    }
+
+    if (article.id == null) return article.publicUrl;
+
+    try {
+      final response = await ApiService.dio.get(
+        '/articles/${article.id}/preview-url',
+      );
+      if (response.statusCode == 200) {
+        final url = response.data['url'];
+        return url is String && url.trim().isNotEmpty ? url : null;
+      }
+    } catch (e) {
+      debugPrint('Fetch Article Preview URL Error: $e');
+      if (e is DioException) {
+        if (e.response?.statusCode == 404 && article.adminPreviewUrl != null) {
+          return article.adminPreviewUrl;
+        }
+        _lastErrorMessage = _extractErrorMessage(e);
+        debugPrint('Response: ${e.response?.data}');
+      } else {
+        _lastErrorMessage = 'เปิดพรีวิวบทความไม่สำเร็จ กรุณาลองใหม่อีกครั้ง';
+      }
+    }
+
+    return null;
+  }
+
+  Future<bool> shareArticle(Article article, String platform) async {
+    if (article.id == null) return false;
+
+    _lastErrorMessage = null;
+
+    try {
+      final response = await ApiService.dio.post(
+        '/articles/${article.id}/share',
+        data: {'platform': platform},
+      );
+
+      return response.statusCode == 200;
+    } catch (e) {
+      debugPrint('Share Article Error: $e');
+      if (e is DioException) {
+        _lastErrorMessage = _extractErrorMessage(e);
+        debugPrint('Response: ${e.response?.data}');
+      } else {
+        _lastErrorMessage = 'แชร์บทความไม่สำเร็จ กรุณาลองใหม่อีกครั้ง';
+      }
+    }
+
+    return false;
+  }
+
   Future<bool> saveArticle(
     Article article, {
     String? landscapePath,
@@ -124,6 +180,37 @@ class ArticleProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
     }
+    return false;
+  }
+
+  Future<bool> deleteArticle(Article article) async {
+    if (article.id == null) return false;
+
+    _isLoading = true;
+    _lastErrorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await ApiService.dio.delete('/articles/${article.id}');
+      if (response.statusCode == 200 || response.statusCode == 204) {
+        _articles.removeWhere((item) => item.id == article.id);
+        return true;
+      }
+
+      _lastErrorMessage = 'ลบบทความไม่สำเร็จ (${response.statusCode})';
+    } catch (e) {
+      debugPrint('Delete Article Error: $e');
+      if (e is DioException) {
+        _lastErrorMessage = _extractErrorMessage(e);
+        debugPrint('Response: ${e.response?.data}');
+      } else {
+        _lastErrorMessage = 'ลบบทความไม่สำเร็จ กรุณาลองใหม่อีกครั้ง';
+      }
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
+
     return false;
   }
 

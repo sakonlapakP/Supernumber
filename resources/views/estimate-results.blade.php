@@ -52,7 +52,7 @@
       <div class="estimate-results-head">
         <div class="estimate-results-head__copy">
           <h2>เบอร์แนะนำ</h2>
-          <p>เรียงจากเบอร์ที่ตรงกับเงื่อนไขมากที่สุด</p>
+          <p>สุ่มจากเบอร์ที่ตรงกับเงื่อนไขมากที่สุด</p>
         </div>
         <div class="numbers-view-toggle" id="estimate-results-view-toggle" role="group" aria-label="เลือกรูปแบบการแสดงผลเบอร์แนะนำ">
           <button class="numbers-view-toggle__button" type="button" data-view="list" aria-pressed="false">รายการ</button>
@@ -60,43 +60,35 @@
         </div>
       </div>
 
-      @if ($numbers->isNotEmpty())
-        <div class="card-grid listing-card-grid estimate-result-number-grid" id="estimate-result-number-grid" data-view="grid">
-          @foreach ($numbers as $number)
-            <article class="number-card number-card--listing number-card--catalog">
-              <div class="card-left-group">
-                <div class="card-top">{{ $number->display_number ?: $number->phone_number }}</div>
+      @if ($numbers->isNotEmpty() || $prepaid_numbers->isNotEmpty())
+        <div class="estimate-result-number-groups" id="estimate-result-number-groups" data-view="grid">
+          @if ($numbers->isNotEmpty())
+            <section class="estimate-result-number-section" aria-labelledby="estimate-recommended-title">
+              <div class="estimate-result-number-section__head">
+                <h3 id="estimate-recommended-title">สุ่มเบอร์ที่เหมาะกับคุณ</h3>
+                <p>คัดจากอาชีพและสิ่งที่อยากเสริม</p>
+              </div>
+              <div class="card-grid numbers-catalog-grid listing-card-grid estimate-result-number-grid" data-view="grid">
+                @foreach ($numbers as $number)
+                  @include('partials.number-card', ['number' => $number])
+                @endforeach
+              </div>
+            </section>
+          @endif
 
-                @if ($number->supported_topic_icons !== [])
-                  @php
-                    $topicIcons = collect($number->supported_topic_icons);
-                    $visibleTopicIcons = $topicIcons->take(4);
-                    $hasMoreTopicIcons = $topicIcons->count() > 4;
-                  @endphp
-                  <div class="card-topic-icons" aria-label="หมวดที่เบอร์นี้ช่วย">
-                    @foreach ($visibleTopicIcons as $topic)
-                      <span class="card-topic-icon" title="{{ $topic['topic'] }}" aria-label="{{ $topic['topic'] }}">{{ $topic['icon'] }}</span>
-                    @endforeach
-                    @if ($hasMoreTopicIcons)
-                      <span class="card-topic-icon card-topic-icon--more" aria-label="มีหมวดที่ช่วยเพิ่มเติม">+</span>
-                    @endif
-                  </div>
-                @endif
+          @if ($prepaid_numbers->isNotEmpty())
+            <section class="estimate-result-number-section" aria-labelledby="estimate-prepaid-title">
+              <div class="estimate-result-number-section__head">
+                <h3 id="estimate-prepaid-title">สุ่มเบอร์เติมเงิน</h3>
+                <p>เบอร์เติมเงินที่ยังผ่านเงื่อนไขเดียวกัน</p>
               </div>
-              <div class="card-body">
-                <div class="card-meta-stack">
-                  <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">{{ $number->service_type_label }}</span></span>
-                  @if ($number->is_prepaid)
-                    <span class="card-meta-plan">{{ $number->payment_label }}</span>
-                  @endif
-                  @if ($number->is_postpaid)
-                    <span class="card-meta-price">{!! $number->initial_payment_html !!}</span>
-                  @endif
-                </div>
+              <div class="card-grid numbers-catalog-grid listing-card-grid estimate-result-number-grid" data-view="grid">
+                @foreach ($prepaid_numbers as $number)
+                  @include('partials.number-card', ['number' => $number])
+                @endforeach
               </div>
-              <a class="card-btn card-btn--buy" href="{{ route('evaluate', ['phone' => $number->phone_number]) }}">สั่งซื้อ</a>
-            </article>
-          @endforeach
+            </section>
+          @endif
         </div>
       @else
         <div class="estimate-results-empty">
@@ -111,16 +103,20 @@
 @push('scripts')
   <script>
     (() => {
-      const grid = document.getElementById("estimate-result-number-grid");
+      const groupRoot = document.getElementById("estimate-result-number-groups");
       const toggle = document.getElementById("estimate-results-view-toggle");
 
-      if (!grid || !toggle) return;
+      if (!groupRoot || !toggle) return;
 
       const buttons = Array.from(toggle.querySelectorAll("[data-view]"));
+      const grids = Array.from(groupRoot.querySelectorAll(".estimate-result-number-grid"));
 
       const applyView = (view) => {
         const normalizedView = view === "list" ? "list" : "grid";
-        grid.dataset.view = normalizedView;
+        groupRoot.dataset.view = normalizedView;
+        grids.forEach((grid) => {
+          grid.dataset.view = normalizedView;
+        });
 
         buttons.forEach((button) => {
           const isActive = button.dataset.view === normalizedView;

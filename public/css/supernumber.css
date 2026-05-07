@@ -4592,6 +4592,31 @@ body.under-construction-page main {
   align-items: stretch;
 }
 
+.estimate-result-number-groups {
+  display: grid;
+  gap: 30px;
+}
+
+.estimate-result-number-section {
+  display: grid;
+  gap: 14px;
+}
+
+.estimate-result-number-section__head {
+  display: grid;
+  gap: 2px;
+}
+
+.estimate-result-number-section__head h3 {
+  color: #342a22;
+  font-size: clamp(20px, 2.4vw, 28px);
+  line-height: 1.25;
+}
+
+.estimate-result-number-section__head p {
+  color: #6d5e52;
+}
+
 body.numbers-scale-soft .estimate-result-number-grid {
   gap: 14px;
 }
@@ -4608,6 +4633,129 @@ body.numbers-scale-soft .estimate-result-number-grid[data-view="list"] {
   background: rgba(255, 253, 249, 0.92);
   padding: 28px;
   color: #4a392c;
+}
+
+.estimate-processing-body {
+  background: #f6efe4;
+}
+
+.estimate-processing {
+  min-height: min(720px, calc(100vh - 92px));
+  display: grid;
+  place-items: center;
+  padding: 72px 18px;
+  background:
+    linear-gradient(90deg, rgba(35, 25, 18, 0.74) 0%, rgba(35, 25, 18, 0.32) 58%, rgba(35, 25, 18, 0.1) 100%),
+    url("../images/home_banner.jpg") center / cover no-repeat;
+}
+
+.estimate-processing__panel {
+  width: min(560px, 100%);
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+  border-radius: 8px;
+  border: 1px solid rgba(233, 187, 100, 0.34);
+  background: rgba(35, 27, 22, 0.88);
+  box-shadow: 0 28px 70px rgba(22, 15, 10, 0.34);
+  padding: clamp(28px, 6vw, 52px);
+  text-align: center;
+  backdrop-filter: blur(10px);
+}
+
+.estimate-processing__mark {
+  position: relative;
+  width: 82px;
+  height: 82px;
+  display: grid;
+  place-items: center;
+  margin-bottom: 4px;
+}
+
+.estimate-processing__mark::before {
+  content: "S";
+  position: relative;
+  z-index: 2;
+  width: 52px;
+  height: 52px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  border: 1px solid rgba(233, 187, 100, 0.58);
+  background: linear-gradient(145deg, #2a211b, #18110d);
+  color: #e8bf65;
+  font-family: "Playfair Display", Georgia, serif;
+  font-size: 34px;
+  font-weight: 700;
+}
+
+.estimate-processing__mark span {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(233, 187, 100, 0.42);
+  animation: estimatePulse 1.6s ease-out infinite;
+}
+
+.estimate-processing__mark span:nth-child(2) {
+  animation-delay: 0.35s;
+}
+
+.estimate-processing__mark span:nth-child(3) {
+  animation-delay: 0.7s;
+}
+
+.estimate-processing__kicker {
+  color: #e8bf65;
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.estimate-processing h1 {
+  max-width: 440px;
+  color: #fff7e8;
+  font-size: clamp(24px, 4vw, 34px);
+  line-height: 1.35;
+}
+
+.estimate-processing__bar {
+  width: min(360px, 100%);
+  height: 8px;
+  margin-top: 10px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.estimate-processing__bar span {
+  display: block;
+  width: 42%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #d59a3d, #f3cf77);
+  animation: estimateLoading 1.25s ease-in-out infinite;
+}
+
+@keyframes estimatePulse {
+  0% {
+    opacity: 0.9;
+    transform: scale(0.58);
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1.18);
+  }
+}
+
+@keyframes estimateLoading {
+  0% {
+    transform: translateX(-120%);
+  }
+
+  100% {
+    transform: translateX(260%);
+  }
 }
 
 @media (max-width: 780px) {
@@ -4690,15 +4838,15 @@ body.numbers-scale-soft .estimate-result-number-grid[data-view="list"] {
   }
 
   body.numbers-scale-soft .estimate-result-number-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
-    width: 100%;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    width: 100% !important;
     margin-inline: auto;
   }
 
   body.numbers-scale-soft .estimate-result-number-grid[data-view="list"] {
-    grid-template-columns: 1fr;
-    width: min(100%, 360px);
+    grid-template-columns: 1fr !important;
+    width: min(100%, 360px) !important;
   }
 
   body.numbers-scale-soft .estimate-result-number-grid .number-card--catalog {

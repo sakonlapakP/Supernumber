@@ -47,7 +47,7 @@ class LineNotificationTest extends TestCase
         ]);
 
         $response->assertRedirect();
-        $this->assertStringContainsString('/estimate/results/', (string) $response->headers->get('Location'));
+        $this->assertStringContainsString('/estimate/processing/', (string) $response->headers->get('Location'));
 
         Http::assertSent(function (HttpRequest $request): bool {
             $payload = $request->data();

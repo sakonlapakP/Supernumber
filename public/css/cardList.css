@@ -124,7 +124,6 @@ body.numbers-scale-soft .numbers-catalog-grid[data-view="list"] .number-card--ca
 /* Right Section: Button */
 body.home-scale-soft .home-card-grid[data-view="list"] .number-card--home .card-btn,
 body.numbers-scale-soft .numbers-catalog-grid[data-view="list"] .number-card--catalog .card-btn {
-body.numbers-scale-soft .numbers-catalog-grid[data-view="list"] .number-card--catalog .card-btn {
   width: 100px !important;
   min-height: 30px !important;
   height: 30px !important;
@@ -192,4 +191,47 @@ body.numbers-scale-soft .numbers-catalog-grid[data-view="list"] .number-card--ca
   display: flex !important;
   align-items: center !important;
   justify-content: center !important;
+}
+
+body.numbers-scale-soft .estimate-result-number-grid[data-view="grid"] {
+  grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+  gap: 24px 16px !important;
+  width: min(1140px, 100%) !important;
+  margin-inline: auto !important;
+}
+
+body.numbers-scale-soft .estimate-result-number-grid[data-view="list"] {
+  grid-template-columns: 1fr !important;
+  width: min(720px, 100%) !important;
+  margin-inline: auto !important;
+}
+
+@media (max-width: 1100px) {
+  body.numbers-scale-soft .estimate-result-number-grid[data-view="grid"] {
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  }
+}
+
+@media (max-width: 780px) {
+  body.numbers-scale-soft .estimate-result-number-grid[data-view="grid"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    width: 100% !important;
+  }
+
+  body.numbers-scale-soft .estimate-result-number-grid[data-view="list"] {
+    grid-template-columns: 1fr !important;
+    width: min(100%, 360px) !important;
+  }
+}
+
+@media (max-width: 600px) {
+  body.numbers-scale-soft .estimate-result-number-grid[data-view="grid"] {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+  }
+
+  body.numbers-scale-soft .estimate-result-number-grid[data-view="list"] {
+    grid-template-columns: 1fr !important;
+  }
 }

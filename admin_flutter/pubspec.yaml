@@ -42,6 +42,7 @@ dependencies:
   html_editor_enhanced: ^2.7.1
   pointer_interceptor: ^0.10.1+2
   image_picker: ^1.2.2
+  url_launcher: ^6.3.2
 
 dev_dependencies:
   flutter_test:

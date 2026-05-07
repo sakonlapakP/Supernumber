@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -149,6 +150,147 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
     );
   }
 
+  Future<void> _showAiPromptDialog() async {
+    final TextEditingController subjectController = TextEditingController();
+
+    await showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF6366F1), Color(0xFFA855F7)],
+                ),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'AI Prompt Generator',
+              style: GoogleFonts.kanit(fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'หัวข้อบทความที่ต้องการ',
+              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: subjectController,
+              decoration: InputDecoration(
+                hintText: 'เช่น ใครสวยที่สุดในปฐพี...',
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                filled: true,
+                fillColor: Colors.grey[50],
+              ),
+              autofocus: true,
+            ),
+          ],
+        ),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.only(bottom: 8.0),
+            child: Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      side: const BorderSide(color: Color(0xFFE0E7FF), width: 2),
+                    ),
+                    onPressed: () => _copyPrompt(subjectController.text, 'short'),
+                    child: Text(
+                      'บทความสั้น',
+                      style: GoogleFonts.kanit(
+                        fontWeight: FontWeight.bold,
+                        color: const Color(0xFF4F46E5),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: FilledButton(
+                    style: FilledButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                      backgroundColor: const Color(0xFF4F46E5),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                    ),
+                    onPressed: () => _copyPrompt(subjectController.text, 'long'),
+                    child: Text(
+                      'บทความยาว',
+                      style: GoogleFonts.kanit(fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _copyPrompt(String subjectText, String type) {
+    final subject = subjectText.isEmpty ? '.....................' : subjectText;
+    final now = DateTime.now();
+    final formattedDate =
+        "${now.year}-${now.month.toString().padLeft(2, '0')}-${now.day.toString().padLeft(2, '0')} 09:00:00";
+
+    final constraints = type == 'long'
+        ? 'CONTENT_MUST_BE_1000_WORDS_MINIMUM | NO_YEAR_IN_SLUG | HTML_FORMAT_ONLY'
+        : 'NO_YEAR_IN_SLUG | HTML_FORMAT_ONLY';
+
+    final promptTemplate = """ช่วยเขียนบทความเกี่ยวกับ $subject หาจากแหล่งข้อมูลที่น่าเชื่อถือเท่านั้น ใน Format [
+  {
+   "_constraints": "$constraints",
+    "title": "พาดหัวที่ดึงดูดใจ (ใส่ปี พ.ศ. ได้)",
+    "slug": "url-slug-no-year",
+    "excerpt": "คำเกริ่นนำสั้นๆ",
+    "content": "เนื้อหา HTML (ใช้ <h2>, <h3>, <p>, <ul>, <li>)",
+    "meta_description": "สรุปเนื้อหาสำหรับ Google Search (120-155 characters)",
+    "keywords": "Focus Keyword หลัก 5 คำ",
+    "lsi_keywords": "ใส่ LSI Keywords คั่นด้วยจุลภาค 10 คำ" ,
+    "is_published": false,
+    "published_at": "$formattedDate",
+    "is_auto_post": true,
+    "image_guidelines": {
+      "landscape_prompt": "Prompt สำหรับรูปที่ relate กับรูป 16:9",
+      "square_prompt": "Prompt สำหรับรูปที่ relate กับรูป 16:9"
+    }
+  }
+]""";
+
+    Clipboard.setData(ClipboardData(text: promptTemplate)).then((_) {
+      if (!mounted) return;
+      Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✓ คัดลอก Prompt เรียบร้อยแล้ว!'),
+          behavior: SnackBarBehavior.floating,
+          backgroundColor: Color(0xFF10B981),
+        ),
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -199,6 +341,14 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
             onPressed: _openJsonImport,
           ),
           IconButton(
+            icon: const Icon(
+              Icons.auto_awesome_rounded,
+              color: Color(0xFF6366F1),
+            ),
+            tooltip: 'AI Prompt Generator',
+            onPressed: _showAiPromptDialog,
+          ),
+          IconButton(
             icon: const Icon(Icons.logout_rounded, color: Color(0xFFC54B3D)),
             onPressed: () => context.read<AuthProvider>().logout(),
           ),
@@ -238,14 +388,16 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
 
           return LayoutBuilder(
             builder: (context, constraints) {
-              final isTablet = constraints.maxWidth > 600;
+              final isWide = constraints.maxWidth > 900;
+              final isNarrowTablet = constraints.maxWidth > 600 && constraints.maxWidth <= 900;
+              
               return RefreshIndicator(
                 onRefresh: () => provider.fetchArticles(),
                 child: GridView.builder(
                   padding: const EdgeInsets.all(16),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: isTablet ? 2 : 1,
-                    childAspectRatio: isTablet ? 2.5 : 3.0,
+                    crossAxisCount: isWide ? 2 : (isNarrowTablet ? 2 : 1),
+                    childAspectRatio: isWide ? 2.5 : (isNarrowTablet ? 2.0 : 2.8),
                     crossAxisSpacing: 12,
                     mainAxisSpacing: 12,
                   ),
@@ -307,70 +459,98 @@ class _ArticleItem extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                article.title,
-                style: GoogleFonts.kanit(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 17,
-                  color: const Color(0xFF1E2D45),
-                ),
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 4),
-              Text(
-                article.excerpt ?? 'ไม่มีคำโปรย...',
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Color(0xFF7488A8), fontSize: 12),
-              ),
-              const Spacer(),
-              Row(
+          padding: const EdgeInsets.all(16),
+          child: LayoutBuilder(
+            builder: (context, cardConstraints) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _StatusPill(article: article),
-                  const SizedBox(width: 8),
-                  Text(
-                    _formatArticleDate(article),
-                    style: GoogleFonts.kanit(
-                      fontSize: 12,
-                      color: const Color(0xFF94A3B8),
-                      fontWeight: FontWeight.w500,
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          article.title,
+                          style: GoogleFonts.kanit(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                            color: const Color(0xFF1E2D45),
+                          ),
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        if (cardConstraints.maxHeight > 80 && cardConstraints.maxWidth > 200) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            article.excerpt ?? 'ไม่มีคำโปรย...',
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(color: Color(0xFF7488A8), fontSize: 11),
+                          ),
+                        ],
+                      ],
                     ),
                   ),
-                  const Spacer(),
-                  Wrap(
-                    spacing: 6,
+                  const SizedBox(height: 4),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _ArticleActionButton(
-                        icon: Icons.visibility_outlined,
-                        tooltip: 'ดูบทความ',
-                        onPressed: onView,
+                      Flexible(
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Flexible(child: _StatusPill(article: article)),
+                            if (cardConstraints.maxWidth > 250) ...[
+                              const SizedBox(width: 8),
+                              Flexible(
+                                child: Text(
+                                  _formatArticleDate(article),
+                                  style: GoogleFonts.kanit(
+                                    fontSize: 10,
+                                    color: const Color(0xFF94A3B8),
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ],
+                        ),
                       ),
-                      _ArticleActionButton(
-                        icon: Icons.edit_outlined,
-                        tooltip: 'แก้ไข',
-                        onPressed: onEdit,
-                      ),
-                      _ArticleActionButton(
-                        icon: Icons.ios_share_outlined,
-                        tooltip: 'แชร์',
-                        onPressed: onShare,
-                      ),
-                      _ArticleActionButton(
-                        icon: Icons.delete_rounded,
-                        tooltip: 'ลบ',
-                        color: const Color(0xFFC54B3D),
-                        onPressed: onDelete,
+                      const SizedBox(width: 4),
+                      Wrap(
+                        spacing: 4,
+                        runSpacing: 4,
+                        alignment: WrapAlignment.end,
+                        children: [
+                          _ArticleActionButton(
+                            icon: Icons.visibility_outlined,
+                            tooltip: 'ดูบทความ',
+                            onPressed: onView,
+                          ),
+                          _ArticleActionButton(
+                            icon: Icons.edit_outlined,
+                            tooltip: 'แก้ไข',
+                            onPressed: onEdit,
+                          ),
+                          _ArticleActionButton(
+                            icon: Icons.ios_share_outlined,
+                            tooltip: 'แชร์',
+                            onPressed: onShare,
+                          ),
+                          _ArticleActionButton(
+                            icon: Icons.delete_rounded,
+                            tooltip: 'ลบ',
+                            color: const Color(0xFFC54B3D),
+                            onPressed: onDelete,
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ],
-              ),
-            ],
+              );
+            },
           ),
         ),
       ),
@@ -404,7 +584,7 @@ class _ArticleActionButton extends StatelessWidget {
         color: color.withValues(alpha: 0.1),
         shape: const CircleBorder(),
         child: InkWell(
-          onPressed: onPressed,
+          onTap: onPressed,
           customBorder: const CircleBorder(),
           child: Container(
             width: 32,

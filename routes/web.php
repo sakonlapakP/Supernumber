@@ -751,6 +751,20 @@ Route::get('/numbers', [PublicController::class, 'numbers'])->name('numbers.inde
 
 Route::get('/articles', [PublicController::class, 'articles'])->name('articles.index');
 
+Route::get('/articles/preview/{article}', function (Request $request, Article $article) use ($resolveLotteryResultForArticle) {
+    if (! $request->hasValidSignature()) {
+        abort(403);
+    }
+
+    $article->load([
+        'approvedComments' => fn ($query) => $query->latest('id'),
+    ]);
+
+    $lotteryResult = $resolveLotteryResultForArticle($article);
+
+    return view('articles.show', compact('article', 'lotteryResult'));
+})->name('articles.signed-preview');
+
 Route::get('/articles/{slug}', [PublicController::class, 'showArticle'])->name('articles.show');
 
 Route::post('/articles/{slug}/comments', [PublicController::class, 'storeArticleComment'])->name('articles.comments.store');

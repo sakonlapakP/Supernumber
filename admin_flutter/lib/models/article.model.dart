@@ -70,6 +70,16 @@ class Article {
     return isScheduled ? 'ตั้งเวลาเผยแพร่' : 'เผยแพร่แล้ว';
   }
 
+  String? get publicUrl {
+    if (slug == null || slug!.trim().isEmpty) return null;
+    return 'https://www.supernumber.co.th/articles/$slug';
+  }
+
+  String? get adminPreviewUrl {
+    if (id == null) return null;
+    return 'https://www.supernumber.co.th/admin/articles/$id/preview';
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

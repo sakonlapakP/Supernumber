@@ -38,6 +38,7 @@ class EstimateRecommendationService
      * @return array{
      *     lead: EstimateLead,
      *     numbers: Collection<int, PhoneNumber>,
+     *     prepaid_numbers: Collection<int, PhoneNumber>,
      *     work_topics: array<int, string>,
      *     work_topic_cards: array<int, array{topic: string, icon: string}>,
      *     work_rule_text: string,
@@ -51,11 +52,42 @@ class EstimateRecommendationService
     {
         $workTopics = self::TOPIC_BY_WORK_TYPE[$lead->work_type] ?? [];
         $goalRule = $this->goalRule($lead->goal, $lead->work_type);
+        [$numbers, $matchedStrictTopics] = $this->recommendedNumbers($workTopics, $goalRule, $limit);
+        [$prepaidNumbers] = $this->recommendedNumbers(
+            $workTopics,
+            $goalRule,
+            $limit,
+            PhoneNumber::SERVICE_TYPE_PREPAID
+        );
 
+        return [
+            'lead' => $lead,
+            'numbers' => $numbers,
+            'prepaid_numbers' => $prepaidNumbers,
+            'work_topics' => $workTopics,
+            'work_topic_cards' => $this->topicCards($workTopics),
+            'work_rule_text' => $this->workRuleText($lead, $workTopics),
+            'goal_rule_text' => $goalRule['text'],
+            'goal_patterns' => $goalRule['required'],
+            'goal_blocked_patterns' => $goalRule['blocked'],
+            'matched_strict_topics' => $matchedStrictTopics,
+        ];
+    }
+
+    /**
+     * @param array<int, string> $workTopics
+     * @param array{type: ?string, required: array<int, string>, blocked: array<int, string>, text: string} $goalRule
+     * @param array<int, int> $excludeIds
+     * @return array{0: Collection<int, PhoneNumber>, 1: bool}
+     */
+    private function recommendedNumbers(array $workTopics, array $goalRule, int $limit, ?string $serviceType = null, array $excludeIds = []): array
+    {
         $query = PhoneNumber::query()
             ->available()
-            ->orderBy('sale_price')
-            ->orderByDesc('id')
+            ->where('network_code', 'true_dtac')
+            ->when($serviceType !== null, fn (Builder $builder) => $builder->where('service_type', $serviceType))
+            ->when($excludeIds !== [], fn (Builder $builder) => $builder->whereNotIn('id', $excludeIds))
+            ->inRandomOrder()
             ->limit(800);
 
         $this->applyGoalQuery($query, $goalRule);
@@ -88,31 +120,28 @@ class EstimateRecommendationService
             $pool = $pool->merge($scored)->unique(fn (array $item): int => (int) $item['number']->id);
         }
 
+        $maxScore = (int) $pool->max('score');
+        $scoreFloor = max(0, $maxScore - 10);
+
         $numbers = $pool
-            ->sort(function (array $a, array $b): int {
-                $scoreComparison = $b['score'] <=> $a['score'];
-
-                if ($scoreComparison !== 0) {
-                    return $scoreComparison;
-                }
-
-                return ((int) $a['number']->sale_price) <=> ((int) $b['number']->sale_price);
-            })
+            ->filter(fn (array $item): bool => (int) $item['score'] >= $scoreFloor)
+            ->shuffle()
             ->take($limit)
             ->pluck('number')
             ->values();
 
-        return [
-            'lead' => $lead,
-            'numbers' => $numbers,
-            'work_topics' => $workTopics,
-            'work_topic_cards' => $this->topicCards($workTopics),
-            'work_rule_text' => $this->workRuleText($lead, $workTopics),
-            'goal_rule_text' => $goalRule['text'],
-            'goal_patterns' => $goalRule['required'],
-            'goal_blocked_patterns' => $goalRule['blocked'],
-            'matched_strict_topics' => $matchedStrictTopics,
-        ];
+        if ($numbers->count() < $limit) {
+            $extraNumbers = $pool
+                ->sortByDesc('score')
+                ->pluck('number')
+                ->reject(fn (PhoneNumber $number): bool => $numbers->contains('id', $number->id))
+                ->take($limit - $numbers->count())
+                ->values();
+
+            $numbers = $numbers->concat($extraNumbers)->values();
+        }
+
+        return [$numbers, $matchedStrictTopics];
     }
 
     /**

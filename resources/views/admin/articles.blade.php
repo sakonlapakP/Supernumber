@@ -853,6 +853,11 @@
 
     <div class="article-bottom-actions">
       @if(in_array(session('admin_user_role'), [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_MANAGER]))
+        <button type="button" class="article-ai-fab" onclick="openAiPromptModal()" title="AI Prompt" style="width: 56px; height: 56px; border-radius: 20px; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: #ffffff; border: none; box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3); cursor: pointer; transition: transform 0.2s; margin-right: 8px;">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 28px; height: 28px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.456-2.455l.259-1.036.259 1.036a3.375 3.375 0 002.455 2.456l1.036.259-1.036.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+          </svg>
+        </button>
         <button type="button" class="article-import-fab" onclick="openImportModal()" title="นำเข้า JSON">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
@@ -882,18 +887,54 @@
     </div>
     </div>
 
+    {{-- AI Prompt Modal --}}
+    <div id="ai-prompt-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10001; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px);">
+        <div style="background: white; width: 100%; max-width: 500px; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.2);">
+            <div style="padding: 24px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(to right, #f8fafc, #ffffff);">
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <div style="width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); display: flex; align-items: center; justify-content: center; color: white;">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 24px; height: 24px;">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.456-2.455l.259-1.036.259 1.036a3.375 3.375 0 002.455 2.456l1.036.259-1.036.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+                        </svg>
+                    </div>
+                    <h3 style="margin: 0; font-size: 20px; font-weight: 800; color: #1e293b; font-family: 'Kanit', sans-serif;">AI Prompt Generator</h3>
+                </div>
+                <button type="button" onclick="closeAiPromptModal()" style="background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #64748b; transition: all 0.2s;">&times;</button>
+            </div>
+            <div style="padding: 24px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 700; color: #475569; font-size: 15px;">หัวข้อบทความที่ต้องการ</label>
+                <input type="text" id="ai-subject" class="admin-input" style="width: 100%; border-radius: 12px; padding: 12px 16px; border: 2px solid #e2e8f0; font-size: 16px; margin-bottom: 24px;" placeholder="เช่น ใครสวยที่สุดในปฐพี..." onkeypress="if(event.key === 'Enter') copyAiPrompt('short')">
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+                    <button type="button" onclick="copyAiPrompt('short')" style="background: #ffffff; color: #4f46e5; border: 2px solid #e0e7ff; padding: 16px; border-radius: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px;" onmouseover="this.style.background='#f5f7ff'" onmouseout="this.style.background='#ffffff'">
+                        <span style="font-size: 14px; opacity: 0.8;">แบบที่ 1</span>
+                        <span style="font-size: 16px;">บทความสั้น</span>
+                    </button>
+                    <button type="button" onclick="copyAiPrompt('long')" style="background: #4f46e5; color: #ffffff; border: 2px solid #4f46e5; padding: 16px; border-radius: 16px; font-weight: 700; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.2);" onmouseover="this.style.transform='translateY(-2px)'" onmouseout="this.style.transform='translateY(0)'">
+                        <span style="font-size: 14px; opacity: 0.9;">แบบที่ 2</span>
+                        <span style="font-size: 16px;">บทความยาว (1000+ คำ)</span>
+                    </button>
+                </div>
+                <p id="copy-status" style="text-align: center; margin-top: 20px; font-size: 14px; font-weight: 600; color: #10b981; display: none;">✓ คัดลอก Prompt เรียบร้อยแล้ว!</p>
+            </div>
+            <div style="padding: 16px 24px; background: #f8fafc; border-top: 1px solid #f1f5f9; color: #94a3b8; font-size: 12px; text-align: center;">
+                ก๊อปปี้แล้วเอาไปวางใน ChatGPT หรือ Claude ได้เลย
+            </div>
+        </div>
+    </div>
+
     {{-- Import JSON Modal --}}
-    <div id="import-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; padding: 20px;">
-        <div style="background: white; width: 100%; max-width: 600px; border-radius: 16px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.1);">
-            <div style="padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
-                <h3 style="margin: 0; font-size: 18px; color: #1e293b;">นำเข้าบทความด้วย JSON</h3>
-                <button type="button" onclick="closeImportModal()" style="background: none; border: none; font-size: 24px; cursor: pointer; color: #94a3b8;">&times;</button>
+    <div id="import-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px);">
+        <div style="background: white; width: 100%; max-width: 600px; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.2);">
+            <div style="padding: 24px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; font-size: 20px; font-weight: 800; color: #1e293b;">นำเข้าบทความด้วย JSON</h3>
+                <button type="button" onclick="closeImportModal()" style="background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #64748b;">&times;</button>
             </div>
             <form action="{{ route('admin.articles.import-json') }}" method="POST">
                 @csrf
-                <div style="padding: 20px;">
-                    <p style="margin-top: 0; margin-bottom: 15px; color: #64748b; font-size: 14px;">วางข้อมูล JSON ของบทความที่นี่ (สามารถใส่เป็นชิ้นเดียว หรือเป็น Array ของหลายบทความได้)</p>
-                    <textarea name="json_data" class="admin-input" style="width: 100%; height: 300px; font-family: monospace; font-size: 12px; padding: 15px;" placeholder='[
+                <div style="padding: 24px;">
+                    <p style="margin-top: 0; margin-bottom: 15px; color: #64748b; font-size: 14px; font-weight: 500;">วางข้อมูล JSON ของบทความที่นี่ (สามารถใส่เป็นชิ้นเดียว หรือเป็น Array ของหลายบทความได้)</p>
+                    <textarea name="json_data" class="admin-input" style="width: 100%; height: 300px; font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0;" placeholder='[
   {
     "title": "หัวข้อบทความ",
     "content": "<p>เนื้อหาบทความ</p>",
@@ -901,9 +942,9 @@
   }
 ]' required></textarea>
                 </div>
-                <div style="padding: 20px; background: #f8fafc; border-top: 1px solid #e2e8f0; display: flex; justify-content: flex-end; gap: 10px;">
-                    <button type="button" onclick="closeImportModal()" class="admin-button admin-button--muted">ยกเลิก</button>
-                    <button type="submit" class="admin-button" style="background: #7c3aed; border-color: #7c3aed;">ยืนยันการนำเข้า</button>
+                <div style="padding: 20px 24px; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 12px;">
+                    <button type="button" onclick="closeImportModal()" class="admin-button admin-button--muted" style="border-radius: 12px; font-weight: 700;">ยกเลิก</button>
+                    <button type="submit" class="admin-button" style="background: #7c3aed; border-color: #7c3aed; border-radius: 12px; font-weight: 700; padding-left: 24px; padding-right: 24px;">ยืนยันการนำเข้า</button>
                 </div>
             </form>
         </div>
@@ -1180,6 +1221,58 @@
         });
       }
     })();
+
+    function openAiPromptModal() {
+        document.getElementById('ai-prompt-modal').style.display = 'flex';
+        document.getElementById('ai-subject').focus();
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeAiPromptModal() {
+        document.getElementById('ai-prompt-modal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    function copyAiPrompt(type) {
+        const subject = document.getElementById('ai-subject').value || '.....................';
+        const now = new Date();
+        const formattedDate = now.getFullYear() + '-' + 
+                            String(now.getMonth() + 1).padStart(2, '0') + '-' + 
+                            String(now.getDate()).padStart(2, '0') + ' 09:00:00';
+        
+        const constraints = type === 'long' 
+            ? 'CONTENT_MUST_BE_1000_WORDS_MINIMUM | NO_YEAR_IN_SLUG | HTML_FORMAT_ONLY'
+            : 'NO_YEAR_IN_SLUG | HTML_FORMAT_ONLY';
+
+        const promptTemplate = `ช่วยเขียนบทความเกี่ยวกับ ${subject} หาจากแหล่งข้อมูลที่น่าเชื่อถือเท่านั้น ใน Format [
+  {
+   "_constraints": "${constraints}",
+    "title": "พาดหัวที่ดึงดูดใจ (ใส่ปี พ.ศ. ได้)",
+    "slug": "url-slug-no-year",
+    "excerpt": "คำเกริ่นนำสั้นๆ",
+    "content": "เนื้อหา HTML (ใช้ <h2>, <h3>, <p>, <ul>, <li>)",
+    "meta_description": "สรุปเนื้อหาสำหรับ Google Search (120-155 characters)",
+    "keywords": "Focus Keyword หลัก 5 คำ",
+    "lsi_keywords": "ใส่ LSI Keywords คั่นด้วยจุลภาค 10 คำ" ,
+    "is_published": false,
+    "published_at": "${formattedDate}",
+    "is_auto_post": true,
+    "image_guidelines": {
+      "landscape_prompt": "Prompt สำหรับรูปที่ relate กับรูป 16:9",
+      "square_prompt": "Prompt สำหรับรูปที่ relate กับรูป 16:9"
+    }
+  }
+]`;
+
+        navigator.clipboard.writeText(promptTemplate).then(() => {
+            const status = document.getElementById('copy-status');
+            status.style.display = 'block';
+            setTimeout(() => {
+                status.style.display = 'none';
+                closeAiPromptModal();
+            }, 1500);
+        });
+    }
 
     function openImportModal() {
         document.getElementById('import-modal').style.display = 'flex';

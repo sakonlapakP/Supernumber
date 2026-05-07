@@ -4,12 +4,15 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Article;
+use App\Services\FacebookPagePoster;
+use App\Services\LineNotifier;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\ValidationException;
 
 class ArticleController extends Controller
@@ -59,10 +62,10 @@ class ArticleController extends Controller
                 'slug' => $slug,
                 'excerpt' => $this->stringValue($item['excerpt'] ?? null) ?? Str::limit(strip_tags($content), 160),
                 'content' => $content,
-                'is_published' => $this->booleanValue($item['is_published'] ?? null, true),
+                'is_published' => $this->booleanValue($item['is_published'] ?? null, false),
                 'published_at' => isset($item['published_at'])
                     ? Carbon::parse($item['published_at'], 'Asia/Bangkok')->setTimezone(config('app.timezone'))
-                    : now(),
+                    : null,
                 'is_auto_post' => $this->booleanValue($item['is_auto_post'] ?? null, false),
                 'author_user_id' => $request->user()->id,
                 'meta_description' => $this->stringValue($item['meta_description'] ?? null),
@@ -135,6 +138,83 @@ class ArticleController extends Controller
     public function show(Article $article)
     {
         return $article;
+    }
+
+    public function previewUrl(Article $article): JsonResponse
+    {
+        $url = $article->is_published && $article->slug
+            ? route('articles.show', $article->slug)
+            : URL::temporarySignedRoute(
+                'articles.signed-preview',
+                now()->addHours(6),
+                ['article' => $article]
+            );
+
+        return response()->json(['url' => $url]);
+    }
+
+    public function share(Request $request, Article $article): JsonResponse
+    {
+        $validated = $request->validate([
+            'platform' => ['required', 'string', 'in:facebook,line'],
+        ]);
+
+        if (! $article->is_published || ! $article->slug) {
+            return response()->json([
+                'message' => 'กรุณาเผยแพร่บทความก่อนแชร์',
+            ], 422);
+        }
+
+        if ($validated['platform'] === 'facebook') {
+            $result = app(FacebookPagePoster::class)->postArticle($article);
+
+            if ($result['success'] ?? false) {
+                return response()->json([
+                    'message' => 'แชร์ไปที่ Facebook Page สำเร็จ',
+                    'id' => $result['id'] ?? null,
+                ]);
+            }
+
+            return response()->json([
+                'message' => 'แชร์ไปที่ Facebook Page ไม่สำเร็จ',
+                'error' => $result['error'] ?? 'Unknown Error',
+            ], 422);
+        }
+
+        $messages = [];
+
+        $imageUrl = $this->articleSquareImageUrl($article);
+        if ($imageUrl !== null) {
+            $messages[] = [
+                'type' => 'image',
+                'originalContentUrl' => $imageUrl,
+                'previewImageUrl' => $imageUrl,
+            ];
+        }
+
+        $messages[] = [
+            'type' => 'text',
+            'text' => "บทความใหม่\n{$article->title}\n\nอ่านเพิ่มเติม: " . route('articles.show', $article->slug),
+        ];
+
+        $log = app(LineNotifier::class)->queueBroadcastMessages(
+            'article_broadcast',
+            $messages,
+            $article
+        );
+
+        if ($log === null) {
+            return response()->json([
+                'message' => 'แชร์ไปที่ LINE ไม่สำเร็จ',
+                'error' => 'LINE ยังไม่ได้ตั้งค่า หรือไม่สามารถบันทึกคิวส่งข้อความได้',
+            ], 422);
+        }
+
+        if (Schema::hasColumn('articles', 'is_line_broadcasted')) {
+            $article->forceFill(['is_line_broadcasted' => true])->save();
+        }
+
+        return response()->json(['message' => 'แชร์ไปที่ LINE สำเร็จ']);
     }
 
     public function update(Request $request, Article $article)
@@ -255,6 +335,17 @@ class ArticleController extends Controller
         }
 
         return isset($columns[$column]);
+    }
+
+    private function articleSquareImageUrl(Article $article): ?string
+    {
+        $path = $article->cover_image_square_path ?: $article->cover_image_landscape_path;
+
+        if (! $path || ! Storage::disk('public')->exists($path)) {
+            return null;
+        }
+
+        return Storage::disk('public')->url($path);
     }
 
     private function uniqueArticleSlug(string $value): string

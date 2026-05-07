@@ -13,6 +13,8 @@ Route::middleware(ApiTokenAuth::class)->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     
     Route::post('articles/import-json', [ArticleController::class, 'importJson'])->name('api.articles.import-json');
+    Route::get('articles/{article}/preview-url', [ArticleController::class, 'previewUrl'])->name('api.articles.preview-url');
+    Route::post('articles/{article}/share', [ArticleController::class, 'share'])->name('api.articles.share');
     Route::apiResource('articles', ArticleController::class)->names('api.articles');
 });
 
