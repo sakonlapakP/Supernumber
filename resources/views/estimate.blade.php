@@ -62,79 +62,81 @@
       @endif
 
       <div class="estimate-card">
-        <div class="estimate-layout">
-          <form class="estimate-form" action="{{ route('estimate.store') }}" method="post">
-            @csrf
-            <div class="estimate-form__intro">
-              <p>ข้อมูลสำหรับคัดเบอร์</p>
-              <h3>กรอกข้อมูลเพื่อให้ทีมงานแนะนำเบอร์ที่เหมาะกับคุณ</h3>
-            </div>
+      <div class="estimate-card">
+        <form class="estimate-form" action="{{ route('estimate.store') }}" method="post">
+          @csrf
+          <div class="estimate-form__intro">
+            <p>ข้อมูลสำหรับคัดเบอร์</p>
+            <h3>กรอกข้อมูลเพื่อให้ทีมงานแนะนำเบอร์ที่เหมาะกับคุณ</h3>
+          </div>
 
-            <div class="estimate-grid estimate-grid--2">
-              <label>
-                ชื่อ*
-                <input type="text" name="first_name" value="{{ old('first_name') }}" placeholder="ชื่อ">
-              </label>
-              <label>
-                นามสกุล*
-                <input type="text" name="last_name" value="{{ old('last_name') }}" placeholder="นามสกุล">
-              </label>
-            </div>
-
-            <div class="estimate-grid estimate-grid--2">
-              <label>
-                เพศ*
-                <select name="gender">
-                  <option value="">-- เลือกเพศ --</option>
-                  <option value="male" @selected(old('gender') === 'male')>ชาย</option>
-                  <option value="female" @selected(old('gender') === 'female')>หญิง</option>
-                </select>
-              </label>
-              <label>
-                วันเกิด
-                <input type="date" name="birthday" value="{{ old('birthday') }}">
-              </label>
-            </div>
-
-            <div class="estimate-grid estimate-grid--2">
-              <label>
-                ลักษณะงานหลักที่ทำ*
-                <select name="work_type">
-                  <option value="">-- เลือกลักษณะงานที่ทำ --</option>
-                  @foreach ($workTypeOptions as $value => $label)
-                    <option value="{{ $value }}" @selected(old('work_type') === $value)>{{ $label }}</option>
-                  @endforeach
-                </select>
-              </label>
-              <label>
-                เบอร์ปัจจุบัน
-                <input type="text" name="current_phone" value="{{ old('current_phone') }}" inputmode="numeric" pattern="[0-9]*" maxlength="10" placeholder="เบอร์ปัจจุบัน">
-              </label>
-            </div>
-
+          <div class="estimate-grid estimate-grid--2">
             <label>
-              เบอร์ที่ใช้งานมากที่สุด*
-              <input type="text" name="main_phone" value="{{ old('main_phone') }}" inputmode="numeric" pattern="[0-9]*" maxlength="10" placeholder="เช่น 0812345678">
+              ชื่อ*
+              <input type="text" name="first_name" value="{{ old('first_name') }}" placeholder="ชื่อ">
             </label>
-
             <label>
-              อีเมล์*
-              <input type="email" name="email" value="{{ old('email') }}" placeholder="you@example.com">
+              นามสกุล*
+              <input type="text" name="last_name" value="{{ old('last_name') }}" placeholder="นามสกุล">
             </label>
+          </div>
 
+          <div class="estimate-grid estimate-grid--2">
             <label>
-              วัตถุประสงค์ในการเปลี่ยนเบอร์*
-              <select name="goal">
-                <option value="">-- เลือกวัตถุประสงค์ในการเปลี่ยนเบอร์ --</option>
-                @foreach ($goalOptions as $value => $label)
-                  <option value="{{ $value }}" @selected(old('goal') === $value)>{{ $label }}</option>
+              เพศ*
+              <select name="gender">
+                <option value="">-- เลือกเพศ --</option>
+                <option value="male" @selected(old('gender') === 'male')>ชาย</option>
+                <option value="female" @selected(old('gender') === 'female')>หญิง</option>
+              </select>
+            </label>
+            <label>
+              วันเกิด
+              <input type="date" name="birthday" value="{{ old('birthday') }}">
+            </label>
+          </div>
+
+          <div class="estimate-grid estimate-grid--2">
+            <label>
+              ลักษณะงานหลักที่ทำ*
+              <select name="work_type">
+                <option value="">-- เลือกลักษณะงานที่ทำ --</option>
+                @foreach ($workTypeOptions as $value => $label)
+                  <option value="{{ $value }}" @selected(old('work_type') === $value)>{{ $label }}</option>
                 @endforeach
               </select>
             </label>
+            <label>
+              เบอร์ปัจจุบัน
+              <input type="text" name="current_phone" value="{{ old('current_phone') }}" inputmode="numeric" pattern="[0-9]*" maxlength="10" placeholder="เบอร์ปัจจุบัน">
+            </label>
+          </div>
 
-            <button class="estimate-submit" type="submit">ทำนายดวง</button>
-          </form>
-        </div>
+          <label>
+            เบอร์ที่ใช้งานมากที่สุด*
+            <input type="text" name="main_phone" value="{{ old('main_phone') }}" inputmode="numeric" pattern="[0-9]*" maxlength="10" placeholder="เช่น 0812345678">
+          </label>
+
+          <label>
+            อีเมล*
+            <input type="email" name="email" value="{{ old('email') }}" placeholder="you@example.com">
+          </label>
+
+          <label>
+            วัตถุประสงค์ในการเปลี่ยนเบอร์*
+            <select name="goal">
+              <option value="">-- เลือกวัตถุประสงค์ในการเปลี่ยนเบอร์ --</option>
+              @foreach ($goalOptions as $value => $label)
+                <option value="{{ $value }}" @selected(old('goal') === $value)>{{ $label }}</option>
+              @endforeach
+            </select>
+          </label>
+
+          <div class="estimate-submit-container">
+            <button class="estimate-submit" type="submit">ส่งข้อมูลเพื่อวิเคราะห์เบอร์ที่เหมาะกับคุณ</button>
+          </div>
+        </form>
+      </div>
       </div>
     </div>
   </section>
@@ -173,53 +175,142 @@
         }
     }
 
+    /* New Premium Styles */
+    .estimate-card {
+        max-width: 800px;
+        margin: 0 auto;
+        background: #fff;
+        padding: clamp(24px, 5vw, 50px);
+        border-radius: 32px;
+        box-shadow: 0 20px 60px rgba(47, 38, 31, 0.08);
+        border: 1px solid rgba(47, 38, 31, 0.03);
+    }
+    
+    .estimate-form {
+        display: grid;
+        gap: 24px;
+    }
+
+    .estimate-form__intro {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .estimate-form input, 
+    .estimate-form select {
+        border-radius: 14px !important;
+        border: 1.5px solid rgba(74, 61, 50, 0.1) !important;
+        background: #fcfcfb !important;
+        padding: 14px 18px !important;
+        font-size: 16px !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    }
+
+    .estimate-form input:focus, 
+    .estimate-form select:focus {
+        border-color: #d8a34a !important;
+        background: #fff !important;
+        box-shadow: 0 0 0 4px rgba(216, 163, 74, 0.1) !important;
+        transform: translateY(-1px);
+    }
+
+    .estimate-submit-container {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .estimate-submit {
+        width: 100%;
+        max-width: 400px;
+        min-height: 56px !important;
+        border-radius: 16px !important;
+        font-size: 18px !important;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        box-shadow: 0 10px 25px rgba(216, 163, 74, 0.3);
+        transition: all 0.3s ease !important;
+    }
+
+    .estimate-submit:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 15px 30px rgba(216, 163, 74, 0.4);
+        filter: brightness(1.1);
+    }
+
+    .estimate-head h2 {
+        font-size: clamp(24px, 3vw, 36px) !important;
+        font-weight: 800 !important;
+        color: #2f261f;
+        margin-bottom: 8px;
+    }
+
     /* SEO Content Styles */
     .estimate-seo-content {
-        margin-top: 40px;
-        margin-bottom: 60px;
+        margin-top: 60px;
+        margin-bottom: 80px;
     }
     .estimate-seo-card {
         background: #fff;
-        padding: 40px;
-        border-radius: 24px;
-        border: 1px solid rgba(0,0,0,0.06);
-        box-shadow: 0 10px 30px rgba(0,0,0,0.04);
+        padding: 50px;
+        border-radius: 32px;
+        border: 1px solid rgba(0,0,0,0.04);
+        box-shadow: 0 15px 45px rgba(0,0,0,0.03);
     }
     .estimate-seo-card h2 {
         font-size: 32px;
         color: #2a2321;
-        margin-bottom: 20px;
-        font-weight: 700;
+        margin-bottom: 24px;
+        font-weight: 800;
+        text-align: center;
     }
     .estimate-seo-card p {
         font-size: 18px;
         color: #5b5048;
         line-height: 1.8;
+        text-align: center;
+        max-width: 700px;
+        margin: 0 auto 40px;
     }
     .seo-feature-grid {
         display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
         gap: 30px;
         margin-top: 40px;
+    }
+    .seo-feature-item {
+        background: #fcfcfb;
+        padding: 30px;
+        border-radius: 24px;
+        transition: all 0.3s ease;
+    }
+    .seo-feature-item:hover {
+        background: #fff;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        transform: translateY(-5px);
     }
     .seo-feature-item h3 {
         font-size: 22px;
         color: #8b5a1f;
         margin-bottom: 12px;
-        font-weight: 600;
+        font-weight: 700;
     }
     .seo-feature-item p {
         font-size: 16px;
+        text-align: left;
+        margin: 0;
     }
     .seo-expert-note {
-        margin-top: 40px;
-        padding: 24px;
-        background: #fff8eb;
-        border-left: 4px solid #d8a34a;
-        border-radius: 4px 16px 16px 4px;
+        margin-top: 50px;
+        padding: 30px;
+        background: #fff9f0;
+        border-left: 5px solid #d8a34a;
+        border-radius: 8px 24px 24px 8px;
     }
     .seo-expert-note p {
-        font-size: 16px;
+        font-size: 17px;
+        color: #6d5d50;
+        text-align: left;
         margin: 0;
     }
     @media (max-width: 768px) {
@@ -227,7 +318,10 @@
             padding: 30px 20px;
         }
         .estimate-seo-card h2 {
-            font-size: 24px;
+            font-size: 26px;
+        }
+        .estimate-grid--2 {
+            grid-template-columns: 1fr;
         }
     }
   </style>
