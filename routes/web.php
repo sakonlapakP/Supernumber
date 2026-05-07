@@ -622,7 +622,7 @@ $resolveLotteryResultForArticle = function (Article $article): ?LotteryResult {
         ->orderByDesc('fetched_at')
         ->orderByDesc('id');
 
-    if ($slug === 'thai-government-lottery-latest-results') {
+    if ($slug === 'thai-goverment-lottery-latest-results') {
         return (clone $latestResultQuery)->first();
     }
 
@@ -2623,7 +2623,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         // Determine round: 1st or 16th
         $day = (int) $drawDate->format('j');
         $round = ($day <= 15) ? 'first' : 'second';
-        $slug = 'thai-government-lottery-' . $drawDate->format('Ym') . $round;
+        $slug = 'thai-goverment-lottery-' . $drawDate->format('Ym') . $round;
 
         // Check if article already exists
         $existing = \App\Models\Article::query()->where('slug', $slug)->first();

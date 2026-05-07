@@ -63,15 +63,15 @@ class LotteryFlowRefinedTest extends TestCase
 
         // Verify Article is Published
         $this->assertDatabaseHas('articles', [
-            'slug' => 'thai-government-lottery-202605first',
+            'slug' => 'thai-goverment-lottery-202605first',
             'is_published' => true,
         ]);
 
         // Verify Images ARE generated
-        $article = Article::where('slug', 'thai-government-lottery-202605first')->first();
+        $article = Article::where('slug', 'thai-goverment-lottery-202605first')->first();
         $this->assertNotNull($article->cover_image_square_path);
         
-        $files = Storage::disk('public')->allFiles('articles/2026/thai-government-lottery-202605first');
+        $files = Storage::disk('public')->allFiles('articles/2026/thai-goverment-lottery-202605first');
         $this->assertGreaterThan(0, $files);
     }
 
@@ -112,13 +112,13 @@ class LotteryFlowRefinedTest extends TestCase
 
         // Verify Article is Published
         $this->assertDatabaseHas('articles', [
-            'slug' => 'thai-government-lottery-202605first',
+            'slug' => 'thai-goverment-lottery-202605first',
             'is_published' => true,
             'is_auto_post' => false,
         ]);
 
         // Verify Images generated
-        $article = Article::where('slug', 'thai-government-lottery-202605first')->first();
+        $article = Article::where('slug', 'thai-goverment-lottery-202605first')->first();
         $this->assertNotNull($article->cover_image_square_path);
         Storage::disk('public')->assertExists($article->cover_image_square_path);
     }
@@ -187,7 +187,7 @@ class LotteryFlowRefinedTest extends TestCase
         Http::fake(['https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response($payload, 200)]);
         $this->artisan('lottery:fetch-latest', ['--force' => true])->assertExitCode(0);
         
-        $files1 = Storage::disk('public')->allFiles('articles/2026/thai-government-lottery-202605first');
+        $files1 = Storage::disk('public')->allFiles('articles/2026/thai-goverment-lottery-202605first');
         $this->assertGreaterThan(0, count($files1));
         $count1 = count($files1);
 
@@ -196,7 +196,7 @@ class LotteryFlowRefinedTest extends TestCase
         Http::fake(['https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response($payload, 200)]);
         $this->artisan('lottery:fetch-latest', ['--force' => true])->assertExitCode(0);
 
-        $files2 = Storage::disk('public')->allFiles('articles/2026/thai-government-lottery-202605first');
+        $files2 = Storage::disk('public')->allFiles('articles/2026/thai-goverment-lottery-202605first');
         $this->assertEquals($count1, count($files2), 'File count should not increase after re-running the command');
     }
 
@@ -212,11 +212,11 @@ class LotteryFlowRefinedTest extends TestCase
         // 1. Setup a complete lottery article with a PNG path
         $article = Article::create([
             'title' => 'Test Lottery',
-            'slug' => 'thai-government-lottery-202605first',
+            'slug' => 'thai-goverment-lottery-202605first',
             'content' => 'Initial Content',
             'is_published' => true,
-            'cover_image_path' => 'articles/2026/thai-government-lottery-202605first/premium.png',
-            'cover_image_square_path' => 'articles/2026/thai-government-lottery-202605first/premium.png',
+            'cover_image_path' => 'articles/2026/thai-goverment-lottery-202605first/premium.png',
+            'cover_image_square_path' => 'articles/2026/thai-goverment-lottery-202605first/premium.png',
         ]);
 
         // 2. Mock API as Complete (must have at least 6 prize entries for isCompletePayload to return true)

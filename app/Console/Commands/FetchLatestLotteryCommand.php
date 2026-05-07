@@ -192,7 +192,7 @@ class FetchLatestLotteryCommand extends Command
         $articleName = "ตรวจหวยรัฐบาล งวดประจำวันที่ {$thaiDateLabel} ผลสลากกินแบ่งรัฐบาล";
         
         $slugSuffix = $drawDate->day >= 16 ? 'second' : 'first';
-        $targetSlug = "thai-government-lottery-{$drawDate->format('Ym')}{$slugSuffix}";
+        $targetSlug = "thai-goverment-lottery-{$drawDate->format('Ym')}{$slugSuffix}";
 
         $article = Article::query()->where('slug', $targetSlug)->first();
 
@@ -284,9 +284,14 @@ class FetchLatestLotteryCommand extends Command
             if (is_scalar($numbers)) $numbers = [$numbers];
 
             foreach ($numbers as $num) {
+                $prizeNumber = is_array($num) ? data_get($num, 'value') : $num;
+                if ($prizeNumber === null || $prizeNumber === '') {
+                    continue;
+                }
+
                 $rows[] = [
                     'prize_name' => $name,
-                    'prize_number' => (string) $num,
+                    'prize_number' => (string) $prizeNumber,
                 ];
             }
         }

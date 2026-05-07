@@ -919,7 +919,7 @@
         <tbody>
           @forelse ($articles as $article)
             @php
-              $isLotteryArticle = preg_match('/^thai-govern?ment-lottery-(\d{4})(\d{2})(first|second)$/', (string)$article->slug, $matches) === 1;
+              $isLotteryArticle = preg_match('/^thai-goverment-lottery-(\d{4})(\d{2})(first|second)$/', (string)$article->slug, $matches) === 1;
               $lotteryIsComplete = true;
               $publishStatusLabel = 'ฉบับร่าง';
               $publishStatusClass = 'admin-status-pill--hold';
@@ -1243,7 +1243,7 @@
               if (!empty($item['is_lottery'])) {
                   $dateObj = \Carbon\Carbon::parse($item['date']);
                   $isRound1 = (int)$dateObj->format('j') <= 15;
-                  $pattern = '/^thai-govern?ment-lottery-' . $dateObj->format('Ym') . ($isRound1 ? 'first' : 'second') . '$/';
+                  $pattern = '/^thai-goverment-lottery-' . $dateObj->format('Ym') . ($isRound1 ? 'first' : 'second') . '$/';
                   if (preg_match($pattern, (string)$article['slug'])) {
                       $exists = true; break;
                   }

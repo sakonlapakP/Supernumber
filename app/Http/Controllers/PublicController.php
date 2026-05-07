@@ -488,11 +488,11 @@ class PublicController extends Controller
             ->orderByDesc('fetched_at')
             ->orderByDesc('id');
 
-        if ($slug === 'thai-government-lottery-latest-results') {
+        if ($slug === 'thai-goverment-lottery-latest-results') {
             return (clone $latestResultQuery)->first();
         }
 
-        if (preg_match('/^thai-govern?ment-lottery-(\d{4})(\d{2})(first|second)$/', $slug, $matches) !== 1) {
+        if (preg_match('/^thai-goverment-lottery-(\d{4})(\d{2})(first|second)$/', $slug, $matches) !== 1) {
             return null;
         }
 

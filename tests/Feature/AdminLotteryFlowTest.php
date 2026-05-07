@@ -29,7 +29,7 @@ class AdminLotteryFlowTest extends TestCase
 
         $article = Article::create([
             'title' => 'ตรวจหวย 1 พ.ค. 2569',
-            'slug' => 'thai-government-lottery-202605first',
+            'slug' => 'thai-goverment-lottery-202605first',
             'content' => 'Test Content',
             'is_published' => true,
         ]);
@@ -61,7 +61,7 @@ class AdminLotteryFlowTest extends TestCase
         // 2. สร้างบทความหวยที่ยังไม่ครบ 100%
         $article = Article::create([
             'title' => 'หวยงวดใหม่',
-            'slug' => 'thai-government-lottery-202605first',
+            'slug' => 'thai-goverment-lottery-202605first',
             'content' => 'Content',
             'is_published' => true,
         ]);

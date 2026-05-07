@@ -340,13 +340,13 @@ class AdminArticleMediaTest extends TestCase
 
         $article = Article::query()->create([
             'title' => 'Lottery Render Article',
-            'slug' => 'thai-government-lottery-202605first',
+            'slug' => 'thai-goverment-lottery-202605first',
             'excerpt' => 'Excerpt',
             'content' => '<p>Lottery content</p>',
             'is_published' => true,
-            'cover_image_path' => 'articles/2026/thai-government-lottery-202605first/thai-government-lottery-202605first_20260501.svg',
-            'cover_image_square_path' => 'articles/2026/thai-government-lottery-202605first/thai-government-lottery-202605first_20260501.svg',
-            'cover_image_landscape_path' => 'articles/2026/thai-government-lottery-202605first/thai-government-lottery-202605first_cover_20260501.svg',
+            'cover_image_path' => 'articles/2026/thai-goverment-lottery-202605first/thai-goverment-lottery-202605first_20260501.svg',
+            'cover_image_square_path' => 'articles/2026/thai-goverment-lottery-202605first/thai-goverment-lottery-202605first_20260501.svg',
+            'cover_image_landscape_path' => 'articles/2026/thai-goverment-lottery-202605first/thai-goverment-lottery-202605first_cover_20260501.svg',
         ]);
 
         Storage::disk('public')->put((string) $article->cover_image_square_path, '<svg></svg>');
@@ -364,13 +364,13 @@ class AdminArticleMediaTest extends TestCase
             ->assertOk()
             ->assertJson([
                 'success' => true,
-                'path' => 'articles/2026/thai-government-lottery-202605first/thai-government-lottery-202605first_20260501.png',
+                'path' => 'articles/2026/thai-goverment-lottery-202605first/thai-goverment-lottery-202605first_20260501.png',
             ]);
 
         $article->refresh();
 
         $this->assertSame(
-            'articles/2026/thai-government-lottery-202605first/thai-government-lottery-202605first_20260501.png',
+            'articles/2026/thai-goverment-lottery-202605first/thai-goverment-lottery-202605first_20260501.png',
             $article->cover_image_square_path
         );
         $this->assertSame($article->cover_image_square_path, $article->cover_image_path);
