@@ -1271,6 +1271,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     $ensureAdmin,
     $buildArticleSlug,
     $resolveLotteryResultForArticle,
+    $resolvePlannedArticlePublishedAt,
     $resolveArticleImageMeta,
     $resolveOrderPaymentSlip,
     $rejectAdminLogin,

@@ -99,7 +99,7 @@ class Article {
       'image_guidelines': imageGuidelines,
       'is_published': isPublished,
       'is_auto_post': isAutoPost,
-      'published_at': publishedAt?.toIso8601String(), 
+      'published_at': publishedAt != null ? "${publishedAt!.year.toString().padLeft(4, '0')}-${publishedAt!.month.toString().padLeft(2, '0')}-${publishedAt!.day.toString().padLeft(2, '0')} ${publishedAt!.hour.toString().padLeft(2, '0')}:${publishedAt!.minute.toString().padLeft(2, '0')}:00" : null,
     };
   }
 }
