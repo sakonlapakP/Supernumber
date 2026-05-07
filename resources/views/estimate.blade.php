@@ -95,9 +95,10 @@
               ลักษณะงานหลักที่ทำ*
               <select name="work_type">
                 <option value="">-- เลือกลักษณะงานที่ทำ --</option>
-                @foreach ($workTypeOptions as $value => $label)
-                  <option value="{{ $value }}" @selected(old('work_type') === $value)>{{ $label }}</option>
-                @endforeach
+                <option value="sales" @selected(old('work_type') === 'sales')>งานขาย / เจรจา</option>
+                <option value="service" @selected(old('work_type') === 'service')>งานบริการ / ดูแลลูกค้า</option>
+                <option value="office" @selected(old('work_type') === 'office')>งานออฟฟิศ / บริหาร</option>
+                <option value="online" @selected(old('work_type') === 'online')>งานออนไลน์ / คอนเทนต์</option>
               </select>
             </label>
             <label>
@@ -120,9 +121,10 @@
             วัตถุประสงค์ในการเปลี่ยนเบอร์*
             <select name="goal">
               <option value="">-- เลือกวัตถุประสงค์ในการเปลี่ยนเบอร์ --</option>
-              @foreach ($goalOptions as $value => $label)
-                <option value="{{ $value }}" @selected(old('goal') === $value)>{{ $label }}</option>
-              @endforeach
+              <option value="work" @selected(old('goal') === 'work')>เน้นการงาน / โอกาสใหม่</option>
+              <option value="money" @selected(old('goal') === 'money')>เน้นการเงิน / ปิดการขาย</option>
+              <option value="love" @selected(old('goal') === 'love')>เน้นความรัก / ความสัมพันธ์</option>
+              <option value="balance" @selected(old('goal') === 'balance')>เน้นสมดุลชีวิต</option>
             </select>
           </label>
 
