@@ -595,9 +595,6 @@ class _ArticleEditScreenState extends State<ArticleEditScreen> {
     );
   }
 
-    );
-  }
-
   Widget _buildAutoPostToggle() {
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
