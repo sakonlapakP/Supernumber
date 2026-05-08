@@ -76,7 +76,9 @@ class LotteryResult extends Model
         }
 
         if (is_numeric($value)) {
-            return Carbon::createFromTimestamp((int) $value)->toDateString();
+            return Carbon::createFromTimestamp((int) $value, 'UTC')
+                ->timezone(config('app.timezone', 'Asia/Bangkok'))
+                ->toDateString();
         }
 
         if (trim((string) $value) === '') {

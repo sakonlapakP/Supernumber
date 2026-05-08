@@ -33,7 +33,9 @@ trait UnixTimestampSerializable
 
         // If the value is a numeric string or integer, assume it's a Unix Timestamp
         if (is_numeric($value)) {
-            return Carbon::createFromTimestamp($value)->format($this->getDateFormat());
+            return Carbon::createFromTimestamp($value, 'UTC')
+                ->timezone(config('app.timezone', 'Asia/Bangkok'))
+                ->format($this->getDateFormat());
         }
 
         return parent::fromDateTime($value);
