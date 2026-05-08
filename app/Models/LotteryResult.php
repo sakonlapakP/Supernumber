@@ -8,8 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Carbon;
 
+use App\Traits\UnixTimestampSerializable;
+
 class LotteryResult extends Model
 {
+    use \App\Traits\UnixTimestampSerializable;
 
     protected $fillable = [
         'draw_date',
@@ -31,10 +34,6 @@ class LotteryResult extends Model
         ];
     }
 
-    protected function serializeDate(\DateTimeInterface $date): string
-    {
-        return (string) $date->getTimestamp();
-    }
 
     protected function drawDate(): Attribute
     {
@@ -74,6 +73,10 @@ class LotteryResult extends Model
 
         if ($value instanceof DateTimeInterface) {
             return Carbon::instance($value)->toDateString();
+        }
+
+        if (is_numeric($value)) {
+            return Carbon::createFromTimestamp((int) $value)->toDateString();
         }
 
         if (trim((string) $value) === '') {

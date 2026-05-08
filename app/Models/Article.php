@@ -6,10 +6,13 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Traits\UnixTimestampSerializable;
 use App\Services\ArticleContentSanitizer;
 
 class Article extends Model
 {
+    use UnixTimestampSerializable;
+
     protected $fillable = [
         'title',
         'slug',
@@ -43,11 +46,6 @@ class Article extends Model
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
-    }
-
-    protected function serializeDate(\DateTimeInterface $date): string
-    {
-        return (string) $date->getTimestamp();
     }
 
     public function scopePublished(Builder $query): Builder

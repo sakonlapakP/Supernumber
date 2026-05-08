@@ -6,8 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Support\Facades\Storage;
 
+use App\Traits\UnixTimestampSerializable;
+
 class SalesDocument extends Model
 {
+    use \App\Traits\UnixTimestampSerializable;
 
     protected $fillable = [
         'document_type',

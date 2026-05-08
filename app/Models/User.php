@@ -8,8 +8,11 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
+use App\Traits\UnixTimestampSerializable;
+
 class User extends Authenticatable
 {
+    use UnixTimestampSerializable;
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
@@ -57,10 +60,6 @@ class User extends Authenticatable
         ];
     }
 
-    protected function serializeDate(\DateTimeInterface $date): string
-    {
-        return (string) $date->getTimestamp();
-    }
 
     public function statusLogs(): HasMany
     {

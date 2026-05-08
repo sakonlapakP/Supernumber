@@ -63,8 +63,20 @@ class Article {
     if (value is int) {
       return DateTime.fromMillisecondsSinceEpoch(value * 1000).toLocal();
     }
-    // Fallback if it's still a string
-    return DateTime.parse(value.toString()).toLocal();
+    if (value is String) {
+      // Handle numeric strings (Unix timestamps)
+      final int? intValue = int.tryParse(value);
+      if (intValue != null) {
+        return DateTime.fromMillisecondsSinceEpoch(intValue * 1000).toLocal();
+      }
+      // Handle ISO 8601 strings
+      try {
+        return DateTime.parse(value).toLocal();
+      } catch (e) {
+        return null;
+      }
+    }
+    return null;
   }
 
   bool get isScheduled =>
@@ -103,7 +115,7 @@ class Article {
       'image_guidelines': imageGuidelines,
       'is_published': isPublished,
       'is_auto_post': isAutoPost,
-      'published_at': publishedAt != null ? (publishedAt!.millisecondsSinceEpoch ~/ 1000).toString() : null,
+      'published_at': publishedAt != null ? (publishedAt!.millisecondsSinceEpoch ~/ 1000) : null,
     };
   }
 }

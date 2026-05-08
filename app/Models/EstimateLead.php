@@ -5,8 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 
+use App\Traits\UnixTimestampSerializable;
+
 class EstimateLead extends Model
 {
+    use \App\Traits\UnixTimestampSerializable;
 
     protected $fillable = [
         'first_name',

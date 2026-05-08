@@ -6,8 +6,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+use App\Traits\UnixTimestampSerializable;
+
 class ArticleComment extends Model
 {
+    use \App\Traits\UnixTimestampSerializable;
 
     public const STATUS_PENDING = 'pending';
     public const STATUS_APPROVED = 'approved';

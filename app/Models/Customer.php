@@ -4,8 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use App\Traits\UnixTimestampSerializable;
+
 class Customer extends Model
 {
+    use \App\Traits\UnixTimestampSerializable;
 
     protected $fillable = [
         'company_name',

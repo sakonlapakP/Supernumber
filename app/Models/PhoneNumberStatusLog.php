@@ -5,8 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+use App\Traits\UnixTimestampSerializable;
+
 class PhoneNumberStatusLog extends Model
 {
+    use \App\Traits\UnixTimestampSerializable;
 
     protected $fillable = [
         'phone_number_id',

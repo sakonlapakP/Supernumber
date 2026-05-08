@@ -5,8 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphTo;
 
+use App\Traits\UnixTimestampSerializable;
+
 class LineNotificationLog extends Model
 {
+    use \App\Traits\UnixTimestampSerializable;
 
     public const STATUS_QUEUED = 'queued';
     public const STATUS_SENT = 'sent';

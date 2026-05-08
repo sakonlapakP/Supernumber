@@ -6,8 +6,11 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+use App\Traits\UnixTimestampSerializable;
+
 class PhoneNumber extends Model
 {
+    use \App\Traits\UnixTimestampSerializable;
 
     public const PHONE_NUMBER_LENGTH = 10;
     public const PREFIX_LENGTH = 3;
@@ -52,10 +55,6 @@ class PhoneNumber extends Model
         ];
     }
 
-    protected function serializeDate(\DateTimeInterface $date): string
-    {
-        return (string) $date->getTimestamp();
-    }
 
     protected static function booted(): void
     {

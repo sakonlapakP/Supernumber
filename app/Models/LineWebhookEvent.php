@@ -4,8 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 
+use App\Traits\UnixTimestampSerializable;
+
 class LineWebhookEvent extends Model
 {
+    use \App\Traits\UnixTimestampSerializable;
 
     protected $guarded = [];
 

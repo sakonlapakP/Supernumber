@@ -7,8 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
 use InvalidArgumentException;
 
+use App\Traits\UnixTimestampSerializable;
+
 class CustomerOrder extends Model
 {
+    use \App\Traits\UnixTimestampSerializable;
 
     public const STATUS_SUBMITTED = 'submitted';
     public const STATUS_PENDING_REVIEW = 'pending_review';
@@ -52,10 +55,6 @@ class CustomerOrder extends Model
         ];
     }
 
-    protected function serializeDate(\DateTimeInterface $date): string
-    {
-        return (string) $date->getTimestamp();
-    }
 
     protected static function booted(): void
     {
