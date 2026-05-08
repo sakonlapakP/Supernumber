@@ -2585,16 +2585,38 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
     })->name('utils.storage-link');
 
-    Route::get('/articles', function () use ($ensureAdmin) {
+    Route::get('/articles', function (Request $request) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
 
-        $articles = Article::query()
-            ->latest('created_at')
-            ->paginate(20);
+        $query = Article::query();
+        
+        $selectedMonthPlan = $request->query('month_plan');
+        if ($selectedMonthPlan) {
+            $thaiMonthsReverse = [
+                'มกราคม' => 1, 'กุมภาพันธ์' => 2, 'มีนาคม' => 3, 'เมษายน' => 4,
+                'พฤษภาคม' => 5, 'มิถุนายน' => 6, 'กรกฎาคม' => 7, 'สิงหาคม' => 8,
+                'กันยายน' => 9, 'ตุลาคม' => 10, 'พฤศจิกายน' => 11, 'ธันวาคม' => 12
+            ];
 
-        // Fetch all article dates and titles for the content plan checklist
+            $parts = explode(' ', trim($selectedMonthPlan));
+            if (count($parts) === 2) {
+                $monthName = $parts[0];
+                $yearShort = (int) $parts[1];
+                
+                if (isset($thaiMonthsReverse[$monthName])) {
+                    $monthNum = $thaiMonthsReverse[$monthName];
+                    $yearFull = 2000 + $yearShort - 43; 
+                    
+                    $query->whereMonth('published_at', $monthNum)
+                          ->whereYear('published_at', $yearFull);
+                }
+            }
+        }
+
+        $articles = $query->latest('created_at')->paginate(20)->withQueryString();
+
         $existingArticlesInfo = Article::query()
             ->select('id', 'title', 'published_at', 'is_published', 'slug')
             ->get()

@@ -895,15 +895,15 @@
 
     <div class="admin-card article-admin-card">
       <div class="article-admin-toolbar" style="padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <div style="display: flex; gap: 12px; align-items: center; flex: 1; max-width: 600px;">
+        <form action="{{ route('admin.articles') }}" method="GET" style="display: flex; gap: 12px; align-items: center; flex: 1; max-width: 600px;">
           <input type="text" id="article-search" placeholder="ค้นหาหัวข้อบทความ..." class="admin-input" style="flex: 1;">
-          <select id="plan-month-filter" class="admin-input" style="width: 180px; background-color: #fff; cursor: pointer; border-color: #e2e8f0; font-weight: 600; color: #1e293b;">
+          <select id="plan-month-filter" name="month_plan" class="admin-input" style="width: 180px; background-color: #fff; cursor: pointer; border-color: #e2e8f0; font-weight: 600; color: #1e293b;" onchange="this.form.submit()">
             <option value="">ทั้งหมด (แผนงาน)</option>
             @foreach($planData as $month)
-              <option value="{{ $month['month'] }}">{{ $month['month'] }}</option>
+              <option value="{{ $month['month'] }}" {{ request('month_plan') === $month['month'] ? 'selected' : '' }}>{{ $month['month'] }}</option>
             @endforeach
           </select>
-        </div>
+        </form>
         <div class="admin-muted article-admin-toolbar__count" style="font-size: 13px; font-weight: 600;">ทั้งหมด {{ number_format($articles->total()) }} รายการ</div>
       </div>
       <div class="admin-table-wrap">
@@ -939,7 +939,19 @@
                   $lotteryIsComplete = $lotteryResult ? $lotteryResult->is_complete : false;
               }
             @endphp
-            <tr class="article-row" data-title="{{ strtolower($article->title) }}" data-slug="{{ strtolower($article->slug) }}">
+            @php
+              $thaiMonthsFull = [
+                  1 => 'มกราคม', 2 => 'กุมภาพันธ์', 3 => 'มีนาคม', 4 => 'เมษายน',
+                  5 => 'พฤษภาคม', 6 => 'มิถุนายน', 7 => 'กรกฎาคม', 8 => 'สิงหาคม',
+                  9 => 'กันยายน', 10 => 'ตุลาคม', 11 => 'พฤศจิกายน', 12 => 'ธันวาคม'
+              ];
+              $rowMonthYear = '';
+              if ($article->published_at) {
+                  $dt = $article->published_at->timezone('Asia/Bangkok');
+                  $rowMonthYear = $thaiMonthsFull[(int)$dt->format('n')] . ' ' . (($dt->format('Y') + 543) % 100);
+              }
+            @endphp
+            <tr class="article-row" data-title="{{ strtolower($article->title) }}" data-slug="{{ strtolower($article->slug) }}" data-month-year="{{ $rowMonthYear }}">
               <td data-label="รูปหน้าปก">
                 <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
                   @php
@@ -1306,35 +1318,62 @@
     <script>
       document.addEventListener('DOMContentLoaded', function() {
         const monthFilter = document.getElementById('plan-month-filter');
+        const searchInput = document.getElementById('article-search');
+        const articleRows = document.querySelectorAll('.article-row');
         const planRows = document.querySelectorAll('.plan-item-row');
         const dividers = document.querySelectorAll('.month-divider');
+        const emptyRow = document.getElementById('articles-empty-row');
+        const countDisplay = document.querySelector('.article-admin-toolbar__count');
 
-        monthFilter.addEventListener('change', function() {
-          const selectedMonth = this.value;
+        function applyFilters() {
+          const selectedMonth = monthFilter ? monthFilter.value : '';
+          const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
           
+          // 1. Filter Main Articles Table
+          let visibleArticleCount = 0;
+          articleRows.forEach(row => {
+            const title = row.getAttribute('data-title') || '';
+            const slug = row.getAttribute('data-slug') || '';
+            const rowMonthYear = row.getAttribute('data-month-year') || '';
+
+            const searchMatch = !searchQuery || title.includes(searchQuery) || slug.includes(searchQuery);
+            const monthMatch = !selectedMonth || rowMonthYear === selectedMonth;
+
+            if (searchMatch && monthMatch) {
+              row.style.display = '';
+              visibleArticleCount++;
+            } else {
+              row.style.display = 'none';
+            }
+          });
+
+          if (emptyRow) {
+            emptyRow.style.display = (visibleArticleCount === 0 && articleRows.length > 0) ? "" : "none";
+          }
+          
+          if (countDisplay) {
+            countDisplay.innerText = `แสดง ${visibleArticleCount} จากทั้งหมด ${articleRows.length} รายการ`;
+          }
+
+          // 2. Filter Roadmap Table
           if (!selectedMonth) {
-            // Show all
             planRows.forEach(row => row.style.display = '');
             dividers.forEach(div => div.style.display = '');
           } else {
-            // Filter by month
             planRows.forEach(row => {
-              if (row.getAttribute('data-month') === selectedMonth) {
-                row.style.display = '';
-              } else {
-                row.style.display = 'none';
-              }
+              row.style.display = row.getAttribute('data-month') === selectedMonth ? '' : 'none';
             });
-            
             dividers.forEach(div => {
-              if (div.getAttribute('data-month-divider') === selectedMonth) {
-                div.style.display = '';
-              } else {
-                div.style.display = 'none';
-              }
+              div.style.display = div.getAttribute('data-month-divider') === selectedMonth ? '' : 'none';
             });
           }
-        });
+        }
+
+        if (monthFilter) monthFilter.addEventListener('change', applyFilters);
+        if (searchInput) searchInput.addEventListener('input', applyFilters);
+        
+        // Initial filter on load
+        applyFilters();
       });
     </script>
 
@@ -1652,26 +1691,6 @@
         });
     })();
 
-    (() => {
-      const searchInput = document.getElementById("article-search");
-      const rows = Array.from(document.querySelectorAll(".article-row"));
-      const emptyRow = document.getElementById("articles-empty-row");
-
-      if (searchInput) {
-        searchInput.addEventListener("input", () => {
-          const query = searchInput.value.toLowerCase().trim();
-          let visibleCount = 0;
-          rows.forEach(row => {
-            const title = row.dataset.title;
-            const slug = row.dataset.slug;
-            const match = title.includes(query) || slug.includes(query);
-            row.style.display = match ? "" : "none";
-            if (match) visibleCount++;
-          });
-          if (emptyRow) emptyRow.style.display = (visibleCount === 0 && rows.length > 0) ? "" : "none";
-        });
-      }
-    })();
 
     function openAiPromptModal() {
         document.getElementById('ai-prompt-modal').style.display = 'flex';
