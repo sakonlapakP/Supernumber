@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 
 class LineNotificationLog extends Model
 {
+    protected $dateFormat = 'U';
+
     public const STATUS_QUEUED = 'queued';
     public const STATUS_SENT = 'sent';
     public const STATUS_FAILED = 'failed';

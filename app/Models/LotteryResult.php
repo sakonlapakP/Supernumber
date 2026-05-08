@@ -10,6 +10,8 @@ use Illuminate\Support\Carbon;
 
 class LotteryResult extends Model
 {
+    protected $dateFormat = 'U';
+
     protected $fillable = [
         'draw_date',
         'source_draw_date',

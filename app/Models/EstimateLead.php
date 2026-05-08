@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
 
 class EstimateLead extends Model
 {
+    protected $dateFormat = 'U';
+
     protected $fillable = [
         'first_name',
         'last_name',

@@ -8,6 +8,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PhoneNumber extends Model
 {
+    protected $dateFormat = 'U';
+
     public const PHONE_NUMBER_LENGTH = 10;
     public const PREFIX_LENGTH = 3;
     public const SERVICE_TYPE_POSTPAID = 'postpaid';

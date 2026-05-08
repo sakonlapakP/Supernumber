@@ -7,6 +7,8 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class LotteryResultPrize extends Model
 {
+    protected $dateFormat = 'U';
+
     protected $fillable = [
         'lottery_result_id',
         'position',

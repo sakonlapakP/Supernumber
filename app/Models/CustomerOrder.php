@@ -9,6 +9,8 @@ use InvalidArgumentException;
 
 class CustomerOrder extends Model
 {
+    protected $dateFormat = 'U';
+
     public const STATUS_SUBMITTED = 'submitted';
     public const STATUS_PENDING_REVIEW = 'pending_review';
     public const STATUS_REVIEWING = 'reviewing';

@@ -10,6 +10,8 @@ use App\Services\ArticleContentSanitizer;
 
 class Article extends Model
 {
+    protected $dateFormat = 'U';
+
     protected $fillable = [
         'title',
         'slug',

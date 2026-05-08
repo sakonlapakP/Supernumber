@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class PairMeaning extends Model
 {
+    protected $dateFormat = 'U';
+
     protected $fillable = [
         'pair',
         'status',

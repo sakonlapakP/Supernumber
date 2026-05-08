@@ -8,6 +8,8 @@ use Illuminate\Support\Facades\Storage;
 
 class SalesDocument extends Model
 {
+    protected $dateFormat = 'U';
+
     protected $fillable = [
         'document_type',
         'document_number',

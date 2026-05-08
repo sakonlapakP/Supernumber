@@ -6,6 +6,8 @@ use Illuminate\Database\Eloquent\Model;
 
 class LineWebhookEvent extends Model
 {
+    protected $dateFormat = 'U';
+
     protected $guarded = [];
 
     protected function casts(): array
