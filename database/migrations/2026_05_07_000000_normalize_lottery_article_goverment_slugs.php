@@ -1,9 +1,10 @@
 <?php
 
-use App\Models\Article;
 use Illuminate\Database\Migrations\Migration;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
+use stdClass;
 
 return new class extends Migration
 {
@@ -13,17 +14,18 @@ return new class extends Migration
             return;
         }
 
-        Article::query()
+        DB::table('articles')
             ->where('slug', 'like', 'thai-government-lottery-%')
             ->get()
-            ->each(function (Article $article): void {
+            ->each(function (stdClass $article): void {
                 $newSlug = Str::replace('thai-government', 'thai-goverment', (string) $article->slug);
+                $updateData = [];
 
                 if (
                     $newSlug !== $article->slug
-                    && ! Article::query()->where('slug', $newSlug)->whereKeyNot($article->getKey())->exists()
+                    && ! DB::table('articles')->where('slug', $newSlug)->where('id', '!=', $article->id)->exists()
                 ) {
-                    $article->slug = $newSlug;
+                    $updateData['slug'] = $newSlug;
                 }
 
                 foreach ([
@@ -34,11 +36,16 @@ return new class extends Migration
                     'cover_image_landscape_path',
                 ] as $column) {
                     if (Schema::hasColumn('articles', $column) && is_string($article->{$column})) {
-                        $article->{$column} = Str::replace('thai-government', 'thai-goverment', $article->{$column});
+                        $newVal = Str::replace('thai-government', 'thai-goverment', $article->{$column});
+                        if ($newVal !== $article->{$column}) {
+                            $updateData[$column] = $newVal;
+                        }
                     }
                 }
 
-                $article->save();
+                if (!empty($updateData)) {
+                    DB::table('articles')->where('id', $article->id)->update($updateData);
+                }
             });
     }
 
@@ -48,17 +55,18 @@ return new class extends Migration
             return;
         }
 
-        Article::query()
+        DB::table('articles')
             ->where('slug', 'like', 'thai-goverment-lottery-%')
             ->get()
-            ->each(function (Article $article): void {
+            ->each(function (stdClass $article): void {
                 $oldSlug = Str::replace('thai-goverment', 'thai-government', (string) $article->slug);
+                $updateData = [];
 
                 if (
                     $oldSlug !== $article->slug
-                    && ! Article::query()->where('slug', $oldSlug)->whereKeyNot($article->getKey())->exists()
+                    && ! DB::table('articles')->where('slug', $oldSlug)->where('id', '!=', $article->id)->exists()
                 ) {
-                    $article->slug = $oldSlug;
+                    $updateData['slug'] = $oldSlug;
                 }
 
                 foreach ([
@@ -69,11 +77,16 @@ return new class extends Migration
                     'cover_image_landscape_path',
                 ] as $column) {
                     if (Schema::hasColumn('articles', $column) && is_string($article->{$column})) {
-                        $article->{$column} = Str::replace('thai-goverment', 'thai-government', $article->{$column});
+                        $oldVal = Str::replace('thai-goverment', 'thai-government', $article->{$column});
+                        if ($oldVal !== $article->{$column}) {
+                            $updateData[$column] = $oldVal;
+                        }
                     }
                 }
 
-                $article->save();
+                if (!empty($updateData)) {
+                    DB::table('articles')->where('id', $article->id)->update($updateData);
+                }
             });
     }
 };
