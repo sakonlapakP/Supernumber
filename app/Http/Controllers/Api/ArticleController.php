@@ -19,7 +19,9 @@ class ArticleController extends Controller
 {
     public function index()
     {
-        return Article::latest()->paginate(20);
+        return Article::query()
+            ->orderByRaw('COALESCE(published_at, created_at) DESC')
+            ->paginate(20);
     }
 
     public function importJson(Request $request): JsonResponse

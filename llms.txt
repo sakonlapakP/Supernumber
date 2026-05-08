@@ -1,5 +1,8 @@
 # Supernumber Project Context
 
+> [!NOTE]
+> **Project Metadata:** See [project_info.json](file:///Users/efaum/Sites/localhost/supernumber/project_info.json) for standard commands and project identity. AI assistants should read that file to understand how to run, build, or manage this project.
+
 ## Overview
 - **Project Name:** Supernumber
 - **Core Business:** Lucky Phone Number Sales (เบอร์มงคล), Numerology Analysis (ทำนายดวง), and SEO Article System.

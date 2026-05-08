@@ -1,0 +1,44 @@
+{
+  "_ai_note": "This file is the Source of Truth for AI assistants to understand the project's identity, port, and standard commands. DO NOT remove this file.",
+  "name": "Supernumber",
+  "port": 8000,
+  "url": "http://127.0.0.1:8000",
+  "description": "ระบบจัดการเบอร์มงคลและบทความหลักสำหรับเว็บไซต์ Supernumber",
+  "features": [
+    "Product Management: จัดการเบอร์โทรศัพท์และสถานะการจอง",
+    "Article System: ระบบจัดการบทความดูดวงและตัวเลขเพื่อ SEO",
+    "Lottery Results: ระบบดึงข้อมูลและจัดการผลสลากกินแบ่ง",
+    "Admin Dashboard: หน้าจัดการสำหรับผู้ดูแลระบบ",
+    "API Backend: ให้บริการข้อมูลสำหรับ Mobile App"
+  ],
+  "commands": {
+    "1. Laravel Backend (Root)": {
+      "Serve": "php artisan serve",
+      "Migrate": "php artisan migrate",
+      "Migrate Rollback": "php artisan migrate:rollback",
+      "Migrate Status": "php artisan migrate:status",
+      "Cache Clear": "php artisan cache:clear",
+      "Config Clear": "php artisan config:clear",
+      "Route Clear": "php artisan route:clear",
+      "View Clear": "php artisan view:clear",
+      "Tinker": "php artisan tinker",
+      "Composer Install": "composer install",
+      "Composer Update": "composer update"
+    },
+    "2. Flutter Admin (admin_flutter)": {
+      "Pub Get": "cd admin_flutter && flutter pub get",
+      "Run Debug": "cd admin_flutter && flutter run",
+      "Build APK": "cd admin_flutter && flutter build apk --release",
+      "Build AppBundle": "cd admin_flutter && flutter build appbundle --release",
+      "Build iOS": "cd admin_flutter && flutter build ios --release",
+      "Clean": "cd admin_flutter && flutter clean"
+    },
+    "3. Git Control": {
+      "Status": "git status",
+      "Add All": "git add .",
+      "Commit": "git commit -m \"update\"",
+      "Push": "git push",
+      "Pull": "git pull"
+    }
+  }
+}
