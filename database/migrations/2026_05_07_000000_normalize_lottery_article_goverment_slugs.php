@@ -4,7 +4,6 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
-use stdClass;
 
 return new class extends Migration
 {
@@ -17,7 +16,7 @@ return new class extends Migration
         DB::table('articles')
             ->where('slug', 'like', 'thai-government-lottery-%')
             ->get()
-            ->each(function (stdClass $article): void {
+            ->each(function ($article): void {
                 $newSlug = Str::replace('thai-government', 'thai-goverment', (string) $article->slug);
                 $updateData = [];
 
@@ -58,7 +57,7 @@ return new class extends Migration
         DB::table('articles')
             ->where('slug', 'like', 'thai-goverment-lottery-%')
             ->get()
-            ->each(function (stdClass $article): void {
+            ->each(function ($article): void {
                 $oldSlug = Str::replace('thai-goverment', 'thai-government', (string) $article->slug);
                 $updateData = [];
 
