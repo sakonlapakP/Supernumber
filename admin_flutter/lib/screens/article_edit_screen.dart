@@ -163,11 +163,11 @@ class _ArticleEditScreenState extends State<ArticleEditScreen> {
   }
 
   String get _publishStatusLabel {
-    if (!_isPublished) return 'ฉบับร่าง';
+    if (!_isPublished) return 'Draft';
     if (_publishedAt != null && _publishedAt!.isAfter(DateTime.now())) {
       return 'ตั้งเวลาเผยแพร่';
     }
-    return 'เผยแพร่แล้ว';
+    return 'Published';
   }
 
   Future<void> _save() async {

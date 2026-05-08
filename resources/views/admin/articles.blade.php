@@ -921,12 +921,12 @@
             @php
               $isLotteryArticle = preg_match('/^thai-goverment-lottery-(\d{4})(\d{2})(first|second)$/', (string)$article->slug, $matches) === 1;
               $lotteryIsComplete = true;
-              $publishStatusLabel = 'ฉบับร่าง';
+              $publishStatusLabel = 'Draft';
               $publishStatusClass = 'admin-status-pill--hold';
               $publishStatusStyle = '';
               if ($article->is_published) {
                   $isScheduled = $article->published_at && $article->published_at->gt(now('Asia/Bangkok'));
-                  $publishStatusLabel = $isScheduled ? 'ตั้งเวลาเผยแพร่' : 'เผยแพร่แล้ว';
+                  $publishStatusLabel = $isScheduled ? 'ตั้งเวลาเผยแพร่' : 'Published';
                   $publishStatusClass = $isScheduled ? 'admin-status-pill--hold' : 'admin-status-pill--active';
                   $publishStatusStyle = $isScheduled ? 'background: #eef6ff; color: #2563eb; border-color: #bfdbfe;' : '';
               }

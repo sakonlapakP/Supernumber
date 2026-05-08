@@ -85,8 +85,8 @@ class Article {
       publishedAt!.isAfter(DateTime.now());
 
   String get publishStatusLabel {
-    if (!isPublished) return 'ฉบับร่าง';
-    return isScheduled ? 'ตั้งเวลาเผยแพร่' : 'เผยแพร่แล้ว';
+    if (!isPublished) return 'Draft';
+    return isScheduled ? 'ตั้งเวลาเผยแพร่' : 'Published';
   }
 
   String? get publicUrl {
