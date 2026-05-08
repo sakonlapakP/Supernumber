@@ -3845,7 +3845,7 @@ Route::post('/direct-save-article/{article}', function (Request $request, Articl
         'meta_description' => ['nullable', 'string', 'max:500'],
         'keywords' => ['nullable', 'string'],
         'lsi_keywords' => ['nullable', 'string'],
-        'published_at' => ['nullable', 'date'],
+        'published_at' => ['nullable'],
         'is_published' => ['nullable', 'boolean'],
         'upload_media_sq' => ['nullable', 'image', 'max:10240'],
     ]);
@@ -3914,7 +3914,7 @@ Route::post('/direct-create-article', function (Request $request) use ($ensureAd
         'meta_description' => ['nullable', 'string', 'max:500'],
         'keywords' => ['nullable', 'string'],
         'lsi_keywords' => ['nullable', 'string'],
-        'published_at' => ['nullable', 'date'],
+        'published_at' => ['nullable'],
         'is_published' => ['nullable', 'boolean'],
         'upload_media_sq' => ['nullable', 'image', 'max:10240'],
     ]);
