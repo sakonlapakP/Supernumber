@@ -17,10 +17,34 @@ use Illuminate\Validation\ValidationException;
 
 class ArticleController extends Controller
 {
-    public function index()
+    public function index(Request $request)
     {
-        return Article::query()
-            ->orderByRaw('COALESCE(published_at, created_at) DESC')
+        $query = Article::query();
+
+        $selectedMonthPlan = $request->query('month_plan');
+        if ($selectedMonthPlan) {
+            $thaiMonthsReverse = [
+                'มกราคม' => 1, 'กุมภาพันธ์' => 2, 'มีนาคม' => 3, 'เมษายน' => 4,
+                'พฤษภาคม' => 5, 'มิถุนายน' => 6, 'กรกฎาคม' => 7, 'สิงหาคม' => 8,
+                'กันยายน' => 9, 'ตุลาคม' => 10, 'พฤศจิกายน' => 11, 'ธันวาคม' => 12
+            ];
+
+            $parts = explode(' ', trim($selectedMonthPlan));
+            if (count($parts) === 2) {
+                $monthName = $parts[0];
+                $yearShort = (int) $parts[1];
+                
+                if (isset($thaiMonthsReverse[$monthName])) {
+                    $monthNum = $thaiMonthsReverse[$monthName];
+                    $yearFull = 2000 + $yearShort - 43; 
+                    
+                    $query->whereMonth('published_at', $monthNum)
+                          ->whereYear('published_at', $yearFull);
+                }
+            }
+        }
+
+        return $query->orderByRaw('COALESCE(published_at, created_at) DESC')
             ->paginate(20);
     }
 

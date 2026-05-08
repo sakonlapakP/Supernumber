@@ -13,12 +13,15 @@ class ArticleProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get lastErrorMessage => _lastErrorMessage;
 
-  Future<void> fetchArticles() async {
+  Future<void> fetchArticles({String? monthPlan}) async {
     _isLoading = true;
     notifyListeners();
 
     try {
-      final response = await ApiService.dio.get('/articles');
+      final response = await ApiService.dio.get(
+        '/articles',
+        queryParameters: monthPlan != null ? {'month_plan': monthPlan} : null,
+      );
       if (response.statusCode == 200) {
         final List<dynamic> data = response.data['data'] ?? [];
         _articles = data.map((json) => Article.fromJson(json)).toList();

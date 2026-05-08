@@ -19,12 +19,20 @@ class ArticleListScreen extends StatefulWidget {
 }
 
 class _ArticleListScreenState extends State<ArticleListScreen> {
+  String? _selectedMonthPlan;
+  final List<String> _monthPlans = [
+    'พฤษภาคม 69', 'มิถุนายน 69', 'กรกฎาคม 69', 'สิงหาคม 69',
+    'กันยายน 69', 'ตุลาคม 69', 'พฤศจิกายน 69', 'ธันวาคม 69',
+    'มกราคม 70', 'กุมภาพันธ์ 70', 'มีนาคม 70', 'เมษายน 70'
+  ];
+
+
   @override
   void initState() {
     super.initState();
     // ดึงข้อมูลอัตโนมัติเมื่อเข้าหน้าจอนี้
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ArticleProvider>().fetchArticles();
+      context.read<ArticleProvider>().fetchArticles(monthPlan: _selectedMonthPlan);
     });
   }
 
@@ -38,7 +46,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
     );
 
     if (!mounted) return;
-    await context.read<ArticleProvider>().fetchArticles();
+    await context.read<ArticleProvider>().fetchArticles(monthPlan: _selectedMonthPlan);
   }
 
   Future<void> _openArticleEditor([Article? article]) async {
@@ -50,7 +58,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
     );
 
     if (!mounted) return;
-    await context.read<ArticleProvider>().fetchArticles();
+    await context.read<ArticleProvider>().fetchArticles(monthPlan: _selectedMonthPlan);
   }
 
   Future<void> _openArticlePreview(Article article) async {
@@ -348,6 +356,50 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
           ],
         ),
         actions: [
+          Container(
+            height: 36,
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            decoration: BoxDecoration(
+              color: Colors.grey[100],
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: Colors.grey[300]!),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedMonthPlan,
+                hint: Text(
+                  'ทั้งหมด (แผนงาน)',
+                  style: GoogleFonts.kanit(fontSize: 13, fontWeight: FontWeight.w600),
+                ),
+                icon: const Icon(Icons.calendar_month_rounded, size: 16),
+                style: GoogleFonts.kanit(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: const Color(0xFF1E293B),
+                ),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _selectedMonthPlan = newValue;
+                  });
+                  context.read<ArticleProvider>().fetchArticles(monthPlan: newValue);
+                },
+                items: [
+                  DropdownMenuItem<String>(
+                    value: null,
+                    child: Text('ทั้งหมด (แผนงาน)', style: GoogleFonts.kanit()),
+                  ),
+                  ..._monthPlans.map<DropdownMenuItem<String>>((String value) {
+                    return DropdownMenuItem<String>(
+                      value: value,
+                      child: Text(value, style: GoogleFonts.kanit()),
+                    );
+                  }),
+                ],
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+
           LayoutBuilder(
             builder: (context, constraints) {
               final isWide = MediaQuery.of(context).size.width > 600;
@@ -446,7 +498,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
-                    onPressed: () => provider.fetchArticles(),
+                    onPressed: () => provider.fetchArticles(monthPlan: _selectedMonthPlan),
                     child: const Text('ลองโหลดใหม่อีกครั้ง'),
                   ),
                 ],
@@ -460,7 +512,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
               final isNarrowTablet = constraints.maxWidth > 600 && constraints.maxWidth <= 900;
               
               return RefreshIndicator(
-                onRefresh: () => provider.fetchArticles(),
+                onRefresh: () => provider.fetchArticles(monthPlan: _selectedMonthPlan),
                 child: GridView.builder(
                   padding: const EdgeInsets.all(16),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
