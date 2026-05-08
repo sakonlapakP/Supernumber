@@ -9,7 +9,6 @@ use InvalidArgumentException;
 
 class CustomerOrder extends Model
 {
-    protected $dateFormat = 'U';
 
     public const STATUS_SUBMITTED = 'submitted';
     public const STATUS_PENDING_REVIEW = 'pending_review';
@@ -48,9 +47,14 @@ class CustomerOrder extends Model
             'service_type' => 'string',
             'selected_package' => 'integer',
             'appointment_date' => 'date',
-            'created_at' => 'datetime:U',
-            'updated_at' => 'datetime:U',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
         ];
+    }
+
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return (string) $date->getTimestamp();
     }
 
     protected static function booted(): void

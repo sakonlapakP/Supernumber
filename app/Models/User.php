@@ -10,8 +10,6 @@ use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
-    protected $dateFormat = 'U';
-
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
@@ -51,12 +49,17 @@ class User extends Authenticatable
     protected function casts(): array
     {
         return [
-            'email_verified_at' => 'datetime:U',
+            'email_verified_at' => 'datetime',
             'is_active' => 'boolean',
             'password' => 'hashed',
-            'created_at' => 'datetime:U',
-            'updated_at' => 'datetime:U',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
         ];
+    }
+
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return (string) $date->getTimestamp();
     }
 
     public function statusLogs(): HasMany

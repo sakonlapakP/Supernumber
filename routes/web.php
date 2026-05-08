@@ -4076,3 +4076,19 @@ Route::get('/cron/fix-storage-link/{secret}', function ($secret) {
             <b>Current Target:</b> $currentTarget <br><br>
             <a href='/admin/articles'>กลับหน้าบทความ</a>";
 });
+
+Route::get('/maintenance/db-convert-timestamps', function(Illuminate\Http\Request $request) {
+    // Simple security check via query parameter
+    if ($request->query('secret') !== 'convert_2026') {
+        return "Unauthorized. Please provide valid secret.";
+    }
+
+    $output = '';
+    try {
+        Artisan::call('db:convert-to-timestamps');
+        $output = Artisan::output();
+        return "<h3>Database Conversion Successful:</h3><pre>{$output}</pre>";
+    } catch (\Exception $e) {
+        return "<h3>Database Conversion Failed:</h3><pre>{$e->getMessage()}</pre>";
+    }
+});

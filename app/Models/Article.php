@@ -10,8 +10,6 @@ use App\Services\ArticleContentSanitizer;
 
 class Article extends Model
 {
-    protected $dateFormat = 'U';
-
     protected $fillable = [
         'title',
         'slug',
@@ -40,11 +38,16 @@ class Article extends Model
             'is_auto_post' => 'boolean',
             'is_line_broadcasted' => 'boolean',
             'image_guidelines' => 'array',
-            'published_at' => 'datetime:U',
-            'notified_at' => 'datetime:U',
-            'created_at' => 'datetime:U',
-            'updated_at' => 'datetime:U',
+            'published_at' => 'datetime',
+            'notified_at' => 'datetime',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
         ];
+    }
+
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return (string) $date->getTimestamp();
     }
 
     public function scopePublished(Builder $query): Builder

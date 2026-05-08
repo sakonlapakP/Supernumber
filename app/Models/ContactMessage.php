@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class ContactMessage extends Model
 {
-    protected $dateFormat = 'U';
 
     protected $fillable = [
         'name',

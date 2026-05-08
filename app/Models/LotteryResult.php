@@ -10,7 +10,6 @@ use Illuminate\Support\Carbon;
 
 class LotteryResult extends Model
 {
-    protected $dateFormat = 'U';
 
     protected $fillable = [
         'draw_date',
@@ -25,11 +24,16 @@ class LotteryResult extends Model
     {
         return [
             'is_complete' => 'boolean',
-            'fetched_at' => 'datetime:U',
+            'fetched_at' => 'datetime',
             'source_payload' => 'array',
-            'created_at' => 'datetime:U',
-            'updated_at' => 'datetime:U',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
         ];
+    }
+
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return (string) $date->getTimestamp();
     }
 
     protected function drawDate(): Attribute

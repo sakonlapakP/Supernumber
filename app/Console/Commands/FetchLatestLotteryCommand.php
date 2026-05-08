@@ -235,9 +235,16 @@ class FetchLatestLotteryCommand extends Command
         Storage::disk('public')->put("{$pathBase}/{$squareSvgFilename}", $squareSvg);
         Storage::disk('public')->put("{$pathBase}/{$landscapeSvgFilename}", $landscapeSvg);
         
-        $article->cover_image_square_path = "{$pathBase}/{$squareSvgFilename}";
-        $article->cover_image_path = "{$pathBase}/{$squareSvgFilename}";
-        $article->cover_image_landscape_path = "{$pathBase}/{$landscapeSvgFilename}";
+        // 🛡️ Protection: Only set SVG paths if the current path is not already a PNG (manual/premium upload)
+        if (!\Illuminate\Support\Str::endsWith((string)$article->cover_image_square_path, '.png')) {
+            $article->cover_image_square_path = "{$pathBase}/{$squareSvgFilename}";
+        }
+        if (!\Illuminate\Support\Str::endsWith((string)$article->cover_image_path, '.png')) {
+            $article->cover_image_path = "{$pathBase}/{$squareSvgFilename}";
+        }
+        if (!\Illuminate\Support\Str::endsWith((string)$article->cover_image_landscape_path, '.png')) {
+            $article->cover_image_landscape_path = "{$pathBase}/{$landscapeSvgFilename}";
+        }
 
         // 2. Generate PNG as additional asset if possible
         $canRenderPng = (getenv('PATH') ?: '') !== '';

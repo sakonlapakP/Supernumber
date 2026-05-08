@@ -6,7 +6,6 @@ use Illuminate\Database\Eloquent\Model;
 
 class Customer extends Model
 {
-    protected $dateFormat = 'U';
 
     protected $fillable = [
         'company_name',

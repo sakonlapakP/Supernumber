@@ -7,7 +7,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class PhoneNumberStatusLog extends Model
 {
-    protected $dateFormat = 'U';
 
     protected $fillable = [
         'phone_number_id',

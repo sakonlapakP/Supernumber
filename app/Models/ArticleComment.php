@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class ArticleComment extends Model
 {
-    protected $dateFormat = 'U';
 
     public const STATUS_PENDING = 'pending';
     public const STATUS_APPROVED = 'approved';

@@ -8,7 +8,6 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class PhoneNumber extends Model
 {
-    protected $dateFormat = 'U';
 
     public const PHONE_NUMBER_LENGTH = 10;
     public const PREFIX_LENGTH = 3;
@@ -48,9 +47,14 @@ class PhoneNumber extends Model
     protected function casts(): array
     {
         return [
-            'created_at' => 'datetime:U',
-            'updated_at' => 'datetime:U',
+            'created_at' => 'datetime',
+            'updated_at' => 'datetime',
         ];
+    }
+
+    protected function serializeDate(\DateTimeInterface $date): string
+    {
+        return (string) $date->getTimestamp();
     }
 
     protected static function booted(): void

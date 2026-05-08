@@ -32,6 +32,10 @@ return new class extends Migration
 
     private function convertTable(string $table, array $columns): void
     {
+        $driver = DB::getDriverName();
+        $unixTimestampPattern = $driver === 'sqlite' ? "strftime('%%s', %s)" : "UNIX_TIMESTAMP(%s)";
+
+        // 1. Add temporary columns
         Schema::table($table, function (Blueprint $t) use ($columns) {
             foreach ($columns as $column) {
                 if (Schema::hasColumn($t->getTable(), $column)) {
@@ -40,10 +44,11 @@ return new class extends Migration
             }
         });
 
+        // 2. Copy and convert data
         $updates = [];
         foreach ($columns as $column) {
             if (Schema::hasColumn($table, $column)) {
-                $updates[] = "{$column}_new = UNIX_TIMESTAMP({$column})";
+                $updates[] = "{$column}_new = " . sprintf($unixTimestampPattern, $column);
             }
         }
         
@@ -52,6 +57,20 @@ return new class extends Migration
             DB::statement("UPDATE {$table} SET {$updateStr}");
         }
 
+        // 3. Handle Indexes on SQLite
+        // SQLite will throw error when dropping columns that are part of an index.
+        if ($driver === 'sqlite') {
+            $allIndexes = Schema::getIndexes($table);
+            foreach ($allIndexes as $index) {
+                if (array_intersect($index['columns'], $columns)) {
+                    Schema::table($table, function (Blueprint $t) use ($index) {
+                        $t->dropIndex($index['name']);
+                    });
+                }
+            }
+        }
+
+        // 4. Drop old columns
         Schema::table($table, function (Blueprint $t) use ($columns) {
             foreach ($columns as $column) {
                 if (Schema::hasColumn($t->getTable(), $column)) {
@@ -60,12 +79,14 @@ return new class extends Migration
             }
         });
 
+        // 5. Recreate columns as bigInteger
         Schema::table($table, function (Blueprint $t) use ($columns) {
             foreach ($columns as $column) {
                 $t->bigInteger($column)->nullable();
             }
         });
 
+        // 6. Restore data from temporary columns
         $updates = [];
         foreach ($columns as $column) {
             $updates[] = "{$column} = {$column}_new";
@@ -73,6 +94,7 @@ return new class extends Migration
         $updateStr = implode(', ', $updates);
         DB::statement("UPDATE {$table} SET {$updateStr}");
 
+        // 7. Cleanup temporary columns
         Schema::table($table, function (Blueprint $t) use ($columns) {
             foreach ($columns as $column) {
                 $t->dropColumn($column . '_new');
