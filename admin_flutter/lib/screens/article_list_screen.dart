@@ -491,49 +491,83 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                     size: 64,
                     color: Colors.grey[400],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   const Text(
-                    'ยังไม่มีบทความในระบบ',
-                    style: TextStyle(color: Colors.grey),
+                    'ยังไม่มีบทความในระบบสำหรับเดือนนี้',
+                    style: TextStyle(
+                      color: Color(0xFF64748B),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
+                  const SizedBox(height: 8),
+                  Text(
+                    'คุณสามารถเริ่มเขียนบทความใหม่หรือนำเข้าข้อมูลได้',
+                    style: TextStyle(color: Colors.grey[500], fontSize: 13),
+                  ),
+                  const SizedBox(height: 24),
+                  OutlinedButton.icon(
                     onPressed: () => provider.fetchArticles(monthPlan: _selectedMonthPlan),
-                    child: const Text('ลองโหลดใหม่อีกครั้ง'),
+                    icon: const Icon(Icons.refresh_rounded, size: 20),
+                    label: const Text('ลองโหลดใหม่อีกครั้ง'),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      side: const BorderSide(color: Color(0xFFE2E8F0)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      foregroundColor: const Color(0xFF475569),
+                    ),
                   ),
                 ],
               ),
             );
           }
 
-          return LayoutBuilder(
-            builder: (context, constraints) {
-              final isWide = constraints.maxWidth > 900;
-              final isNarrowTablet = constraints.maxWidth > 600 && constraints.maxWidth <= 900;
-              
-              return RefreshIndicator(
-                onRefresh: () => provider.fetchArticles(monthPlan: _selectedMonthPlan),
-                child: GridView.builder(
-                  padding: const EdgeInsets.all(16),
-                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: isWide ? 2 : (isNarrowTablet ? 2 : 1),
-                    childAspectRatio: isWide ? 2.5 : (isNarrowTablet ? 2.0 : 2.8),
-                    crossAxisSpacing: 12,
-                    mainAxisSpacing: 12,
+          return RefreshIndicator(
+            onRefresh: () => provider.fetchArticles(monthPlan: _selectedMonthPlan),
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              physics: const AlwaysScrollableScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  LayoutBuilder(
+                    builder: (context, constraints) {
+                      final isWide = constraints.maxWidth > 900;
+                      final isNarrowTablet = constraints.maxWidth > 600 && constraints.maxWidth <= 900;
+                      
+                      return GridView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: isWide ? 2 : (isNarrowTablet ? 2 : 1),
+                          childAspectRatio: isWide ? 2.5 : (isNarrowTablet ? 2.0 : 2.8),
+                          crossAxisSpacing: 12,
+                          mainAxisSpacing: 12,
+                        ),
+                        itemCount: provider.articles.length,
+                        itemBuilder: (context, index) => _ArticleItem(
+                          article: provider.articles[index],
+                          onTap: () => _openArticleEditor(provider.articles[index]),
+                          onView: () => _openArticlePreview(provider.articles[index]),
+                          onEdit: () => _openArticleEditor(provider.articles[index]),
+                          onShare: () => _shareArticle(provider.articles[index]),
+                          onDelete: () =>
+                              _confirmDeleteArticle(provider.articles[index]),
+                        ),
+                      );
+                    },
                   ),
-                  itemCount: provider.articles.length,
-                  itemBuilder: (context, index) => _ArticleItem(
-                    article: provider.articles[index],
-                    onTap: () => _openArticleEditor(provider.articles[index]),
-                    onView: () => _openArticlePreview(provider.articles[index]),
-                    onEdit: () => _openArticleEditor(provider.articles[index]),
-                    onShare: () => _shareArticle(provider.articles[index]),
-                    onDelete: () =>
-                        _confirmDeleteArticle(provider.articles[index]),
+                  const SizedBox(height: 32),
+                  _ContentPlanSection(
+                    selectedMonth: _selectedMonthPlan,
+                    articles: provider.articles,
                   ),
-                ),
-              );
-            },
+                  const SizedBox(height: 80), // Space for FAB
+                ],
+              ),
+            ),
           );
         },
       ),
@@ -765,5 +799,351 @@ class _StatusPill extends StatelessWidget {
         ),
       ),
     );
+  }
+}
+
+class _ContentPlanSection extends StatelessWidget {
+  final String? selectedMonth;
+  final List<Article> articles;
+
+  const _ContentPlanSection({
+    required this.selectedMonth,
+    required this.articles,
+  });
+
+  static const List<Map<String, dynamic>> _allPlanData = [
+    {
+      'month': 'พฤษภาคม 69',
+      'items': [
+        {'d': 11, 't': '09:00', 'type': 'วันสำคัญ', 'topic': 'วันพืชมงคล: เลขมงคลการเงินและความมั่งคั่ง', 'date': '2026-05-11'},
+        {'d': 16, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย (สถิติ/วิเคราะห์)', 'date': '2026-05-16', 'is_lottery': true},
+        {'d': 22, 't': '09:09', 'type': 'Evergreen', 'topic': '(Pillar Content เติมช่องว่างปลายเดือน)', 'date': '2026-05-22'},
+        {'d': 27, 't': '09:09', 'type': 'Evergreen', 'topic': '(Pillar Content เลี้ยงกระแสก่อยวันพระใหญ่)', 'date': '2026-05-27'},
+        {'d': 31, 't': '09:00', 'type': 'วันสำคัญ', 'topic': 'วันวิสาขบูชา: เลขสติปัญญาและการเริ่มต้นใหม่', 'date': '2026-05-31'},
+      ]
+    },
+    {
+      'month': 'มิถุนายน 69',
+      'items': [
+        {'d': 1, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย', 'date': '2026-06-01', 'is_lottery': true},
+        {'d': 8, 't': '09:09', 'type': 'Evergreen', 'topic': '(คั่นกลางต้นเดือน)', 'date': '2026-06-08'},
+        {'d': 16, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย', 'date': '2026-06-16', 'is_lottery': true},
+        {'d': 21, 't': '09:09', 'type': 'Evergreen', 'topic': '(คั่นกลางปลายเดือน)', 'date': '2026-06-21'},
+        {'d': 26, 't': '09:00', 'type': 'วันมู', 'topic': 'วันสุนทรภู่: เลขมงคลสายวาทศิลป์และการเจรจา', 'date': '2026-06-26'},
+      ]
+    },
+    {
+      'month': 'กรกฎาคม 69',
+      'items': [
+        {'d': 1, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย', 'date': '2026-07-01', 'is_lottery': true},
+        {'d': 8, 't': '09:09', 'type': 'Evergreen', 'topic': '(คั่นกลางต้นเดือน)', 'date': '2026-07-08'},
+        {'d': 16, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย', 'date': '2026-07-16', 'is_lottery': true},
+        {'d': 23, 't': '09:09', 'type': 'Evergreen', 'topic': '(คั่นกลางปลายเดือน)', 'date': '2026-07-23'},
+        {'d': 28, 't': '09:00', 'type': 'วันสำคัญ', 'topic': 'คอนเทนต์มงคลรวมใจ (ร.10)', 'date': '2026-07-28'},
+        {'d': 29, 't': '09:00', 'type': 'วันสำคัญ', 'topic': 'วันอาสาฬหบูชา: ปรับพลังงานตัวเลข', 'date': '2026-07-29'},
+      ]
+    },
+    {
+      'month': 'สิงหาคม 69',
+      'items': [
+        {'d': 1, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย', 'date': '2026-08-01', 'is_lottery': true},
+        {'d': 8, 't': '09:09', 'type': 'Evergreen', 'topic': '(คั่นกลางต้นเดือน)', 'date': '2026-08-08'},
+        {'d': 12, 't': '09:00', 'type': 'วันสำคัญ', 'topic': 'วันแม่: เลขมงคลสุขภาพ', 'date': '2026-08-12'},
+        {'d': 15, 't': '09:00', 'type': 'วันมู', 'topic': 'วันคเณศจตุรถี: เลขมงคลประทานพร', 'date': '2026-08-15'},
+        {'d': 16, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย', 'date': '2026-08-16', 'is_lottery': true},
+        {'d': 25, 't': '09:09', 'type': 'Evergreen', 'topic': '(คั่นกลางปลายเดือน เพราะวันสำคัญกระจุกต้นเดือน)', 'date': '2026-08-25'},
+      ]
+    },
+    {
+      'month': 'กันยายน 69',
+      'items': [
+        {'d': 1, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย', 'date': '2026-09-01', 'is_lottery': true},
+        {'d': 8, 't': '09:09', 'type': 'Evergreen', 'topic': '(คั่นกลางต้นเดือน)', 'date': '2026-09-08'},
+        {'d': 16, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย', 'date': '2026-09-16', 'is_lottery': true},
+        {'d': 21, 't': '09:09', 'type': 'Evergreen', 'topic': '(คั่นกลางปลายเดือน)', 'date': '2026-09-21'},
+        {'d': 25, 't': '09:00', 'type': 'วันมู', 'topic': 'วันไหว้พระจันทร์: เลขเมตตามหานิยม', 'date': '2026-09-25'},
+        {'d': 30, 't': '09:09', 'type': 'Evergreen', 'topic': '(ปิดท้ายเดือน)', 'date': '2026-09-30'},
+      ]
+    },
+    {
+      'month': 'ตุลาคม 69',
+      'items': [
+        {'d': 1, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย', 'date': '2026-10-01', 'is_lottery': true},
+        {'d': 8, 't': '09:09', 'type': 'Evergreen', 'topic': '(คั่นกลางต้นเดือน)', 'date': '2026-10-08'},
+        {'d': 16, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย', 'date': '2026-10-16', 'is_lottery': true},
+        {'d': 20, 't': '09:00', 'type': 'วันมู', 'topic': 'เทศกาลกินเจ: เลขสายขาว (เลือกลงวันที่ 20)', 'date': '2026-10-20'},
+        {'d': 23, 't': '09:00', 'type': 'วันสำคัญ', 'topic': 'วันปิยมหาราช: เลขมงคลการงาน', 'date': '2026-10-23'},
+      ]
+    },
+    {
+      'month': 'พฤศจิกายน 69',
+      'items': [
+        {'d': 1, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย', 'date': '2026-11-01', 'is_lottery': true},
+        {'d': 8, 't': '09:09', 'type': 'Evergreen', 'topic': '(คั่นกลางต้นเดือน)', 'date': '2026-11-08'},
+        {'d': 16, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย', 'date': '2026-11-16', 'is_lottery': true},
+        {'d': 24, 't': '09:00', 'type': 'วันสำคัญ', 'topic': 'วันลอยกระทง: เลขขอพรโชคลาภ', 'date': '2026-11-24'},
+        {'d': 29, 't': '09:09', 'type': 'Evergreen', 'topic': '(คั่นกลางปลายเดือน)', 'date': '2026-11-29'},
+      ]
+    },
+    {
+      'month': 'ธันวาคม 69',
+      'items': [
+        {'d': 1, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย', 'date': '2026-12-01', 'is_lottery': true},
+        {'d': 5, 't': '09:00', 'type': 'วันสำคัญ', 'topic': 'วันพ่อ: เลขมงคลความมั่นคง', 'date': '2026-12-05'},
+        {'d': 10, 't': '09:00', 'type': 'วันสำคัญ', 'topic': 'วันรัฐธรรมนูญ: เลขมงคลระเบียบวินัย', 'date': '2026-12-10'},
+        {'d': 16, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย', 'date': '2026-12-16', 'is_lottery': true},
+        {'d': 24, 't': '09:09', 'type': 'Evergreen', 'topic': '(คั่นกลางก่อนปีใหม่)', 'date': '2026-12-24'},
+        {'d': 31, 't': '09:00', 'type': 'วันสำคัญ', 'topic': 'วันสิ้นปี: สรุปเลขปี 69', 'date': '2026-12-31'},
+      ]
+    },
+    {
+      'month': 'มกราคม 70',
+      'items': [
+        {'d': 1, 't': '09:00', 'type': 'หวย/สำคัญ', 'topic': 'วันขึ้นปีใหม่: เปิดดวงตัวเลขปี 70 + หวย', 'date': '2027-01-01', 'is_lottery': true},
+        {'d': 9, 't': '09:00', 'type': 'วันสำคัญ', 'topic': 'วันเด็ก: เลขมงคลเสริม IQ', 'date': '2027-01-09'},
+        {'d': 16, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย', 'date': '2027-01-16', 'is_lottery': true},
+        {'d': 23, 't': '09:09', 'type': 'Evergreen', 'topic': '(อุดช่องว่างปลายเดือน)', 'date': '2027-01-23'},
+      ]
+    },
+    {
+      'month': 'กุมภาพันธ์ 70',
+      'items': [
+        {'d': 1, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย', 'date': '2027-02-01', 'is_lottery': true},
+        {'d': 6, 't': '09:00', 'type': 'วันมู', 'topic': 'วันตรุษจีน: เลขรับทรัพย์', 'date': '2027-02-06'},
+        {'d': 14, 't': '09:00', 'type': 'วันสำคัญ', 'topic': 'วันวาเลนไทน์: คู่เลขความรัก', 'date': '2027-02-14'},
+        {'d': 16, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย', 'date': '2027-02-16', 'is_lottery': true},
+        {'d': 21, 't': '09:00', 'type': 'วันสำคัญ', 'topic': 'วันมาฆบูชา: เลขสายบุญ', 'date': '2027-02-21'},
+        {'d': 26, 't': '09:09', 'type': 'Evergreen', 'topic': '(อุดช่องว่างปลายเดือน)', 'date': '2027-02-26'},
+      ]
+    },
+    {
+      'month': 'มีนาคม 70',
+      'items': [
+        {'d': 1, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย', 'date': '2027-03-01', 'is_lottery': true},
+        {'d': 8, 't': '09:09', 'type': 'Evergreen', 'topic': '(คั่นกลางต้นเดือน - เดือนนี้ไม่มีเทศกาล)', 'date': '2027-03-08'},
+        {'d': 16, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย', 'date': '2027-03-16', 'is_lottery': true},
+        {'d': 24, 't': '09:09', 'type': 'Evergreen', 'topic': '(คั่นกลางปลายเดือน)', 'date': '2027-03-24'},
+        {'d': 30, 't': '09:09', 'type': 'Evergreen', 'topic': '(ปิดท้ายเดือน)', 'date': '2027-03-30'},
+      ]
+    },
+    {
+      'month': 'เมษายน 70',
+      'items': [
+        {'d': 1, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย', 'date': '2027-04-01', 'is_lottery': true},
+        {'d': 6, 't': '09:00', 'type': 'วันสำคัญ', 'topic': 'วันจักรี: เลขเสริมอำนาจ', 'date': '2027-04-06'},
+        {'d': 13, 't': '09:00', 'type': 'วันสำคัญ', 'topic': 'วันสงกรานต์: เลขปลอดภัยในการเดินทาง', 'date': '2027-04-13'},
+        {'d': 16, 't': '09:00', 'type': 'หวย', 'topic': 'คอนเทนต์หวย', 'date': '2027-04-16', 'is_lottery': true},
+        {'d': 24, 't': '09:09', 'type': 'Evergreen', 'topic': '(อุดช่องว่างปลายเดือน)', 'date': '2027-04-24'},
+      ]
+    },
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final filteredData = selectedMonth == null
+        ? _allPlanData
+        : _allPlanData.where((m) => m['month'] == selectedMonth).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: const Color(0xFF223A63).withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Icon(Icons.assignment_outlined, color: Color(0xFF223A63), size: 20),
+            ),
+            const SizedBox(width: 12),
+            Text(
+              'CONTENT ROADMAP',
+              style: GoogleFonts.kanit(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.5,
+                color: const Color(0xFF1D1816),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        ...filteredData.map((monthData) => _MonthPlanCard(
+          monthName: monthData['month'],
+          items: monthData['items'],
+          articles: articles,
+        )),
+      ],
+    );
+  }
+}
+
+class _MonthPlanCard extends StatelessWidget {
+  final String monthName;
+  final List<dynamic> items;
+  final List<Article> articles;
+
+  const _MonthPlanCard({
+    required this.monthName,
+    required this.items,
+    required this.articles,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF1E2D45).withValues(alpha: 0.03),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+            color: const Color(0xFFF8FAFC),
+            width: double.infinity,
+            child: Text(
+              monthName,
+              style: GoogleFonts.kanit(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: const Color(0xFF1E293B),
+              ),
+            ),
+          ),
+          const Divider(height: 1, color: Color(0xFFE2E8F0)),
+          ...items.map((item) {
+            final isDone = _checkIfDone(item);
+            return _PlanItemRow(item: item, isDone: isDone);
+          }),
+        ],
+      ),
+    );
+  }
+
+  bool _checkIfDone(Map<String, dynamic> item) {
+    final planDate = item['date'] as String;
+    final isLottery = item['is_lottery'] == true;
+    
+    return articles.any((a) {
+      if (a.publishedAt == null) return false;
+      final articleDate = DateFormat('yyyy-MM-dd').format(a.publishedAt!);
+      
+      if (isLottery) {
+        // สำหรับหวย เช็คแค่วันที่ตรงกัน
+        return articleDate == planDate;
+      } else {
+        // สำหรับทั่วไป เช็คทั้งวันที่และหัวข้อที่คล้ายกัน (หรือแค่มีบทความในวันนั้น)
+        return articleDate == planDate;
+      }
+    });
+  }
+}
+
+class _PlanItemRow extends StatelessWidget {
+  final Map<String, dynamic> item;
+  final bool isDone;
+
+  const _PlanItemRow({required this.item, required this.isDone});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+      ),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: isDone 
+                  ? const Color(0xFFEDF9F5) 
+                  : const Color(0xFFF8FAFC),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              '${item['d']}',
+              style: GoogleFonts.kanit(
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+                color: isDone ? const Color(0xFF1B8B6F) : const Color(0xFF64748B),
+              ),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: _getTypeColor(item['type']).withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        item['type'],
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: _getTypeColor(item['type']),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      item['t'],
+                      style: const TextStyle(fontSize: 11, color: Color(0xFF94A3B8), fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  item['topic'],
+                  style: GoogleFonts.kanit(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: const Color(0xFF1E293B),
+                    decoration: isDone ? TextDecoration.lineThrough : null,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Icon(
+            isDone ? Icons.check_circle_rounded : Icons.radio_button_unchecked_rounded,
+            color: isDone ? const Color(0xFF10B981) : const Color(0xFFCBD5E1),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Color _getTypeColor(String type) {
+    switch (type) {
+      case 'หวย': return const Color(0xFFC54B3D);
+      case 'วันสำคัญ': return const Color(0xFF6366F1);
+      case 'วันมู': return const Color(0xFFD8A34A);
+      default: return const Color(0xFF64748B);
+    }
   }
 }
