@@ -237,13 +237,13 @@ class ArticleController extends Controller
             'lsi_keywords' => 'nullable|string',
             'is_published' => 'boolean',
             'is_auto_post' => 'boolean',
-            'published_at' => 'nullable',
             'image_guidelines' => 'nullable|string',
             'cover_landscape' => 'nullable|image|max:2048',
             'cover_square' => 'nullable|image|max:2048',
         ]);
 
         $data = $validated;
+        $data['published_at'] = $request->published_at;
         unset($data['cover_landscape'], $data['cover_square']);
 
         if ($request->hasFile('cover_landscape')) {
