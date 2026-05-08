@@ -3044,7 +3044,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $publishedAt = $data['published_at'] ?? null;
         if ($publishedAt) {
             if (is_numeric($publishedAt)) {
-                $publishedAt = \Illuminate\Support\Carbon::createFromTimestamp($publishedAt);
+                $publishedAt = \Illuminate\Support\Carbon::createFromTimestamp($publishedAt)->timezone(config('app.timezone'));
             } else {
                 $publishedAt = \Illuminate\Support\Carbon::parse($publishedAt, 'Asia/Bangkok')->setTimezone(config('app.timezone'));
             }
@@ -3232,7 +3232,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $publishedAt = $data['published_at'] ?? null;
         if ($publishedAt) {
             if (is_numeric($publishedAt)) {
-                $publishedAt = \Illuminate\Support\Carbon::createFromTimestamp($publishedAt);
+                $publishedAt = \Illuminate\Support\Carbon::createFromTimestamp($publishedAt)->timezone(config('app.timezone'));
             } else {
                 $publishedAt = \Illuminate\Support\Carbon::parse($publishedAt, 'Asia/Bangkok')->setTimezone(config('app.timezone'));
             }

@@ -123,7 +123,7 @@ class ArticleController extends Controller
         }
         if (! empty($data['published_at'])) {
             if (is_numeric($data['published_at'])) {
-                $data['published_at'] = \Illuminate\Support\Carbon::createFromTimestamp($data['published_at']);
+                $data['published_at'] = \Illuminate\Support\Carbon::createFromTimestamp($data['published_at'])->timezone(config('app.timezone'));
             } else {
                 $data['published_at'] = \Illuminate\Support\Carbon::parse($data['published_at'], 'Asia/Bangkok')->setTimezone(config('app.timezone'));
             }
@@ -266,7 +266,7 @@ class ArticleController extends Controller
         }
         if (! empty($data['published_at'])) {
             if (is_numeric($data['published_at'])) {
-                $data['published_at'] = \Illuminate\Support\Carbon::createFromTimestamp($data['published_at']);
+                $data['published_at'] = \Illuminate\Support\Carbon::createFromTimestamp($data['published_at'])->timezone(config('app.timezone'));
             } else {
                 $data['published_at'] = \Illuminate\Support\Carbon::parse($data['published_at'], 'Asia/Bangkok')->setTimezone(config('app.timezone'));
             }
