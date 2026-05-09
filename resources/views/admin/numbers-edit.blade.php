@@ -57,39 +57,41 @@
       @csrf
       @method('put')
 
-      <div class="admin-field">
-        <label>เบอร์จริงในระบบ</label>
-        <div class="admin-readonly-display">{{ $phoneNumber->phone_number }}</div>
-        <p class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem;">ฟิลด์นี้ถูกล็อกไว้เพื่อไม่ให้กระทบ order และ activity log เดิม</p>
+      <div class="admin-readonly-field">
+        <div class="admin-readonly-field__label">เบอร์จริงในระบบ</div>
+        <div class="admin-readonly-field__value">
+          {{ $phoneNumber->phone_number }}
+          <p class="admin-muted" style="margin: 4px 0 0; font-size: 0.8rem; font-weight: normal;">ฟิลด์นี้ถูกล็อกไว้เพื่อไม่ให้กระทบ order และ activity log เดิม</p>
+        </div>
       </div>
 
-      <div class="admin-field">
-        <label>ผลรวมเบอร์</label>
-        <div class="admin-readonly-display">{{ $phoneNumber->number_sum ?: '-' }}</div>
+      <div class="admin-readonly-field">
+        <div class="admin-readonly-field__label">ผลรวมเบอร์</div>
+        <div class="admin-readonly-field__value">{{ $phoneNumber->number_sum ?: '-' }}</div>
       </div>
 
-      <div class="admin-field">
-        <label>ประเภทเบอร์</label>
-        <div class="admin-readonly-display">{{ $phoneNumber->service_type === \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID ? 'เติมเงิน' : 'รายเดือน' }}</div>
+      <div class="admin-readonly-field">
+        <div class="admin-readonly-field__label">ประเภทเบอร์</div>
+        <div class="admin-readonly-field__value">{{ $phoneNumber->service_type === \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID ? 'เติมเงิน' : 'รายเดือน' }}</div>
       </div>
 
-      <div class="admin-field">
-        <label>เครือข่าย</label>
-        <div class="admin-readonly-display">{{ $phoneNumber->network_code }}</div>
+      <div class="admin-readonly-field">
+        <div class="admin-readonly-field__label">เครือข่าย</div>
+        <div class="admin-readonly-field__value">{{ $phoneNumber->network_code }}</div>
       </div>
 
-      <div class="admin-field">
-        <label>ชื่อโปร / ข้อเสนอ</label>
-        <div class="admin-readonly-display">{{ $phoneNumber->plan_name ?: '-' }}</div>
+      <div class="admin-readonly-field">
+        <div class="admin-readonly-field__label">ชื่อโปร / ข้อเสนอ</div>
+        <div class="admin-readonly-field__value">{{ $phoneNumber->plan_name ?: '-' }}</div>
       </div>
 
-      <div class="admin-field">
-        <label>ราคา</label>
-        <div class="admin-readonly-display">{{ number_format($phoneNumber->sale_price) }} บาท</div>
+      <div class="admin-readonly-field">
+        <div class="admin-readonly-field__label">ราคา</div>
+        <div class="admin-readonly-field__value">{{ number_format($phoneNumber->sale_price) }} บาท</div>
       </div>
 
-      <div class="admin-field">
-        <label for="status">สถานะ</label>
+      <div class="admin-field" style="margin-top: 1.5rem;">
+        <label for="status">สถานะการแสดงผล</label>
         <select id="status" class="admin-select" name="status" required>
           @foreach (\App\Models\PhoneNumber::adminStatusOptions() as $status)
             <option value="{{ $status }}" @selected(old('status', $phoneNumber->status) === $status)>{{ $status }}</option>
@@ -97,18 +99,31 @@
         </select>
       </div>
 
-      <button type="submit" class="admin-button" style="margin-top: 1rem;">บันทึกการแก้ไข</button>
+      <button type="submit" class="admin-button" style="margin-top: 1rem;">บันทึกการแก้ไขสถานะ</button>
     </form>
   </section>
 
   <style>
-    .admin-readonly-display {
+    .admin-readonly-field {
+      display: flex;
+      align-items: flex-start;
       padding: 12px 16px;
       background-color: #f8fafc;
       border: 1px solid #e2e8f0;
       border-radius: 8px;
+      margin-bottom: 12px;
+    }
+    .admin-readonly-field__label {
+      flex: 0 0 160px;
+      color: #64748b;
+      font-size: 0.95rem;
+      font-weight: 600;
+    }
+    .admin-readonly-field__value {
+      flex: 1;
       color: #1e293b;
-      font-weight: 500;
+      font-weight: 600;
+      font-size: 1.05rem;
     }
   </style>
 @endsection
