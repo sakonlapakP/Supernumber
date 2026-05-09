@@ -1367,6 +1367,9 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return redirect()->route('admin.login');
     })->name('logout');
 
+    Route::get('/register', [\App\Http\Controllers\Admin\RegisterController::class, 'showRegistrationForm'])->name('register');
+    Route::post('/register', [\App\Http\Controllers\Admin\RegisterController::class, 'register'])->name('register.store');
+
     Route::get('/tests', function (Request $request) use ($ensureAdmin, $resolveTestDiscovery) {
         if ($redirect = $ensureAdmin('manager')) {
             return $redirect;
@@ -3941,6 +3944,25 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->route('admin.users')
             ->with('status_message', 'สร้างผู้ใช้เรียบร้อย');
     })->name('users.store');
+
+    Route::post('/users/{user}/approve', function (Request $request, User $user) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        $data = $request->validate([
+            'role' => ['required', 'string', Rule::in(User::roleOptions())],
+        ]);
+
+        $user->update([
+            'role' => $data['role'],
+            'is_active' => true,
+        ]);
+
+        return redirect()
+            ->route('admin.users')
+            ->with('status_message', "อนุมัติผู้ใช้ {$user->name} เรียบร้อยแล้ว");
+    })->name('users.approve');
 
     Route::get('/activity-logs', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {

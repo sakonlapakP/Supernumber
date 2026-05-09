@@ -78,7 +78,21 @@
               <td>{{ $user->username ?: '-' }}</td>
               <td>{{ $user->email }}</td>
               <td>{{ $user->role }}</td>
-              <td>{{ $user->is_active ? 'เปิดใช้งาน' : 'ปิดใช้งาน' }}</td>
+              <td>
+                @if ($user->is_active)
+                  <span class="admin-badge admin-badge--success">เปิดใช้งาน</span>
+                @else
+                  <form action="{{ route('admin.users.approve', $user) }}" method="post" style="display: flex; gap: 8px; align-items: center;">
+                    @csrf
+                    <select name="role" class="admin-select admin-select--compact" style="margin: 0; width: auto;">
+                      @foreach ($roleOptions as $role)
+                        <option value="{{ $role }}" @selected($user->role === $role)>{{ $role }}</option>
+                      @endforeach
+                    </select>
+                    <button type="submit" class="admin-button admin-button--compact">อนุมัติ</button>
+                  </form>
+                @endif
+              </td>
             </tr>
           @empty
             <tr>

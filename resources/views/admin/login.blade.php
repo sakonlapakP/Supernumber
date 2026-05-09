@@ -12,6 +12,10 @@
         <div class="admin-alert admin-alert--error">{{ $errors->first() }}</div>
       @endif
 
+      @if (session('status_message'))
+        <div class="admin-alert admin-alert--success">{{ session('status_message') }}</div>
+      @endif
+
       <form class="admin-form" action="{{ route('admin.login.attempt') }}" method="post">
         @csrf
         <div class="admin-field">
@@ -38,6 +42,10 @@
           />
         </div>
         <button type="submit" class="admin-button">เข้าสู่ระบบ</button>
+        
+        <div style="text-align: center; margin-top: 20px;">
+          <a href="{{ route('admin.register') }}" class="admin-muted" style="text-decoration: none;">สร้างยูเซอร์ใหม่</a>
+        </div>
       </form>
     </div>
   </section>
