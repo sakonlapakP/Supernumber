@@ -111,7 +111,7 @@
             @foreach ($numbers as $number)
               <tr class="hold-number-row" data-phone-number="{{ preg_replace('/\D/', '', $number->phone_number) }}">
                 <td>
-                  <div class="admin-number">{{ $number->display_number ?: $number->phone_number }}</div>
+                  <div class="admin-number">{{ $number->formatted_number }}</div>
                 </td>
                 <td>{{ $number->number_sum ?: '-' }}</td>
                 <td>{{ $number->service_type_label }}</td>

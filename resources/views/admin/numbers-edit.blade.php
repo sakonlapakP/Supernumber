@@ -41,7 +41,7 @@
   <section class="admin-card admin-feature-card">
     <div class="admin-feature-card__head">
       <div>
-        <h2 class="admin-feature-card__title">{{ $phoneNumber->display_number ?: $phoneNumber->phone_number }}</h2>
+        <h2 class="admin-feature-card__title">{{ $phoneNumber->formatted_number }}</h2>
         <p class="admin-feature-card__hint">เบอร์จริง: {{ $phoneNumber->phone_number }} | การแสดงผลปัจจุบัน: {{ $phoneNumber->service_type_label }} | {{ $phoneNumber->payment_label }}</p>
       </div>
     </div>
@@ -63,10 +63,7 @@
         <p class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem;">ฟิลด์นี้ถูกล็อกไว้เพื่อไม่ให้กระทบ order และ activity log เดิม</p>
       </div>
 
-      <div class="admin-field">
-        <label for="display_number">รูปแบบแสดงผล</label>
-        <input id="display_number" class="admin-input" type="text" name="display_number" value="{{ old('display_number', $phoneNumber->display_number) }}" placeholder="เช่น 089-123-4567" />
-      </div>
+
 
       <div class="admin-field">
         <label for="number_sum">ผลรวมเบอร์</label>
@@ -101,10 +98,7 @@
         <p id="sale_price_hint" class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem;"></p>
       </div>
 
-      <div class="admin-field">
-        <label for="price_text">ข้อความราคาสำรอง</label>
-        <input id="price_text" class="admin-input" type="text" name="price_text" value="{{ old('price_text', $phoneNumber->price_text) }}" placeholder="ถ้าเว้นว่าง ระบบจะใช้ตัวเลขจากราคา" />
-      </div>
+
 
       <div class="admin-field">
         <label for="status">สถานะ</label>

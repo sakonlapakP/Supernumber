@@ -1,6 +1,6 @@
 <article class="number-card number-card--listing number-card--catalog">
   <div class="card-left-group">
-    <div class="card-top">{{ $number->display_number ?: $number->phone_number }}</div>
+    <div class="card-top">{{ $number->formatted_number }}</div>
 
     @if ($number->supported_topic_icons !== [])
       @php

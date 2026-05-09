@@ -37,12 +37,10 @@ class PhoneNumber extends Model
 
     protected $fillable = [
         'phone_number',
-        'display_number',
         'number_sum',
         'service_type',
         'network_code',
         'plan_name',
-        'price_text',
         'sale_price',
         'status',
     ];
@@ -129,6 +127,25 @@ class PhoneNumber extends Model
         }
 
         return $pattern;
+    }
+    public function getFormattedNumberAttribute(): string
+    {
+        return self::format($this->phone_number);
+    }
+
+    public static function format(?string $phoneNumber): string
+    {
+        $digits = self::digitsOnly($phoneNumber);
+
+        if (strlen($digits) !== self::PHONE_NUMBER_LENGTH) {
+            return (string) $phoneNumber;
+        }
+
+        return substr($digits, 0, 3)
+            . '-'
+            . substr($digits, 3, 3)
+            . '-'
+            . substr($digits, 6, 4);
     }
 
     public function getPackageLabelAttribute(): string

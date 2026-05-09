@@ -1457,12 +1457,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
 
         $data = $request->validate([
-            'display_number' => ['nullable', 'string', 'max:20'],
             'number_sum' => ['nullable', 'integer', 'min:1', 'max:999'],
             'service_type' => ['required', 'string', Rule::in(PhoneNumber::serviceTypeOptions())],
             'network_code' => ['required', 'string', 'max:20'],
             'plan_name' => ['nullable', 'string', 'max:255'],
-            'price_text' => ['nullable', 'string', 'max:255'],
             'sale_price' => ['required', 'integer', 'min:1'],
             'status' => ['required', 'string', Rule::in(PhoneNumber::adminStatusOptions())],
         ]);
@@ -1476,9 +1474,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $networkCode = trim($networkCode, '_');
         $numberSum = isset($data['number_sum']) ? (int) $data['number_sum'] : null;
         $salePrice = (int) $data['sale_price'];
-        $displayNumber = trim((string) ($data['display_number'] ?? ''));
         $planName = trim((string) ($data['plan_name'] ?? ''));
-        $priceText = trim((string) ($data['price_text'] ?? ''));
 
         if ($serviceType === PhoneNumber::SERVICE_TYPE_PREPAID && $planName === '') {
             $planName = 'เติมเงิน';
@@ -1488,22 +1484,16 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             $planName = PhoneNumber::PACKAGE_NAME;
         }
 
-        if ($priceText === '') {
-            $priceText = (string) $salePrice;
-        }
-
         if (! in_array($serviceTypeFilter, PhoneNumber::serviceTypeOptions(), true)) {
             $serviceTypeFilter = null;
         }
 
         DB::transaction(function () use (
             $phoneNumber,
-            $displayNumber,
             $numberSum,
             $serviceType,
             $networkCode,
             $planName,
-            $priceText,
             $salePrice,
             $data,
             $previousStatus,
@@ -1511,12 +1501,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             $logPhoneNumberStatusChange
         ) {
             $phoneNumber->fill([
-                'display_number' => $displayNumber !== '' ? $displayNumber : null,
                 'number_sum' => $numberSum,
                 'service_type' => $serviceType,
                 'network_code' => $networkCode !== '' ? $networkCode : 'true_dtac',
                 'plan_name' => $planName !== '' ? $planName : null,
-                'price_text' => $priceText !== '' ? $priceText : null,
                 'sale_price' => $salePrice,
                 'status' => trim((string) $data['status']),
             ]);

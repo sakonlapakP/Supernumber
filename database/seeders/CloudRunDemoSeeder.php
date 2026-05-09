@@ -50,11 +50,9 @@ class CloudRunDemoSeeder extends Seeder
 
             $rows[] = [
                 'phone_number' => $phoneNumber,
-                'display_number' => $this->formatDisplayNumber($phoneNumber),
                 'number_sum' => PhoneNumber::calculateNumberSum($phoneNumber),
                 'network_code' => 'true_dtac',
                 'plan_name' => PhoneNumber::PACKAGE_NAME,
-                'price_text' => (string) $price,
                 'sale_price' => $price,
                 'status' => PhoneNumber::STATUS_ACTIVE,
                 'created_at' => $now,
@@ -72,12 +70,5 @@ class CloudRunDemoSeeder extends Seeder
         });
     }
 
-    private function formatDisplayNumber(string $phoneNumber): string
-    {
-        return substr($phoneNumber, 0, 3)
-            . '-'
-            . substr($phoneNumber, 3, 3)
-            . '-'
-            . substr($phoneNumber, 6, 4);
-    }
+
 }

@@ -56,15 +56,7 @@ class ImportTruePrepaidCsvCommand extends Command
                 continue;
             }
 
-            // Column 2 is the sum
-            $sum = (int) $row[2];
-            
-            // Column 5 is the price text e.g. "12,900"
-            $priceText = $row[5];
-            $salePrice = (int) preg_replace('/\D/', '', $priceText);
-
             $records[$phoneNumber] = [
-                'display_number' => $displayNumber,
                 'number_sum' => $sum ?: PhoneNumber::calculateNumberSum($phoneNumber),
                 'sale_price' => $salePrice,
             ];
@@ -89,12 +81,10 @@ class ImportTruePrepaidCsvCommand extends Command
                 $existing = $existingNumbers->get($phone);
                 
                 $payload = [
-                    'display_number' => $data['display_number'],
                     'number_sum' => $data['number_sum'],
                     'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
                     'network_code' => 'true_dtac',
                     'plan_name' => 'เติมเงิน',
-                    'price_text' => number_format($data['sale_price']),
                     'sale_price' => $data['sale_price'],
                     'status' => PhoneNumber::STATUS_ACTIVE,
                 ];

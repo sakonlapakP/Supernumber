@@ -94,12 +94,10 @@ class ImportTruePrepaidNumbersCommand extends Command
                 }
 
                 $payload = [
-                    'display_number' => $this->formatDisplayNumber($phoneNumber),
                     'number_sum' => $row['number_sum'] ?? PhoneNumber::calculateNumberSum($phoneNumber),
                     'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
                     'network_code' => 'true_dtac',
                     'plan_name' => 'เติมเงิน',
-                    'price_text' => (string) $row['sale_price'],
                     'sale_price' => $row['sale_price'],
                     'status' => $status,
                 ];
@@ -511,14 +509,7 @@ class ImportTruePrepaidNumbersCommand extends Command
         return $status !== '' ? $status : PhoneNumber::STATUS_ACTIVE;
     }
 
-    private function formatDisplayNumber(string $phoneNumber): string
-    {
-        return substr($phoneNumber, 0, 3)
-            . '-'
-            . substr($phoneNumber, 3, 3)
-            . '-'
-            . substr($phoneNumber, 6, 4);
-    }
+
 
     private function resolveImportPath(string $path): ?string
     {

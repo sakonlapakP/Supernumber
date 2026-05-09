@@ -541,7 +541,7 @@
           return $numbers->take($maxItems)->map(function ($number) {
               return [
                   'phone_number' => $number->phone_number,
-                  'display_number' => $number->display_number ?: $number->phone_number,
+                  'formatted_number' => $number->formatted_number,
                   'service_type_label' => $number->service_type_label,
                   'payment_label' => $number->payment_label,
                   'initial_payment_label' => $number->initial_payment_label,
@@ -595,7 +595,7 @@
                 @foreach ($initialPrepaidNumbers as $number)
                   <article class="number-card number-card--listing number-card--home">
                     <div class="card-left-group">
-                      <div class="card-top">{{ $number['display_number'] }}</div>
+                      <div class="card-top">{{ $number['formatted_number'] }}</div>
 
                     @if (! empty($number['supported_topic_icons']))
                       @php
@@ -642,7 +642,7 @@
               <div class="card-grid home-card-grid listing-card-grid" id="home-postpaid-grid" data-view="grid">
                 @foreach ($initialPostpaidNumbers as $number)
                   <article class="number-card number-card--listing number-card--home">
-                    <div class="card-top">{{ $number['display_number'] }}</div>
+                    <div class="card-top">{{ $number['formatted_number'] }}</div>
                     @if (! empty($number['supported_topic_icons']))
                       @php
                         $topicIcons = collect($number['supported_topic_icons']);
@@ -746,7 +746,7 @@
         const renderCard = (number) => `
           <article class="number-card number-card--listing number-card--home">
             <div class="card-left-group">
-              <div class="card-top">${escapeHtml(number.display_number)}</div>
+              <div class="card-top">${escapeHtml(number.formatted_number)}</div>
               ${Array.isArray(number.supported_topic_icons) && number.supported_topic_icons.length
                 ? `<div class="card-topic-icons" aria-label="หมวดที่เบอร์ this helps">${number.supported_topic_icons.slice(0, 4).map((topic) => `<span class="card-topic-icon" title="${escapeHtml(topic.topic)}" aria-label="${escapeHtml(topic.topic)}">${escapeHtml(topic.icon)}</span>`).join("")}${number.supported_topic_icons.length > 4 ? `<span class="card-topic-icon card-topic-icon--more" aria-label="More categories">+</span>` : ""}</div>`
                 : ""}

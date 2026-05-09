@@ -32,7 +32,7 @@
             <tr>
               <td>{{ $log->created_at?->format('Y-m-d H:i:s') ?: '-' }}</td>
               <td>{{ $log->user?->name ?: 'ไม่ทราบชื่อ' }}</td>
-              <td>{{ $log->phoneNumber?->display_number ?: $log->phoneNumber?->phone_number ?: '-' }}</td>
+              <td>{{ $log->phoneNumber?->formatted_number ?: '-' }}</td>
               <td>{{ $log->action }}</td>
               <td>{{ ($log->from_status ?: '-') . ' -> ' . ($log->to_status ?: '-') }}</td>
             </tr>

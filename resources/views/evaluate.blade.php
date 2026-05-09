@@ -10,7 +10,7 @@
     }
     
     $phone = $number;
-    $displayPhone = preg_replace('/(\d{3})(\d{3})(\d{4})/', '$1-$2-$3', $number);
+    $displayPhone = \App\Models\PhoneNumber::format($number);
 
     // Analysis Logic for SEO
     $lastSeven = substr($number, -7);
@@ -620,7 +620,7 @@
         <div class="card-grid recommend-grid">
           @forelse ($recommendedNumbers as $recommended)
             <article class="number-card number-card--recommend">
-              <div class="card-top">{{ $recommended->display_number ?: $recommended->phone_number }}</div>
+              <div class="card-top">{{ $recommended->formatted_number }}</div>
               @if ($recommended->supported_topic_icons !== [])
                 @php
                   $topicIcons = collect($recommended->supported_topic_icons);

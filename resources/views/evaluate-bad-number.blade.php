@@ -169,7 +169,7 @@
         <div class="card-grid recommend-grid">
           @forelse ($recommendedNumbers as $recommended)
             <article class="number-card number-card--recommend">
-              <div class="card-top">{{ $recommended->display_number ?: $recommended->phone_number }}</div>
+              <div class="card-top">{{ $recommended->formatted_number }}</div>
               <div class="card-body">
                 <div class="card-meta-stack">
                   <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">{{ $recommended->service_type_label }}</span></span>

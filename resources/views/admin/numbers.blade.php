@@ -84,7 +84,7 @@
           @forelse ($numbers as $number)
             <tr>
               <td>
-                <div class="admin-number">{{ $number->display_number ?: $number->phone_number }}</div>
+                <div class="admin-number">{{ $number->formatted_number }}</div>
               </td>
               <td>{{ $number->number_sum ?: '-' }}</td>
               <td>{{ $number->service_type_label }}</td>
