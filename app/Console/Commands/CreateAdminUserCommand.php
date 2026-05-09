@@ -12,7 +12,7 @@ class CreateAdminUserCommand extends Command
         {password : Password used for admin login}
         {--name= : Display name}
         {--email= : Email address}
-        {--role=admin : Role to assign (admin or manager)}';
+        {--role=manager : Role to assign (manager, admin, or staff)}';
 
     protected $description = 'Create or update an admin-panel user explicitly outside migrations';
 

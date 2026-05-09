@@ -16,9 +16,9 @@ class User extends Authenticatable
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
 
-    public const ROLE_ADMIN = 'admin';
     public const ROLE_MANAGER = 'manager';
-    public const ROLE_STAFF_LEGACY = 'staff';
+    public const ROLE_ADMIN = 'admin';
+    public const ROLE_STAFF = 'staff';
 
     /**
      * The attributes that are mass assignable.
@@ -69,19 +69,47 @@ class User extends Authenticatable
     public static function roleOptions(): array
     {
         return [
-            self::ROLE_ADMIN,
             self::ROLE_MANAGER,
+            self::ROLE_ADMIN,
+            self::ROLE_STAFF,
         ];
     }
 
     public function canAccessAdminPanel(): bool
     {
         return $this->is_active
-            && in_array($this->role, [...self::roleOptions(), self::ROLE_STAFF_LEGACY], true);
+            && in_array($this->role, self::roleOptions(), true);
     }
 
+    /**
+     * Highest priority role (Manager)
+     */
+    public function isManager(): bool
+    {
+        return $this->role === self::ROLE_MANAGER;
+    }
+
+    /**
+     * Specifically Admin role (General Management)
+     */
     public function isAdmin(): bool
     {
         return $this->role === self::ROLE_ADMIN;
+    }
+
+    /**
+     * Basic Read-only role (Staff)
+     */
+    public function isStaff(): bool
+    {
+        return $this->role === self::ROLE_STAFF;
+    }
+
+    /**
+     * Check if user is at least Admin level (Admin or Manager)
+     */
+    public function isAtLeastAdmin(): bool
+    {
+        return in_array($this->role, [self::ROLE_ADMIN, self::ROLE_MANAGER], true);
     }
 }
