@@ -24,8 +24,13 @@
     <div>
       <h1>{{ $numbersHeading }}</h1>
     </div>
-    <div class="admin-summary">
-      แสดง {{ $numbersSummary }} จาก {{ number_format($numbers->total()) }} เบอร์
+    <div style="display: flex; gap: 15px; align-items: center;">
+      <a href="{{ route('admin.numbers.import') }}" class="admin-button admin-button--secondary">
+        <span style="margin-right: 5px;">📥</span> นำเข้าเบอร์ (CSV)
+      </a>
+      <div class="admin-summary">
+        แสดง {{ $numbersSummary }} จาก {{ number_format($numbers->total()) }} เบอร์
+      </div>
     </div>
   </div>
 

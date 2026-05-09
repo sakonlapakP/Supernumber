@@ -4211,9 +4211,8 @@ body.under-construction-page main {
 .estimate-page {
   position: relative;
   padding: 0 0 92px;
-  margin-top: -58px;
-  background:
-    linear-gradient(180deg, rgba(255, 248, 235, 0) 0%, #f6efe4 58px, #f6efe4 100%);
+  margin-top: -82px;
+  background: transparent;
 }
 
 .estimate-shell {
@@ -4261,12 +4260,15 @@ body.under-construction-page main {
 }
 
 .estimate-card {
-  background: rgba(255, 253, 249, 0.94);
-  border: 1px solid rgba(219, 195, 156, 0.55);
+  background: rgba(255, 255, 255, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.8);
   border-radius: 8px;
-  box-shadow: 0 22px 46px rgba(44, 33, 23, 0.16);
+  box-shadow:
+    0 10px 40px rgba(45, 33, 24, 0.1),
+    0 2px 4px rgba(216, 163, 74, 0.1);
   padding: clamp(18px, 3vw, 32px);
   backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .estimate-layout {
@@ -4288,7 +4290,7 @@ body.under-construction-page main {
 }
 
 .estimate-form__intro p {
-  color: #c6923f;
+  color: #3b2f27;
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0;
@@ -4425,7 +4427,7 @@ body.under-construction-page main {
   }
 
   .estimate-page {
-    margin-top: -28px;
+    margin-top: -42px;
     padding: 0 0 52px;
   }
 

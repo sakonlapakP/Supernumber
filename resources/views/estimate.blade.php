@@ -43,11 +43,6 @@
 
   <section class="estimate-page">
     <div class="container estimate-shell">
-      <div class="estimate-head">
-        <h2>ระบบวิเคราะห์เลือกเบอร์ที่เหมาะกับคุณ</h2>
-        <p>กรุณากรอกข้อมูลข้างล่างเพื่อวิเคราะห์</p>
-      </div>
-
       @if (session('estimate_status_message'))
         <div class="estimate-alert estimate-alert--success">{{ session('estimate_status_message') }}</div>
       @endif
@@ -60,8 +55,9 @@
         <form class="estimate-form" action="{{ route('estimate.store') }}" method="post">
           @csrf
           <div class="estimate-form__intro">
-            <p>ข้อมูลสำหรับคัดเบอร์</p>
-            <h3>กรอกข้อมูลเพื่อให้ทีมงานแนะนำเบอร์ที่เหมาะกับคุณ</h3>
+            <p>ข้อมูลสำหรับวิเคราะห์เบอร์</p>
+            <h3>กรอกข้อมูลเพื่อให้ระบบวิเคราะห์เบอร์ที่เหมาะกับคุณ</h3>
+            <div class="estimate-test-notice" role="status">ขณะนี้อยู่ในระหว่างทดสอบระบบ</div>
           </div>
 
           <div class="estimate-grid estimate-grid--2">
@@ -174,11 +170,15 @@
     .estimate-card {
         max-width: 800px;
         margin: 0 auto;
-        background: #fff;
+        background: rgba(255, 255, 255, 0.75);
         padding: clamp(24px, 5vw, 50px);
         border-radius: 32px;
-        box-shadow: 0 20px 60px rgba(47, 38, 31, 0.08);
-        border: 1px solid rgba(47, 38, 31, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.8);
+        box-shadow:
+            0 10px 40px rgba(45, 33, 24, 0.1),
+            0 2px 4px rgba(216, 163, 74, 0.1);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
     }
     
     .estimate-form {
@@ -189,6 +189,22 @@
     .estimate-form__intro {
         text-align: center;
         margin-bottom: 20px;
+    }
+
+    .estimate-test-notice {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        justify-self: center;
+        margin-top: 14px;
+        padding: 8px 16px;
+        border: 1px solid rgba(216, 163, 74, 0.32);
+        border-radius: 999px;
+        background: rgba(255, 246, 226, 0.78);
+        color: #7a521c;
+        font-size: 14px;
+        font-weight: 700;
+        line-height: 1.35;
     }
 
     .estimate-form input, 

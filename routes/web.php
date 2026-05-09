@@ -3955,7 +3955,93 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.activity-logs', compact('logs'));
     })->name('activity-logs');
 
+    Route::get('/numbers/import', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin('manager')) {
+            return $redirect;
+        }
+        return view('admin.import');
+    })->name('numbers.import');
+
+    Route::post('/numbers/import', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin('manager')) {
+            return $redirect;
+        }
+
+        $file = $request->file('csv_file');
+        if (!$file || !$file->isValid()) {
+            return back()->with('error_message', 'กรุณาอัปโหลดไฟล์ที่ถูกต้อง');
+        }
+
+        $path = $file->getRealPath();
+        $fileLines = file($path, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+        if (!$fileLines || count($fileLines) < 2) {
+            return back()->with('error_message', 'ไฟล์ไม่มีข้อมูล');
+        }
+
+        $data = array_map('str_getcsv', $fileLines);
+        $header = array_shift($data);
+        $phoneIdx = array_search('phone_number', $header);
+        $priceIdx = array_search('sale_price', $header);
+
+        if ($phoneIdx === false || $priceIdx === false) {
+            return back()->with('error_message', 'ไม่พบหัวคอลัมน์ phone_number หรือ sale_price');
+        }
+
+        $summary = [
+            'total' => 0,
+            'new_imported' => 0,
+            'updated_prices' => 0,
+            'skipped' => 0
+        ];
+
+        DB::transaction(function () use ($data, $phoneIdx, $priceIdx, &$summary) {
+            foreach ($data as $row) {
+                if (!isset($row[$phoneIdx]) || !isset($row[$priceIdx])) continue;
+                
+                $phone = preg_replace('/\D/', '', $row[$phoneIdx]);
+                if (strlen($phone) !== 10) continue;
+                
+                $price = (float) str_replace(',', '', $row[$priceIdx]);
+                $summary['total']++;
+
+                $dbNumber = PhoneNumber::where('phone_number', $phone)->first();
+
+                if (!$dbNumber) {
+                    // Create new
+                    PhoneNumber::create([
+                        'phone_number' => $phone,
+                        'display_number' => substr($phone, 0, 3) . '-' . substr($phone, 3, 3) . '-' . substr($phone, 6),
+                        'sale_price' => $price,
+                        'network_code' => 'true',
+                        'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
+                        'status' => PhoneNumber::STATUS_ACTIVE,
+                        'plan_name' => 'เติมเงิน',
+                        'price_text' => (string)$price
+                    ]);
+                    $summary['new_imported']++;
+                } else {
+                    // Update if higher
+                    if ($price > (float)$dbNumber->sale_price) {
+                        $dbNumber->update([
+                            'sale_price' => $price,
+                            'price_text' => (string)$price
+                        ]);
+                        $summary['updated_prices']++;
+                    } else {
+                        $summary['skipped']++;
+                    }
+                }
+            }
+        });
+
+        return back()->with([
+            'status_message' => 'นำเข้าข้อมูลเรียบร้อยแล้ว',
+            'import_summary' => $summary
+        ]);
+    })->name('numbers.import.process');
+
 });
+
 
 
 // UPDATE
