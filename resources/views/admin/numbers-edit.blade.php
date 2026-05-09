@@ -42,7 +42,6 @@
     <div class="admin-feature-card__head">
       <div>
         <h2 class="admin-feature-card__title">{{ $phoneNumber->formatted_number }}</h2>
-        <p class="admin-feature-card__hint">เบอร์จริง: {{ $phoneNumber->phone_number }} | การแสดงผลปัจจุบัน: {{ $phoneNumber->service_type_label }} | {{ $phoneNumber->payment_label }}</p>
       </div>
     </div>
 
