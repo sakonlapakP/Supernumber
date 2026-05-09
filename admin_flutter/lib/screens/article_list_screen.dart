@@ -10,6 +10,7 @@ import '../models/article.model.dart';
 import '../utils/date_formatter.dart';
 import 'article_edit_screen.dart';
 import 'article_json_import_screen.dart';
+import 'admin_register_screen.dart';
 
 class ArticleListScreen extends StatefulWidget {
   const ArticleListScreen({super.key});
@@ -318,6 +319,84 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      drawer: Consumer<AuthProvider>(
+        builder: (context, auth, _) => Drawer(
+          child: Column(
+            children: [
+              DrawerHeader(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Color(0xFF1D1816), Color(0xFF46372B)],
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
+                    const CircleAvatar(
+                      backgroundColor: Color(0xFFD8A34A),
+                      child: Icon(Icons.person, color: Colors.white),
+                    ),
+                    const SizedBox(height: 12),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            auth.user?['name'] ?? 'Admin',
+                            style: GoogleFonts.kanit(
+                              color: Colors.white,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Text(
+                      (auth.user?['role']?.toString().toUpperCase() ?? 'ADMIN'),
+                      style: GoogleFonts.kanit(
+                        color: const Color(0xFFD8A34A),
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 1,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              ListTile(
+                leading: const Icon(Icons.article_outlined),
+                title: Text('จัดการบทความ', style: GoogleFonts.kanit()),
+                onTap: () => Navigator.pop(context),
+              ),
+              if (auth.user?['role'] == 'manager')
+                ListTile(
+                  leading: const Icon(Icons.person_add_alt_1_outlined),
+                  title: Text('เพิ่มผู้ดูแลระบบ', style: GoogleFonts.kanit()),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const AdminRegisterScreen()),
+                    );
+                  },
+                ),
+              const Spacer(),
+              const Divider(),
+              ListTile(
+                leading: const Icon(Icons.logout_rounded, color: Color(0xFFC54B3D)),
+                title: Text(
+                  'ออกจากระบบ',
+                  style: GoogleFonts.kanit(color: const Color(0xFFC54B3D), fontWeight: FontWeight.bold),
+                ),
+                onTap: () => auth.logout(),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        ),
+      ),
       appBar: AppBar(
         title: Row(
           children: [
