@@ -1133,6 +1133,8 @@
       .plan-table tr:hover td { background: #fcfdff; }
       .plan-row--checked { background: #f0fdf4 !important; }
       .plan-row--checked td { color: #065f46; }
+      .plan-row--lottery { background: #fffbeb !important; }
+      .plan-row--lottery td { color: #854d0e; }
       .month-divider { background: #f1f5f9; font-weight: 800; color: #475569; padding: 10px 18px; font-size: 13px; }
       .check-icon { color: #10b981; font-weight: 900; margin-right: 8px; font-size: 16px; }
       .type-pill { display: inline-block; padding: 2px 10px; border-radius: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; }
@@ -1294,7 +1296,7 @@
               </tr>
               @foreach($month['items'] as $item)
                 @php $isDone = $checkDone($item); @endphp
-                <tr class="{{ $isDone ? 'plan-row--checked' : '' }} plan-item-row" data-month="{{ $month['month'] }}">
+                <tr class="{{ $isDone ? 'plan-row--checked' : ($item['type'] === 'หวย' ? 'plan-row--lottery' : '') }} plan-item-row" data-month="{{ $month['month'] }}">
                   <td>{{ $month['month'] }}</td>
                   <td style="font-weight: 700;">
                     @if($isDone) 

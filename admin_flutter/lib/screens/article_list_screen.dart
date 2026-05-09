@@ -1061,10 +1061,16 @@ class _PlanItemRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bool isLottery = item['type'] == 'หวย';
+    final Color? rowColor = isDone 
+        ? const Color(0xFFF0FDF4) 
+        : (isLottery ? const Color(0xFFFFFBEB) : null);
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-      decoration: const BoxDecoration(
-        border: Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
+      decoration: BoxDecoration(
+        color: rowColor,
+        border: const Border(bottom: BorderSide(color: Color(0xFFF1F5F9))),
       ),
       child: Row(
         children: [
