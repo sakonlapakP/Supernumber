@@ -20,6 +20,9 @@ try {
     
     $kernel->call('config:clear');
     echo "✅ Config Cache Cleared!<br>";
+
+    $kernel->call('route:clear');
+    echo "✅ Route Cache Cleared!<br>";
     
     echo "<br><b>Done!</b> Now please delete this file for security.";
 } catch (Exception $e) {
