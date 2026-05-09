@@ -39,12 +39,6 @@
   @endif
 
   <section class="admin-card admin-feature-card">
-    <div class="admin-feature-card__head">
-      <div>
-        <h2 class="admin-feature-card__title">{{ $phoneNumber->formatted_number }}</h2>
-      </div>
-    </div>
-
     <form
       class="admin-form"
       action="{{ route('admin.numbers.update', array_filter([
@@ -57,8 +51,8 @@
       @method('put')
 
       <div class="admin-readonly-field">
-        <div class="admin-readonly-field__label">เบอร์จริงในระบบ</div>
-        <div class="admin-readonly-field__value">{{ $phoneNumber->phone_number }}</div>
+        <div class="admin-readonly-field__label">เบอร์</div>
+        <div class="admin-readonly-field__value">{{ $phoneNumber->formatted_number }}</div>
       </div>
 
       <div class="admin-readonly-field">
