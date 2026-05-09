@@ -102,18 +102,19 @@
   <style>
     .admin-readonly-field {
       display: flex;
-      align-items: flex-start;
-      padding: 12px 16px;
-      background-color: #f8fafc;
-      border: 1px solid #e2e8f0;
-      border-radius: 8px;
-      margin-bottom: 12px;
+      align-items: center;
+      padding: 10px 0;
+      margin-bottom: 4px;
+      border-bottom: 1px solid #f1f5f9;
+    }
+    .admin-readonly-field:last-of-type {
+      border-bottom: none;
     }
     .admin-readonly-field__label {
       flex: 0 0 160px;
       color: #64748b;
       font-size: 0.95rem;
-      font-weight: 600;
+      font-weight: 500;
     }
     .admin-readonly-field__value {
       flex: 1;
