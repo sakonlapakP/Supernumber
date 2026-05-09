@@ -40,7 +40,10 @@
       <div class="admin-field">
         <label for="csv_file" class="admin-label">ไฟล์ CSV</label>
         <input type="file" name="csv_file" id="csv_file" class="admin-input" accept=".csv" required>
-        <div class="admin-field__hint">ไฟล์ต้องมีคอลัมน์ phone_number และ sale_price</div>
+        <div class="admin-field__hint">
+          ไฟล์ต้องมีคอลัมน์ phone_number และ sale_price <br>
+          <strong style="color: #d93025;">* ระบบจะนำเข้าเป็นเบอร์ค่าย True เท่านั้น</strong>
+        </div>
       </div>
 
       <div class="admin-form-actions">
