@@ -59,10 +59,7 @@
 
       <div class="admin-readonly-field">
         <div class="admin-readonly-field__label">เบอร์จริงในระบบ</div>
-        <div class="admin-readonly-field__value">
-          {{ $phoneNumber->phone_number }}
-          <p class="admin-muted" style="margin: 4px 0 0; font-size: 0.8rem; font-weight: normal;">ฟิลด์นี้ถูกล็อกไว้เพื่อไม่ให้กระทบ order และ activity log เดิม</p>
-        </div>
+        <div class="admin-readonly-field__value">{{ $phoneNumber->phone_number }}</div>
       </div>
 
       <div class="admin-readonly-field">
