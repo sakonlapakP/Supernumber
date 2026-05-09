@@ -1457,32 +1457,12 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
 
         $data = $request->validate([
-            'number_sum' => ['nullable', 'integer', 'min:1', 'max:999'],
-            'service_type' => ['required', 'string', Rule::in(PhoneNumber::serviceTypeOptions())],
-            'network_code' => ['required', 'string', 'max:20'],
-            'plan_name' => ['nullable', 'string', 'max:255'],
-            'sale_price' => ['required', 'integer', 'min:1'],
             'status' => ['required', 'string', Rule::in(PhoneNumber::adminStatusOptions())],
         ]);
 
         $adminUserId = session('admin_user_id');
         $previousStatus = (string) $phoneNumber->status;
         $serviceTypeFilter = trim((string) $request->query('service_type_filter', ''));
-        $serviceType = $normalizeServiceType($data['service_type']);
-        $networkCode = strtolower(trim((string) $data['network_code']));
-        $networkCode = preg_replace('/[^a-z0-9]+/', '_', $networkCode) ?? '';
-        $networkCode = trim($networkCode, '_');
-        $numberSum = isset($data['number_sum']) ? (int) $data['number_sum'] : null;
-        $salePrice = (int) $data['sale_price'];
-        $planName = trim((string) ($data['plan_name'] ?? ''));
-
-        if ($serviceType === PhoneNumber::SERVICE_TYPE_PREPAID && $planName === '') {
-            $planName = 'เติมเงิน';
-        }
-
-        if ($serviceType === PhoneNumber::SERVICE_TYPE_POSTPAID && $planName === '') {
-            $planName = PhoneNumber::PACKAGE_NAME;
-        }
 
         if (! in_array($serviceTypeFilter, PhoneNumber::serviceTypeOptions(), true)) {
             $serviceTypeFilter = null;
@@ -1490,24 +1470,12 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         DB::transaction(function () use (
             $phoneNumber,
-            $numberSum,
-            $serviceType,
-            $networkCode,
-            $planName,
-            $salePrice,
             $data,
             $previousStatus,
             $adminUserId,
             $logPhoneNumberStatusChange
         ) {
-            $phoneNumber->fill([
-                'number_sum' => $numberSum,
-                'service_type' => $serviceType,
-                'network_code' => $networkCode !== '' ? $networkCode : 'true_dtac',
-                'plan_name' => $planName !== '' ? $planName : null,
-                'sale_price' => $salePrice,
-                'status' => trim((string) $data['status']),
-            ]);
+            $phoneNumber->status = trim((string) $data['status']);
             $phoneNumber->save();
 
             $logPhoneNumberStatusChange(
@@ -1522,7 +1490,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'phoneNumber' => $phoneNumber,
                 'service_type_filter' => $serviceTypeFilter,
             ], static fn ($value) => $value !== null && $value !== ''))
-            ->with('status_message', 'อัปเดตข้อมูลเบอร์เรียบร้อยแล้ว');
+            ->with('status_message', 'อัปเดตสถานะเบอร์เรียบร้อยแล้ว');
     })->name('numbers.update');
 
     Route::get('/orders', function () use ($ensureAdmin) {

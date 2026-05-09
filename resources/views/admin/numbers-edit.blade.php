@@ -58,47 +58,35 @@
       @method('put')
 
       <div class="admin-field">
-        <label for="phone_number">เบอร์จริงในระบบ</label>
-        <input id="phone_number" class="admin-input" type="text" value="{{ $phoneNumber->phone_number }}" readonly />
+        <label>เบอร์จริงในระบบ</label>
+        <div class="admin-readonly-display">{{ $phoneNumber->phone_number }}</div>
         <p class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem;">ฟิลด์นี้ถูกล็อกไว้เพื่อไม่ให้กระทบ order และ activity log เดิม</p>
       </div>
 
-
-
       <div class="admin-field">
-        <label for="number_sum">ผลรวมเบอร์</label>
-        <input id="number_sum" class="admin-input" type="number" name="number_sum" min="1" max="999" step="1" value="{{ old('number_sum', $phoneNumber->number_sum) }}" placeholder="เช่น 36" />
+        <label>ผลรวมเบอร์</label>
+        <div class="admin-readonly-display">{{ $phoneNumber->number_sum ?: '-' }}</div>
       </div>
 
       <div class="admin-field">
-        <label for="service_type">ประเภทเบอร์</label>
-        <select id="service_type" class="admin-select" name="service_type" required>
-          @foreach (\App\Models\PhoneNumber::serviceTypeOptions() as $serviceType)
-            <option value="{{ $serviceType }}" @selected(old('service_type', $phoneNumber->service_type) === $serviceType)>
-              {{ $serviceType === \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID ? 'เติมเงิน' : 'รายเดือน' }}
-            </option>
-          @endforeach
-        </select>
+        <label>ประเภทเบอร์</label>
+        <div class="admin-readonly-display">{{ $phoneNumber->service_type === \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID ? 'เติมเงิน' : 'รายเดือน' }}</div>
       </div>
 
       <div class="admin-field">
-        <label for="network_code">เครือข่าย</label>
-        <input id="network_code" class="admin-input" type="text" name="network_code" value="{{ old('network_code', $phoneNumber->network_code) }}" placeholder="เช่น true_dtac" required />
+        <label>เครือข่าย</label>
+        <div class="admin-readonly-display">{{ $phoneNumber->network_code }}</div>
       </div>
 
       <div class="admin-field">
-        <label for="plan_name" id="plan_name_label">ชื่อโปร / ข้อเสนอ</label>
-        <input id="plan_name" class="admin-input" type="text" name="plan_name" value="{{ old('plan_name', $phoneNumber->plan_name) }}" placeholder="เช่น True Super Value หรือ เติมเงิน" />
-        <p id="plan_name_hint" class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem;"></p>
+        <label>ชื่อโปร / ข้อเสนอ</label>
+        <div class="admin-readonly-display">{{ $phoneNumber->plan_name ?: '-' }}</div>
       </div>
 
       <div class="admin-field">
-        <label for="sale_price" id="sale_price_label">ราคา</label>
-        <input id="sale_price" class="admin-input" type="number" name="sale_price" min="1" step="1" value="{{ old('sale_price', (int) $phoneNumber->sale_price) }}" required />
-        <p id="sale_price_hint" class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem;"></p>
+        <label>ราคา</label>
+        <div class="admin-readonly-display">{{ number_format($phoneNumber->sale_price) }} บาท</div>
       </div>
-
-
 
       <div class="admin-field">
         <label for="status">สถานะ</label>
@@ -109,45 +97,22 @@
         </select>
       </div>
 
-      <p id="service_type_help" class="admin-subtitle" style="margin: 0;"></p>
-
-      <button type="submit" class="admin-button">บันทึกการแก้ไข</button>
+      <button type="submit" class="admin-button" style="margin-top: 1rem;">บันทึกการแก้ไข</button>
     </form>
   </section>
+
+  <style>
+    .admin-readonly-display {
+      padding: 12px 16px;
+      background-color: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      color: #1e293b;
+      font-weight: 500;
+    }
+  </style>
 @endsection
 
 @push('scripts')
-  <script>
-    (() => {
-      const serviceTypeInput = document.getElementById("service_type");
-      const planNameLabel = document.getElementById("plan_name_label");
-      const planNameHint = document.getElementById("plan_name_hint");
-      const salePriceLabel = document.getElementById("sale_price_label");
-      const salePriceHint = document.getElementById("sale_price_hint");
-      const serviceTypeHelp = document.getElementById("service_type_help");
-
-      if (!serviceTypeInput || !planNameLabel || !planNameHint || !salePriceLabel || !salePriceHint || !serviceTypeHelp) {
-        return;
-      }
-
-      const renderByType = () => {
-        const isPrepaid = serviceTypeInput.value === "{{ \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID }}";
-
-        planNameLabel.textContent = isPrepaid ? "ชื่อข้อเสนอเติมเงิน" : "ชื่อโปรรายเดือน";
-        planNameHint.textContent = isPrepaid
-          ? "ถ้าเว้นว่าง ระบบจะตั้งชื่อเริ่มต้นเป็น \"เติมเงิน\""
-          : "ถ้าเว้นว่าง ระบบจะตั้งชื่อเริ่มต้นเป็น \"{{ \App\Models\PhoneNumber::PACKAGE_NAME }}\"";
-        salePriceLabel.textContent = isPrepaid ? "ราคาขายครั้งเดียว (บาท)" : "ราคาแพ็กเกจ (บาท / เดือน)";
-        salePriceHint.textContent = isPrepaid
-          ? "ราคานี้จะเป็นยอดโอนเต็มจำนวนของเบอร์เติมเงิน"
-          : "ราคานี้จะใช้เป็นแพ็กเกจเริ่มต้นของเบอร์รายเดือน";
-        serviceTypeHelp.textContent = isPrepaid
-          ? "เบอร์เติมเงิน: ลูกค้ากรอกชื่อ ที่อยู่ และอัปโหลดสลิป จากนั้นระบบจะ hold เพื่อรอ admin ตรวจสอบ"
-          : "เบอร์รายเดือน: ใช้ flow เดิมที่เลือกแพ็กเกจและดำเนินการตามขั้นตอนของรายเดือน";
-      };
-
-      serviceTypeInput.addEventListener("change", renderByType);
-      renderByType();
-    })();
-  </script>
+  {{-- Scripts removed as fields are now static --}}
 @endpush
