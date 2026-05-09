@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\CustomerSubmission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -20,7 +21,7 @@ class EvaluatePhoneValidationTest extends TestCase
 
     public function test_evaluate_accepts_a_10_digit_phone_after_sanitizing_non_digits(): void
     {
-        $response = $this->get('/evaluate?phone=081-234-5678');
+        $response = $this->get('/evaluate?phone=081-234-5678&consent_dev=1&consent_marketing=0');
 
         $response->assertOk();
         $response->assertViewHas('phone', '0812345678');
@@ -29,6 +30,13 @@ class EvaluatePhoneValidationTest extends TestCase
         $response->assertSee('การสื่อสาร');
         $response->assertSee('สิ่งศักดิ์สิทธิ์คุ้มครอง/ลางสังหรณ์');
         $response->assertDontSee('10/10');
+
+        $this->assertDatabaseHas('customer_submissions', [
+            'form_type' => CustomerSubmission::FORM_EVALUATE,
+            'phone' => '0812345678',
+            'consent_dev' => true,
+            'consent_marketing' => false,
+        ]);
     }
 
     public function test_evaluate_bad_number_requires_a_10_digit_phone(): void

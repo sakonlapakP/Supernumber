@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\CustomerSubmission;
 use App\Models\EstimateLead;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -22,6 +23,8 @@ class EstimateLeadStoreTest extends TestCase
             'main_phone' => '0899998888',
             'email' => 'somchai@example.com',
             'goal' => 'money',
+            'consent_dev' => '0',
+            'consent_marketing' => '1',
         ]);
 
         $response->assertRedirect();
@@ -37,6 +40,15 @@ class EstimateLeadStoreTest extends TestCase
             'main_phone' => '0899998888',
             'email' => 'somchai@example.com',
             'goal' => 'money',
+        ]);
+
+        $this->assertDatabaseHas('customer_submissions', [
+            'form_type' => CustomerSubmission::FORM_ESTIMATE,
+            'name' => 'สมชาย ใจดี',
+            'phone' => '0899998888',
+            'email' => 'somchai@example.com',
+            'consent_dev' => false,
+            'consent_marketing' => true,
         ]);
 
         $processingResponse = $this->get($processingUrl);

@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Models\ContactMessage;
+use App\Models\CustomerSubmission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Tests\TestCase;
@@ -48,6 +49,8 @@ class ContactMessageStoreTest extends TestCase
             'phone' => '0812345678',
             'message' => 'ต้องการให้ช่วยแนะนำเบอร์ที่เหมาะกับงานขาย',
             'cf-turnstile-response' => 'test-token',
+            'consent_dev' => '1',
+            'consent_marketing' => '0',
         ]);
 
         $response->assertRedirect('/contact-us');
@@ -57,6 +60,14 @@ class ContactMessageStoreTest extends TestCase
             'name' => 'สมชาย ใจดี',
             'phone' => '0812345678',
             'message' => 'ต้องการให้ช่วยแนะนำเบอร์ที่เหมาะกับงานขาย',
+        ]);
+
+        $this->assertDatabaseHas('customer_submissions', [
+            'form_type' => CustomerSubmission::FORM_CONTACT,
+            'name' => 'สมชาย ใจดี',
+            'phone' => '0812345678',
+            'consent_dev' => true,
+            'consent_marketing' => false,
         ]);
     }
 

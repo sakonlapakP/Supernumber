@@ -981,6 +981,11 @@
           'label' => 'ระบบ',
           'items' => [
             [
+              'label' => 'Submission ลูกค้า',
+              'url' => route('admin.customer-submissions'),
+              'active' => request()->routeIs('admin.customer-submissions'),
+            ],
+            [
               'label' => 'Analytics GA4',
               'url' => route('admin.analytics'),
               'active' => request()->routeIs('admin.analytics*'),

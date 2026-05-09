@@ -7,12 +7,14 @@ use App\Models\ArticleComment;
 use App\Models\ContactMessage;
 use App\Models\Customer;
 use App\Models\CustomerOrder;
+use App\Models\CustomerSubmission;
 use App\Models\EstimateLead;
 use App\Models\LotteryResult;
 use App\Models\LineWebhookEvent;
 use App\Models\SalesDocument;
 use App\Models\User;
 use App\Services\ContactSpamFilter;
+use App\Services\CustomerSubmissionRecorder;
 use App\Services\EnvironmentEditor;
 use App\Services\AdminLogViewer;
 use App\Services\ArticleContentSanitizer;
@@ -863,6 +865,19 @@ Route::post('/estimate', function (Request $request) use ($safelyRunLineNotifica
         'ip_address' => $request->ip(),
         'user_agent' => substr((string) $request->userAgent(), 0, 65535),
         'submitted_at' => Carbon::now(),
+    ]);
+
+    app(CustomerSubmissionRecorder::class)->record($request, CustomerSubmission::FORM_ESTIMATE, [
+        'first_name' => trim((string) $data['first_name']),
+        'last_name' => trim((string) $data['last_name']),
+        'gender' => $data['gender'] ?? null,
+        'birthday' => $data['birthday'] ?? null,
+        'work_type' => $data['work_type'] ?? null,
+        'current_phone' => $currentPhone !== '' ? $currentPhone : null,
+        'main_phone' => $mainPhone,
+        'email' => trim((string) $data['email']),
+        'goal' => $data['goal'] ?? null,
+        'estimate_lead_id' => $lead->id,
     ]);
 
     $safelyRunLineNotification(
@@ -3568,6 +3583,93 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         return view('admin.contact-messages', compact('messages'));
     })->name('contact-messages');
+
+    Route::get('/customer-submissions', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+
+        if (session('admin_user_role') !== User::ROLE_MANAGER) {
+            abort(403);
+        }
+
+        $formTypeLabels = CustomerSubmission::formTypeLabels();
+        $selectedFormType = trim((string) $request->query('form_type', ''));
+        $selectedConsent = trim((string) $request->query('consent', ''));
+        $dateFrom = trim((string) $request->query('date_from', ''));
+        $dateTo = trim((string) $request->query('date_to', ''));
+        $search = trim((string) $request->query('q', ''));
+        $searchDigits = preg_replace('/\D+/', '', $search) ?? '';
+        $searchTerm = mb_strtolower($search);
+
+        if (! array_key_exists($selectedFormType, $formTypeLabels)) {
+            $selectedFormType = '';
+        }
+
+        if (! in_array($selectedConsent, ['dev_yes', 'dev_no', 'marketing_yes', 'marketing_no'], true)) {
+            $selectedConsent = '';
+        }
+
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateFrom)) {
+            $dateFrom = '';
+        }
+
+        if (! preg_match('/^\d{4}-\d{2}-\d{2}$/', $dateTo)) {
+            $dateTo = '';
+        }
+
+        $submissionQuery = CustomerSubmission::query()
+            ->with('customer')
+            ->when($selectedFormType !== '', fn ($query) => $query->where('form_type', $selectedFormType))
+            ->when($selectedConsent === 'dev_yes', fn ($query) => $query->where('consent_dev', true))
+            ->when($selectedConsent === 'dev_no', fn ($query) => $query->where('consent_dev', false))
+            ->when($selectedConsent === 'marketing_yes', fn ($query) => $query->where('consent_marketing', true))
+            ->when($selectedConsent === 'marketing_no', fn ($query) => $query->where('consent_marketing', false))
+            ->when($dateFrom !== '', fn ($query) => $query->where('submitted_at', '>=', Carbon::parse($dateFrom, 'Asia/Bangkok')->startOfDay()))
+            ->when($dateTo !== '', fn ($query) => $query->where('submitted_at', '<=', Carbon::parse($dateTo, 'Asia/Bangkok')->endOfDay()))
+            ->when($search !== '', function ($query) use ($search, $searchDigits, $searchTerm) {
+                $query->where(function ($innerQuery) use ($search, $searchDigits, $searchTerm) {
+                    $innerQuery
+                        ->where('name', 'like', '%' . $search . '%')
+                        ->orWhereRaw('LOWER(email) like ?', ['%' . $searchTerm . '%']);
+
+                    if ($searchDigits !== '') {
+                        $innerQuery->orWhere('phone', 'like', '%' . $searchDigits . '%');
+                    }
+                });
+            });
+
+        $todayStart = now('Asia/Bangkok')->startOfDay();
+        $stats = [
+            'total' => CustomerSubmission::query()->count(),
+            'today' => CustomerSubmission::query()->where('submitted_at', '>=', $todayStart)->count(),
+            'filtered' => (clone $submissionQuery)->count(),
+            'consent_dev_yes' => CustomerSubmission::query()->where('consent_dev', true)->count(),
+            'consent_marketing_yes' => CustomerSubmission::query()->where('consent_marketing', true)->count(),
+            'by_form_type' => CustomerSubmission::query()
+                ->select('form_type', DB::raw('COUNT(*) as aggregate'))
+                ->groupBy('form_type')
+                ->pluck('aggregate', 'form_type')
+                ->all(),
+        ];
+
+        $submissions = $submissionQuery
+            ->orderByRaw('COALESCE(submitted_at, created_at) DESC')
+            ->orderByDesc('id')
+            ->paginate(40)
+            ->withQueryString();
+
+        return view('admin.customer-submissions', compact(
+            'submissions',
+            'formTypeLabels',
+            'selectedFormType',
+            'selectedConsent',
+            'dateFrom',
+            'dateTo',
+            'search',
+            'stats'
+        ));
+    })->name('customer-submissions');
 
     Route::get('/estimate-leads', function (Request $request) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {

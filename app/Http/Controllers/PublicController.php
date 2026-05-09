@@ -14,6 +14,7 @@ use App\Models\EstimateLead;
 use App\Models\SalesDocument;
 use App\Models\User;
 use App\Services\ContactSpamFilter;
+use App\Services\CustomerSubmissionRecorder;
 use App\Services\LineOrderNotifier;
 use App\Services\TurnstileVerifier;
 use Illuminate\Http\Request;
@@ -357,13 +358,17 @@ class PublicController extends Controller
     /**
      * Number evaluation
      */
-    public function evaluate(Request $request)
+    public function evaluate(Request $request, CustomerSubmissionRecorder $submissionRecorder)
     {
         [$redirect, $phone] = $this->resolveAnalysisPhone($request);
 
         if ($redirect !== null) {
             return $redirect;
         }
+
+        $submissionRecorder->record($request, \App\Models\CustomerSubmission::FORM_EVALUATE, [
+            'phone' => $phone,
+        ]);
 
         return view('evaluate', compact('phone'));
     }
@@ -401,7 +406,7 @@ class PublicController extends Controller
     /**
      * Store contact message
      */
-    public function storeContact(Request $request, TurnstileVerifier $turnstileVerifier, ContactSpamFilter $spamFilter)
+    public function storeContact(Request $request, TurnstileVerifier $turnstileVerifier, ContactSpamFilter $spamFilter, CustomerSubmissionRecorder $submissionRecorder)
     {
         if (trim((string) $request->input('website', '')) !== '') {
             Log::info('Blocked contact form submission via honeypot.', [
@@ -455,6 +460,12 @@ class PublicController extends Controller
             'ip_address' => $request->ip(),
             'user_agent' => $request->userAgent(),
             'submitted_at' => now(),
+        ]);
+
+        $submissionRecorder->record($request, \App\Models\CustomerSubmission::FORM_CONTACT, [
+            'name' => trim($data['name']),
+            'phone' => trim($data['phone']),
+            'message' => trim($data['message']),
         ]);
 
         app(LineOrderNotifier::class)->notifyContactMessage(

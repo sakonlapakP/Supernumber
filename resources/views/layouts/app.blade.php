@@ -434,6 +434,41 @@
           });
         }
       })();
+
+      (() => {
+        const storageKey = "supernumber_analytics_consent";
+        const readConsent = () => {
+          try {
+            const parsed = JSON.parse(window.localStorage.getItem(storageKey) || "{}");
+
+            return {
+              dev: parsed.dev === true,
+              marketing: parsed.marketing === true,
+            };
+          } catch (error) {
+            return { dev: false, marketing: false };
+          }
+        };
+
+        const ensureHidden = (form, name, value) => {
+          let input = form.querySelector(`input[name="${name}"]`);
+          if (!input) {
+            input = document.createElement("input");
+            input.type = "hidden";
+            input.name = name;
+            form.appendChild(input);
+          }
+          input.value = value ? "1" : "0";
+        };
+
+        document.querySelectorAll("form").forEach((form) => {
+          form.addEventListener("submit", () => {
+            const consent = readConsent();
+            ensureHidden(form, "consent_dev", consent.dev);
+            ensureHidden(form, "consent_marketing", consent.marketing);
+          });
+        });
+      })();
     </script>
     @stack('scripts')
   </body>
