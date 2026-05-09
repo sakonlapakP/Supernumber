@@ -4012,7 +4012,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                         'phone_number' => $phone,
                         'display_number' => substr($phone, 0, 3) . '-' . substr($phone, 3, 3) . '-' . substr($phone, 6),
                         'sale_price' => $price,
-                        'network_code' => 'true',
+                        'network_code' => 'true-dtac',
                         'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
                         'status' => PhoneNumber::STATUS_ACTIVE,
                         'plan_name' => 'เติมเงิน',
