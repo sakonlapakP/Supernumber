@@ -1,25 +1,28 @@
 # Supernumber Project Context
 
 > [!NOTE]
-> **Project Metadata:** See [project_info.json](file:///Users/efaum/Sites/localhost/supernumber/project_info.json) for standard commands and project identity. AI assistants should read that file to understand how to run, build, or manage this project.
+> **Detailed Context:** For full technical details, business logic, and coding standards, refer to [AI_CONTEXT_MASTER.md](AI_CONTEXT_MASTER.md).
 
 ## Overview
 - **Project Name:** Supernumber
 - **Core Business:** Lucky Phone Number Sales (เบอร์มงคล), Numerology Analysis (ทำนายดวง), and SEO Article System.
-- **Main Tech Stack:** PHP 8.2+, Laravel 11, MySQL, Tailwind CSS.
+- **Main Tech Stack:** PHP 8.2+, Laravel 10/11, MySQL, Tailwind CSS v4.
+- **Admin App:** Flutter-based mobile dashboard in `/admin_flutter`.
 
 ## Core Modules
-1. **PhoneNumber Inventory:** Managing and selling prepaid/postpaid numbers. Includes CSV import and status tracking.
-2. **Numerology (Tarot):** Logic for analyzing phone numbers based on pair meanings (`PairMeaning` model).
-3. **Articles & SEO:** High-performance content system designed for SEO. Integrated with Gemini AI for auto-generation.
-4. **Order System:** Customer bookings, payment slip verification, and automated status syncing.
-
-## AI Content Guidelines (บทความ)
-- Articles are often AI-generated or AI-assisted.
-- SEO Fields: title, slug, meta_description, keywords, lsi_keywords.
-- Automation: supports auto-posting (`is_auto_post`) and LINE broadcasting.
+1. **PhoneNumber Inventory:** Logic for analyzing numbers based on pair meanings. Supports `active`, `hold`, and `sold` statuses.
+2. **Articles & SEO:** SEO-driven content system with Gemini AI integration and automated LINE broadcasting.
+3. **RBAC System:** Role-based access control with `Manager`, `Admin`, and `Staff` levels.
+4. **CI/CD:** GitHub Actions workflows for automated deployment and Telegram notifications.
 
 ## Development Patterns
-- Use Laravel Migrations for DB changes.
-- Tailwind CSS in Blade components.
-- Automated testing with PHPUnit for core logic.
+- **Architecture:** Laravel MVC with Service Pattern preference.
+- **UI:** Premium, rich aesthetics using Tailwind CSS v4 and modern typography.
+- **Database:** Managed via Laravel Migrations. No direct edits.
+- **Testing:** Unit and Feature tests in `/tests`. Run `php artisan test` before major changes.
+- **Language:** UI and system messages are in **Thai**.
+
+## Standard Commands
+- **Start Dev:** `npm run dev` / `php artisan serve`
+- **Test:** `php artisan test`
+- **Migrations:** `php artisan migrate`

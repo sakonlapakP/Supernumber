@@ -23,7 +23,8 @@
       "View Clear": "php artisan view:clear",
       "Tinker": "php artisan tinker",
       "Composer Install": "composer install",
-      "Composer Update": "composer update"
+      "Composer Update": "composer update",
+      "Test": "php artisan test"
     },
     "2. Flutter Admin (admin_flutter)": {
       "Pub Get": "cd admin_flutter && flutter pub get",
