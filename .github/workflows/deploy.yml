@@ -14,9 +14,11 @@ jobs:
     steps:
     - name: 🚚 Get latest code
       uses: actions/checkout@v3
+      with:
+        fetch-depth: 0
 
     - name: 🔔 Telegram Notification (Start)
-      uses: appleboy/telegram-action@master
+      uses: appleboy/telegram-action@v1.0.1
       with:
         to: ${{ secrets.TELEGRAM_TO }}
         token: ${{ secrets.TELEGRAM_TOKEN }}
@@ -73,7 +75,7 @@ jobs:
         echo "msg=$MSG" >> $GITHUB_OUTPUT
 
     - name: 🔔 Telegram Notification (Finish)
-      uses: appleboy/telegram-action@master
+      uses: appleboy/telegram-action@v1.0.1
       if: always()
       with:
         to: ${{ secrets.TELEGRAM_TO }}
