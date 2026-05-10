@@ -18,11 +18,14 @@ jobs:
         fetch-depth: 0
 
     - name: 🔔 Telegram Notification (Start)
+      env:
+        TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+        TELEGRAM_TO: ${{ secrets.TELEGRAM_TO }}
       run: |
         MSG="รายงานสถานะการ Deploy Website Supernumber ครับพี่อั้ม 🚀 ตอนนี้กำลังเริ่มนำโค้ดล่าสุดขึ้นเซิร์ฟเวอร์ครับ 💬 Commit: ${{ github.event.head_commit.message }}"
-        curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
-             -d chat_id="${{ secrets.TELEGRAM_TO }}" \
-             -d text="$MSG"
+        curl -f -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+             -d chat_id="${TELEGRAM_TO}" \
+             --data-urlencode "text=$MSG"
 
     - name: 📂 Sync to public_html
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
@@ -66,20 +69,27 @@ jobs:
             4) MSG="แจ้งข่าวครับพี่อั้ม ระบบจัดการเรื่อง $COMMIT_MSG ให้ Supernumber ผลคือ ยังไม่สำเร็จครับผม" ;;
           esac
         fi
-        # Add Emoji based on status for visual feedback in TG
+        
+        # Add Emoji based on status for visual feedback
         if [ "$STATUS" == "success" ]; then
           MSG="$MSG ✅"
         else
           MSG="$MSG ❌"
         fi
+        
+        # Output the final message
         echo "msg=$MSG" >> $GITHUB_OUTPUT
 
     - name: 🔔 Telegram Notification (Finish)
       if: always()
+      env:
+        TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
+        TELEGRAM_TO: ${{ secrets.TELEGRAM_TO }}
       run: |
-        curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
-             -d chat_id="${{ secrets.TELEGRAM_TO }}" \
+        curl -f -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+             -d chat_id="${TELEGRAM_TO}" \
              --data-urlencode "text=${{ steps.prepare_msg.outputs.msg }}"
+
 
 
 
