@@ -15,6 +15,19 @@ jobs:
     - name: 🚚 Get latest code
       uses: actions/checkout@v3
 
+    - name: 🔔 Telegram Notification (Start)
+      uses: appleboy/telegram-action@master
+      with:
+        to: ${{ secrets.TELEGRAM_TO }}
+        token: ${{ secrets.TELEGRAM_TOKEN }}
+        format: markdown
+        message: |
+          รายงานสถานะการ Deploy Website Supernumber ครับพี่อั้ม 🚀
+          ตอนนี้กำลังเริ่มนำโค้ดล่าสุดขึ้นเซิร์ฟเวอร์ครับ
+          
+          💬 Commit: `${{ github.event.head_commit.message }}`
+          👤 By: ${{ github.actor }}
+
     - name: 📂 Sync to public_html
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
       with:
@@ -30,4 +43,50 @@ jobs:
           **/storage/*.pdf
           .github/workflows/**
           README.md
+
+    - name: 📝 Prepare Notification Message
+      id: prepare_msg
+      if: always()
+      run: |
+        RUN_ID=${{ github.run_number }}
+        MOD=$((RUN_ID % 5))
+        COMMIT_MSG="${{ github.event.head_commit.message }}"
+        STATUS="${{ job.status }}"
+        
+        if [ "$STATUS" == "success" ]; then
+          case $MOD in
+            0) MSG="รายงานสถานะการ Deploy Website Supernumber ครับพี่อั้ม ตอนนี้ดำเนินการเสร็จสิ้นแล้วครับ ผลคือ สำเร็จเรียบร้อย ในการอัปเดตเรื่อง $COMMIT_MSG ครับผม" ;;
+            1) MSG="พี่อั้มครับ ระบบ Supernumber รายงานตัวครับ ตอนนี้การ Deploy สำเร็จแล้วครับ ในส่วนของ $COMMIT_MSG" ;;
+            2) MSG="อัปเดตสถานะครับพี่อั้ม การนำโค้ดเรื่อง $COMMIT_MSG ขึ้นระบบ Supernumber ผลออกมาคือ เรียบร้อยดีครับ" ;;
+            3) MSG="เรียบร้อยครับพี่อั้ม การ Deploy เรื่อง $COMMIT_MSG เข้าสู่ Supernumber ตอนนี้ สำเร็จแล้วครับ" ;;
+            4) MSG="แจ้งข่าวดีครับพี่อั้ม ระบบจัดการเรื่อง $COMMIT_MSG ให้ Supernumber ผลคือ สำเร็จเรียบร้อยครับผม" ;;
+          esac
+        else
+          case $MOD in
+            0) MSG="รายงานสถานะการ Deploy Website Supernumber ครับพี่อั้ม ตอนนี้ดำเนินการเสร็จสิ้นแล้วครับ ผลคือ ไม่สำเร็จ ในการอัปเดตเรื่อง $COMMIT_MSG ครับผม" ;;
+            1) MSG="พี่อั้มครับ ระบบ Supernumber แจ้งเตือนครับ ตอนนี้การ Deploy มีปัญหาเล็กน้อยครับ ในส่วนของ $COMMIT_MSG" ;;
+            2) MSG="อัปเดตสถานะครับพี่อั้ม การนำโค้ดเรื่อง $COMMIT_MSG ขึ้นระบบ Supernumber ผลออกมาคือ ขัดข้องครับ" ;;
+            3) MSG="ขออภัยครับพี่อั้ม การ Deploy เรื่อง $COMMIT_MSG เข้าสู่ Supernumber ตอนนี้ ยังไม่สำเร็จนะครับ" ;;
+            4) MSG="แจ้งข่าวครับพี่อั้ม ระบบจัดการเรื่อง $COMMIT_MSG ให้ Supernumber ผลคือ ยังไม่สำเร็จครับผม" ;;
+          esac
+        fi
+        echo "msg=$MSG" >> $GITHUB_OUTPUT
+
+    - name: 🔔 Telegram Notification (Finish)
+      uses: appleboy/telegram-action@master
+      if: always()
+      with:
+        to: ${{ secrets.TELEGRAM_TO }}
+        token: ${{ secrets.TELEGRAM_TOKEN }}
+        format: markdown
+        message: |
+          ${{ steps.prepare_msg.outputs.msg }} 🏁
+          
+          📊 สถานะ: ${{ job.status == 'success' && '✅ Success' || '❌ Failed' }}
+          💬 Commit: `${{ github.event.head_commit.message }}`
+          🔗 [ดูรายละเอียด](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+
+
+
+
 
