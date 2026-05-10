@@ -18,17 +18,11 @@ jobs:
         fetch-depth: 0
 
     - name: 🔔 Telegram Notification (Start)
-      uses: appleboy/telegram-action@v1.0.1
-      with:
-        to: ${{ secrets.TELEGRAM_TO }}
-        token: ${{ secrets.TELEGRAM_TOKEN }}
-        format: markdown
-        message: |
-          รายงานสถานะการ Deploy Website Supernumber ครับพี่อั้ม 🚀
-          ตอนนี้กำลังเริ่มนำโค้ดล่าสุดขึ้นเซิร์ฟเวอร์ครับ
-          
-          💬 Commit: `${{ github.event.head_commit.message }}`
-          👤 By: ${{ github.actor }}
+      run: |
+        MSG="รายงานสถานะการ Deploy Website Supernumber ครับพี่อั้ม 🚀 ตอนนี้กำลังเริ่มนำโค้ดล่าสุดขึ้นเซิร์ฟเวอร์ครับ 💬 Commit: ${{ github.event.head_commit.message }}"
+        curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
+             -d chat_id="${{ secrets.TELEGRAM_TO }}" \
+             -d text="$MSG"
 
     - name: 📂 Sync to public_html
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
@@ -72,21 +66,21 @@ jobs:
             4) MSG="แจ้งข่าวครับพี่อั้ม ระบบจัดการเรื่อง $COMMIT_MSG ให้ Supernumber ผลคือ ยังไม่สำเร็จครับผม" ;;
           esac
         fi
+        # Add Emoji based on status for visual feedback in TG
+        if [ "$STATUS" == "success" ]; then
+          MSG="$MSG ✅"
+        else
+          MSG="$MSG ❌"
+        fi
         echo "msg=$MSG" >> $GITHUB_OUTPUT
 
     - name: 🔔 Telegram Notification (Finish)
-      uses: appleboy/telegram-action@v1.0.1
       if: always()
-      with:
-        to: ${{ secrets.TELEGRAM_TO }}
-        token: ${{ secrets.TELEGRAM_TOKEN }}
-        format: markdown
-        message: |
-          ${{ steps.prepare_msg.outputs.msg }} 🏁
-          
-          📊 สถานะ: ${{ job.status == 'success' && '✅ Success' || '❌ Failed' }}
-          💬 Commit: `${{ github.event.head_commit.message }}`
-          🔗 [ดูรายละเอียด](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
+      run: |
+        curl -X POST "https://api.telegram.org/bot${{ secrets.TELEGRAM_TOKEN }}/sendMessage" \
+             -d chat_id="${{ secrets.TELEGRAM_TO }}" \
+             --data-urlencode "text=${{ steps.prepare_msg.outputs.msg }}"
+
 
 
 
