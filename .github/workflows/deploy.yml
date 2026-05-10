@@ -23,9 +23,11 @@ jobs:
         TELEGRAM_TO: ${{ secrets.TELEGRAM_TO }}
       run: |
         MSG="รายงานสถานะการ Deploy Website Supernumber ครับพี่อั้ม 🚀 ตอนนี้กำลังเริ่มนำโค้ดล่าสุดขึ้นเซิร์ฟเวอร์ครับ 💬 Commit: ${{ github.event.head_commit.message }}"
-        curl -f -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+        RESPONSE=$(curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
              -d chat_id="${TELEGRAM_TO}" \
-             --data-urlencode "text=$MSG"
+             --data-urlencode "text=$MSG")
+        echo "Telegram Response: $RESPONSE"
+        if echo "$RESPONSE" | grep -q '"ok":false'; then exit 1; fi
 
     - name: 📂 Sync to public_html
       uses: SamKirkland/FTP-Deploy-Action@v4.3.4
@@ -86,9 +88,12 @@ jobs:
         TELEGRAM_TOKEN: ${{ secrets.TELEGRAM_TOKEN }}
         TELEGRAM_TO: ${{ secrets.TELEGRAM_TO }}
       run: |
-        curl -f -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
+        RESPONSE=$(curl -s -X POST "https://api.telegram.org/bot${TELEGRAM_TOKEN}/sendMessage" \
              -d chat_id="${TELEGRAM_TO}" \
-             --data-urlencode "text=${{ steps.prepare_msg.outputs.msg }}"
+             --data-urlencode "text=${{ steps.prepare_msg.outputs.msg }}")
+        echo "Telegram Response: $RESPONSE"
+        if echo "$RESPONSE" | grep -q '"ok":false'; then exit 1; fi
+
 
 
 
