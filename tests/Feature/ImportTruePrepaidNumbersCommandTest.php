@@ -15,12 +15,10 @@ class ImportTruePrepaidNumbersCommandTest extends TestCase
     {
         PhoneNumber::query()->create([
             'phone_number' => '0951415156',
-            'display_number' => '095-141-5156',
             'number_sum' => 11,
             'service_type' => PhoneNumber::SERVICE_TYPE_POSTPAID,
             'network_code' => 'true_dtac',
             'plan_name' => PhoneNumber::PACKAGE_NAME,
-            'price_text' => '699',
             'sale_price' => 699,
             'status' => PhoneNumber::STATUS_SOLD,
         ]);
@@ -48,12 +46,10 @@ class ImportTruePrepaidNumbersCommandTest extends TestCase
 
         $this->assertDatabaseHas('phone_numbers', [
             'phone_number' => '0961414645',
-            'display_number' => '096-141-4645',
             'number_sum' => 40,
             'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
             'network_code' => 'true_dtac',
             'plan_name' => 'เติมเงิน',
-            'price_text' => '12900',
             'sale_price' => 12900,
             'status' => PhoneNumber::STATUS_ACTIVE,
         ]);
@@ -114,7 +110,6 @@ class ImportTruePrepaidNumbersCommandTest extends TestCase
 
         $this->assertDatabaseHas('phone_numbers', [
             'phone_number' => '0802829197',
-            'display_number' => '080-282-9197',
             'number_sum' => 46,
             'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
             'sale_price' => 13500,
@@ -123,7 +118,6 @@ class ImportTruePrepaidNumbersCommandTest extends TestCase
 
         $this->assertDatabaseHas('phone_numbers', [
             'phone_number' => '0661414265',
-            'display_number' => '066-141-4265',
             'number_sum' => 35,
             'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
             'sale_price' => 15000,

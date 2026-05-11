@@ -168,7 +168,6 @@ class EstimateRecommendationServiceTest extends TestCase
     {
         PhoneNumber::query()->create([
             'phone_number' => $phoneNumber,
-            'display_number' => substr($phoneNumber, 0, 3) . '-' . substr($phoneNumber, 3, 3) . '-' . substr($phoneNumber, 6),
             'service_type' => $serviceType,
             'network_code' => 'true_dtac',
             'plan_name' => $serviceType === PhoneNumber::SERVICE_TYPE_PREPAID ? 'เติมเงิน' : PhoneNumber::PACKAGE_NAME,

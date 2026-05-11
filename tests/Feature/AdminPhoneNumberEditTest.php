@@ -15,7 +15,6 @@ class AdminPhoneNumberEditTest extends TestCase
     {
         $phoneNumber = PhoneNumber::query()->create([
             'phone_number' => '0891234567',
-            'display_number' => '089-123-4567',
             'service_type' => PhoneNumber::SERVICE_TYPE_POSTPAID,
             'network_code' => 'true_dtac',
             'plan_name' => PhoneNumber::PACKAGE_NAME,
@@ -33,19 +32,16 @@ class AdminPhoneNumberEditTest extends TestCase
             ->get(route('admin.numbers.edit', $phoneNumber))
             ->assertOk()
             ->assertSee('แก้ไขเบอร์')
-            ->assertSee('0891234567')
             ->assertSee('089-123-4567');
     }
 
-    public function test_admin_can_change_number_to_prepaid_and_update_price(): void
+    public function test_admin_can_change_number_status_and_log_it(): void
     {
         $phoneNumber = PhoneNumber::query()->create([
             'phone_number' => '0891234567',
-            'display_number' => '089-123-4567',
             'service_type' => PhoneNumber::SERVICE_TYPE_POSTPAID,
             'network_code' => 'true_dtac',
             'plan_name' => PhoneNumber::PACKAGE_NAME,
-            'price_text' => '699',
             'sale_price' => 699,
             'status' => PhoneNumber::STATUS_ACTIVE,
         ]);
@@ -58,24 +54,16 @@ class AdminPhoneNumberEditTest extends TestCase
 
         $this->withSession($this->adminSession($manager))
             ->put(route('admin.numbers.update', $phoneNumber), [
-                'display_number' => '089-123-4567',
-                'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
-                'network_code' => ' TRUE DTAC ',
-                'plan_name' => '',
-                'price_text' => '',
-                'sale_price' => 5000,
                 'status' => PhoneNumber::STATUS_HOLD,
             ])
             ->assertRedirect(route('admin.numbers.edit', $phoneNumber));
 
         $this->assertDatabaseHas('phone_numbers', [
             'id' => $phoneNumber->id,
-            'display_number' => '089-123-4567',
-            'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
+            'service_type' => PhoneNumber::SERVICE_TYPE_POSTPAID,
             'network_code' => 'true_dtac',
-            'plan_name' => 'เติมเงิน',
-            'price_text' => '5000',
-            'sale_price' => 5000,
+            'plan_name' => PhoneNumber::PACKAGE_NAME,
+            'sale_price' => 699,
             'status' => PhoneNumber::STATUS_HOLD,
         ]);
 
@@ -92,7 +80,6 @@ class AdminPhoneNumberEditTest extends TestCase
     {
         PhoneNumber::query()->create([
             'phone_number' => '0891234567',
-            'display_number' => '089-123-4567',
             'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
             'network_code' => 'true_dtac',
             'plan_name' => 'เติมเงิน',
@@ -102,7 +89,6 @@ class AdminPhoneNumberEditTest extends TestCase
 
         PhoneNumber::query()->create([
             'phone_number' => '0811112222',
-            'display_number' => '081-111-2222',
             'service_type' => PhoneNumber::SERVICE_TYPE_POSTPAID,
             'network_code' => 'true_dtac',
             'plan_name' => PhoneNumber::PACKAGE_NAME,

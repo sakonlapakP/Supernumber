@@ -1413,8 +1413,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->when($search !== '', function ($query) use ($search, $searchDigits, $searchTerm) {
                 $query->where(function ($innerQuery) use ($search, $searchDigits, $searchTerm) {
                     if ($searchDigits !== '') {
-                        $innerQuery->where('phone_number', 'like', '%' . $searchDigits . '%')
-                            ->orWhere('display_number', 'like', '%' . $searchDigits . '%');
+                        $innerQuery->where('phone_number', 'like', '%' . $searchDigits . '%');
                     }
 
                     $innerQuery->orWhereRaw('LOWER(network_code) like ?', ['%' . $searchTerm . '%'])

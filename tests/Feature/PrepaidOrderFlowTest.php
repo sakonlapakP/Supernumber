@@ -18,7 +18,6 @@ class PrepaidOrderFlowTest extends TestCase
     {
         PhoneNumber::query()->create([
             'phone_number' => '0891234567',
-            'display_number' => '089-123-4567',
             'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
             'network_code' => 'true_dtac',
             'plan_name' => 'เติมเงิน',
@@ -41,7 +40,6 @@ class PrepaidOrderFlowTest extends TestCase
 
         $phoneNumber = PhoneNumber::query()->create([
             'phone_number' => '0891234567',
-            'display_number' => '089-123-4567',
             'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
             'network_code' => 'true_dtac',
             'plan_name' => 'เติมเงิน',
@@ -100,7 +98,6 @@ class PrepaidOrderFlowTest extends TestCase
 
         PhoneNumber::query()->create([
             'phone_number' => '0891234567',
-            'display_number' => '089-123-4567',
             'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
             'network_code' => 'true_dtac',
             'plan_name' => 'เติมเงิน',
@@ -142,7 +139,6 @@ class PrepaidOrderFlowTest extends TestCase
 
         PhoneNumber::query()->create([
             'phone_number' => '0891234567',
-            'display_number' => '089-123-4567',
             'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
             'network_code' => 'true_dtac',
             'plan_name' => 'เติมเงิน',
