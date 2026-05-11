@@ -191,30 +191,25 @@
    4. Home Page Specific (Grid & Layout)
    ========================================================================== */
 
-/* Base Logic for Home Grid - Only applied when in grid view */
-body.home-scale-soft .home-card-grid[data-view="grid"] {
+/* Base Logic for Home & Catalog Grid - Only applied when in grid view */
+body.home-scale-soft .home-card-grid[data-view="grid"],
+body.numbers-scale-soft .home-card-grid[data-view="grid"],
+body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] {
   display: grid !important;
   gap: 20px 16px !important;
   align-items: stretch !important;
   grid-auto-rows: auto !important;
-  /* Changed to auto as requested */
 }
 
-/* Catalog Page Layout Spacing */
-body.numbers-scale-soft .numbers-default-columns {
-  display: grid !important;
-  grid-template-columns: repeat(2, 1fr) !important;
-  gap: 30px !important;
-  align-items: start !important;
+/* Catalog Page Layout Spacing - Matching Home Page Style */
+body.numbers-scale-soft .home-number-groups {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 40px !important;
+  width: 100% !important;
 }
 
-@media (max-width: 900px) {
-  body.numbers-scale-soft .numbers-default-columns {
-    grid-template-columns: 1fr !important;
-  }
-}
-
-body.numbers-scale-soft .numbers-default-column__head {
+body.numbers-scale-soft .home-number-group__head {
   margin-bottom: 24px !important;
 }
 
@@ -223,19 +218,18 @@ body.numbers-scale-soft .numbers-catalog-shell {
   margin: 0 auto !important;
 }
 
-/* Catalog Page Grid View Container - Matching Home Page Spacing */
-body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] {
+/* Unified Grid Container - Matching Home Page Spacing */
+body.numbers-scale-soft .home-card-grid[data-view="grid"],
+body.home-scale-soft .home-card-grid[data-view="grid"] {
   display: grid !important;
-  grid-template-columns: repeat(2, 1fr) !important; /* 2 cols per side = 4 cols total */
-  gap: 24px 16px !important;
   width: 100% !important;
   margin: 0 auto !important;
 }
 
-body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog,
+body.numbers-scale-soft .home-card-grid[data-view="grid"] .number-card--home,
 body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home {
   width: 100% !important;
-  max-width: 260px !important; /* Slightly smaller to fit 4 columns better in 1140px container */
+  max-width: 260px !important; 
   margin: 0 auto !important;
 }
 
@@ -431,7 +425,8 @@ body.numbers-scale-soft .number-card--catalog .card-btn {
 
 /* Large Desktop (1200px+) */
 @media (min-width: 1200px) {
-  body.home-scale-soft .home-card-grid[data-view="grid"] {
+  body.home-scale-soft .home-card-grid[data-view="grid"],
+  body.numbers-scale-soft .home-card-grid[data-view="grid"] {
     grid-template-columns: repeat(4, 1fr) !important;
     max-width: 1200px !important;
     margin-left: auto !important;
@@ -442,7 +437,8 @@ body.numbers-scale-soft .number-card--catalog .card-btn {
 
 /* Standard Desktop / Tablet Landscape (992px - 1199px) */
 @media (min-width: 992px) and (max-width: 1199px) {
-  body.home-scale-soft .home-card-grid[data-view="grid"] {
+  body.home-scale-soft .home-card-grid[data-view="grid"],
+  body.numbers-scale-soft .home-card-grid[data-view="grid"] {
     grid-template-columns: repeat(4, 1fr) !important;
     justify-content: center !important;
   }
@@ -450,7 +446,8 @@ body.numbers-scale-soft .number-card--catalog .card-btn {
 
 /* Tablet Portrait (681px - 991px) */
 @media (min-width: 681px) and (max-width: 991px) {
-  body.home-scale-soft .home-card-grid[data-view="grid"] {
+  body.home-scale-soft .home-card-grid[data-view="grid"],
+  body.numbers-scale-soft .home-card-grid[data-view="grid"] {
     grid-template-columns: repeat(2, 240px) !important;
     justify-content: center !important;
   }
@@ -458,7 +455,8 @@ body.numbers-scale-soft .number-card--catalog .card-btn {
 
 /* Mobile Large (421px - 680px) */
 @media (max-width: 680px) {
-  body.home-scale-soft .home-card-grid[data-view="grid"] {
+  body.home-scale-soft .home-card-grid[data-view="grid"],
+  body.numbers-scale-soft .home-card-grid[data-view="grid"] {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 10px !important;
   }
@@ -466,7 +464,8 @@ body.numbers-scale-soft .number-card--catalog .card-btn {
 
 /* Mobile Small (Under 420px) */
 @media (max-width: 420px) {
-  body.home-scale-soft .home-card-grid[data-view="grid"] {
+  body.home-scale-soft .home-card-grid[data-view="grid"],
+  body.numbers-scale-soft .home-card-grid[data-view="grid"] {
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
     gap: 8px !important;
   }
