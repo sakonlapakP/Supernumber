@@ -2605,13 +2605,17 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 ];
             });
 
-        $articlePlans = \App\Models\ArticlePlan::query()
-            ->whereYear('publish_date', now()->year)
-            ->orderBy('publish_date')
-            ->orderBy('publish_time')
-            ->get();
+        $articlePlans = collect();
+        if (\Illuminate\Support\Facades\Schema::hasTable('article_plans')) {
+            $articlePlans = \App\Models\ArticlePlan::query()
+                ->whereYear('publish_date', now()->year)
+                ->orderBy('publish_date')
+                ->orderBy('publish_time')
+                ->get();
+        }
 
-        return view('admin.articles', compact('articles', 'existingArticlesInfo', 'articlePlans'));
+        $tableExists = \Illuminate\Support\Facades\Schema::hasTable('article_plans');
+        return view('admin.articles', compact('articles', 'existingArticlesInfo', 'articlePlans', 'tableExists'));
     })->name('articles');
 
     Route::post('/article-plans', [\App\Http\Controllers\Admin\ArticlePlanController::class, 'store'])->name('article-plans.store');
@@ -4208,4 +4212,33 @@ Route::get('/maintenance/db-convert-timestamps', function(Illuminate\Http\Reques
     } catch (\Exception $e) {
         return "<h3>Database Conversion Failed:</h3><pre>{$e->getMessage()}</pre>";
     }
+});
+
+Route::get('/emergency-restore', function() {
+    $output = "<h1>Emergency Restoration</h1>";
+    
+    $files = [
+        ['command' => 'numbers:import-true-csv', 'file' => 'TRUE เติมเงินปกขาว-ม่วง.csv'],
+        ['command' => 'numbers:import-true-prepaid', 'file' => 'TRUE เติมเงิน064-080.xlsx'],
+        ['command' => 'numbers:import-true-prepaid', 'file' => 'ทรูเติมเงิน(ชุดใหม่).xlsx'],
+    ];
+
+    foreach ($files as $f) {
+        $output .= "<h2>Running: {$f['command']} with {$f['file']}</h2>";
+        try {
+            // Check if file exists in base path
+            if (!file_exists(base_path($f['file']))) {
+                $output .= "<p style='color:orange'>File not found: {$f['file']}</p>";
+                continue;
+            }
+            
+            \Illuminate\Support\Facades\Artisan::call($f['command'], ['file' => $f['file']]);
+            $output .= "<pre>" . \Illuminate\Support\Facades\Artisan::output() . "</pre>";
+        } catch (\Exception $e) {
+            $output .= "<p style='color:red'>Error: " . $e->getMessage() . "</p>";
+        }
+    }
+
+    $output .= "<br><a href='/'>Go to Home</a>";
+    return $output;
 });

@@ -435,17 +435,15 @@
       </div>
 
       @if ($isDefaultSplitLayout)
-        <div class="home-number-groups" id="numbers-catalog-grid" data-view="{{ $selectedView }}">
-          <section class="home-number-group home-number-group--prepaid">
-            <div class="home-number-group__head">
-              <div class="home-number-group__copy">
-                <h3 class="home-number-group__title">เบอร์เติมเงิน</h3>
-                <p class="home-number-group__hint">แสดงก่อนเมื่อยังไม่ได้ค้นหา</p>
-              </div>
+        <div class="numbers-default-columns" id="numbers-catalog-grid" data-view="{{ $selectedView }}">
+          <section class="numbers-default-column numbers-default-column--prepaid">
+            <div class="numbers-default-column__head">
+              <h3>เบอร์เติมเงิน</h3>
+              <p>แสดงก่อนเมื่อยังไม่ได้ค้นหา</p>
             </div>
-            <div class="card-grid home-card-grid listing-card-grid" data-view="{{ $selectedView }}">
+            <div class="numbers-catalog-grid listing-card-grid is-default-split" data-view="{{ $selectedView }}">
               @foreach ($defaultPrepaidNumbers as $number)
-                <article class="number-card number-card--listing number-card--home">
+                <article class="number-card number-card--listing number-card--catalog">
                   <div class="card-left-group">
                     <div class="card-top">{{ $number->formatted_number }}</div>
                     @if ($number->supported_topic_icons !== [])
@@ -481,16 +479,14 @@
             </div>
           </section>
 
-          <section class="home-number-group home-number-group--postpaid">
-            <div class="home-number-group__head">
-              <div class="home-number-group__copy">
-                <h3 class="home-number-group__title">เบอร์รายเดือน</h3>
-                <p class="home-number-group__hint">แสดงถัดลงมาเมื่อยังไม่ได้ค้นหา</p>
-              </div>
+          <section class="numbers-default-column numbers-default-column--postpaid">
+            <div class="numbers-default-column__head">
+              <h3>เบอร์รายเดือน</h3>
+              <p>แสดงถัดลงมาเมื่อยังไม่ได้ค้นหา</p>
             </div>
-            <div class="card-grid home-card-grid listing-card-grid" data-view="{{ $selectedView }}">
+            <div class="numbers-catalog-grid listing-card-grid is-default-split" data-view="{{ $selectedView }}">
               @foreach ($defaultPostpaidNumbers as $number)
-                <article class="number-card number-card--listing number-card--home">
+                <article class="number-card number-card--listing number-card--catalog">
                   <div class="card-left-group">
                     <div class="card-top">{{ $number->formatted_number }}</div>
                     @if ($number->supported_topic_icons !== [])
@@ -527,9 +523,9 @@
           </section>
         </div>
       @else
-        <div class="card-grid home-card-grid listing-card-grid" id="numbers-catalog-grid" data-view="{{ $selectedView }}">
+        <div class="numbers-catalog-grid listing-card-grid" id="numbers-catalog-grid" data-view="{{ $selectedView }}">
           @forelse ($numbers as $number)
-            <article class="number-card number-card--listing number-card--home">
+            <article class="number-card number-card--listing number-card--catalog">
               <div class="card-left-group">
                 <div class="card-top">{{ $number->formatted_number }}</div>
                 @if ($number->supported_topic_icons !== [])

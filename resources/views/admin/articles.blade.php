@@ -130,22 +130,30 @@
   .plan-action-btn {
     background: #f1f5f9;
     border: none;
-    padding: 6px;
-    border-radius: 8px;
+    padding: 10px;
+    border-radius: 12px;
     color: #475569;
     cursor: pointer;
     transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
+    min-width: 40px;
+    min-height: 40px;
+    -webkit-tap-highlight-color: transparent;
   }
-  .plan-action-btn:hover {
-    background: #e2e8f0;
-    color: #1e293b;
+  @media (hover: hover) {
+    .plan-action-btn:hover {
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+    .plan-action-btn--delete:hover {
+      background: #fef2f2;
+      color: #dc2626;
+    }
   }
-  .plan-action-btn--delete:hover {
-    background: #fef2f2;
-    color: #dc2626;
+  .plan-action-btn:active {
+    transform: scale(0.95);
   }
 
   @media (min-width: 768px) {
@@ -870,8 +878,8 @@
           <input type="text" id="article-search" placeholder="ค้นหาหัวข้อบทความ..." class="admin-input" style="flex: 1;">
           <select id="plan-month-filter" name="month_plan" class="admin-input" style="width: 180px; background-color: #fff; cursor: pointer; border-color: #e2e8f0; font-weight: 600; color: #1e293b;" onchange="this.form.submit()">
             <option value="">ทั้งหมด (แผนงาน)</option>
-            @foreach($planData as $month)
-              <option value="{{ $month['month'] }}" {{ request('month_plan') === $month['month'] ? 'selected' : '' }}>{{ $month['month'] }}</option>
+            @foreach($groupedPlans->keys() as $monthName)
+              <option value="{{ $monthName }}" {{ request('month_plan') === $monthName ? 'selected' : '' }}>{{ $monthName }}</option>
             @endforeach
           </select>
         </form>
@@ -1239,6 +1247,16 @@
       };
     @endphp
 
+    @if(!$tableExists)
+      <div class="admin-alert admin-alert--warning" style="margin-bottom: 20px; background: #fffbeb; border: 1px solid #fef3c7; color: #92400e; padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 24px; height: 24px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
+        <div>
+          <strong style="display: block;">ยังไม่ได้รัน Migration!</strong>
+          <span style="font-size: 14px;">กรุณารันคำสั่ง <code>php artisan migrate</code> เพื่อเปิดใช้งานระบบแผนการเผยแพร่บทความครับ</span>
+        </div>
+      </div>
+    @endif
+
     <section class="admin-card content-plan-card">
       <div class="plan-header">
         <h3 class="plan-title">
@@ -1375,7 +1393,7 @@
     </script>
 
     {{-- AI Prompt Modal --}}
-    <div id="ai-prompt-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10001; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px);">
+    <div id="ai-prompt-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10001; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
         <div style="background: white; width: 100%; max-width: 500px; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.2);">
             <div style="padding: 24px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; background: linear-gradient(to right, #f8fafc, #ffffff);">
                 <div style="display: flex; align-items: center; gap: 12px;">
@@ -1411,7 +1429,7 @@
     </div>
 
     {{-- Article Plan Modal --}}
-    <div id="plan-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px);">
+    <div id="plan-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
         <div style="background: white; width: 100%; max-width: 500px; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.2);">
             <div style="padding: 24px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
                 <h3 id="plan-modal-title" style="margin: 0; font-size: 20px; font-weight: 800; color: #1e293b;">เพิ่มแผนการเผยแพร่</h3>
@@ -1425,16 +1443,16 @@
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
                         <div>
                             <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #475569; font-size: 14px;">วันที่</label>
-                            <input type="date" id="plan-date" name="publish_date" class="admin-input" style="width: 100%;" required>
+                            <input type="date" id="plan-date" name="publish_date" class="admin-input" style="width: 100%; font-size: 16px;" required>
                         </div>
                         <div>
                             <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #475569; font-size: 14px;">เวลา</label>
-                            <input type="text" id="plan-time" name="publish_time" class="admin-input" style="width: 100%;" placeholder="09:00" required>
+                            <input type="text" id="plan-time" name="publish_time" class="admin-input" style="width: 100%; font-size: 16px;" placeholder="09:00" required>
                         </div>
                     </div>
                     <div style="margin-bottom: 15px;">
                         <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #475569; font-size: 14px;">ประเภท</label>
-                        <select id="plan-type" name="type" class="admin-input" style="width: 100%;">
+                        <select id="plan-type" name="type" class="admin-input" style="width: 100%; font-size: 16px;">
                             <option value="วันสำคัญ">วันสำคัญ</option>
                             <option value="หวย">หวย</option>
                             <option value="Evergreen">Evergreen</option>
@@ -1444,7 +1462,7 @@
                     </div>
                     <div style="margin-bottom: 15px;">
                         <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #475569; font-size: 14px;">หัวข้อ</label>
-                        <input type="text" id="plan-topic" name="topic" class="admin-input" style="width: 100%;" placeholder="เช่น วันพืชมงคล..." required>
+                        <input type="text" id="plan-topic" name="topic" class="admin-input" style="width: 100%; font-size: 16px;" placeholder="เช่น วันพืชมงคล..." required>
                     </div>
                     <div style="display: flex; align-items: center; gap: 10px;">
                         <input type="checkbox" id="plan-lottery" name="is_lottery" value="1" style="width: 18px; height: 18px;">
@@ -1460,7 +1478,7 @@
     </div>
 
     {{-- Import JSON Modal --}}
-    <div id="import-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px);">
+    <div id="import-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px); -webkit-backdrop-filter: blur(4px);">
         <div style="background: white; width: 100%; max-width: 600px; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.2);">
             <div style="padding: 24px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
                 <h3 style="margin: 0; font-size: 20px; font-weight: 800; color: #1e293b;">นำเข้าบทความด้วย JSON</h3>
@@ -1470,7 +1488,7 @@
                 @csrf
                 <div style="padding: 24px;">
                     <p style="margin-top: 0; margin-bottom: 15px; color: #64748b; font-size: 14px; font-weight: 500;">วางข้อมูล JSON ของบทความที่นี่ (สามารถใส่เป็นชิ้นเดียว หรือเป็น Array ของหลายบทความได้)</p>
-                    <textarea name="json_data" class="admin-input" style="width: 100%; height: 300px; font-family: 'JetBrains Mono', monospace; font-size: 12px; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0;" placeholder='[
+                    <textarea name="json_data" class="admin-input" style="width: 100%; height: 300px; font-family: 'JetBrains Mono', monospace; font-size: 16px; padding: 15px; border-radius: 16px; border: 2px solid #e2e8f0;" placeholder='[
   {
     "title": "หัวข้อบทความ",
     "content": "<p>เนื้อหาบทความ</p>",
