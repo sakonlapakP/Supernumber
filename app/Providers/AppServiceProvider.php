@@ -2,11 +2,14 @@
 
 namespace App\Providers;
 
+use Illuminate\Console\Events\CommandStarting;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Event;
 use Illuminate\Support\Facades\RateLimiter;
 use Illuminate\Support\Facades\URL;
 use Illuminate\Support\ServiceProvider;
+use RuntimeException;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -23,6 +26,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
+        $this->guardDestructiveDatabaseCommands();
+
         RateLimiter::for('tarot-ai', function (Request $request): Limit {
             $ip = (string) ($request->ip() ?? 'unknown');
             $userAgent = substr((string) $request->userAgent(), 0, 120);
@@ -56,5 +61,46 @@ class AppServiceProvider extends ServiceProvider
                 URL::forceRootUrl(preg_replace('/^http:/i', 'https:', $appUrl));
             }
         }
+    }
+
+    private function guardDestructiveDatabaseCommands(): void
+    {
+        if (! $this->app->runningInConsole()) {
+            return;
+        }
+
+        Event::listen(CommandStarting::class, function (CommandStarting $event): void {
+            $command = $event->command;
+            $connection = (string) config('database.default');
+            $database = (string) config("database.connections.{$connection}.database");
+
+            if ($command === 'test' && $this->app->isProduction()) {
+                throw new RuntimeException('Refusing to run tests in production.');
+            }
+
+            $destructiveCommands = [
+                'db:wipe',
+                'migrate:fresh',
+                'migrate:refresh',
+                'migrate:reset',
+                'migrate:rollback',
+            ];
+
+            if (! in_array($command, $destructiveCommands, true)) {
+                return;
+            }
+
+            $isExplicitlyAllowed = filter_var(env('ALLOW_DESTRUCTIVE_DB_COMMANDS', false), FILTER_VALIDATE_BOOL);
+            $looksLikeTestDatabase = $connection === 'sqlite'
+                || str_contains(strtolower($database), 'test')
+                || $database === ':memory:';
+
+            if (! $isExplicitlyAllowed && ! $looksLikeTestDatabase) {
+                throw new RuntimeException(
+                    'Refusing to run [' . $command . '] against database [' . $database . '] on connection [' . $connection . ']. '
+                    . 'Use a test database, or set ALLOW_DESTRUCTIVE_DB_COMMANDS=true only after taking a backup.'
+                );
+            }
+        });
     }
 }

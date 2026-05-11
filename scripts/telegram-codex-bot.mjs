@@ -19,6 +19,7 @@ const codexBin =
   process.env.CODEX_BIN || "/Applications/Codex.app/Contents/Resources/codex";
 const codexModel = process.env.TELEGRAM_CODEX_MODEL;
 const codexSandbox = process.env.TELEGRAM_CODEX_SANDBOX || "workspace-write";
+const askCodexSandbox = "read-only";
 const maxOutputChars = Number(process.env.TELEGRAM_MAX_OUTPUT_CHARS || 3500);
 const codexTimeoutMs = Number(process.env.TELEGRAM_CODEX_TIMEOUT_MS || 600000);
 
@@ -44,6 +45,16 @@ let running = false;
 let activeTask = null;
 const processedTaskMessages = new Set();
 
+const askSystemRules = [
+  "You are running in /ask mode.",
+  "This is read-only analysis only.",
+  "Do not modify files.",
+  "Do not run commands with side effects.",
+  "You may inspect repository context by reading files and running read-only commands only.",
+  "If the user asks you to fix, change, edit, create, delete, run migrations, deploy, commit, push, or otherwise take action, do not perform the action. Ask the user to confirm switching from /ask to /task first.",
+  "Answer the user's question directly and mention any repository context you inspected.",
+].join("\n");
+
 function chatId(ctx) {
   return String(ctx.chat?.id ?? "");
 }
@@ -65,6 +76,21 @@ function replyLong(ctx, text) {
 function taskFromText(text) {
   const match = text.match(/(?:^|\s)\/task(?:@\w+)?\s+([\s\S]*)/i);
   return match?.[1]?.trim() ?? "";
+}
+
+function askFromText(text) {
+  const match = text.match(/(?:^|\s)\/ask(?:@\w+)?\s+([\s\S]*)/i);
+  return match?.[1]?.trim() ?? "";
+}
+
+function looksLikeActionRequest(text) {
+  const actionPatterns = [
+    /(?:ช่วย\s*)?(?:แก้|ทำ|เพิ่ม|ลบ|เปลี่ยน|เขียน|สร้าง|อัปเดต|อัพเดต)\s*ให้/i,
+    /(?:รัน|เทสต์|ทดสอบ|deploy|commit|push|migrate|seed)\b/i,
+    /\b(?:fix|edit|modify|create|delete|update|run|test|deploy|commit|push|migrate|seed)\b/i,
+  ];
+
+  return actionPatterns.some((pattern) => pattern.test(text));
 }
 
 function previewTask(task, maxLength = 500) {
@@ -101,6 +127,7 @@ function helpMessage() {
     "คำสั่งที่ใช้ได้:",
     "",
     "/task <งาน> สั่งให้ Codex ทำงาน",
+    "/ask <คำถาม> ถามอย่างเดียว โหมด read-only ไม่แก้ไฟล์",
     "/status ดูว่างานกำลังรันอยู่ไหม",
     "/cancel ยกเลิกงานที่กำลังรัน",
     "/id ดู chat_id",
@@ -134,18 +161,23 @@ function killProcessGroup(pid) {
   }
 }
 
-function runCodex(task) {
+function runCodex(task, options = {}) {
   return new Promise((resolveRun) => {
+    const sandbox = options.sandbox ?? codexSandbox;
     const args = [
       "exec",
       "--cd",
       repoRoot,
       "--sandbox",
-      codexSandbox,
+      sandbox,
     ];
 
     if (codexModel) {
       args.push("--model", codexModel);
+    }
+
+    if (options.ephemeral) {
+      args.push("--ephemeral");
     }
 
     args.push(task);
@@ -262,6 +294,72 @@ async function handleTask(ctx, rawText) {
   }
 }
 
+async function handleAsk(ctx, rawText) {
+  if (!isAllowed(ctx)) {
+    return ctx.reply(
+      `ยังไม่ได้อนุญาต chat นี้\nchat_id: ${chatId(ctx)}\nใส่ค่านี้ใน TELEGRAM_ALLOWED_CHAT_IDS แล้ว restart bot`,
+    );
+  }
+
+  const question = askFromText(rawText);
+  if (!question) {
+    return ctx.reply("ส่งแบบนี้: /ask หน้า import numbers ตอนนี้ทำงานยังไง");
+  }
+
+  const key = taskMessageKey(ctx);
+  const processedKey = key ? `ask:${key}` : null;
+  if (processedKey && processedTaskMessages.has(processedKey)) {
+    return ctx.reply("ข้อความ /ask นี้เคยเริ่มรันไปแล้ว ถ้าจะถามใหม่ให้ส่งเป็นข้อความใหม่");
+  }
+
+  if (looksLikeActionRequest(question)) {
+    return ctx.reply(
+      [
+        "/ask เป็นโหมดถามอย่างเดียวและห้ามแก้ไฟล์",
+        "",
+        "ถ้าต้องการให้ลงมือทำจริง ให้ยืนยันโดยส่งเป็น /task <งานที่ต้องการให้ทำ>",
+      ].join("\n"),
+    );
+  }
+
+  if (running) {
+    return ctx.reply(activeTaskMessage());
+  }
+
+  if (processedKey) {
+    processedTaskMessages.add(processedKey);
+  }
+
+  const askTask = `${askSystemRules}\n\nUser question:\n${question}`;
+
+  running = true;
+  activeTask = {
+    chatId: chatId(ctx),
+    messageId: (ctx.message ?? ctx.editedMessage)?.message_id,
+    pid: null,
+    startedAt: new Date(),
+    task: `/ask ${question}`,
+  };
+
+  try {
+    await ctx.reply("รับคำถามแล้ว กำลังให้ Codex อ่านแบบ read-only...");
+    console.log(`Running ask from chat ${chatId(ctx)}: ${question}`);
+    const result = await runCodex(askTask, {
+      ephemeral: true,
+      sandbox: askCodexSandbox,
+    });
+    const status = result.ok ? "ตอบคำถามแล้ว" : "Codex จบด้วย error";
+    console.log(`Sending ask result to chat ${chatId(ctx)}: ${status}`);
+    await replyLong(ctx, `${status}\n\n${result.output}`);
+  } catch (error) {
+    console.error("Ask handler failed", error);
+    await ctx.reply(`Bot error: ${error.message}`).catch(() => {});
+  } finally {
+    running = false;
+    activeTask = null;
+  }
+}
+
 async function handleStatus(ctx) {
   if (!isAllowed(ctx)) {
     return ctx.reply(`ยังไม่ได้อนุญาต chat นี้\nchat_id: ${chatId(ctx)}`);
@@ -321,6 +419,10 @@ bot.command("task", async (ctx) => {
   return handleTask(ctx, ctx.message.text);
 });
 
+bot.command("ask", async (ctx) => {
+  return handleAsk(ctx, ctx.message.text);
+});
+
 bot.command("status", (ctx) => {
   console.log(`Received /status from chat ${chatId(ctx)}`);
   return handleStatus(ctx);
@@ -339,6 +441,10 @@ bot.on("text", async (ctx) => {
     return handleTask(ctx, text);
   }
 
+  if (askFromText(text)) {
+    return handleAsk(ctx, text);
+  }
+
   return undefined;
 });
 
@@ -350,6 +456,10 @@ bot.on("edited_message", async (ctx) => {
 
   if (taskFromText(text)) {
     return handleTask(ctx, text);
+  }
+
+  if (askFromText(text)) {
+    return handleAsk(ctx, text);
   }
 
   if (/\/status(?:@\w+)?(?:\s|$)/i.test(text)) {

@@ -1371,6 +1371,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     Route::post('/register', [\App\Http\Controllers\Admin\RegisterController::class, 'register'])->name('register.store');
 
     Route::get('/tests', function (Request $request) use ($ensureAdmin, $resolveTestDiscovery) {
+        abort_if(app()->isProduction(), 404);
+
         if ($redirect = $ensureAdmin('manager')) {
             return $redirect;
         }
@@ -1379,6 +1381,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     })->name('tests');
 
     Route::post('/tests/run', function (Request $request) use ($ensureAdmin, $resolveTestDiscovery) {
+        abort_if(app()->isProduction(), 404);
+
         if ($redirect = $ensureAdmin('manager')) {
             return response()->json(['error' => 'Unauthorized'], 403);
         }
