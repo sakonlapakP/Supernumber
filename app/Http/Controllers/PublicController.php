@@ -37,17 +37,17 @@ class PublicController extends Controller
 
         $baseQuery = PhoneNumber::query()
             ->available()
-            ->where('network_code', 'true_dtac');
+            ->supportedNetwork();
 
         $prepaidNumbers = (clone $baseQuery)
-            ->where('service_type', PhoneNumber::SERVICE_TYPE_PREPAID)
+            ->prepaid()
             ->inRandomOrder()
             ->limit($homeNumbersLimitPerType)
             ->get()
             ->values();
 
         $postpaidNumbers = (clone $baseQuery)
-            ->where('service_type', PhoneNumber::SERVICE_TYPE_POSTPAID)
+            ->postpaid()
             ->inRandomOrder()
             ->limit($homeNumbersLimitPerType)
             ->get()
@@ -69,13 +69,13 @@ class PublicController extends Controller
             'all' => $buildPlanOptions(PhoneNumber::packageLabelsForQuery(
                 PhoneNumber::query()
                     ->available()
-                    ->where('network_code', 'true_dtac')
+                    ->supportedNetwork()
             )),
             PhoneNumber::SERVICE_TYPE_POSTPAID => $buildPlanOptions(PhoneNumber::packageLabelsForQuery(
                 PhoneNumber::query()
                     ->available()
-                    ->where('network_code', 'true_dtac')
-                    ->where('service_type', PhoneNumber::SERVICE_TYPE_POSTPAID)
+                    ->supportedNetwork()
+                    ->postpaid()
             )),
             PhoneNumber::SERVICE_TYPE_PREPAID => PhoneNumber::prepaidPriceRangeOptions(),
         ];
@@ -102,9 +102,9 @@ class PublicController extends Controller
 
         $baseQuery = PhoneNumber::query()
             ->available()
-            ->where('network_code', 'true_dtac')
+            ->supportedNetwork()
             ->when($selectedServiceType !== '', function ($query) use ($selectedServiceType) {
-                $query->where('service_type', $selectedServiceType);
+                $query->ofServiceType($selectedServiceType);
             });
 
         $buildPlanOptions = static fn (array $labels): array => collect($labels)
@@ -119,13 +119,13 @@ class PublicController extends Controller
             'all' => $buildPlanOptions(PhoneNumber::packageLabelsForQuery(
                 PhoneNumber::query()
                     ->available()
-                    ->where('network_code', 'true_dtac')
+                    ->supportedNetwork()
             )),
             PhoneNumber::SERVICE_TYPE_POSTPAID => $buildPlanOptions(PhoneNumber::packageLabelsForQuery(
                 PhoneNumber::query()
                     ->available()
-                    ->where('network_code', 'true_dtac')
-                    ->where('service_type', PhoneNumber::SERVICE_TYPE_POSTPAID)
+                    ->supportedNetwork()
+                    ->postpaid()
             )),
             PhoneNumber::SERVICE_TYPE_PREPAID => PhoneNumber::prepaidPriceRangeOptions(),
         ];
@@ -201,10 +201,10 @@ class PublicController extends Controller
             $columnOffset = max(0, ($currentPage - 1) * $perColumn);
 
             $prepaidQuery = $applyCatalogFilters(
-                (clone $baseQuery)->where('service_type', PhoneNumber::SERVICE_TYPE_PREPAID)
+                (clone $baseQuery)->prepaid()
             );
             $postpaidQuery = $applyCatalogFilters(
-                (clone $baseQuery)->where('service_type', PhoneNumber::SERVICE_TYPE_POSTPAID)
+                (clone $baseQuery)->postpaid()
             );
 
             $prepaidTotal = (clone $prepaidQuery)->count();

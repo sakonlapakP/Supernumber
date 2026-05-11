@@ -20,7 +20,7 @@
   </div>
   <div class="card-body">
     <div class="card-meta-stack">
-      <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">{{ $number->service_type_label }}</span></span>
+      <span class="card-tier card-tier--network"><span class="card-network-main">{{ $number->network_label }}</span><span class="card-network-suffix">{{ $number->service_type_label }}</span></span>
       @if ($number->is_prepaid)
         <span class="card-meta-plan">{{ $number->payment_label }}</span>
       @endif

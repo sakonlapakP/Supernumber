@@ -88,7 +88,7 @@
               </td>
               <td>{{ $number->number_sum ?: '-' }}</td>
               <td>{{ $number->service_type_label }}</td>
-              <td>{{ strtoupper(str_replace('_', '-', $number->network_code)) }}</td>
+              <td>{{ $number->network_label }}</td>
               <td>{{ $number->payment_label }}</td>
               <td>
                 @php

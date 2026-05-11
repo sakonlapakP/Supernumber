@@ -67,7 +67,7 @@
 
       <div class="admin-readonly-field">
         <div class="admin-readonly-field__label">เครือข่าย</div>
-        <div class="admin-readonly-field__value">{{ $phoneNumber->network_code }}</div>
+        <div class="admin-readonly-field__value">{{ $phoneNumber->network_label }}</div>
       </div>
 
       <div class="admin-readonly-field">

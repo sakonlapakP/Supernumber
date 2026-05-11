@@ -87,7 +87,7 @@
 
     $recommendedNumbers = \App\Models\PhoneNumber::query()
         ->available()
-        ->where('network_code', 'true_dtac')
+        ->supportedNetwork()
         ->where('phone_number', '!=', $phone)
         ->inRandomOrder()
         ->limit(12)
@@ -100,7 +100,7 @@
             ->all();
         $extraNumbers = \App\Models\PhoneNumber::query()
             ->available()
-            ->where('network_code', 'true_dtac')
+            ->supportedNetwork()
             ->whereNotIn('phone_number', $excludedNumbers)
             ->inRandomOrder()
             ->limit(12 - $recommendedNumbers->count())
@@ -172,7 +172,7 @@
               <div class="card-top">{{ $recommended->formatted_number }}</div>
               <div class="card-body">
                 <div class="card-meta-stack">
-                  <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">{{ $recommended->service_type_label }}</span></span>
+                  <span class="card-tier card-tier--network"><span class="card-network-main">{{ $recommended->network_label }}</span><span class="card-network-suffix">{{ $recommended->service_type_label }}</span></span>
                   @if ($recommended->is_prepaid)
                     <span class="card-meta-plan">{{ $recommended->payment_label }}</span>
                   @endif

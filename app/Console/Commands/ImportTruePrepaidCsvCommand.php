@@ -29,8 +29,15 @@ class ImportTruePrepaidCsvCommand extends Command
             return self::FAILURE;
         }
 
-        // Skip header
         $header = fgetcsv($handle);
+        $columns = $this->matchHeaderColumns(is_array($header) ? $header : []);
+
+        if ($columns === null) {
+            fclose($handle);
+            $this->error('CSV header must include เบอร์ and ราคา columns.');
+
+            return self::FAILURE;
+        }
         
         $stats = [
             'total' => 0,
@@ -42,15 +49,22 @@ class ImportTruePrepaidCsvCommand extends Command
 
         $records = [];
         while (($row = fgetcsv($handle)) !== false) {
-            // Check if row has enough columns
-            if (count($row) < 6) continue;
+            $phoneNumber = $this->normalizePhoneNumber($row[$columns['phone']] ?? null);
+            $salePrice = $this->normalizeInteger($row[$columns['price']] ?? null);
+            $sum = isset($columns['number_sum'])
+                ? $this->normalizeInteger($row[$columns['number_sum']] ?? null)
+                : null;
+            $status = isset($columns['status'])
+                ? trim((string) ($row[$columns['status']] ?? ''))
+                : '';
 
-            // Column 1 is the phone number with dashes
-            $displayNumber = trim($row[1]);
-            $phoneNumber = preg_replace('/\D/', '', $displayNumber);
-            
-            if (strlen($phoneNumber) !== 10) {
-                if ($phoneNumber !== '') {
+            if ($this->shouldSkipStatus($status)) {
+                $stats['skipped']++;
+                continue;
+            }
+
+            if ($phoneNumber === null || $salePrice === null) {
+                if (implode('', $row) !== '') {
                     $stats['skipped']++;
                 }
                 continue;
@@ -114,5 +128,73 @@ class ImportTruePrepaidCsvCommand extends Command
         $this->line("Skipped: " . number_format($stats['skipped']));
 
         return self::SUCCESS;
+    }
+
+    /**
+     * @param  array<int, string|null>  $header
+     * @return array{phone:int,price:int,status?:int,number_sum?:int}|null
+     */
+    private function matchHeaderColumns(array $header): ?array
+    {
+        $matched = [];
+
+        foreach ($header as $index => $value) {
+            $label = trim((string) $value);
+
+            if ($label === 'เบอร์') {
+                $matched['phone'] = $index;
+            }
+
+            if ($label === 'ราคา') {
+                $matched['price'] = $index;
+            }
+
+            if ($label === 'สถานะ') {
+                $matched['status'] = $index;
+            }
+
+            if ($label === 'ผลรวม') {
+                $matched['number_sum'] = $index;
+            }
+        }
+
+        if (! isset($matched['phone'], $matched['price'])) {
+            return null;
+        }
+
+        return $matched;
+    }
+
+    private function normalizePhoneNumber(mixed $value): ?string
+    {
+        $digits = preg_replace('/\D+/', '', (string) $value) ?? '';
+
+        if (strlen($digits) === PhoneNumber::PHONE_NUMBER_LENGTH) {
+            return $digits;
+        }
+
+        if (strlen($digits) === PhoneNumber::PHONE_NUMBER_LENGTH - 1) {
+            return '0' . $digits;
+        }
+
+        return null;
+    }
+
+    private function normalizeInteger(mixed $value): ?int
+    {
+        $digits = preg_replace('/\D+/', '', (string) $value) ?? '';
+
+        if ($digits === '') {
+            return null;
+        }
+
+        return (int) $digits;
+    }
+
+    private function shouldSkipStatus(string $status): bool
+    {
+        $status = trim(mb_strtolower($status));
+
+        return in_array($status, ['ขาย', 'sold'], true);
     }
 }

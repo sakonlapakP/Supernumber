@@ -191,7 +191,7 @@
 
     $recommendedNumbers = \App\Models\PhoneNumber::query()
         ->available()
-        ->where('network_code', 'true_dtac')
+        ->supportedNetwork()
         ->when($currentNumberModel !== null, function ($query) use ($currentServiceType) {
             $query->where('service_type', $currentServiceType);
         })
@@ -207,7 +207,7 @@
             ->all();
         $extraNumbers = \App\Models\PhoneNumber::query()
             ->available()
-            ->where('network_code', 'true_dtac')
+            ->supportedNetwork()
             ->when($currentNumberModel !== null, function ($query) use ($currentServiceType) {
                 $query->where('service_type', $currentServiceType);
             })
@@ -638,7 +638,7 @@
               @endif
               <div class="card-body">
                 <div class="card-meta-stack">
-                  <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">{{ $recommended->service_type_label }}</span></span>
+                  <span class="card-tier card-tier--network"><span class="card-network-main">{{ $recommended->network_label }}</span><span class="card-network-suffix">{{ $recommended->service_type_label }}</span></span>
                   @if ($recommended->is_prepaid)
                     <span class="card-meta-plan">{{ $recommended->payment_label }}</span>
                   @endif

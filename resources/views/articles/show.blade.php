@@ -239,7 +239,7 @@
                         <div class="article-number-card__phone">{{ $num->display_phone }}</div>
                         <div class="article-number-card__meta">
                             <span class="article-number-card__price">฿{{ number_format($num->sale_price) }}</span>
-                            <span class="article-number-card__network">{{ strtoupper($num->network_code) }}</span>
+                            <span class="article-number-card__network">{{ $num->network_label }}</span>
                         </div>
                         <a href="{{ route('evaluate', ['phone' => $num->phone_number]) }}" class="article-number-card__btn">ดูรายละเอียด</a>
                     </div>

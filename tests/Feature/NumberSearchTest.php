@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\PhoneNumber;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class NumberSearchTest extends TestCase
@@ -124,6 +125,96 @@ class NumberSearchTest extends TestCase
             ];
         });
         $response->assertSee('True Super Value 699');
+    }
+
+    public function test_catalog_includes_true_dtac_and_ais_networks(): void
+    {
+        PhoneNumber::create([
+            'phone_number' => '0810000001',
+            'network_code' => 'true',
+            'plan_name' => 'Promo A',
+            'sale_price' => 699,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
+        PhoneNumber::create([
+            'phone_number' => '0820000002',
+            'network_code' => 'dtac',
+            'plan_name' => 'Promo A',
+            'sale_price' => 699,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
+        PhoneNumber::create([
+            'phone_number' => '0830000003',
+            'network_code' => 'ais',
+            'plan_name' => 'Promo A',
+            'sale_price' => 699,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->get('/numbers');
+
+        $response->assertOk();
+        $response->assertViewHas('numbers', function ($numbers) {
+            return $numbers->getCollection()->pluck('phone_number')->all() === [
+                '0810000001',
+                '0820000002',
+                '0830000003',
+            ];
+        });
+    }
+
+    public function test_catalog_treats_legacy_blank_service_type_as_postpaid(): void
+    {
+        DB::table('phone_numbers')->insert([
+            [
+                'phone_number' => '0810000001',
+                'network_code' => 'true_dtac',
+                'plan_name' => 'True Super Value',
+                'sale_price' => 699,
+                'status' => PhoneNumber::STATUS_ACTIVE,
+                'service_type' => '',
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'phone_number' => '0820000002',
+                'network_code' => 'true_dtac',
+                'plan_name' => 'True Super Value',
+                'sale_price' => 1199,
+                'status' => PhoneNumber::STATUS_ACTIVE,
+                'service_type' => PhoneNumber::SERVICE_TYPE_POSTPAID,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+            [
+                'phone_number' => '0830000003',
+                'network_code' => 'true_dtac',
+                'plan_name' => 'เติมเงิน',
+                'sale_price' => 5000,
+                'status' => PhoneNumber::STATUS_ACTIVE,
+                'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
+                'created_at' => now(),
+                'updated_at' => now(),
+            ],
+        ]);
+
+        $response = $this->get('/numbers?service_type=postpaid');
+
+        $response->assertOk();
+        $response->assertViewHas('numbers', function ($numbers) {
+            return $numbers->getCollection()->pluck('phone_number')->all() === [
+                '0810000001',
+                '0820000002',
+            ];
+        });
+        $response->assertViewHas('plans', function ($plans) {
+            return $plans->values()->all() === [
+                ['value' => 'True Super Value 699', 'label' => 'True Super Value 699'],
+                ['value' => 'True Super Value 1199', 'label' => 'True Super Value 1199'],
+            ];
+        });
     }
 
     public function test_book_page_uses_promotion_name_from_database(): void

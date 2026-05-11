@@ -16,6 +16,10 @@ class PhoneNumber extends Model
     public const PREFIX_LENGTH = 3;
     public const SERVICE_TYPE_POSTPAID = 'postpaid';
     public const SERVICE_TYPE_PREPAID = 'prepaid';
+    public const NETWORK_TRUE = 'true';
+    public const NETWORK_DTAC = 'dtac';
+    public const NETWORK_AIS = 'ais';
+    public const NETWORK_TRUE_DTAC = 'true_dtac';
     public const PACKAGE_NAME = 'True Super Value';
     public const PACKAGE_PRICE_BASIC = 699;
     public const PACKAGE_PRICE_STANDARD = 1199;
@@ -59,6 +63,7 @@ class PhoneNumber extends Model
         static::saving(function (self $phoneNumber): void {
             $serviceType = self::normalizeServiceType($phoneNumber->service_type);
             $phoneNumber->service_type = $serviceType ?? self::SERVICE_TYPE_POSTPAID;
+            $phoneNumber->network_code = self::normalizeNetworkCode($phoneNumber->network_code) ?? self::NETWORK_TRUE_DTAC;
 
             $status = strtolower(trim((string) $phoneNumber->status));
             $phoneNumber->status = in_array($status, self::adminStatusOptions(), true)
@@ -95,7 +100,28 @@ class PhoneNumber extends Model
             return $query;
         }
 
-        return $query->where('service_type', $serviceType);
+        return $serviceType === self::SERVICE_TYPE_POSTPAID
+            ? $query->postpaid()
+            : $query->prepaid();
+    }
+
+    public function scopePostpaid(Builder $query): Builder
+    {
+        return $query->where(function (Builder $query): void {
+            $query->where('service_type', self::SERVICE_TYPE_POSTPAID)
+                ->orWhereNull('service_type')
+                ->orWhere('service_type', '');
+        });
+    }
+
+    public function scopePrepaid(Builder $query): Builder
+    {
+        return $query->where('service_type', self::SERVICE_TYPE_PREPAID);
+    }
+
+    public function scopeSupportedNetwork(Builder $query): Builder
+    {
+        return $query->whereIn('network_code', self::supportedNetworkCodes());
     }
 
     public static function buildSearchPattern(array $filters): ?string
@@ -228,6 +254,11 @@ class PhoneNumber extends Model
         return $this->is_prepaid ? 'เติมเงิน' : 'รายเดือน';
     }
 
+    public function getNetworkLabelAttribute(): string
+    {
+        return self::networkLabel($this->network_code);
+    }
+
     public function getTierLabelAttribute(): string
     {
         return match ($this->normalized_package_price) {
@@ -301,6 +332,27 @@ class PhoneNumber extends Model
             ->reject(fn (string $label) => $label === '-')
             ->values()
             ->all();
+    }
+
+    public static function supportedNetworkCodes(): array
+    {
+        return [
+            self::NETWORK_TRUE,
+            self::NETWORK_DTAC,
+            self::NETWORK_AIS,
+            self::NETWORK_TRUE_DTAC,
+        ];
+    }
+
+    public static function networkLabel(?string $networkCode): string
+    {
+        return match (self::normalizeNetworkCode($networkCode)) {
+            self::NETWORK_TRUE => 'TRUE',
+            self::NETWORK_DTAC => 'DTAC',
+            self::NETWORK_AIS => 'AIS',
+            self::NETWORK_TRUE_DTAC => 'TRUE-DTAC',
+            default => '-',
+        };
     }
 
     public function getSupportedTopicIconsAttribute(): array
@@ -564,6 +616,20 @@ class PhoneNumber extends Model
         return match ($serviceType) {
             self::SERVICE_TYPE_POSTPAID,
             self::SERVICE_TYPE_PREPAID => $serviceType,
+            default => null,
+        };
+    }
+
+    protected static function normalizeNetworkCode(?string $networkCode): ?string
+    {
+        $networkCode = strtolower(trim((string) $networkCode));
+        $networkCode = str_replace([' ', '-'], '_', $networkCode);
+
+        return match ($networkCode) {
+            self::NETWORK_TRUE,
+            self::NETWORK_DTAC,
+            self::NETWORK_AIS,
+            self::NETWORK_TRUE_DTAC => $networkCode,
             default => null,
         };
     }

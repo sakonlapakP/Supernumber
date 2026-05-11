@@ -84,7 +84,7 @@ class EstimateRecommendationService
     {
         $query = PhoneNumber::query()
             ->available()
-            ->where('network_code', 'true_dtac')
+            ->supportedNetwork()
             ->when($serviceType !== null, fn (Builder $builder) => $builder->where('service_type', $serviceType))
             ->when($excludeIds !== [], fn (Builder $builder) => $builder->whereNotIn('id', $excludeIds))
             ->inRandomOrder()

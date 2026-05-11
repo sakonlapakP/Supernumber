@@ -542,6 +542,7 @@
               return [
                   'phone_number' => $number->phone_number,
                   'formatted_number' => $number->formatted_number,
+                  'network_label' => $number->network_label,
                   'service_type_label' => $number->service_type_label,
                   'payment_label' => $number->payment_label,
                   'initial_payment_label' => $number->initial_payment_label,
@@ -615,7 +616,7 @@
                     </div>
                     <div class="card-body">
                       <div class="card-meta-stack">
-                        <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">{{ $number['service_type_label'] }}</span></span>
+                        <span class="card-tier card-tier--network"><span class="card-network-main">{{ $number['network_label'] }}</span><span class="card-network-suffix">{{ $number['service_type_label'] }}</span></span>
                         @if (! $number['is_postpaid'])
                           <span class="card-meta-plan">{{ $number['payment_label'] }}</span>
                         @endif
@@ -660,7 +661,7 @@
                     @endif
                     <div class="card-body">
                       <div class="card-meta-stack">
-                        <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">{{ $number['service_type_label'] }}</span></span>
+                        <span class="card-tier card-tier--network"><span class="card-network-main">{{ $number['network_label'] }}</span><span class="card-network-suffix">{{ $number['service_type_label'] }}</span></span>
                         @if (! $number['is_postpaid'])
                           <span class="card-meta-plan"><strong>ราคา {{ $number['payment_label'] }}</strong></span>
                         @endif
@@ -753,7 +754,7 @@
             </div>
             <div class="card-body">
               <div class="card-meta-stack">
-                <span class="card-tier card-tier--network"><span class="card-network-main">TRUE-DTAC</span><span class="card-network-suffix">${escapeHtml(number.service_type_label)}</span></span>
+                <span class="card-tier card-tier--network"><span class="card-network-main">${escapeHtml(number.network_label)}</span><span class="card-network-suffix">${escapeHtml(number.service_type_label)}</span></span>
                 ${!number.is_postpaid ? `<span class="card-meta-plan">${escapeHtml(number.payment_label)}</span>` : ""}
                 ${number.is_postpaid ? `<span class="card-meta-price">${number.initial_payment_html}</span>` : ""}
               </div>

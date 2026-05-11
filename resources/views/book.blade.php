@@ -118,7 +118,7 @@
             <div class="full book-network-row">
               <p class="book-network-line">
                 เครือข่าย:
-                <span class="network-brand-gradient">True-Dtac</span>
+                <span class="network-brand-gradient">True / Dtac / AIS</span>
               </p>
               <label class="book-network-select-label">
                 {{ $isPrepaid ? 'ราคาขายเบอร์' : 'กรุณาเลือกแพคเกจ' }}

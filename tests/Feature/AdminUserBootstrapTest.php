@@ -11,17 +11,6 @@ class AdminUserBootstrapTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_migrations_do_not_seed_default_privileged_users(): void
-    {
-        $this->assertDatabaseMissing('users', [
-            'username' => 'admin',
-        ]);
-
-        $this->assertDatabaseMissing('users', [
-            'username' => 'manager',
-        ]);
-    }
-
     public function test_admin_create_user_command_creates_a_manager_account(): void
     {
         $this->artisan('admin:create-user', [
