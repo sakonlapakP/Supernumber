@@ -2,96 +2,45 @@
 
 @section('content')
     @php
-      $planData = [
-          ['month' => 'พฤษภาคม 69', 'items' => [
-              ['d' => 11, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันพืชมงคล: เลขมงคลการเงินและความมั่งคั่ง', 'date' => '2026-05-11'],
-              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย (สถิติ/วิเคราะห์)', 'date' => '2026-05-16', 'is_lottery' => true],
-              ['d' => 22, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(Pillar Content เติมช่องว่างปลายเดือน)', 'date' => '2026-05-22'],
-              ['d' => 27, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(Pillar Content เลี้ยงกระแสก่อยวันพระใหญ่)', 'date' => '2026-05-27'],
-              ['d' => 31, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันวิสาขบูชา: เลขสติปัญญาและการเริ่มต้นใหม่', 'date' => '2026-05-31'],
-          ]],
-          ['month' => 'มิถุนายน 69', 'items' => [
-              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-06-01', 'is_lottery' => true],
-              ['d' => 8, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางต้นเดือน)', 'date' => '2026-06-08'],
-              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-06-16', 'is_lottery' => true],
-              ['d' => 21, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางปลายเดือน)', 'date' => '2026-06-21'],
-              ['d' => 26, 't' => '09:00', 'type' => 'วันมู', 'topic' => 'วันสุนทรภู่: เลขมงคลสายวาทศิลป์และการเจรจา', 'date' => '2026-06-26'],
-          ]],
-          ['month' => 'กรกฎาคม 69', 'items' => [
-              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-07-01', 'is_lottery' => true],
-              ['d' => 8, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางต้นเดือน)', 'date' => '2026-07-08'],
-              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-07-16', 'is_lottery' => true],
-              ['d' => 23, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางปลายเดือน)', 'date' => '2026-07-23'],
-              ['d' => 28, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'คอนเทนต์มงคลรวมใจ (ร.10)', 'date' => '2026-07-28'],
-              ['d' => 29, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันอาสาฬหบูชา: ปรับพลังงานตัวเลข', 'date' => '2026-07-29'],
-          ]],
-          ['month' => 'สิงหาคม 69', 'items' => [
-              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-08-01', 'is_lottery' => true],
-              ['d' => 8, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางต้นเดือน)', 'date' => '2026-08-08'],
-              ['d' => 12, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันแม่: เลขมงคลสุขภาพ', 'date' => '2026-08-12'],
-              ['d' => 15, 't' => '09:00', 'type' => 'วันมู', 'topic' => 'วันคเณศจตุรถี: เลขมงคลประทานพร', 'date' => '2026-08-15'],
-              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-08-16', 'is_lottery' => true],
-              ['d' => 25, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางปลายเดือน เพราะวันสำคัญกระจุกต้นเดือน)', 'date' => '2026-08-25'],
-          ]],
-          ['month' => 'กันยายน 69', 'items' => [
-              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-09-01', 'is_lottery' => true],
-              ['d' => 8, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางต้นเดือน)', 'date' => '2026-09-08'],
-              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-09-16', 'is_lottery' => true],
-              ['d' => 21, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางปลายเดือน)', 'date' => '2026-09-21'],
-              ['d' => 25, 't' => '09:00', 'type' => 'วันมู', 'topic' => 'วันไหว้พระจันทร์: เลขเมตตามหานิยม', 'date' => '2026-09-25'],
-              ['d' => 30, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(ปิดท้ายเดือน)', 'date' => '2026-09-30'],
-          ]],
-          ['month' => 'ตุลาคม 69', 'items' => [
-              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-10-01', 'is_lottery' => true],
-              ['d' => 8, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางต้นเดือน)', 'date' => '2026-10-08'],
-              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-10-16', 'is_lottery' => true],
-              ['d' => 20, 't' => '09:00', 'type' => 'วันมู', 'topic' => 'เทศกาลกินเจ: เลขสายขาว (เลือกลงวันที่ 20)', 'date' => '2026-10-20'],
-              ['d' => 23, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันปิยมหาราช: เลขมงคลการงาน', 'date' => '2026-10-23'],
-          ]],
-          ['month' => 'พฤศจิกายน 69', 'items' => [
-              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-11-01', 'is_lottery' => true],
-              ['d' => 8, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางต้นเดือน)', 'date' => '2026-11-08'],
-              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-11-16', 'is_lottery' => true],
-              ['d' => 24, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันลอยกระทง: เลขขอพรโชคลาภ', 'date' => '2026-11-24'],
-              ['d' => 29, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางปลายเดือน)', 'date' => '2026-11-29'],
-          ]],
-          ['month' => 'ธันวาคม 69', 'items' => [
-              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-12-01', 'is_lottery' => true],
-              ['d' => 5, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันพ่อ: เลขมงคลความมั่นคง', 'date' => '2026-12-05'],
-              ['d' => 10, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันรัฐธรรมนูญ: เลขมงคลระเบียบวินัย', 'date' => '2026-12-10'],
-              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2026-12-16', 'is_lottery' => true],
-              ['d' => 24, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางก่อนปีใหม่)', 'date' => '2026-12-24'],
-              ['d' => 31, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันสิ้นปี: สรุปเลขปี 69', 'date' => '2026-12-31'],
-          ]],
-          ['month' => 'มกราคม 70', 'items' => [
-              ['d' => 1, 't' => '09:00', 'type' => 'หวย/สำคัญ', 'topic' => 'วันขึ้นปีใหม่: เปิดดวงตัวเลขปี 70 + หวย', 'date' => '2027-01-01', 'is_lottery' => true],
-              ['d' => 9, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันเด็ก: เลขมงคลเสริม IQ', 'date' => '2027-01-09'],
-              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2027-01-16', 'is_lottery' => true],
-              ['d' => 23, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(อุดช่องว่างปลายเดือน)', 'date' => '2027-01-23'],
-          ]],
-          ['month' => 'กุมภาพันธ์ 70', 'items' => [
-              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2027-02-01', 'is_lottery' => true],
-              ['d' => 6, 't' => '09:00', 'type' => 'วันมู', 'topic' => 'วันตรุษจีน: เลขรับทรัพย์', 'date' => '2027-02-06'],
-              ['d' => 14, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันวาเลนไทน์: คู่เลขความรัก', 'date' => '2027-02-14'],
-              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2027-02-16', 'is_lottery' => true],
-              ['d' => 21, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันมาฆบูชา: เลขสายบุญ', 'date' => '2027-02-21'],
-              ['d' => 26, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(อุดช่องว่างปลายเดือน)', 'date' => '2027-02-26'],
-          ]],
-          ['month' => 'มีนาคม 70', 'items' => [
-              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2027-03-01', 'is_lottery' => true],
-              ['d' => 8, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางต้นเดือน - เดือนนี้ไม่มีเทศกาล)', 'date' => '2027-03-08'],
-              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2027-03-16', 'is_lottery' => true],
-              ['d' => 24, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(คั่นกลางปลายเดือน)', 'date' => '2027-03-24'],
-              ['d' => 30, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(ปิดท้ายเดือน)', 'date' => '2027-03-30'],
-          ]],
-          ['month' => 'เมษายน 70', 'items' => [
-              ['d' => 1, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2027-04-01', 'is_lottery' => true],
-              ['d' => 6, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันจักรี: เลขเสริมอำนาจ', 'date' => '2027-04-06'],
-              ['d' => 13, 't' => '09:00', 'type' => 'วันสำคัญ', 'topic' => 'วันสงกรานต์: เลขปลอดภัยในการเดินทาง', 'date' => '2027-04-13'],
-              ['d' => 16, 't' => '09:00', 'type' => 'หวย', 'topic' => 'คอนเทนต์หวย', 'date' => '2027-04-16', 'is_lottery' => true],
-              ['d' => 24, 't' => '09:09', 'type' => 'Evergreen', 'topic' => '(อุดช่องว่างปลายเดือน)', 'date' => '2027-04-24'],
-          ]],
-      ];
+       $thaiMonths = [
+           1 => 'มกราคม', 2 => 'กุมภาพันธ์', 3 => 'มีนาคม', 4 => 'เมษายน',
+           5 => 'พฤษภาคม', 6 => 'มิถุนายน', 7 => 'กรกฎาคม', 8 => 'สิงหาคม',
+           9 => 'กันยายน', 10 => 'ตุลาคม', 11 => 'พฤศจิกายน', 12 => 'ธันวาคม'
+       ];
+       
+       $totalPlanned = $articlePlans->count();
+       $totalDone = 0;
+       
+       $checkItemDone = function($item) use ($existingArticlesInfo) {
+           if (\Carbon\Carbon::parse($item->publish_date)->isPast()) {
+               return true;
+           }
+           foreach ($existingArticlesInfo as $article) {
+               if ($article['date'] === $item->publish_date->format('Y-m-d')) {
+                   return true;
+               }
+               if ($item->is_lottery) {
+                   $dateObj = $item->publish_date;
+                   $isRound1 = (int)$dateObj->format('j') <= 15;
+                   $pattern = '/^thai-goverment-lottery-' . $dateObj->format('Ym') . ($isRound1 ? 'first' : 'second') . '$/';
+                   if (preg_match($pattern, (string)$article['slug'])) {
+                       return true;
+                   }
+               }
+           }
+           return false;
+       };
+
+       foreach($articlePlans as $item) {
+           if ($checkItemDone($item)) $totalDone++;
+       }
+
+       $groupedPlans = $articlePlans->groupBy(function($plan) use ($thaiMonths) {
+           $date = \Carbon\Carbon::parse($plan->publish_date);
+           return $thaiMonths[$date->month] . ' ' . ($date->year + 543 - 2500); 
+       });
+
+       $isManager = session('admin_user_role') === \App\Models\User::ROLE_MANAGER;
     @endphp
     <div class="admin-page-head">
       <div>
@@ -175,6 +124,28 @@
   .admin-button--import-top:hover {
     background: #e2e8f0 !important;
     color: #1e293b !important;
+  }
+
+
+  .plan-action-btn {
+    background: #f1f5f9;
+    border: none;
+    padding: 6px;
+    border-radius: 8px;
+    color: #475569;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .plan-action-btn:hover {
+    background: #e2e8f0;
+    color: #1e293b;
+  }
+  .plan-action-btn--delete:hover {
+    background: #fef2f2;
+    color: #dc2626;
   }
 
   @media (min-width: 768px) {
@@ -1272,10 +1243,15 @@
       <div class="plan-header">
         <h3 class="plan-title">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 24px; height: 24px; color: #7c3aed;"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z" /></svg>
-          ตารางแผนการเผยแพร่บทความ (พ.ค. 69 - เม.ย. 70)
+          ตารางแผนการเผยแพร่บทความ (1 ม.ค. - 31 ธ.ค. {{ now()->format('Y') + 543 }})
         </h3>
-        <div class="plan-status-summary">
-          เตรียมแล้ว <span style="color: #10b981;">{{ $totalDone }}</span> / ทั้งหมด {{ $totalPlanned }}
+        <div style="display: flex; align-items: center; gap: 15px;">
+          @if($isManager)
+            <button type="button" class="admin-button" style="background: #7c3aed; padding: 6px 12px; font-size: 13px;" onclick="openAddPlanModal()">+ เพิ่มแผนงาน</button>
+          @endif
+          <div class="plan-status-summary">
+            เตรียมแล้ว <span style="color: #10b981;">{{ $totalDone }}</span> / ทั้งหมด {{ $totalPlanned }}
+          </div>
         </div>
       </div>
 
@@ -1286,28 +1262,47 @@
               <th style="width: 140px;">เดือน</th>
               <th style="width: 140px;">วันที่ / เวลา</th>
               <th style="width: 110px;">ประเภท</th>
-              <th>หัวข้อ / แนวทางคอนเทนต์</th>
+              <th>หัวข้อ</th>
+              @if($isManager)
+                <th style="width: 80px;">จัดการ</th>
+              @endif
             </tr>
           </thead>
           <tbody>
-            @foreach($planData as $month)
-              <tr class="month-divider" data-month-divider="{{ $month['month'] }}">
-                <td colspan="4">{{ $month['month'] }}</td>
+            @foreach($groupedPlans as $monthName => $items)
+              <tr class="month-divider" data-month-divider="{{ $monthName }}">
+                <td colspan="{{ $isManager ? 5 : 4 }}">{{ $monthName }}</td>
               </tr>
-              @foreach($month['items'] as $item)
-                @php $isDone = $checkDone($item); @endphp
-                <tr class="{{ $isDone ? 'plan-row--checked' : ($item['type'] === 'หวย' ? 'plan-row--lottery' : '') }} plan-item-row" data-month="{{ $month['month'] }}">
-                  <td>{{ $month['month'] }}</td>
+              @foreach($items as $item)
+                @php $isDone = $checkItemDone($item); @endphp
+                <tr class="{{ $isDone ? 'plan-row--checked' : ($item->type === 'หวย' ? 'plan-row--lottery' : '') }} plan-item-row" data-month="{{ $monthName }}">
+                  <td>{{ $monthName }}</td>
                   <td style="font-weight: 700;">
                     @if($isDone) 
                       <span class="check-icon">✅</span> 
-                    @elseif($item['type'] === 'หวย')
+                    @elseif($item->type === 'หวย')
                       <span style="color: #EAB308; margin-right: 4px; font-weight: 900;">!</span>
                     @endif
-                    {{ $item['d'] }} | {{ $item['t'] }}
+                    {{ \Carbon\Carbon::parse($item->publish_date)->format('j') }} | {{ $item->publish_time }}
                   </td>
-                  <td><span class="type-pill type-pill--{{ strtolower($item['type']) }}">{{ $item['type'] }}</span></td>
-                  <td>{{ $item['topic'] }}</td>
+                  <td><span class="type-pill type-pill--{{ strtolower($item->type) }}">{{ $item->type }}</span></td>
+                  <td>{{ $item->topic }}</td>
+                  @if($isManager)
+                    <td>
+                      <div style="display: flex; gap: 8px;">
+                        <button type="button" class="plan-action-btn" onclick="openEditPlanModal({{ $item->toJson() }})" title="แก้ไข">
+                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                        </button>
+                        <form action="{{ route('admin.article-plans.destroy', $item) }}" method="POST" onsubmit="return confirm('ยืนยันการลบแผนงานนี้?')">
+                          @csrf
+                          @method('DELETE')
+                          <button type="submit" class="plan-action-btn plan-action-btn--delete" title="ลบ">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5a3.375 3.375 0 00-3.375 3.375V6.75m7.5 0H9" /></svg>
+                          </button>
+                        </form>
+                      </div>
+                    </td>
+                  @endif
                 </tr>
               @endforeach
             @endforeach
@@ -1412,6 +1407,55 @@
             <div style="padding: 16px 24px; background: #f8fafc; border-top: 1px solid #f1f5f9; color: #94a3b8; font-size: 12px; text-align: center;">
                 ก๊อปปี้แล้วเอาไปวางใน ChatGPT หรือ Claude ได้เลย
             </div>
+        </div>
+    </div>
+
+    {{-- Article Plan Modal --}}
+    <div id="plan-modal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 10000; align-items: center; justify-content: center; padding: 20px; backdrop-filter: blur(4px);">
+        <div style="background: white; width: 100%; max-width: 500px; border-radius: 24px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.2);">
+            <div style="padding: 24px; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="plan-modal-title" style="margin: 0; font-size: 20px; font-weight: 800; color: #1e293b;">เพิ่มแผนการเผยแพร่</h3>
+                <button type="button" onclick="closePlanModal()" style="background: #f1f5f9; border: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; color: #64748b;">&times;</button>
+            </div>
+            <form id="plan-form" action="" method="POST">
+                @csrf
+                <input type="hidden" id="plan-method" name="_method" value="POST">
+                <input type="hidden" id="plan-id" name="id" value="">
+                <div style="padding: 24px;">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #475569; font-size: 14px;">วันที่</label>
+                            <input type="date" id="plan-date" name="publish_date" class="admin-input" style="width: 100%;" required>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #475569; font-size: 14px;">เวลา</label>
+                            <input type="text" id="plan-time" name="publish_time" class="admin-input" style="width: 100%;" placeholder="09:00" required>
+                        </div>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #475569; font-size: 14px;">ประเภท</label>
+                        <select id="plan-type" name="type" class="admin-input" style="width: 100%;">
+                            <option value="วันสำคัญ">วันสำคัญ</option>
+                            <option value="หวย">หวย</option>
+                            <option value="Evergreen">Evergreen</option>
+                            <option value="วันมู">วันมู</option>
+                            <option value="บทวิเคราะห์">บทวิเคราะห์</option>
+                        </select>
+                    </div>
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 6px; font-weight: 700; color: #475569; font-size: 14px;">หัวข้อ</label>
+                        <input type="text" id="plan-topic" name="topic" class="admin-input" style="width: 100%;" placeholder="เช่น วันพืชมงคล..." required>
+                    </div>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="plan-lottery" name="is_lottery" value="1" style="width: 18px; height: 18px;">
+                        <label for="plan-lottery" style="font-weight: 700; color: #475569; font-size: 14px;">เป็นคอนเทนต์หวย (เพื่อตรวจสอบ Slug อัตโนมัติ)</label>
+                    </div>
+                </div>
+                <div style="padding: 20px 24px; background: #f8fafc; border-top: 1px solid #f1f5f9; display: flex; justify-content: flex-end; gap: 12px;">
+                    <button type="button" onclick="closePlanModal()" class="admin-button admin-button--muted" style="border-radius: 12px; font-weight: 700;">ยกเลิก</button>
+                    <button type="submit" class="admin-button" style="background: #7c3aed; border-color: #7c3aed; border-radius: 12px; font-weight: 700; padding-left: 24px; padding-right: 24px;">บันทึก</button>
+                </div>
+            </form>
         </div>
     </div>
 
@@ -1753,6 +1797,41 @@
 
     function closeImportModal() {
         document.getElementById('import-modal').style.display = 'none';
+        document.body.style.overflow = 'auto';
+    }
+
+    function openAddPlanModal() {
+        document.getElementById('plan-modal-title').innerText = 'เพิ่มแผนการเผยแพร่';
+        document.getElementById('plan-method').value = 'POST';
+        document.getElementById('plan-form').action = "{{ route('admin.article-plans.store') }}";
+        document.getElementById('plan-id').value = '';
+        document.getElementById('plan-date').value = '';
+        document.getElementById('plan-time').value = '09:00';
+        document.getElementById('plan-type').value = 'วันสำคัญ';
+        document.getElementById('plan-topic').value = '';
+        document.getElementById('plan-lottery').checked = false;
+        
+        document.getElementById('plan-modal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function openEditPlanModal(item) {
+        document.getElementById('plan-modal-title').innerText = 'แก้ไขแผนการเผยแพร่';
+        document.getElementById('plan-method').value = 'PUT';
+        document.getElementById('plan-form').action = "/admin/article-plans/" + item.id;
+        document.getElementById('plan-id').value = item.id;
+        document.getElementById('plan-date').value = item.publish_date.split('T')[0];
+        document.getElementById('plan-time').value = item.publish_time;
+        document.getElementById('plan-type').value = item.type;
+        document.getElementById('plan-topic').value = item.topic;
+        document.getElementById('plan-lottery').checked = !!item.is_lottery;
+        
+        document.getElementById('plan-modal').style.display = 'flex';
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closePlanModal() {
+        document.getElementById('plan-modal').style.display = 'none';
         document.body.style.overflow = 'auto';
     }
   </script>

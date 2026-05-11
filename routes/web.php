@@ -2605,8 +2605,18 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 ];
             });
 
-        return view('admin.articles', compact('articles', 'existingArticlesInfo'));
+        $articlePlans = \App\Models\ArticlePlan::query()
+            ->whereYear('publish_date', now()->year)
+            ->orderBy('publish_date')
+            ->orderBy('publish_time')
+            ->get();
+
+        return view('admin.articles', compact('articles', 'existingArticlesInfo', 'articlePlans'));
     })->name('articles');
+
+    Route::post('/article-plans', [\App\Http\Controllers\Admin\ArticlePlanController::class, 'store'])->name('article-plans.store');
+    Route::put('/article-plans/{articlePlan}', [\App\Http\Controllers\Admin\ArticlePlanController::class, 'update'])->name('article-plans.update');
+    Route::delete('/article-plans/{articlePlan}', [\App\Http\Controllers\Admin\ArticlePlanController::class, 'destroy'])->name('article-plans.destroy');
 
     Route::post('/articles/check-slug', function (Request $request) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {
