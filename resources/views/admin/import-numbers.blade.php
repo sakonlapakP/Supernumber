@@ -49,13 +49,13 @@
           <div class="admin-field">
             <label for="prepaid_file">ไฟล์เบอร์เติมเงิน (Prepaid CSV)</label>
             <input type="file" id="prepaid_file" name="prepaid_file" class="admin-input" accept=".csv">
-            <span class="admin-feature-card__hint">ตัวอย่าง Header: เบอร์, ยอดจ่ายก้อนแรก, แพ็กเกจ, เครือข่าย, สถานะ</span>
+            <span class="admin-feature-card__hint">ตัวอย่าง Header: เบอร์, ราคาเบอร์, แพ็กเกจ, เครือข่าย, สถานะ</span>
           </div>
 
           <div class="admin-field">
             <label for="postpaid_file">ไฟล์เบอร์รายเดือน (Postpaid CSV)</label>
             <input type="file" id="postpaid_file" name="postpaid_file" class="admin-input" accept=".csv">
-            <span class="admin-feature-card__hint">ตัวอย่าง Header: เบอร์, ยอดจ่ายก้อนแรก, แพ็กเกจ, เครือข่าย, สถานะ</span>
+            <span class="admin-feature-card__hint">ตัวอย่าง Header: เบอร์, ราคาเบอร์, แพ็กเกจ, เครือข่าย, สถานะ</span>
           </div>
         </div>
 
@@ -78,8 +78,8 @@
       </div>
       <div class="admin-muted" style="font-size: 14px; line-height: 1.8;">
         <p>1. ไฟล์ต้องเป็นนามสกุล <strong>.csv</strong> เท่านั้น</p>
-        <p>2. คอลัมน์ที่จำเป็นต้องมี: <strong>เบอร์</strong> (เช่น 0812345678) และ <strong>แพ็กเกจ</strong>; คอลัมน์ <strong>ยอดจ่ายก้อนแรก</strong> จำเป็นสำหรับรายเดือน แต่เติมเงินเว้นว่างได้</p>
-        <p>3. เบอร์เติมเงินให้เว้นแพ็กเกจว่างหรือใส่ <strong>-</strong>; ถ้าไม่มียอดจ่ายก้อนแรก ระบบจะบันทึกเบอร์ไว้แต่ยังไม่แสดงเป็นเบอร์พร้อมขายหน้าเว็บ</p>
+        <p>2. คอลัมน์ที่จำเป็นต้องมี: <strong>เบอร์</strong> (เช่น 0812345678) และ <strong>แพ็กเกจ</strong>; คอลัมน์ <strong>ราคาเบอร์</strong> จำเป็นสำหรับรายเดือน แต่เติมเงินเว้นว่างได้</p>
+        <p>3. เบอร์เติมเงินให้เว้นแพ็กเกจว่างหรือใส่ <strong>-</strong>; ถ้าไม่มีราคาเบอร์ ระบบจะบันทึกเบอร์ไว้แต่ยังไม่แสดงเป็นเบอร์พร้อมขายหน้าเว็บ</p>
         <p>4. คอลัมน์เสริม: <strong>เครือข่าย</strong> (true, ais, dtac) และ <strong>สถานะ</strong> (active, sold, hold หรือ ว่าง, จอง, ขายแล้ว)</p>
         <p>5. หากไม่ระบุสถานะ ระบบจะกำหนดให้เป็น <strong>active (ว่าง)</strong> โดยอัตโนมัติ</p>
         <p>6. อัปโหลดได้ทีละประเภทหรือสองประเภทพร้อมกัน ระบบจะปิดเฉพาะเบอร์ active ของประเภทที่อัปโหลดแต่ไม่อยู่ในไฟล์นั้น</p>

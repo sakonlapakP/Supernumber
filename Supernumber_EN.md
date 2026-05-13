@@ -54,6 +54,8 @@
 
 ## 4. Business Logic & Rules
 
+> CSV phone-number import requirements and file-preparation conditions are documented in [`importCSV.md`](./importCSV.md). Use that file as the source of truth for import formats.
+
 ### Phone Number Management
 - **Model:** `app/Models/PhoneNumber.php`.
 - **Status Workflow:** `active` (Available), `hold` (Reserved), `sold` (Purchased).

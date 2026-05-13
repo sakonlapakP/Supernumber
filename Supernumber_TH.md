@@ -54,6 +54,8 @@
 
 ## 4. ตรรกะทางธุรกิจและกฎ (Business Logic)
 
+> เงื่อนไขการเตรียมและนำเข้าไฟล์ CSV เบอร์โทรศัพท์ ให้ดูเอกสาร [`importCSV.md`](./importCSV.md) เป็นหลัก
+
 ### การจัดการเบอร์โทรศัพท์
 - **โมเดล:** `app/Models/PhoneNumber.php`
 - **ขั้นตอนสถานะ (Status Workflow):** `active` (ว่าง), `hold` (จอง), `sold` (ขายแล้ว)

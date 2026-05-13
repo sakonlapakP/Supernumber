@@ -26,7 +26,7 @@ class PhoneNumberImportController extends Controller
         $callback = function () {
             $file = fopen('php://output', 'w');
             fputs($file, "\xEF\xBB\xBF"); // UTF-8 BOM
-            fputcsv($file, ['เบอร์', 'ยอดจ่ายก้อนแรก', 'แพ็กเกจ', 'เครือข่าย', 'สถานะ']);
+            fputcsv($file, ['เบอร์', 'ราคาเบอร์', 'แพ็กเกจ', 'เครือข่าย', 'สถานะ']);
             fputcsv($file, ['0812345678', '999', '-', 'true', 'active']);
             fputcsv($file, ['0822345678', '', '-', 'ais', 'active']);
             fputcsv($file, ['0912345678', '999', 'TRUE-SV-1499', 'true', 'active']);
@@ -151,7 +151,7 @@ class PhoneNumberImportController extends Controller
 
         if ($serviceType === PhoneNumber::SERVICE_TYPE_POSTPAID && ! isset($headerMap['initial_payment'])) {
             fclose($handle);
-            return ['records' => [], 'errors' => ['ไฟล์ CSV รายเดือนต้องมีคอลัมน์ "ยอดจ่ายก้อนแรก"']];
+            return ['records' => [], 'errors' => ['ไฟล์ CSV รายเดือนต้องมีคอลัมน์ "ราคาเบอร์"']];
         }
 
         $records = [];
@@ -191,12 +191,12 @@ class PhoneNumberImportController extends Controller
             }
 
             if ($initialPaymentPrice === null && ! in_array($initialPaymentRaw, ['', '-'], true)) {
-                $errors[] = "แถวที่ {$rowCount}: ยอดจ่ายก้อนแรกไม่ถูกต้อง";
+                $errors[] = "แถวที่ {$rowCount}: ราคาเบอร์ไม่ถูกต้อง";
                 continue;
             }
 
             if ($initialPaymentPrice === null && $serviceType === PhoneNumber::SERVICE_TYPE_POSTPAID) {
-                $errors[] = "แถวที่ {$rowCount}: ยอดจ่ายก้อนแรกไม่ถูกต้อง";
+                $errors[] = "แถวที่ {$rowCount}: ราคาเบอร์ไม่ถูกต้อง";
                 continue;
             }
 
@@ -277,7 +277,7 @@ class PhoneNumberImportController extends Controller
             $label = mb_strtolower(trim($label));
             if (in_array($label, ['เบอร์', 'เลขหมาย', 'phone', 'phone_number'], true)) {
                 $map['phone'] = $index;
-            } elseif (in_array($label, ['ยอดจ่ายก้อนแรก', 'ยอดชำระก้อนแรก', 'ยอดชำระแรก', 'ราคา', 'price', 'initial_payment_price'], true)) {
+            } elseif (in_array($label, ['ราคาเบอร์', 'ยอดจ่ายก้อนแรก', 'ยอดชำระก้อนแรก', 'ยอดชำระแรก', 'ราคา', 'price', 'initial_payment_price'], true)) {
                 $map['initial_payment'] = $index;
             } elseif (in_array($label, ['แพ็กเกจ', 'แพคเกจ', 'โปร', 'package', 'plan', 'โปรโมชั่น'], true)) {
                 $map['package'] = $index;
