@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\Customer;
+use App\Models\BillingCustomer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -13,7 +13,7 @@ class AdminCustomersTest extends TestCase
 
     public function test_admin_can_view_customers_page(): void
     {
-        Customer::query()->create([
+        BillingCustomer::query()->create([
             'company_name' => 'บริษัท ลูกค้าทดสอบ จำกัด',
             'tax_id' => '0105550000001',
             'address' => 'กรุงเทพมหานคร',
@@ -59,7 +59,7 @@ class AdminCustomersTest extends TestCase
 
         $response->assertRedirect(route('admin.customers'));
         $response->assertSessionHas('status_message');
-        $this->assertDatabaseHas('customers', [
+        $this->assertDatabaseHas('billing_customers', [
             'company_name' => 'บริษัท ทดสอบสร้างลูกค้า จำกัด',
             'tax_id' => '0105551111111',
             'payment_term' => 'เครดิต 15 วัน',
@@ -68,7 +68,7 @@ class AdminCustomersTest extends TestCase
 
     public function test_admin_can_update_customer(): void
     {
-        $customer = Customer::query()->create([
+        $customer = BillingCustomer::query()->create([
             'company_name' => 'บริษัท ก่อนแก้ไข จำกัด',
             'tax_id' => '0105552222222',
             'address' => 'ที่อยู่เดิม',
@@ -96,7 +96,7 @@ class AdminCustomersTest extends TestCase
             ]);
 
         $response->assertRedirect(route('admin.customers'));
-        $this->assertDatabaseHas('customers', [
+        $this->assertDatabaseHas('billing_customers', [
             'id' => $customer->id,
             'company_name' => 'บริษัท หลังแก้ไข จำกัด',
             'tax_id' => '0105553333333',

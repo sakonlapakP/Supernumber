@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\Customer;
+use App\Models\BillingCustomer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -31,7 +31,7 @@ class AdminCustomerQuickStoreTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('customer.display_name', 'บริษัท บันทึกด่วน จำกัด');
-        $this->assertDatabaseHas('customers', [
+        $this->assertDatabaseHas('billing_customers', [
             'company_name' => 'บริษัท บันทึกด่วน จำกัด',
             'tax_id' => '0105554444444',
         ]);
@@ -65,7 +65,7 @@ class AdminCustomerQuickStoreTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('customer.display_name', 'บริษัท ใหม่ จำกัด');
-        $this->assertDatabaseHas('customers', [
+        $this->assertDatabaseHas('billing_customers', [
             'id' => $customer->id,
             'company_name' => 'บริษัท ใหม่ จำกัด',
             'tax_id' => '0105552222222',
