@@ -30,44 +30,59 @@ return new class extends Migration
 
     public function up(): void
     {
-        Schema::create('phone_packages', function (Blueprint $table): void {
-            $table->id();
-            $table->string('code', 80)->unique();
-            $table->string('service_type', 20)->default(PhoneNumber::SERVICE_TYPE_POSTPAID);
-            $table->string('network_code', 20)->default(PhoneNumber::NETWORK_TRUE);
-            $table->string('name');
-            $table->unsignedInteger('monthly_price')->nullable();
-            $table->string('data_quota')->nullable();
-            $table->string('speed_after_quota')->nullable();
-            $table->string('voice_minutes')->nullable();
-            $table->text('benefits')->nullable();
-            $table->text('conditions')->nullable();
-            $table->boolean('is_active')->default(true);
-            $table->timestamps();
+        if (!Schema::hasTable('phone_packages')) {
+            Schema::create('phone_packages', function (Blueprint $table): void {
+                $table->id();
+                $table->string('code', 80)->unique();
+                $table->string('service_type', 20)->default(PhoneNumber::SERVICE_TYPE_POSTPAID);
+                $table->string('network_code', 20)->default(PhoneNumber::NETWORK_TRUE);
+                $table->string('name');
+                $table->unsignedInteger('monthly_price')->nullable();
+                $table->string('data_quota')->nullable();
+                $table->string('speed_after_quota')->nullable();
+                $table->string('voice_minutes')->nullable();
+                $table->text('benefits')->nullable();
+                $table->text('conditions')->nullable();
+                $table->boolean('is_active')->default(true);
+                $table->timestamps();
 
-            $table->index(['service_type', 'network_code', 'is_active']);
-            $table->index('monthly_price');
-        });
+                $table->index(['service_type', 'network_code', 'is_active']);
+                $table->index('monthly_price');
+            });
+        }
 
         Schema::table('phone_numbers', function (Blueprint $table): void {
-            $table->foreignId('package_id')
-                ->nullable()
-                ->constrained('phone_packages')
-                ->nullOnDelete();
-            $table->unsignedInteger('initial_payment_price')->nullable()->index();
+            if (!Schema::hasColumn('phone_numbers', 'package_id')) {
+                $table->foreignId('package_id')
+                    ->nullable()
+                    ->constrained('phone_packages')
+                    ->nullOnDelete();
+            }
+            if (!Schema::hasColumn('phone_numbers', 'initial_payment_price')) {
+                $table->unsignedInteger('initial_payment_price')->nullable()->index();
+            }
         });
 
         Schema::table('customer_orders', function (Blueprint $table): void {
-            $table->foreignId('package_id')
-                ->nullable()
-                ->constrained('phone_packages')
-                ->nullOnDelete();
-            $table->string('package_code', 80)->nullable();
-            $table->string('package_name')->nullable();
-            $table->unsignedInteger('monthly_price')->nullable();
-            $table->unsignedInteger('initial_payment_price')->nullable();
-
-            $table->index('package_code');
+            if (!Schema::hasColumn('customer_orders', 'package_id')) {
+                $table->foreignId('package_id')
+                    ->nullable()
+                    ->constrained('phone_packages')
+                    ->nullOnDelete();
+            }
+            if (!Schema::hasColumn('customer_orders', 'package_code')) {
+                $table->string('package_code', 80)->nullable();
+                $table->index('package_code');
+            }
+            if (!Schema::hasColumn('customer_orders', 'package_name')) {
+                $table->string('package_name')->nullable();
+            }
+            if (!Schema::hasColumn('customer_orders', 'monthly_price')) {
+                $table->unsignedInteger('monthly_price')->nullable();
+            }
+            if (!Schema::hasColumn('customer_orders', 'initial_payment_price')) {
+                $table->unsignedInteger('initial_payment_price')->nullable();
+            }
         });
 
         $this->seedDefaultPackages();
