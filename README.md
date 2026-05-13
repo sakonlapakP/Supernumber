@@ -10,6 +10,7 @@
 ## สถานะระบบ (System Status)
 - **สถานะเบอร์โทรศัพท์:** [number.md](file:///Users/efaum/Sites/localhost/Supernumber/number.md)
 - **สถานะคำสั่งซื้อ:** [order.md](file:///Users/efaum/Sites/localhost/Supernumber/order.md)
+- **ระบบหวย:** [docs/Lottery.md](docs/Lottery.md) — การจัดการผลสลากกินแบ่งรัฐบาล
 
 ## About Laravel
 
@@ -62,12 +63,22 @@ If you discover a security vulnerability within Laravel, please send an e-mail t
 
 The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
 
+## Lottery System
+
+For detailed information about the lottery results system, see [docs/Lottery.md](docs/Lottery.md).
+
+The system automatically fetches Government Lottery Organization (GLO) results twice monthly and publishes articles with cover images via LINE notifications.
+
+**Quick commands:**
+- `php artisan lottery:fetch-latest` — Scheduled fetch (runs every 5 min, 15:45–16:20 BKT)
+- `php artisan lottery:fetch-latest --force` — Force fetch (bypass schedule checks)
+
 ## LINE Notifications
 
 This project can send LINE Messaging API notifications for:
 
 - Estimate form submissions (`/estimate`)
-- Lottery result completion (`lottery:fetch-latest`)
+- **Lottery result completion** (`lottery:fetch-latest`) — see [docs/Lottery.md](docs/Lottery.md)
 - New number orders (`/book`)
 - Admin order status changes for configured statuses
 - Manual test sends from the admin order detail page
@@ -77,7 +88,7 @@ Environment variables:
 - `LINE_CHANNEL_ACCESS_TOKEN`
 - `LINE_GROUP_ID` as the default fallback group
 - `LINE_ESTIMATE_GROUP_ID`
-- `LINE_LOTTERY_GROUP_ID`
+- **`LINE_LOTTERY_GROUP_ID`** — Group for lottery notifications (see [docs/Lottery.md](docs/Lottery.md))
 - `LINE_ORDER_GROUP_ID`
 - `LINE_ORDER_STATUS_GROUP_ID`
 - `LINE_TEST_GROUP_ID`
