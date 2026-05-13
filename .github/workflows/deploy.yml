@@ -30,9 +30,10 @@ jobs:
              --data-urlencode "text=$MSG"
         
         # 🎙️ ส่งเสียงประกาศที่เครื่อง Mac
-        curl -s -X POST "https://planets-suse-duty-reflection.trycloudflare.com/announce" \
-             -H "Content-Type: application/json" \
-             -d "{\"project\": \"Supernumber\", \"message\": \"กำลังเริ่ม Deploy เว็บไซต์ซูเปอร์นัมเบอร์ครับพี่อั้ม\", \"apiKey\": \"efaum-secret-key-789\"}"
+        curl -s -X POST "https://miscellaneous-terminal-helped-reflections.trycloudflare.com/announce" \
+        -H "Content-Type: application/json" \
+        -d "{\"project\": \"Supernumber\", \"message\": \"กำลังเริ่ม Deploy เว็บไซต์ซูเปอร์นัมเบอร์ครับพี่อั้ม\", \"apiKey\": \"efaum-secret-key-789\"}"
+    continue-on-error: true
 
     - name: 📂 Sync to public_html
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
@@ -100,9 +101,10 @@ jobs:
              --data-urlencode "text=$MSG"
 
         # 🎙️ ส่งเสียงประกาศที่เครื่อง Mac (ตอนจบ)
-        curl -s -X POST "https://planets-suse-duty-reflection.trycloudflare.com/announce" \
-             -H "Content-Type: application/json" \
-             -d "{\"project\": \"Supernumber\", \"message\": \"$MSG\", \"apiKey\": \"efaum-secret-key-789\"}"
+        curl -s -X POST "https://miscellaneous-terminal-helped-reflections.trycloudflare.com/announce" \
+        -H "Content-Type: application/json" \
+        -d "{\"project\": \"Supernumber\", \"message\": \"$MSG\", \"apiKey\": \"efaum-secret-key-789\"}"
+    continue-on-error: true
 
 
 
