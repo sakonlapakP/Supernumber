@@ -712,6 +712,7 @@ $logPhoneNumberStatusChange = function (PhoneNumber $phoneNumber, ?string $fromS
     $action = match ($toStatus) {
         PhoneNumber::STATUS_SOLD => 'sell',
         PhoneNumber::STATUS_ACTIVE => 'release',
+        PhoneNumber::STATUS_UNACTIVE => 'deactivate',
         default => 'hold',
     };
 
@@ -4478,5 +4479,4 @@ Route::get('/emergency-migrate', function () use ($ensureAdmin) {
         return "Migration failed: " . $e->getMessage();
     }
 });
-
 

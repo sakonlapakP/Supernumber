@@ -28,6 +28,7 @@ class PhoneNumber extends Model
     public const STATUS_ACTIVE = 'active';
     public const STATUS_HOLD = 'hold';
     public const STATUS_SOLD = 'sold';
+    public const STATUS_UNACTIVE = 'unactive';
     public const TOPIC_ICON_MAP = [
         'การสื่อสาร' => '💬',
         'ความรัก/เสน่ห์' => '💖',
@@ -605,6 +606,7 @@ class PhoneNumber extends Model
             self::STATUS_ACTIVE,
             self::STATUS_HOLD,
             self::STATUS_SOLD,
+            self::STATUS_UNACTIVE,
         ];
     }
 
@@ -614,6 +616,7 @@ class PhoneNumber extends Model
             self::STATUS_ACTIVE => 'ว่าง / พร้อมขาย',
             self::STATUS_HOLD => 'จอง / รอตรวจสอบ',
             self::STATUS_SOLD => 'ขายแล้ว',
+            self::STATUS_UNACTIVE => 'ปิดใช้งาน',
         ];
     }
 

@@ -117,7 +117,7 @@ class PhoneNumberImportController extends Controller
             return redirect()->route('admin.numbers')->with(
                 'status_message',
                 sprintf(
-                    'นำเข้าข้อมูลเบอร์เรียบร้อยแล้ว: เพิ่มใหม่ %s, อัปเดต %s, ไม่เปลี่ยนแปลง %s, ปิดเบอร์เดิมที่ไม่อยู่ในไฟล์ %s',
+                    'นำเข้าข้อมูลเบอร์เรียบร้อยแล้ว: เพิ่มใหม่ %s, อัปเดต %s, ไม่เปลี่ยนแปลง %s, เปลี่ยนเบอร์เดิมที่ไม่อยู่ในไฟล์เป็น unactive %s',
                     number_format($stats['created']),
                     number_format($stats['updated']),
                     number_format($stats['unchanged']),
@@ -335,6 +335,7 @@ class PhoneNumberImportController extends Controller
         if ($status === '') return PhoneNumber::STATUS_ACTIVE;
         if (in_array($status, ['active', 'available', 'พร้อมขาย', 'ว่าง'], true)) return PhoneNumber::STATUS_ACTIVE;
         if (in_array($status, ['sold', 'ขายแล้ว', 'ขาย'], true)) return PhoneNumber::STATUS_SOLD;
+        if (in_array($status, ['unactive', 'inactive', 'ปิดใช้งาน'], true)) return PhoneNumber::STATUS_UNACTIVE;
         if (in_array($status, ['hold', 'held', 'จอง', 'พัก'], true)) return PhoneNumber::STATUS_HOLD;
         return null;
     }
@@ -369,7 +370,7 @@ class PhoneNumberImportController extends Controller
             ->whereNotIn('phone_number', array_values(array_unique($importedPhones)))
             ->where('status', PhoneNumber::STATUS_ACTIVE)
             ->update([
-                'status' => PhoneNumber::STATUS_SOLD,
+                'status' => PhoneNumber::STATUS_UNACTIVE,
                 'updated_at' => now(),
             ]);
     }

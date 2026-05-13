@@ -76,6 +76,43 @@ class AdminPhoneNumberEditTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_change_number_status_to_unactive_and_log_it(): void
+    {
+        $phoneNumber = PhoneNumber::query()->create([
+            'phone_number' => '0891234567',
+            'service_type' => PhoneNumber::SERVICE_TYPE_POSTPAID,
+            'network_code' => 'true_dtac',
+            'plan_name' => PhoneNumber::PACKAGE_NAME,
+            'sale_price' => 699,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
+        $manager = User::factory()->create([
+            'username' => 'manager-number-edit-unactive',
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        $this->withSession($this->adminSession($manager))
+            ->put(route('admin.numbers.update', $phoneNumber), [
+                'status' => PhoneNumber::STATUS_UNACTIVE,
+            ])
+            ->assertRedirect(route('admin.numbers.edit', $phoneNumber));
+
+        $this->assertDatabaseHas('phone_numbers', [
+            'id' => $phoneNumber->id,
+            'status' => PhoneNumber::STATUS_UNACTIVE,
+        ]);
+
+        $this->assertDatabaseHas('phone_number_status_logs', [
+            'phone_number_id' => $phoneNumber->id,
+            'user_id' => $manager->id,
+            'action' => 'deactivate',
+            'from_status' => PhoneNumber::STATUS_ACTIVE,
+            'to_status' => PhoneNumber::STATUS_UNACTIVE,
+        ]);
+    }
+
     public function test_admin_can_filter_numbers_page_by_service_type_from_sidebar(): void
     {
         PhoneNumber::query()->create([
