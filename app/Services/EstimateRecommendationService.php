@@ -83,6 +83,7 @@ class EstimateRecommendationService
     private function recommendedNumbers(array $workTopics, array $goalRule, int $limit, ?string $serviceType = null, array $excludeIds = []): array
     {
         $query = PhoneNumber::query()
+            ->with('package')
             ->available()
             ->supportedNetwork()
             ->when($serviceType !== null, fn (Builder $builder) => $builder->where('service_type', $serviceType))
@@ -95,6 +96,7 @@ class EstimateRecommendationService
         /** @var Collection<int, PhoneNumber> $candidates */
         $candidates = $query->get();
 
+        // Score first by work-topic coverage, then by the selected goal rule so fallback results stay relevant.
         $scored = $candidates
             ->map(function (PhoneNumber $number) use ($workTopics, $goalRule): array {
                 $supportedTopics = collect($number->supported_topic_icons)->pluck('topic')->all();
@@ -113,6 +115,7 @@ class EstimateRecommendationService
             ? $scored
             : $scored->filter(fn (array $item): bool => count($item['topic_matches']) === count($workTopics));
 
+        // Prefer exact topic matches, but relax to partial matches when inventory is too small.
         $matchedStrictTopics = $workTopics === [] || $strict->count() >= min(4, $limit);
         $pool = $matchedStrictTopics ? $strict : $scored->filter(fn (array $item): bool => count($item['topic_matches']) > 0);
 
@@ -207,6 +210,7 @@ class EstimateRecommendationService
         }
 
         if ($goalRule['type'] === 'love_position') {
+            // Love recommendations require the charm pair at digits 4-5, matching the public explanation.
             $query->where(function (Builder $inner) use ($goalRule): void {
                 foreach ($goalRule['required'] as $pair) {
                     $inner->orWhere('phone_number', 'like', '___' . $pair . '_____');

@@ -72,16 +72,19 @@
 
       <div class="admin-readonly-field">
         <div class="admin-readonly-field__label">ชื่อโปร / ข้อเสนอ</div>
-        <div class="admin-readonly-field__value">{{ $phoneNumber->plan_name ?: '-' }}</div>
+        <div class="admin-readonly-field__value">{{ $phoneNumber->package_label }}</div>
       </div>
 
       <div class="admin-readonly-field">
-        <div class="admin-readonly-field__label">ราคา</div>
-        <div class="admin-readonly-field__value">{{ number_format($phoneNumber->sale_price) }} บาท</div>
+        <div class="admin-readonly-field__label">ราคาเบอร์</div>
+        <div class="admin-readonly-field__value">{{ $phoneNumber->payment_label }}</div>
       </div>
 
+
+
+
       <div class="admin-field" style="margin-top: 1.5rem;">
-        <label for="status">สถานะการแสดงผล</label>
+        <label for="status">สถานะเบอร์</label>
         <select id="status" class="admin-select" name="status" required>
           @foreach (\App\Models\PhoneNumber::adminStatusOptions() as $status)
             <option value="{{ $status }}" @selected(old('status', $phoneNumber->status) === $status)>{{ $status }}</option>

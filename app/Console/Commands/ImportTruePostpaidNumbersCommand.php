@@ -3,18 +3,19 @@
 namespace App\Console\Commands;
 
 use App\Models\PhoneNumber;
+use App\Models\PhonePackage;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 use SimpleXMLElement;
 use ZipArchive;
 
-class ImportTruePrepaidNumbersCommand extends Command
+class ImportTruePostpaidNumbersCommand extends Command
 {
-    protected $signature = 'numbers:import-true-prepaid
-        {file : Path to the TRUE prepaid spreadsheet (.xlsx)}
+    protected $signature = 'numbers:import-true-postpaid
+        {file : Path to the TRUE postpaid spreadsheet (.xlsx)}
         {--dry-run : Parse the spreadsheet and show the summary without writing to the database}';
 
-    protected $description = 'Import prepaid stock spreadsheet using number, optional sum, price, and status columns';
+    protected $description = 'Import postpaid stock spreadsheet using number and price columns';
 
     private const XML_NS = 'http://schemas.openxmlformats.org/spreadsheetml/2006/main';
 
@@ -76,7 +77,7 @@ class ImportTruePrepaidNumbersCommand extends Command
             'updated' => 0,
             'unchanged' => 0,
             'preserved_status' => 0,
-            'converted_to_prepaid' => 0,
+            'converted_to_postpaid' => 0,
         ];
 
         DB::transaction(function () use ($parsed, $existingNumbers, &$stats): void {
@@ -89,18 +90,20 @@ class ImportTruePrepaidNumbersCommand extends Command
                     $stats['preserved_status']++;
                 }
 
-                if ($existing && $existing->service_type !== PhoneNumber::SERVICE_TYPE_PREPAID) {
-                    $stats['converted_to_prepaid']++;
+                if ($existing && $existing->service_type !== PhoneNumber::SERVICE_TYPE_POSTPAID) {
+                    $stats['converted_to_postpaid']++;
                 }
+
+                $package = $this->resolvePackage((int) $row['sale_price']);
 
                 $payload = [
                     'number_sum' => PhoneNumber::calculateNumberSum($phoneNumber),
-                    'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
-                    'network_code' => 'true_dtac',
-                    'plan_name' => 'เติมเงิน',
+                    'service_type' => PhoneNumber::SERVICE_TYPE_POSTPAID,
+                    'network_code' => PhoneNumber::NETWORK_TRUE_DTAC,
+                    'plan_name' => $package?->name ?? 'รายเดือน',
                     'sale_price' => $row['sale_price'],
                     'initial_payment_price' => $row['sale_price'],
-                    'package_id' => null,
+                    'package_id' => $package?->id,
                     'status' => $status,
                 ];
 
@@ -126,26 +129,16 @@ class ImportTruePrepaidNumbersCommand extends Command
             }
         });
 
-        $this->info('นำเข้าข้อมูล TRUE เติมเงินเรียบร้อยแล้ว');
+        $this->info('นำเข้าข้อมูล TRUE รายเดือนเรียบร้อยแล้ว');
         $this->line('สร้างใหม่: ' . number_format($stats['created']) . ' เบอร์');
         $this->line('อัปเดตข้อมูลเดิม: ' . number_format($stats['updated']) . ' เบอร์');
         $this->line('ไม่เปลี่ยนแปลง: ' . number_format($stats['unchanged']) . ' เบอร์');
         $this->line('คงสถานะเดิมที่ไม่ใช่ active: ' . number_format($stats['preserved_status']) . ' เบอร์');
-        $this->line('เปลี่ยนจากรายเดือนเป็นเติมเงิน: ' . number_format($stats['converted_to_prepaid']) . ' เบอร์');
+        $this->line('เปลี่ยนจากเติมเงินเป็นรายเดือน: ' . number_format($stats['converted_to_postpaid']) . ' เบอร์');
 
         return self::SUCCESS;
     }
 
-    /**
-     * @return array{
-     *     row_count:int,
-     *     record_count:int,
-     *     duplicate_count:int,
-     *     skipped_sold_count:int,
-     *     duplicates:array<string, array<int, string>>,
-     *     records:array<string, array{row:string, number_sum:int|null, sale_price:int}>
-     * }
-     */
     private function parseWorkbook(string $path): array
     {
         $archive = new ZipArchive();
@@ -219,9 +212,6 @@ class ImportTruePrepaidNumbersCommand extends Command
         ];
     }
 
-    /**
-     * @return array<int, array{name:string,path:string}>
-     */
     private function parseWorkbookSheets(string $workbookXml, string $workbookRelsXml): array
     {
         $workbook = $this->loadXml($workbookXml);
@@ -251,15 +241,6 @@ class ImportTruePrepaidNumbersCommand extends Command
         return $sheets;
     }
 
-    /**
-     * @param  array<int, string>  $sharedStrings
-     * @return array{
-     *     row_count:int,
-     *     skipped_sold_count:int,
-     *     duplicates:array<string, array<int, string>>,
-     *     records:array<string, array{row:string, number_sum:int|null, sale_price:int}>
-     * }
-     */
     private function parseWorksheet(string $sheetXml, array $sharedStrings, string $sheetName): array
     {
         $sheet = $this->loadXml($sheetXml);
@@ -342,9 +323,6 @@ class ImportTruePrepaidNumbersCommand extends Command
         ];
     }
 
-    /**
-     * @return array<int, string>
-     */
     private function parseSharedStrings(?string $xml): array
     {
         if ($xml === null || trim($xml) === '') {
@@ -447,10 +425,6 @@ class ImportTruePrepaidNumbersCommand extends Command
         return (int) round((float) $normalized);
     }
 
-    /**
-     * @param  array<string, string|null>  $cells
-     * @return array{phone:string,price:string,status?:string,number_sum?:string}|null
-     */
     private function matchHeaderColumns(array $cells): ?array
     {
         $matched = [];
@@ -458,11 +432,11 @@ class ImportTruePrepaidNumbersCommand extends Command
         foreach ($cells as $column => $value) {
             $label = trim((string) $value);
 
-            if ($label === 'เบอร์') {
+            if (in_array($label, ['เบอร์', 'เลขหมาย', 'phone'], true)) {
                 $matched['phone'] = $column;
             }
 
-            if (in_array($label, ['ยอดจ่ายก้อนแรก', 'ยอดชำระก้อนแรก', 'ยอดชำระแรก', 'ราคา'], true)) {
+            if (in_array($label, ['ยอดจ่ายก้อนแรก', 'ยอดชำระก้อนแรก', 'ยอดชำระแรก', 'ราคา', 'ระดับหมายเลข', 'price'], true)) {
                 $matched['price'] = $column;
             }
 
@@ -511,7 +485,15 @@ class ImportTruePrepaidNumbersCommand extends Command
         return $status !== '' ? $status : PhoneNumber::STATUS_ACTIVE;
     }
 
-
+    private function resolvePackage(int $monthlyPrice): ?PhonePackage
+    {
+        return PhonePackage::query()
+            ->where('service_type', PhoneNumber::SERVICE_TYPE_POSTPAID)
+            ->where('network_code', PhoneNumber::NETWORK_TRUE_DTAC)
+            ->where('monthly_price', $monthlyPrice)
+            ->where('is_active', true)
+            ->first();
+    }
 
     private function resolveImportPath(string $path): ?string
     {

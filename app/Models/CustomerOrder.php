@@ -13,20 +13,28 @@ class CustomerOrder extends Model
 {
     use \App\Traits\UnixTimestampSerializable;
 
+    public const STATUS_PROCESSING = 'processing';
+    public const STATUS_COMPLETED = 'completed';
+    public const STATUS_CANCELLED = 'cancelled';
+
+    // Deprecated statuses (kept for mapping old records)
     public const STATUS_SUBMITTED = 'submitted';
     public const STATUS_PENDING_REVIEW = 'pending_review';
     public const STATUS_REVIEWING = 'reviewing';
     public const STATUS_PAID = 'paid';
-    public const STATUS_COMPLETED = 'completed';
     public const STATUS_SOLD = 'sold';
     public const STATUS_REJECTED = 'rejected';
-    public const STATUS_CANCELLED = 'cancelled';
 
     protected $fillable = [
         'phone_number_id',
         'ordered_number',
         'service_type',
         'selected_package',
+        'package_id',
+        'package_code',
+        'package_name',
+        'monthly_price',
+        'initial_payment_price',
         'title_prefix',
         'first_name',
         'last_name',
@@ -49,6 +57,9 @@ class CustomerOrder extends Model
             'phone_number_id' => 'integer',
             'service_type' => 'string',
             'selected_package' => 'integer',
+            'package_id' => 'integer',
+            'monthly_price' => 'integer',
+            'initial_payment_price' => 'integer',
             'appointment_date' => 'date',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
@@ -75,31 +86,46 @@ class CustomerOrder extends Model
     public static function statusOptions(): array
     {
         return [
-            self::STATUS_SUBMITTED,
-            self::STATUS_PENDING_REVIEW,
-            self::STATUS_REVIEWING,
-            self::STATUS_PAID,
+            self::STATUS_PROCESSING,
             self::STATUS_COMPLETED,
-            self::STATUS_SOLD,
-            self::STATUS_REJECTED,
             self::STATUS_CANCELLED,
         ];
     }
 
+    public static function statusLabelOptions(): array
+    {
+        return [
+            self::STATUS_PROCESSING => 'กำลังดำเนินการ',
+            self::STATUS_COMPLETED => 'สำเร็จ',
+            self::STATUS_CANCELLED => 'ยกเลิก',
+            // Mapping for old statuses
+            self::STATUS_SUBMITTED => 'กำลังดำเนินการ (ใหม่)',
+            self::STATUS_PENDING_REVIEW => 'กำลังดำเนินการ (รอตรวจ)',
+            self::STATUS_REVIEWING => 'กำลังดำเนินการ (ตรวจอยู่)',
+            self::STATUS_PAID => 'กำลังดำเนินการ (จ่ายแล้ว)',
+            self::STATUS_SOLD => 'สำเร็จ (ขายแล้ว)',
+            self::STATUS_REJECTED => 'ยกเลิก (ปฏิเสธ)',
+        ];
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return self::statusLabelOptions()[$this->status] ?? $this->status;
+    }
+
     public static function defaultStatusForServiceType(?string $serviceType): string
     {
-        return self::normalizeServiceType($serviceType) === PhoneNumber::SERVICE_TYPE_PREPAID
-            ? self::STATUS_PENDING_REVIEW
-            : self::STATUS_SUBMITTED;
+        return self::STATUS_PROCESSING;
     }
 
     public static function resolvePhoneNumberStatus(?string $orderStatus): ?string
     {
         return match (self::normalizeStatus($orderStatus)) {
-            self::STATUS_SOLD,
-            self::STATUS_COMPLETED => PhoneNumber::STATUS_SOLD,
-            self::STATUS_REJECTED,
-            self::STATUS_CANCELLED => PhoneNumber::STATUS_ACTIVE,
+            self::STATUS_COMPLETED,
+            self::STATUS_SOLD => PhoneNumber::STATUS_SOLD,
+            self::STATUS_CANCELLED,
+            self::STATUS_REJECTED => PhoneNumber::STATUS_ACTIVE,
+            self::STATUS_PROCESSING,
             self::STATUS_SUBMITTED,
             self::STATUS_PENDING_REVIEW,
             self::STATUS_REVIEWING,
@@ -125,17 +151,49 @@ class CustomerOrder extends Model
 
     public function getPaymentLabelAttribute(): string
     {
-        $amount = (int) $this->selected_package;
+        $amount = $this->initial_payment_amount;
 
-        if ($amount <= 0) {
+        if ($amount === null || $amount <= 0) {
             return '-';
         }
 
-        if ($this->is_prepaid) {
-            return number_format($amount) . ' บาท';
+        return number_format($amount) . ' บาท';
+    }
+
+    public function getInitialPaymentAmountAttribute(): ?int
+    {
+        $amount = $this->initial_payment_price ?? $this->selected_package;
+
+        return is_numeric($amount) && (int) $amount > 0 ? (int) $amount : null;
+    }
+
+    public function getMonthlyPaymentLabelAttribute(): string
+    {
+        $amount = $this->monthly_price ?? $this->package?->monthly_price;
+
+        return is_numeric($amount) && (int) $amount > 0
+            ? number_format((int) $amount) . ' บาท / เดือน'
+            : '-';
+    }
+
+    public function getPackageLabelAttribute(): string
+    {
+        $name = trim((string) ($this->package_name ?? $this->package?->name ?? ''));
+        $price = $this->monthly_price ?? $this->package?->monthly_price;
+
+        if ($name !== '' && is_numeric($price) && (int) $price > 0) {
+            if (preg_match('/(?:^|\s)' . preg_quote((string) (int) $price, '/') . '$/u', $name) === 1) {
+                return $name;
+            }
+
+            return $name . ' ' . (int) $price;
         }
 
-        return number_format($amount) . ' บาท / เดือน';
+        if ($name !== '') {
+            return $name;
+        }
+
+        return is_numeric($price) && (int) $price > 0 ? (string) (int) $price : '-';
     }
 
     public function getFullNameAttribute(): string
@@ -163,9 +221,19 @@ class CustomerOrder extends Model
         return $this->belongsTo(PhoneNumber::class);
     }
 
+    public function package(): BelongsTo
+    {
+        return $this->belongsTo(PhonePackage::class, 'package_id');
+    }
+
     public function lineNotificationLogs(): MorphMany
     {
         return $this->morphMany(LineNotificationLog::class, 'notifiable');
+    }
+
+    public function activityLogs(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(CustomerOrderActivityLog::class);
     }
 
     private static function normalizeServiceType(?string $serviceType): string

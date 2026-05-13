@@ -26,7 +26,8 @@
           <tr>
             <th>เบอร์ที่สั่งซื้อ</th>
             <th>ประเภท</th>
-            <th>ยอดชำระ</th>
+            <th>ยอดชำระแรก</th>
+            <th>แพ็กเกจ</th>
             <th>ชื่อผู้สั่งซื้อ</th>
             <th>โทรศัพท์</th>
             <th>สถานะ</th>
@@ -39,9 +40,10 @@
               <td><div class="admin-number">{{ $order->ordered_number ?: '-' }}</div></td>
               <td>{{ $order->service_type_label }}</td>
               <td>{{ $order->payment_label }}</td>
+              <td>{{ $order->is_postpaid ? $order->package_label : '-' }}</td>
               <td>{{ $order->full_name ?: '-' }}</td>
               <td>{{ $order->current_phone ?: '-' }}</td>
-              <td>{{ $order->status ?: '-' }}</td>
+              <td>{{ $order->status_label ?: '-' }}</td>
               <td>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                   <a href="{{ route('admin.orders.show', $order) }}" class="admin-button admin-button--muted admin-button--compact">ดูรายละเอียด</a>
@@ -51,7 +53,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="7" class="admin-muted">ยังไม่มีรายการคำสั่งซื้อ</td>
+              <td colspan="9" class="admin-muted">ยังไม่มีรายการคำสั่งซื้อ</td>
             </tr>
           @endforelse
         </tbody>

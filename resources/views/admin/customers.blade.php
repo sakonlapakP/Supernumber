@@ -1,11 +1,11 @@
 @extends('layouts.admin')
 
-@section('title', 'Supernumber Admin | ลูกค้า')
+@section('title', 'Supernumber Admin | รายชื่อลูกค้าที่ออกเอกสาร')
 
 @section('content')
   <div class="admin-page-head">
     <div>
-      <h1>ลูกค้า</h1>
+      <h1>รายชื่อลูกค้าที่ออกเอกสาร</h1>
       <p class="admin-subtitle">ตั้งค่าข้อมูลลูกค้าแยกไว้ก่อน เพื่อให้หน้าออกเอกสารเลือกชื่อแล้วเติมข้อมูลอัตโนมัติได้ทันที</p>
     </div>
     <div class="admin-page-actions">

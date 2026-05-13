@@ -66,6 +66,7 @@ class LineNotifier
             'messages' => $messages,
         ];
 
+        // Persist the exact payload before delivery so failed pushes remain auditable and retryable.
         $log = new LineNotificationLog();
         $log->forceFill([
             'event_type' => $eventType,
@@ -153,6 +154,7 @@ class LineNotifier
         $payload = (array) ($log->request_payload ?? []);
         $isBroadcast = $log->destination_id === 'broadcast';
 
+        // Broadcast logs intentionally omit "to"; push logs must resolve a concrete destination.
         if (!$isBroadcast && ($payload['to'] ?? '') === '') {
             $payload['to'] = $log->destination_id ?: $this->resolveDestinationId($log->destination_key);
         }
@@ -225,6 +227,7 @@ class LineNotifier
         if (config('services.line.test_mode', false)) {
             $adminId = trim((string) config('services.line.admin_user_id', ''));
             if ($adminId !== '') {
+                // Test mode redirects all LINE traffic to one admin user to protect real groups.
                 Log::info("LINE: Test mode active. Redirecting notification to Admin User ID [{$adminId}].");
                 return $adminId;
             }

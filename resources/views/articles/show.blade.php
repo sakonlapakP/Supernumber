@@ -207,6 +207,7 @@
         }
 
         $relevantNumbers = \App\Models\PhoneNumber::query()
+            ->with('package')
             ->available()
             ->when($searchQuery, function($q) use ($searchQuery) {
                 return $q->where('phone_number', 'like', '%' . $searchQuery . '%');
@@ -218,6 +219,7 @@
         // Fallback to random high quality if not enough relevant numbers
         if ($relevantNumbers->count() < 4) {
             $extra = \App\Models\PhoneNumber::query()
+                ->with('package')
                 ->available()
                 ->whereNotIn('id', $relevantNumbers->pluck('id'))
                 ->inRandomOrder()
@@ -238,7 +240,7 @@
                     <div class="article-number-card">
                         <div class="article-number-card__phone">{{ $num->display_phone }}</div>
                         <div class="article-number-card__meta">
-                            <span class="article-number-card__price">฿{{ number_format($num->sale_price) }}</span>
+                            <span class="article-number-card__price">{{ $num->payment_label }}</span>
                             <span class="article-number-card__network">{{ $num->network_label }}</span>
                         </div>
                         <a href="{{ route('evaluate', ['phone' => $num->phone_number]) }}" class="article-number-card__btn">ดูรายละเอียด</a>

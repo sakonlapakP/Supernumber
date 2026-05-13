@@ -8,9 +8,9 @@
     $serviceType = trim((string) ($serviceType ?? $currentNumber?->service_type ?? \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID));
     $isPrepaid = $serviceType === \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID;
     $packagePlanName = trim((string) ($packagePlanName ?? \App\Models\PhoneNumber::PACKAGE_NAME));
-    $minimumFirstPayment = 999;
+    $phonePackage = $currentNumber?->package;
     if ($isPrepaid) {
-        $basePackage = (int) ($currentNumber?->sale_price ?? request('package', 0));
+        $basePackage = (int) ($currentNumber?->initial_payment_amount ?? request('package', 0));
         $basePackage = $basePackage > 0 ? $basePackage : 0;
         $allPackages = $basePackage > 0 ? [$basePackage] : [];
         $packageCatalog = $basePackage > 0 ? [
@@ -20,6 +20,12 @@
                 'speed' => number_format($basePackage) . ' บาท',
                 'voice' => 'จัดส่งตามที่อยู่',
                 'ent' => 'ไม่ต้องยืนยันตัวตน',
+                'monthly_price' => null,
+                'conditions' => [
+                    'เบอร์เติมเงินชำระตามราคาที่แสดงและรอแอดมินตรวจสอบสลิปก่อนจัดส่ง',
+                    'ไม่ต้องนัดยืนยันตัวตนผ่านเครือข่ายหลังสั่งซื้อ',
+                    'เมื่อทีมงานตรวจสอบการชำระเงินเรียบร้อย จะเปลี่ยนสถานะเบอร์เป็น sold และจัดส่งตามที่อยู่ที่แจ้งไว้',
+                ],
             ],
         ] : [];
         $availablePackages = $allPackages;
@@ -28,35 +34,31 @@
             ? 'ราคาขาย ' . number_format($selectedPackage) . ' บาท'
             : 'ราคาขาย -';
     } else {
-        $allPackages = [499, 599, 699, 899, 999, 1199, 1499, 1699, 1999, 2199, 2499, 2699, 2999, 3499];
-        $packageCatalog = [
-            499 => ['label' => 'พื้นฐาน', 'data' => '50GB', 'speed' => '1 Mbps (หลังหมดสปีดเต็ม)', 'voice' => '150 นาที', 'ent' => 'ไม่รวม'],
-            599 => ['label' => 'เริ่มคุ้ม', 'data' => '60GB', 'speed' => '1 Mbps (หลังหมดสปีดเต็ม)', 'voice' => '200 นาที', 'ent' => 'ไม่รวม'],
-            699 => ['label' => 'แพคเกจแนะนำ', 'data' => '70GB', 'speed' => '1 Mbps (หลังหมดสปีดเต็ม)', 'voice' => '250 นาที', 'ent' => 'NOW ENT 12 เดือน'],
-            899 => ['label' => 'ยอดนิยม', 'data' => '90GB', 'speed' => '1 Mbps (หลังหมดสปีดเต็ม)', 'voice' => '300 นาที', 'ent' => 'NOW ENT 12 เดือน'],
-            999 => ['label' => 'คุ้มค่า+', 'data' => '100GB', 'speed' => '1 Mbps (หลังหมดสปีดเต็ม)', 'voice' => '400 นาที', 'ent' => 'NOW ENT 12 เดือน'],
-            1199 => ['label' => 'โปรสปีดสูง', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '600 นาที', 'ent' => 'NOW ENT + CyberSafe PRO'],
-            1499 => ['label' => 'พรีเมียม', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '900 นาที', 'ent' => 'NOW ENT + CyberSafe PRO'],
-            1699 => ['label' => 'พรีเมียม+', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '1,100 นาที', 'ent' => 'NOW ENT + CyberSafe PRO'],
-            1999 => ['label' => 'โปรธุรกิจ', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '1,500 นาที', 'ent' => 'NOW ENT + CyberSafe PRO'],
-            2199 => ['label' => 'โปรธุรกิจ+', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '1,800 นาที', 'ent' => 'NOW ENT + CyberSafe PRO'],
-            2499 => ['label' => 'Max', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '2,300 นาที', 'ent' => 'NOW ENT + CyberSafe PRO'],
-            2699 => ['label' => 'Max+', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '2,700 นาที', 'ent' => 'NOW ENT + CyberSafe PRO'],
-            2999 => ['label' => 'Ultra', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '3,000 นาที', 'ent' => 'NOW ENT + CyberSafe PRO'],
-            3499 => ['label' => 'Ultra Max', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '3,400 นาที', 'ent' => 'NOW ENT + CyberSafe PRO'],
-        ];
-        $basePackage = (int) request('package', 699);
-        if (!in_array($basePackage, $allPackages, true)) {
-            $basePackage = 699;
-        }
-        $availablePackages = array_values(array_filter($allPackages, fn ($price) => $price >= $basePackage));
-        $selectedPackage = (int) request('selected_package', $basePackage);
-        if (!in_array($selectedPackage, $availablePackages, true)) {
-            $selectedPackage = $basePackage;
-        }
-        $selectedPackageLabel = \App\Models\PhoneNumber::buildPackageLabel($packagePlanName, $selectedPackage);
+        $monthlyPackagePrice = (int) ($phonePackage?->monthly_price ?? $currentNumber?->monthly_package_price ?? request('package', 0));
+        $initialPayment = (int) ($currentNumber?->initial_payment_amount ?? $monthlyPackagePrice);
+        $initialPayment = $initialPayment > 0 ? $initialPayment : $monthlyPackagePrice;
+        $availablePackages = $initialPayment > 0 ? [$initialPayment] : [];
+        $selectedPackage = $initialPayment;
+        $selectedPackageLabel = $phonePackage
+            ? \App\Models\PhoneNumber::buildPackageLabel($phonePackage->name, $phonePackage->monthly_price)
+            : \App\Models\PhoneNumber::buildPackageLabel($packagePlanName, $monthlyPackagePrice);
+        $packageCatalog = $initialPayment > 0 ? [
+            $initialPayment => [
+                'label' => $phonePackage?->name ?? $selectedPackageLabel,
+                'data' => $phonePackage?->data_quota ?? '-',
+                'speed' => $phonePackage?->speed_after_quota ?? '-',
+                'voice' => $phonePackage?->voice_minutes ?? '-',
+                'ent' => $phonePackage?->benefits ?? '-',
+                'monthly_price' => $monthlyPackagePrice,
+                'conditions' => $phonePackage?->conditions_list ?: [
+                    'แพคเกจนี้สำหรับเบอร์ใหม่/ย้ายค่ายที่ร่วมรายการ',
+                    'ค่าโทรเกินแพคเกจและบริการเสริม คิดตามเงื่อนไขผู้ให้บริการ',
+                    'สิทธิพิเศษอาจมีการเปลี่ยนแปลงตามเงื่อนไขค่ายมือถือ',
+                ],
+            ],
+        ] : [];
     }
-    $initialPaymentAmount = $isPrepaid ? $selectedPackage : max($selectedPackage, $minimumFirstPayment);
+    $initialPaymentAmount = $selectedPackage;
   @endphp
 
   <section class="book-page">
@@ -121,21 +123,22 @@
                 <span class="network-brand-gradient">True / Dtac / AIS</span>
               </p>
               <label class="book-network-select-label">
-                {{ $isPrepaid ? 'ราคาขายเบอร์' : 'กรุณาเลือกแพคเกจ' }}
+                {{ $isPrepaid ? 'ราคาขายเบอร์' : 'ยอดชำระแรก' }}
                 <select name="selected_package" id="selected_package">
                   @foreach ($availablePackages as $packagePrice)
                     @php $plan = $packageCatalog[$packagePrice]; @endphp
                     <option
                       value="{{ $packagePrice }}"
-                      data-promo="{{ \App\Models\PhoneNumber::buildPackageLabel($packagePlanName, $packagePrice) }}"
+                      data-promo="{{ $isPrepaid ? 'ราคาขาย ' . number_format($packagePrice) . ' บาท' : $selectedPackageLabel }}"
                       data-label="{{ $plan['label'] }}"
                       data-data="{{ $plan['data'] }}"
                       data-speed="{{ $plan['speed'] }}"
                       data-voice="{{ $plan['voice'] }}"
                       data-ent="{{ $plan['ent'] }}"
+                      data-monthly="{{ $plan['monthly_price'] }}"
                       {{ $packagePrice === $selectedPackage ? 'selected' : '' }}
                     >
-                      {{ number_format($packagePrice) }} บาท{{ $isPrepaid ? '' : ' / เดือน' }}
+                      {{ $isPrepaid ? number_format($packagePrice) . ' บาท' : number_format($packagePrice) . ' บาท' }}
                     </option>
                   @endforeach
                 </select>
@@ -146,7 +149,7 @@
             @endphp
             <div class="full package-preview" id="package-preview">
               <p class="package-preview__name" id="preview-name">{{ $isPrepaid ? 'ประเภท: เบอร์เติมเงิน' : 'ชื่อโปร: ' . $selectedPackageLabel }}</p>
-              <h4>{{ $isPrepaid ? 'ราคาขาย ' . number_format($selectedPackage) . ' บาท' : 'โปรโมชั่นแพคเกจ ' . number_format($selectedPackage) . ' บาท' }}</h4>
+              <h4>{{ $isPrepaid ? 'ราคาขาย ' . number_format($selectedPackage) . ' บาท' : 'โปรโมชั่นแพคเกจ ' . number_format((int) ($selectedPlan['monthly_price'] ?? 0)) . ' บาท' }}</h4>
               <div class="package-preview__grid">
                 <div><span>{{ $isPrepaid ? 'ประเภท' : 'Data' }}</span><strong id="preview-data">{{ $selectedPlan['data'] }}</strong></div>
                 <div><span>{{ $isPrepaid ? 'ยอดชำระ' : 'ความเร็วหลังเน็ตเต็มสปีด' }}</span><strong id="preview-speed">{{ $selectedPlan['speed'] }}</strong></div>
@@ -156,15 +159,9 @@
               <div class="package-conditions">
                 <p class="package-conditions__title">{{ $isPrepaid ? 'เงื่อนไขการสั่งซื้อ' : 'เงื่อนไขแพคเกจ' }}</p>
                 <ul>
-                  @if ($isPrepaid)
-                    <li>เบอร์เติมเงินชำระตามราคาที่แสดงและรอแอดมินตรวจสอบสลิปก่อนจัดส่ง</li>
-                    <li>ไม่ต้องนัดยืนยันตัวตนผ่านเครือข่ายหลังสั่งซื้อ</li>
-                    <li>เมื่อทีมงานตรวจสอบการชำระเงินเรียบร้อย จะเปลี่ยนสถานะเบอร์เป็น sold และจัดส่งตามที่อยู่ที่แจ้งไว้</li>
-                  @else
-                    <li>แพคเกจนี้สำหรับเบอร์ใหม่/ย้ายค่ายที่ร่วมรายการ</li>
-                    <li>ค่าโทรเกินแพคเกจและบริการเสริม คิดตามเงื่อนไขผู้ให้บริการ</li>
-                    <li>สิทธิพิเศษอาจมีการเปลี่ยนแปลงตามเงื่อนไขค่ายมือถือ</li>
-                  @endif
+                  @foreach (($selectedPlan['conditions'] ?? []) as $condition)
+                    <li>{{ $condition }}</li>
+                  @endforeach
                 </ul>
               </div>
             </div>
@@ -340,7 +337,6 @@
   <script>
     (function () {
       const isPrepaid = @json($isPrepaid);
-      const minimumFirstPayment = @json($minimumFirstPayment);
       const form = document.getElementById("book-form");
       const packageSelect = document.getElementById("selected_package");
       const previewBox = document.getElementById("package-preview");
@@ -424,16 +420,17 @@
       const updatePreview = () => {
         const opt = packageSelect.options[packageSelect.selectedIndex];
         if (!opt) return;
-        const packageAmount = Number(opt.value);
-        const priceText = packageAmount.toLocaleString("th-TH");
-        const initialPaymentAmount = isPrepaid ? packageAmount : Math.max(packageAmount, minimumFirstPayment);
+        const initialPaymentAmount = Number(opt.value);
+        const monthlyAmount = Number(opt.dataset.monthly || opt.value);
+        const priceText = initialPaymentAmount.toLocaleString("th-TH");
+        const monthlyText = monthlyAmount.toLocaleString("th-TH");
         const initialPaymentText = initialPaymentAmount.toLocaleString("th-TH");
         if (isPrepaid) {
           if (nameEl) nameEl.textContent = "ประเภท: เบอร์เติมเงิน";
           title.textContent = `ราคาขาย ${priceText} บาท`;
         } else {
           if (nameEl) nameEl.textContent = `ชื่อโปร: ${opt.dataset.promo || "-"}`;
-          title.textContent = `โปรโมชั่นแพคเกจ ${priceText} บาท`;
+          title.textContent = `โปรโมชั่นแพคเกจ ${monthlyText} บาท`;
         }
         dataEl.textContent = opt.dataset.data || "-";
         speedEl.textContent = opt.dataset.speed || "-";

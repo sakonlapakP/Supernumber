@@ -6,9 +6,11 @@ use Illuminate\Database\Eloquent\Model;
 
 use App\Traits\UnixTimestampSerializable;
 
-class Customer extends Model
+class BillingCustomer extends Model
 {
     use \App\Traits\UnixTimestampSerializable;
+
+    protected $table = 'billing_customers';
 
     protected $fillable = [
         'company_name',

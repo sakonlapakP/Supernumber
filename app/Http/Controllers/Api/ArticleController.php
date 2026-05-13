@@ -68,6 +68,7 @@ class ArticleController extends Controller
             ]);
         }
 
+        // Accept either one article object or an array of article objects from the Flutter admin importer.
         $articlesToImport = isset($data['title']) ? [$data] : $data;
         $imported = 0;
         $skipped = 0;
@@ -220,6 +221,7 @@ class ArticleController extends Controller
 
         $imageUrl = $this->articleSquareImageUrl($article);
         if ($imageUrl !== null) {
+            // LINE broadcasts prefer the square cover before text so the article appears as a visual card.
             $messages[] = [
                 'type' => 'image',
                 'originalContentUrl' => $imageUrl,

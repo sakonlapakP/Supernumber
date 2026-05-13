@@ -34,8 +34,9 @@ SQL);
             'number_sum' => 37,
             'service_type' => PhoneNumber::SERVICE_TYPE_POSTPAID,
             'network_code' => PhoneNumber::NETWORK_TRUE_DTAC,
-            'plan_name' => PhoneNumber::PACKAGE_NAME,
+            'plan_name' => 'True Super Value 1199',
             'sale_price' => 1199,
+            'initial_payment_price' => 1199,
             'status' => PhoneNumber::STATUS_ACTIVE,
         ]);
 
@@ -80,7 +81,9 @@ SQL);
 
         $this->assertDatabaseHas('phone_numbers', [
             'id' => $heldPostpaid->id,
+            'plan_name' => 'True Super Value 1199',
             'sale_price' => 1199,
+            'initial_payment_price' => 1199,
             'status' => PhoneNumber::STATUS_HOLD,
         ]);
 

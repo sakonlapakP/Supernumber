@@ -288,7 +288,7 @@
         <article class="analytics-stat-card">
           <div class="analytics-stat-card__label">Order ปิดการขายแล้ว</div>
           <div class="analytics-stat-card__value">{{ $formatNumber($internalSummary['closed_orders'] ?? 0) }}</div>
-          <div class="analytics-stat-card__hint">สถานะ `completed` หรือ `sold`</div>
+          <div class="analytics-stat-card__hint">สถานะ `สำเร็จ`</div>
         </article>
       </div>
     </section>
@@ -342,7 +342,7 @@
           <tbody>
             @forelse ($orderStatusBreakdown as $status => $count)
               <tr>
-                <td>{{ $status }}</td>
+                <td>{{ \App\Models\CustomerOrder::statusLabelOptions()[$status] ?? $status }}</td>
                 <td>{{ $formatNumber($count) }}</td>
               </tr>
             @empty

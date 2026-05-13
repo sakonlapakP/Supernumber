@@ -1,22 +1,16 @@
 @extends('layouts.admin')
 
-@section('title', 'Supernumber Admin | Order Detail')
+@section('title', 'Supernumber Admin | รายละเอียดคำสั่งซื้อ')
 
 @section('content')
   <div class="admin-page-head">
     <div>
-      <h1>Order Detail</h1>
+      <h1>รายละเอียดคำสั่งซื้อ</h1>
       <p class="admin-subtitle">รายละเอียดคำสั่งซื้อทั้งหมด รวมหลักฐานการโอน</p>
     </div>
     <div class="admin-page-actions" style="margin-left: 0; margin-right: auto;">
       <a href="{{ route('admin.orders') }}" class="admin-button admin-button--muted admin-button--compact">กลับ</a>
       <a href="{{ route('admin.orders.edit', $order) }}" class="admin-button admin-button--compact">แก้ไข</a>
-      @if ($canTestLineNotification)
-        <form action="{{ route('admin.orders.line-test', $order) }}" method="post" style="margin: 0;">
-          @csrf
-          <button type="submit" class="admin-button admin-button--secondary admin-button--compact">ทดสอบส่ง LINE</button>
-        </form>
-      @endif
     </div>
   </div>
 
@@ -41,9 +35,15 @@
             <td>{{ $order->service_type_label }}</td>
           </tr>
           <tr>
-            <th>ยอดชำระ</th>
+            <th>ยอดชำระแรก</th>
             <td>{{ $order->payment_label }}</td>
           </tr>
+          @if ($order->is_postpaid)
+            <tr>
+              <th>แพ็กเกจ</th>
+              <td>{{ $order->package_label }}</td>
+            </tr>
+          @endif
           <tr>
             <th>ชื่อผู้สั่งซื้อ</th>
             <td>{{ $order->full_name ?: '-' }}</td>
@@ -70,7 +70,7 @@
           </tr>
           <tr>
             <th>สถานะ</th>
-            <td>{{ $order->status ?: '-' }}</td>
+            <td>{{ $order->status_label ?: '-' }}</td>
           </tr>
           <tr>
             <th>บันทึกเมื่อ</th>
@@ -81,8 +81,8 @@
             <td>
               @if ($order->payment_slip_path)
                 @php
-                  $slipUrl = route('admin.orders.payment-slip', $order);
-                  $slipViewerUrl = route('admin.orders.payment-slip.view', $order);
+                  $slipUrl = route('admin.orders.payment-slip', $order) . '?v=' . time();
+                  $slipViewerUrl = route('admin.orders.payment-slip.view', $order) . '?v=' . time();
                 @endphp
 
                 <div style="display: grid; gap: 10px;">
@@ -181,4 +181,74 @@
       </table>
     </div>
   </section>
+  @if (session('admin_user_role') === 'manager')
+  <section class="admin-card admin-table-card" style="margin-top: 18px;">
+    <div style="padding: 18px 20px 0;">
+      <h2 style="margin: 0; font-size: 1.1rem;">ประวัติการแก้ไข (สำหรับเบอร์ {{ $order->ordered_number }})</h2>
+      <p class="admin-subtitle" style="margin-top: 6px;">แสดงบันทึกการเปลี่ยนแปลงของทุกคำสั่งซื้อที่ใช้เบอร์นี้</p>
+    </div>
+
+    <div class="admin-table-wrap">
+      <table class="admin-table" style="table-layout: fixed;">
+        <thead>
+          <tr>
+            <th style="width: 170px;">เวลา</th>
+            <th style="width: 140px;">ผู้แก้ไข</th>
+            <th style="width: 100px;">Order ID</th>
+            <th style="width: 100px;">การกระทำ</th>
+            <th>รายละเอียดการเปลี่ยนแปลง</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse ($order->activityLogs as $log)
+            <tr>
+              <td>{{ optional($log->created_at)->format('Y-m-d H:i:s') ?: '-' }}</td>
+              <td>{{ $log->user?->name ?: 'System / Unknown' }}</td>
+              <td>
+                <span class="{{ $log->customer_order_id === $order->id ? 'admin-pill' : 'admin-pill admin-pill--muted' }}" style="font-size: 0.75rem;">
+                  #{{ $log->customer_order_id }}
+                </span>
+              </td>
+              <td>{{ $log->action }}</td>
+              <td>
+                <div style="display: grid; gap: 4px;">
+                  @if ($log->changes)
+                    @foreach ($log->changes as $field => $change)
+                      <div style="font-size: 0.9rem;">
+                        <strong>{{ $field }}:</strong>
+                        @if ($field === 'payment_slip_path')
+                          <span style="color: #b42318; text-decoration: line-through; font-size: 0.8rem;">
+                            {{ $change['old'] ?: 'None' }}
+                          </span>
+                          @if ($change['old'])
+                            <a href="{{ asset('storage/' . $change['old']) }}" target="_blank" style="text-decoration: underline; color: #b42318; margin-left: 4px;">[ดูรูปเก่า]</a>
+                          @endif
+                          <span style="color: #1b8b6f; margin-left: 4px;">
+                            &rarr; {{ $change['new'] ?: 'None' }}
+                          </span>
+                          @if ($change['new'])
+                            <a href="{{ asset('storage/' . $change['new']) }}" target="_blank" style="text-decoration: underline; color: #1b8b6f; margin-left: 4px;">[ดูรูปใหม่]</a>
+                          @endif
+                        @else
+                          <span style="color: #b42318; text-decoration: line-through;">{{ is_scalar($change['old']) ? $change['old'] : json_encode($change['old']) }}</span>
+                          <span style="color: #1b8b6f;">&rarr; {{ is_scalar($change['new']) ? $change['new'] : json_encode($change['new']) }}</span>
+                        @endif
+                      </div>
+                    @endforeach
+                  @else
+                    <span class="admin-muted">-</span>
+                  @endif
+                </div>
+              </td>
+            </tr>
+          @empty
+            <tr>
+              <td colspan="5" class="admin-muted">ยังไม่มีประวัติการแก้ไขสำหรับเบอร์นี้</td>
+            </tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+  </section>
+  @endif
 @endsection

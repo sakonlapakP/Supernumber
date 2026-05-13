@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\Customer;
+use App\Models\BillingCustomer;
 use App\Models\CustomerSubmission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -29,6 +29,7 @@ class CustomerSubmissionRecorder
         $email = $this->cleanString($payload['email'] ?? null);
         $customer = $this->resolveCustomer($name, $phone, $email);
 
+        // Keep the raw form context for admins while stripping transport, bot-trap, and CAPTCHA fields.
         return CustomerSubmission::query()->create([
             'customer_id' => $customer?->id,
             'form_type' => $formType,
@@ -44,7 +45,7 @@ class CustomerSubmissionRecorder
         ]);
     }
 
-    private function resolveCustomer(?string $name, ?string $phone, ?string $email): ?Customer
+    private function resolveCustomer(?string $name, ?string $phone, ?string $email): ?BillingCustomer
     {
         if ($phone === null && $email === null && $name === null) {
             return null;
@@ -53,7 +54,8 @@ class CustomerSubmissionRecorder
         $customer = null;
 
         if ($phone !== null || $email !== null) {
-            $customer = Customer::query()
+            // Phone/email identify repeat customers across contact, estimate, and evaluation forms.
+            $customer = BillingCustomer::query()
                 ->where(function ($query) use ($phone, $email) {
                     if ($phone !== null) {
                         $query->orWhere('phone', $phone);
@@ -74,7 +76,7 @@ class CustomerSubmissionRecorder
         $firstName = $nameParts !== [] ? array_shift($nameParts) : null;
         $lastName = $nameParts !== [] ? implode(' ', $nameParts) : null;
 
-        return Customer::query()->create([
+        return BillingCustomer::query()->create([
             'first_name' => $firstName ?: null,
             'last_name' => $lastName ?: null,
             'phone' => $phone,

@@ -2314,15 +2314,19 @@ body.under-construction-page main {
 
 .home-number-group__head {
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
   flex-wrap: wrap;
+  width: 100%;
 }
 
 .home-number-group__copy {
-  display: grid;
-  gap: 3px;
+  display: flex;
+  align-items: baseline;
+  justify-content: flex-start;
+  gap: 12px;
+  width: 100%;
 }
 
 .home-number-group__title {
@@ -2330,6 +2334,7 @@ body.under-construction-page main {
   color: #3b2f27;
   font-size: 20px;
   line-height: 1.15;
+  white-space: nowrap;
 }
 
 .home-number-group__hint {

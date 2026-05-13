@@ -35,6 +35,7 @@ class ApiTokenAuth
             return null;
         }
 
+        // Sanctum-style bearer tokens arrive as "{id}|{plainTextToken}"; only the SHA-256 hash is stored.
         [$tokenId, $plainTextToken] = explode('|', $bearerToken, 2);
 
         if (! ctype_digit($tokenId) || $plainTextToken === '') {

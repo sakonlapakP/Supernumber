@@ -101,7 +101,7 @@
             <th>ผลรวม</th>
             <th>ประเภท</th>
             <th>เครือข่าย</th>
-            <th>ราคา / แพ็กเกจ</th>
+            <th>แพ็กเกจ / ราคาเบอร์</th>
             <th>สถานะ</th>
             <th>จัดการ</th>
           </tr>
@@ -116,8 +116,14 @@
                 <td>{{ $number->number_sum ?: '-' }}</td>
                 <td>{{ $number->service_type_label }}</td>
                 <td>{{ $number->network_label }}</td>
-                <td>{{ $number->payment_label }}</td>
-                <td><span class="admin-status-pill admin-status-pill--hold">{{ $number->status ?: '-' }}</span></td>
+                <td>
+                  <div>{{ $number->is_postpaid ? $number->package_label : 'เติมเงิน' }}</div>
+                  <div class="admin-muted" style="font-size: 0.86rem;">
+                    ราคาเบอร์ {{ $number->payment_label }}
+
+                  </div>
+                </td>
+                <td><span class="admin-status-pill admin-status-pill--hold">{{ $number->status_label ?: '-' }}</span></td>
                 <td class="admin-action-cell">
                   <div class="admin-action-group">
                     <a href="{{ route('admin.numbers.edit', $number) }}" class="admin-button admin-button--secondary admin-button--compact">แก้ไข</a>

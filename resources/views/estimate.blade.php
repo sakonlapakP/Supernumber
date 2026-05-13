@@ -30,6 +30,11 @@
 @endsection
 
 @section('content')
+  @php
+    $workTypeLabels = \App\Models\EstimateLead::workTypeLabels();
+    $goalLabels = \App\Models\EstimateLead::goalLabels();
+  @endphp
+
   <section class="estimate-hero" aria-labelledby="estimate-title">
     <div class="estimate-hero__overlay"></div>
     <div class="container estimate-hero__content">
@@ -91,10 +96,9 @@
               ลักษณะงานหลักที่ทำ*
               <select name="work_type">
                 <option value="">-- เลือกลักษณะงานที่ทำ --</option>
-                <option value="sales" @selected(old('work_type') === 'sales')>งานขาย / เจรจา</option>
-                <option value="service" @selected(old('work_type') === 'service')>งานบริการ / ดูแลลูกค้า</option>
-                <option value="office" @selected(old('work_type') === 'office')>งานออฟฟิศ / บริหาร</option>
-                <option value="online" @selected(old('work_type') === 'online')>งานออนไลน์ / คอนเทนต์</option>
+                @foreach ($workTypeLabels as $workTypeValue => $workTypeLabel)
+                  <option value="{{ $workTypeValue }}" @selected(old('work_type') === $workTypeValue)>{{ $workTypeLabel }}</option>
+                @endforeach
               </select>
             </label>
             <label>
@@ -117,10 +121,9 @@
             วัตถุประสงค์ในการเปลี่ยนเบอร์*
             <select name="goal">
               <option value="">-- เลือกวัตถุประสงค์ในการเปลี่ยนเบอร์ --</option>
-              <option value="work" @selected(old('goal') === 'work')>เน้นการงาน / โอกาสใหม่</option>
-              <option value="money" @selected(old('goal') === 'money')>เน้นการเงิน / ปิดการขาย</option>
-              <option value="love" @selected(old('goal') === 'love')>เน้นความรัก / ความสัมพันธ์</option>
-              <option value="balance" @selected(old('goal') === 'balance')>เน้นสมดุลชีวิต</option>
+              @foreach ($goalLabels as $goalValue => $goalLabel)
+                <option value="{{ $goalValue }}" @selected(old('goal') === $goalValue)>{{ $goalLabel }}</option>
+              @endforeach
             </select>
           </label>
 
@@ -135,7 +138,7 @@
   <section class="estimate-seo-content container">
     <div class="estimate-seo-card">
       <h2>ทำไมต้องใช้ระบบเลือกเบอร์มงคลอัจฉริยะ?</h2>
-      <p>การเลือกเบอร์โทรศัพท์ไม่ใช่แค่เรื่องของความสวยงาม แต่เป็นเรื่องของ <strong>"พลังงานตัวเลข"</strong> ที่ส่งผลต่อชีวิตในทุกๆ ด้าน ระบบของเราถูกออกแบบมาเพื่อช่วยให้คุณค้นพบเบอร์ที่ใช่ที่สุด โดยวิเคราะห์จากข้อมูลส่วนบุคคลที่สำคัญ:</p>
+      <p>การเลือกเบอร์โทรศัพท์ไม่ใช่แค่เรื่องของความสวยงาม แต่เป็นเรื่องของ <strong>"พลังตัวเลข"</strong> ที่ส่งผลต่อชีวิตในทุกๆ ด้าน ระบบของเราถูกออกแบบมาเพื่อช่วยให้คุณค้นพบเบอร์ที่ใช่ที่สุด โดยวิเคราะห์จากข้อมูลส่วนบุคคลที่สำคัญ:</p>
       
       <div class="seo-feature-grid">
         <div class="seo-feature-item">

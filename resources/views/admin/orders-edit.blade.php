@@ -18,24 +18,84 @@
     <div class="admin-alert admin-alert--error">{{ $errors->first() }}</div>
   @endif
 
+  <style>
+    .admin-form--inline-fields .admin-field {
+      grid-template-columns: 200px 1fr;
+      align-items: center;
+      gap: 12px;
+      border-bottom: 1px solid var(--admin-border);
+      padding-bottom: 4px;
+      margin-bottom: 4px;
+    }
+    .admin-form--inline-fields .admin-field label {
+      margin: 0;
+      color: var(--admin-muted);
+      font-weight: 600;
+      font-size: 12px;
+    }
+    .admin-form--inline-fields .admin-input,
+    .admin-form--inline-fields .admin-select {
+      border: none;
+      padding: 4px 0;
+      background: transparent;
+      box-shadow: none;
+      min-height: 28px;
+      font-weight: 500;
+      font-size: 14px;
+    }
+    .admin-form--inline-fields .admin-input:focus,
+    .admin-form--inline-fields .admin-select:focus {
+      box-shadow: none;
+      border-bottom: 1px solid var(--admin-primary);
+      border-radius: 0;
+    }
+    .admin-form--inline-fields .admin-input[readonly] {
+      color: var(--admin-text);
+      cursor: not-allowed;
+      opacity: 0.8;
+    }
+  </style>
+
   <section class="admin-card admin-feature-card">
-    <form class="admin-form" action="{{ route('admin.orders.update', $order) }}" method="post" enctype="multipart/form-data">
+    <form class="admin-form admin-form--inline-fields" action="{{ route('admin.orders.update', $order) }}" method="post" enctype="multipart/form-data">
       @csrf
       @method('put')
 
       <div class="admin-field">
         <label for="ordered_number">เบอร์ที่สั่งซื้อ</label>
-        <input id="ordered_number" class="admin-input" type="text" name="ordered_number" value="{{ old('ordered_number', $order->ordered_number) }}" required />
+        <input id="ordered_number" class="admin-input" type="text" name="ordered_number" value="{{ old('ordered_number', $order->ordered_number) }}" readonly required />
       </div>
 
       <div class="admin-field">
-        <label for="selected_package">{{ $order->is_prepaid ? 'ยอดชำระ (บาท)' : 'แพคเกจ (บาท/เดือน)' }}</label>
-        <input id="selected_package" class="admin-input" type="number" min="1" name="selected_package" value="{{ old('selected_package', (int) $order->selected_package) }}" required />
+        <label for="initial_payment_price">ยอดชำระแรก (บาท)</label>
+        <input id="initial_payment_price" class="admin-input" type="number" min="1" name="initial_payment_price" value="{{ old('initial_payment_price', $order->initial_payment_amount) }}" readonly required />
       </div>
+
+      @if ($order->is_postpaid)
+        <div class="admin-field" style="display: none;">
+          <label for="package_code">รหัสแพ็กเกจ</label>
+          <input id="package_code" class="admin-input" type="text" name="package_code" value="{{ old('package_code', $order->package_code ?: $order->package?->code) }}" />
+        </div>
+
+        <div class="admin-field">
+          <label for="package_name">ชื่อแพ็กเกจ</label>
+          <input id="package_name" class="admin-input" type="text" name="package_name" value="{{ old('package_name', $order->package_name ?: $order->package?->name) }}" />
+        </div>
+
+        <div class="admin-field" style="display: none;">
+          <label for="monthly_price">ค่าบริการรายเดือน (บาท)</label>
+          <input id="monthly_price" class="admin-input" type="number" name="monthly_price" value="{{ old('monthly_price', $order->monthly_price) }}" readonly />
+        </div>
+      @endif
 
       <div class="admin-field">
         <label for="title_prefix">คำนำหน้า</label>
-        <input id="title_prefix" class="admin-input" type="text" name="title_prefix" value="{{ old('title_prefix', $order->title_prefix) }}" />
+        <select id="title_prefix" class="admin-select" name="title_prefix">
+          <option value="">- ไม่ระบุ -</option>
+          @foreach(['นาย', 'นางสาว'] as $prefix)
+            <option value="{{ $prefix }}" {{ old('title_prefix', $order->title_prefix) === $prefix ? 'selected' : '' }}>{{ $prefix }}</option>
+          @endforeach
+        </select>
       </div>
 
       <div class="admin-field">
@@ -95,22 +155,35 @@
 
       <div class="admin-field">
         <label for="status">สถานะ</label>
-        <input id="status" class="admin-input" type="text" name="status" value="{{ old('status', $order->status) }}" list="order-status-options" required />
-        <datalist id="order-status-options">
-          <option value="submitted"></option>
-          <option value="pending_review"></option>
-          <option value="paid"></option>
-          <option value="sold"></option>
-          <option value="completed"></option>
-          <option value="rejected"></option>
-          <option value="cancelled"></option>
-        </datalist>
-        <p class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem;">เบอร์เติมเงินจะ hold อัตโนมัติระหว่างตรวจสอบ และจะเปลี่ยนเป็น sold เมื่อสถานะเป็น `sold` หรือ `completed`</p>
+        <select id="status" class="admin-select" name="status" required>
+          @foreach (App\Models\CustomerOrder::statusOptions() as $option)
+            <option value="{{ $option }}" {{ old('status', $order->status) === $option ? 'selected' : '' }}>
+              {{ App\Models\CustomerOrder::statusLabelOptions()[$option] ?? $option }}
+            </option>
+          @endforeach
+        </select>
+        <p class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem; grid-column: 2;">เบอร์จะถูกล็อคเป็น 'จอง' ระหว่างดำเนินการ และจะเปลี่ยนเป็น 'ขายแล้ว' เมื่อสถานะเป็น 'สำเร็จ'</p>
       </div>
 
       <div class="admin-field">
-        <label for="payment_slip">เปลี่ยนหลักฐานการโอน (ถ้าต้องการ)</label>
-        <input id="payment_slip" class="admin-input" type="file" name="payment_slip" accept="image/*,application/pdf,.pdf" />
+        <label for="payment_slip">หลักฐานการโอน</label>
+        <div style="display: grid; gap: 8px;">
+          @php
+            $slipPath = $order->payment_slip_path;
+            $slipUrl = $slipPath;
+            if ($slipPath && !Str::startsWith($slipPath, ['http://', 'https://'])) {
+                $slipUrl = asset('storage/' . $slipPath);
+            }
+          @endphp
+          @if ($slipUrl)
+            <div style="font-size: 0.8rem; color: var(--admin-muted);">รูปปัจจุบัน:</div>
+            <a href="{{ $slipUrl }}" target="_blank">
+              <img src="{{ $slipUrl }}" alt="หลักฐานการโอน" style="max-width: 180px; border-radius: 8px; border: 1px solid var(--admin-border);" />
+            </a>
+          @endif
+          <div style="font-size: 0.8rem; color: var(--admin-muted); margin-top: 4px;">เปลี่ยนหลักฐานการโอน (ถ้าต้องการ):</div>
+          <input id="payment_slip" class="admin-input" type="file" name="payment_slip" accept="image/*,application/pdf,.pdf" />
+        </div>
       </div>
 
       <button type="submit" class="admin-button">บันทึกการแก้ไข</button>

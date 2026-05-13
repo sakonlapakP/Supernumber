@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\PhoneNumber;
+use App\Models\PhonePackage;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
@@ -80,12 +81,16 @@ class ImportPostpaidSnapshotCommand extends Command
                     $stats['preserved_status']++;
                 }
 
+                $package = $this->resolvePackage((int) $price);
+
                 $payload = [
                     'number_sum' => PhoneNumber::calculateNumberSum($phoneNumber),
                     'service_type' => PhoneNumber::SERVICE_TYPE_POSTPAID,
                     'network_code' => PhoneNumber::NETWORK_TRUE_DTAC,
-                    'plan_name' => PhoneNumber::PACKAGE_NAME,
+                    'plan_name' => $package?->name ?? PhoneNumber::PACKAGE_NAME,
                     'sale_price' => $price,
+                    'initial_payment_price' => $price,
+                    'package_id' => $package?->id,
                     'status' => $status,
                 ];
 
@@ -181,5 +186,15 @@ class ImportPostpaidSnapshotCommand extends Command
         return in_array($status, [PhoneNumber::STATUS_HOLD, PhoneNumber::STATUS_SOLD], true)
             ? $status
             : PhoneNumber::STATUS_ACTIVE;
+    }
+
+    private function resolvePackage(int $monthlyPrice): ?PhonePackage
+    {
+        return PhonePackage::query()
+            ->where('service_type', PhoneNumber::SERVICE_TYPE_POSTPAID)
+            ->where('network_code', PhoneNumber::NETWORK_TRUE_DTAC)
+            ->where('monthly_price', $monthlyPrice)
+            ->where('is_active', true)
+            ->first();
     }
 }

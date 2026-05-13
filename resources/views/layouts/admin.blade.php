@@ -923,7 +923,12 @@
               'active' => request()->routeIs('admin.hold-numbers'),
             ],
             [
-              'label' => 'คำสั่งซื้อ',
+              'label' => 'แพ็กเกจรายเดือน',
+              'url' => route('admin.phone-packages'),
+              'active' => request()->routeIs('admin.phone-packages*'),
+            ],
+            [
+              'label' => 'ลูกค้าที่ซื้อเบอร์ (คำสั่งซื้อ)',
               'url' => route('admin.orders'),
               'active' => request()->routeIs('admin.orders*'),
             ],
@@ -933,14 +938,29 @@
           'label' => 'ใบเสนอราคา / ใบแจ้งหนี้',
           'items' => [
             [
-              'label' => 'ลูกค้า',
-              'url' => route('admin.customers'),
-              'active' => request()->routeIs('admin.customers*'),
-            ],
-            [
               'label' => 'รายการเอกสารทั้งหมด',
               'url' => route('admin.saved-sales-documents.index'),
               'active' => request()->routeIs('admin.saved-sales-documents.*') || request()->routeIs('admin.sales-documents'),
+            ],
+            [
+              'label' => 'ลูกค้าที่ขอใบกำกับภาษี/ใบแจ้งหนี้',
+              'url' => route('admin.customers'),
+              'active' => request()->routeIs('admin.customers*'),
+            ],
+          ],
+        ],
+        [
+          'label' => 'ลูกค้าและการติดต่อ',
+          'items' => [
+            [
+              'label' => 'ลูกค้าเลือกเบอร์อัตโนมัติ',
+              'url' => route('admin.estimate-leads'),
+              'active' => request()->routeIs('admin.estimate-leads*'),
+            ],
+            [
+              'label' => 'ข้อความติดต่อ (Contact Us)',
+              'url' => route('admin.contact-messages'),
+              'active' => request()->routeIs('admin.contact-messages*'),
             ],
           ],
         ],
@@ -958,16 +978,6 @@
               'active' => request()->routeIs('admin.comments*'),
             ],
             [
-              'label' => 'ข้อความติดต่อ',
-              'url' => route('admin.contact-messages'),
-              'active' => request()->routeIs('admin.contact-messages*'),
-            ],
-            [
-              'label' => 'Lead เลือกเบอร์',
-              'url' => route('admin.estimate-leads'),
-              'active' => request()->routeIs('admin.estimate-leads*'),
-            ],
-            [
               'label' => 'ตั้งค่าข้อความอัตโนมัติ',
               'url' => route('admin.auto-messages'),
               'active' => request()->routeIs('admin.auto-messages*'),
@@ -977,14 +987,16 @@
       ];
 
       if (session('admin_user_role') === 'manager') {
+        // เพิ่ม Submission ลูกค้า เข้าไปในหมวดลูกค้าและการติดต่อ สำหรับ Manager
+        $adminNavGroups[2]['items'][] = [
+          'label' => 'ประวัติวิเคราะห์เบอร์ / ส่งฟอร์ม',
+          'url' => route('admin.customer-submissions'),
+          'active' => request()->routeIs('admin.customer-submissions'),
+        ];
+
         $adminNavGroups[] = [
           'label' => 'ระบบ',
           'items' => [
-            [
-              'label' => 'Submission ลูกค้า',
-              'url' => route('admin.customer-submissions'),
-              'active' => request()->routeIs('admin.customer-submissions'),
-            ],
             [
               'label' => 'Analytics GA4',
               'url' => route('admin.analytics'),
@@ -1001,6 +1013,11 @@
               'active' => request()->routeIs('admin.users'),
             ],
             [
+              'label' => 'อัพเดทเบอร์ (CSV)',
+              'url' => route('admin.import-numbers'),
+              'active' => request()->routeIs('admin.import-numbers*'),
+            ],
+            [
               'label' => 'บันทึกระบบ',
               'url' => route('admin.logs'),
               'active' => request()->routeIs('admin.logs'),
@@ -1009,6 +1026,11 @@
               'label' => 'บันทึกกิจกรรม',
               'url' => route('admin.activity-logs'),
               'active' => request()->routeIs('admin.activity-logs'),
+            ],
+            [
+              'label' => 'ประวัติแก้ไขคำสั่งซื้อ',
+              'url' => route('admin.orders.activity-logs'),
+              'active' => request()->routeIs('admin.orders.activity-logs'),
             ],
           ],
         ];

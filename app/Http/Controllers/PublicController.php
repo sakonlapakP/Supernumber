@@ -36,6 +36,7 @@ class PublicController extends Controller
         $homeNumbersLimitPerType = 48;
 
         $baseQuery = PhoneNumber::query()
+            ->with('package')
             ->available()
             ->supportedNetwork();
 
@@ -101,6 +102,7 @@ class PublicController extends Controller
         }
 
         $baseQuery = PhoneNumber::query()
+            ->with('package')
             ->available()
             ->supportedNetwork()
             ->when($selectedServiceType !== '', function ($query) use ($selectedServiceType) {
@@ -146,6 +148,7 @@ class PublicController extends Controller
             : PhoneNumber::parsePackageLabel($selectedPlan);
 
         $applyCatalogFilters = static function ($query) use ($searchDigits, $positionPattern, $selectedPlan, $selectedServiceType, $selectedPrepaidPriceRange, $selectedPlanName, $selectedPlanPrice) {
+            // The same filter closure is reused for split default lists and normal paginated search.
             return $query
                 ->when($searchDigits !== '', function ($builder) use ($searchDigits) {
                     $builder->where('phone_number', 'like', '%' . $searchDigits . '%');
@@ -157,32 +160,36 @@ class PublicController extends Controller
                         $max = $selectedPrepaidPriceRange['max'];
 
                         if ($min === null && $max !== null) {
-                            $builder->where('sale_price', '<', $max);
+                            $builder->whereRaw('COALESCE(initial_payment_price, sale_price) < ?', [$max]);
                             return;
                         }
 
                         if ($min !== null && $max === null) {
-                            $builder->where('sale_price', '>', $min);
+                            $builder->whereRaw('COALESCE(initial_payment_price, sale_price) > ?', [$min]);
                             return;
                         }
 
                         if ($min !== null && $max !== null) {
-                            $builder->where('sale_price', '>=', $min)
-                                ->where('sale_price', '<', $max);
+                            $builder->whereRaw('COALESCE(initial_payment_price, sale_price) >= ?', [$min])
+                                ->whereRaw('COALESCE(initial_payment_price, sale_price) < ?', [$max]);
                         }
 
                         return;
                     }
 
-                    if ($selectedPlanName !== null) {
-                        $builder->where('plan_name', $selectedPlanName);
-                    }
+                    $builder->where(function ($query) use ($selectedPlanName, $selectedPlanPrice) {
+                        if ($selectedPlanName !== null) {
+                            $query->where('plan_name', $selectedPlanName)
+                                ->orWhereHas('package', fn ($packageQuery) => $packageQuery->where('name', $selectedPlanName));
+                        }
 
-                    if ($selectedPlanPrice !== null) {
-                        $builder->where('sale_price', $selectedPlanPrice);
-                    }
+                        if ($selectedPlanPrice !== null) {
+                            $query->orWhere('sale_price', $selectedPlanPrice)
+                                ->orWhereHas('package', fn ($packageQuery) => $packageQuery->where('monthly_price', $selectedPlanPrice));
+                        }
+                    });
                 })
-                ->orderBy('sale_price')
+                ->orderByRaw('COALESCE(initial_payment_price, sale_price)')
                 ->orderBy('phone_number');
         };
 
@@ -200,6 +207,7 @@ class PublicController extends Controller
             $currentPage = Paginator::resolveCurrentPage('page');
             $columnOffset = max(0, ($currentPage - 1) * $perColumn);
 
+            // Default catalog pages intentionally balance prepaid and postpaid numbers side by side.
             $prepaidQuery = $applyCatalogFilters(
                 (clone $baseQuery)->prepaid()
             );
@@ -448,6 +456,7 @@ class PublicController extends Controller
         );
 
         if ($spamResult['blocked']) {
+            // Return the same success message so blocked spam does not learn which rule caught it.
             return redirect()
                 ->route('contact')
                 ->with('contact_status_message', 'ส่งข้อความเรียบร้อยแล้ว ทีมงานจะติดต่อกลับตามข้อมูลที่แจ้งไว้');
@@ -499,6 +508,7 @@ class PublicController extends Controller
             ->orderByDesc('fetched_at')
             ->orderByDesc('id');
 
+        // Lottery article slugs encode month and draw half, so the detail page can attach the matching result.
         if ($slug === 'thai-goverment-lottery-latest-results') {
             return (clone $latestResultQuery)->first();
         }

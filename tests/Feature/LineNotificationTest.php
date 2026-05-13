@@ -141,7 +141,9 @@ class LineNotificationTest extends TestCase
                 && str_contains($message, 'มีคำสั่งซื้อเบอร์ใหม่')
                 && str_contains($message, 'เบอร์: 0891234567')
                 && str_contains($message, 'ประเภท: รายเดือน')
-                && str_contains($message, 'ยอดชำระ: 399 บาท / เดือน')
+                && str_contains($message, 'ยอดชำระแรก: 399 บาท')
+                && str_contains($message, 'แพ็กเกจ: True Super Value 399')
+                && str_contains($message, 'ค่าบริการรายเดือน: 399 บาท / เดือน')
                 && str_contains($message, 'ชื่อ: คุณ สุดา ดีพร้อม')
                 && ! str_contains($message, 'หลักฐานการโอน:');
         });

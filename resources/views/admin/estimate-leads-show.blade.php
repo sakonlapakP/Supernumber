@@ -1,11 +1,11 @@
 @extends('layouts.admin')
 
-@section('title', 'Supernumber Admin | รายละเอียด Lead เลือกเบอร์')
+@section('title', 'Supernumber Admin | รายละเอียดลูกค้าเลือกเบอร์อัตโนมัติ')
 
 @section('content')
   <div class="admin-page-head">
     <div>
-      <h1>รายละเอียด Lead เลือกเบอร์</h1>
+      <h1>รายละเอียดลูกค้าเลือกเบอร์อัตโนมัติ</h1>
       <p class="admin-subtitle">ข้อมูลที่ลูกค้ากรอกจากหน้า <code>/estimate</code> พร้อมประวัติการแจ้งเตือน LINE ล่าสุด</p>
     </div>
     <div class="admin-page-actions" style="margin-left: 0; margin-right: auto;">

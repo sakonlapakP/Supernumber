@@ -86,6 +86,7 @@
     }
 
     $recommendedNumbers = \App\Models\PhoneNumber::query()
+        ->with('package')
         ->available()
         ->supportedNetwork()
         ->where('phone_number', '!=', $phone)
@@ -99,6 +100,7 @@
             ->push($phone)
             ->all();
         $extraNumbers = \App\Models\PhoneNumber::query()
+            ->with('package')
             ->available()
             ->supportedNetwork()
             ->whereNotIn('phone_number', $excludedNumbers)

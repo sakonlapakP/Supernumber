@@ -1,4 +1,4 @@
-<article class="number-card number-card--listing number-card--catalog">
+<article class="number-card number-card--listing number-card--home">
   <div class="card-left-group">
     <div class="card-top">{{ $number->formatted_number }}</div>
 

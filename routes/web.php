@@ -2,11 +2,13 @@
 
 use App\Models\PhoneNumberStatusLog;
 use App\Models\PhoneNumber;
+use App\Models\PhonePackage;
 use App\Models\Article;
 use App\Models\ArticleComment;
 use App\Models\ContactMessage;
-use App\Models\Customer;
+use App\Models\BillingCustomer;
 use App\Models\CustomerOrder;
+use App\Models\CustomerOrderActivityLog;
 use App\Models\CustomerSubmission;
 use App\Models\EstimateLead;
 use App\Models\LotteryResult;
@@ -279,12 +281,7 @@ $storeOrderPaymentSlip = function (CustomerOrder $order, UploadedFile $file): st
         default => $originalExtension !== '' ? $originalExtension : 'bin',
     };
 
-    $path = $directory . '/' . $order->id . '.' . ($image !== null ? 'png' : $originalExtension);
-
-    $previousPath = trim((string) $order->payment_slip_path);
-    if ($previousPath !== '' && $previousPath !== $path && $disk->exists($previousPath)) {
-        $disk->delete($previousPath);
-    }
+    $path = $directory . '/' . $order->id . '_' . time() . '.' . ($image !== null ? 'png' : $originalExtension);
 
     $disk->put($path, $image ?? $contents);
 
@@ -899,6 +896,7 @@ Route::get('/book', function () {
     }
 
     $currentNumber = PhoneNumber::query()
+        ->with('package')
         ->where('phone_number', $orderedNumber)
         ->firstOrFail();
 
@@ -956,7 +954,47 @@ $validatePrepaidOrderCustomerDetails = static function (array $customerDetails):
     ])->validate();
 };
 
-Route::post('/book/save-step2', function (Request $request) use ($defaultOrderStatus, $normalizeServiceType, $storeOrderPaymentSlip, $safelyRunLineNotification, $syncPhoneNumberStatusFromOrder, $normalizeOrderCustomerDetails, $validatePrepaidOrderCustomerDetails) {
+$buildOrderPackageSnapshot = static function (PhoneNumber $phoneNumber, string $serviceType): array {
+    $initialPayment = $phoneNumber->initial_payment_amount;
+
+    if ($initialPayment === null || $initialPayment < 1) {
+        throw ValidationException::withMessages([
+            'selected_package' => $serviceType === PhoneNumber::SERVICE_TYPE_PREPAID
+                ? 'ไม่พบราคาขายของเบอร์เติมเงิน'
+                : 'ไม่พบยอดจ่ายก้อนแรกของเบอร์รายเดือน',
+        ]);
+    }
+
+    if ($serviceType === PhoneNumber::SERVICE_TYPE_PREPAID) {
+        return [
+            'selected_package' => $initialPayment,
+            'package_id' => null,
+            'package_code' => null,
+            'package_name' => null,
+            'monthly_price' => null,
+            'initial_payment_price' => $initialPayment,
+        ];
+    }
+
+    $package = $phoneNumber->package;
+    $monthlyPrice = $package?->monthly_price ?? $phoneNumber->monthly_package_price;
+    if ($monthlyPrice === null || $monthlyPrice < 1) {
+        throw ValidationException::withMessages([
+            'selected_package' => 'ไม่พบแพ็กเกจรายเดือนของเบอร์นี้',
+        ]);
+    }
+
+    return [
+        'selected_package' => $initialPayment,
+        'package_id' => $package?->id,
+        'package_code' => $package?->code,
+        'package_name' => $package?->name ?: (trim((string) $phoneNumber->plan_name) ?: PhoneNumber::PACKAGE_NAME),
+        'monthly_price' => $monthlyPrice,
+        'initial_payment_price' => $initialPayment,
+    ];
+};
+
+Route::post('/book/save-step2', function (Request $request) use ($defaultOrderStatus, $normalizeServiceType, $storeOrderPaymentSlip, $safelyRunLineNotification, $syncPhoneNumberStatusFromOrder, $normalizeOrderCustomerDetails, $validatePrepaidOrderCustomerDetails, $buildOrderPackageSnapshot) {
     $data = $request->validate([
         'saved_order_id' => ['nullable', 'integer'],
         'ordered_number' => ['required', 'string', 'max:20'],
@@ -990,6 +1028,7 @@ Route::post('/book/save-step2', function (Request $request) use ($defaultOrderSt
     $isNewOrder = ! $order->exists;
 
     $currentNumber = PhoneNumber::query()
+        ->with('package')
         ->where('phone_number', $orderedNumber)
         ->first();
 
@@ -1015,23 +1054,13 @@ Route::post('/book/save-step2', function (Request $request) use ($defaultOrderSt
         ]);
     }
 
-    $selectedPackage = $serviceType === PhoneNumber::SERVICE_TYPE_PREPAID
-        ? (int) ($currentNumber->sale_price ?? 0)
-        : (int) $data['selected_package'];
-
-    if ($selectedPackage < 1) {
-        throw ValidationException::withMessages([
-            'selected_package' => $serviceType === PhoneNumber::SERVICE_TYPE_PREPAID
-                ? 'ไม่พบราคาขายของเบอร์เติมเงิน'
-                : 'กรุณาเลือกแพ็กเกจ',
-        ]);
-    }
+    $packageSnapshot = $buildOrderPackageSnapshot($currentNumber, $serviceType);
 
     $order->fill([
         'phone_number_id' => $currentNumber->id,
         'ordered_number' => $orderedNumber !== '' ? $orderedNumber : trim((string) $data['ordered_number']),
         'service_type' => $serviceType,
-        'selected_package' => $selectedPackage,
+        ...$packageSnapshot,
         'title_prefix' => $customerDetails['title_prefix'] !== '' ? $customerDetails['title_prefix'] : null,
         'first_name' => $customerDetails['first_name'] !== '' ? $customerDetails['first_name'] : null,
         'last_name' => $customerDetails['last_name'] !== '' ? $customerDetails['last_name'] : null,
@@ -1070,7 +1099,7 @@ Route::post('/book/save-step2', function (Request $request) use ($defaultOrderSt
     ]);
 })->name('book.save-step2');
 
-Route::post('/book', function (Request $request) use ($defaultOrderStatus, $normalizeServiceType, $storeOrderPaymentSlip, $safelyRunLineNotification, $syncPhoneNumberStatusFromOrder, $normalizeOrderCustomerDetails, $validatePrepaidOrderCustomerDetails) {
+Route::post('/book', function (Request $request) use ($defaultOrderStatus, $normalizeServiceType, $storeOrderPaymentSlip, $safelyRunLineNotification, $syncPhoneNumberStatusFromOrder, $normalizeOrderCustomerDetails, $validatePrepaidOrderCustomerDetails, $buildOrderPackageSnapshot) {
     $data = $request->validate([
         'saved_order_id' => ['nullable', 'integer'],
         'ordered_number' => ['required', 'string', 'max:20'],
@@ -1104,6 +1133,7 @@ Route::post('/book', function (Request $request) use ($defaultOrderStatus, $norm
     $isNewOrder = ! $order->exists;
 
     $currentNumber = PhoneNumber::query()
+        ->with('package')
         ->where('phone_number', $orderedNumber)
         ->first();
 
@@ -1129,17 +1159,7 @@ Route::post('/book', function (Request $request) use ($defaultOrderStatus, $norm
         ]);
     }
 
-    $selectedPackage = $serviceType === PhoneNumber::SERVICE_TYPE_PREPAID
-        ? (int) ($currentNumber->sale_price ?? 0)
-        : (int) $data['selected_package'];
-
-    if ($selectedPackage < 1) {
-        throw ValidationException::withMessages([
-            'selected_package' => $serviceType === PhoneNumber::SERVICE_TYPE_PREPAID
-                ? 'ไม่พบราคาขายของเบอร์เติมเงิน'
-                : 'กรุณาเลือกแพ็กเกจ',
-        ]);
-    }
+    $packageSnapshot = $buildOrderPackageSnapshot($currentNumber, $serviceType);
 
     $slipPath = $order->payment_slip_path;
     if (! $slipPath && ! $request->hasFile('payment_slip')) {
@@ -1152,7 +1172,7 @@ Route::post('/book', function (Request $request) use ($defaultOrderStatus, $norm
         'phone_number_id' => $currentNumber->id,
         'ordered_number' => $orderedNumber !== '' ? $orderedNumber : trim((string) $data['ordered_number']),
         'service_type' => $serviceType,
-        'selected_package' => $selectedPackage,
+        ...$packageSnapshot,
         'title_prefix' => $customerDetails['title_prefix'] !== '' ? $customerDetails['title_prefix'] : null,
         'first_name' => $customerDetails['first_name'] !== '' ? $customerDetails['first_name'] : null,
         'last_name' => $customerDetails['last_name'] !== '' ? $customerDetails['last_name'] : null,
@@ -1190,7 +1210,7 @@ Route::post('/book', function (Request $request) use ($defaultOrderStatus, $norm
     return redirect()
         ->route('book', [
             'number' => $data['ordered_number'],
-            'package' => (int) $data['selected_package'],
+            'package' => $packageSnapshot['monthly_price'] ?? $packageSnapshot['initial_payment_price'],
         ])
         ->with('status_message', 'บันทึกคำสั่งซื้อเรียบร้อยแล้ว เจ้าหน้าที่จะติดต่อกลับโดยเร็วที่สุด');
 })->name('book.submit');
@@ -1370,6 +1390,120 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     Route::get('/register', [\App\Http\Controllers\Admin\RegisterController::class, 'showRegistrationForm'])->name('register');
     Route::post('/register', [\App\Http\Controllers\Admin\RegisterController::class, 'register'])->name('register.store');
 
+    Route::get('/import-numbers', function () use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin('manager')) return $redirect;
+        return (new \App\Http\Controllers\Admin\PhoneNumberImportController())->index();
+    })->name('import-numbers');
+
+    Route::get('/import-numbers/sample', function () use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin('manager')) return $redirect;
+        return (new \App\Http\Controllers\Admin\PhoneNumberImportController())->downloadSample();
+    })->name('import-numbers.sample');
+
+    Route::post('/import-numbers', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin('manager')) return $redirect;
+        return (new \App\Http\Controllers\Admin\PhoneNumberImportController())->store($request);
+    })->name('import-numbers.store');
+
+    Route::get('/phone-packages', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin('manager')) {
+            return $redirect;
+        }
+
+        $search = trim((string) $request->query('q', ''));
+        $packages = PhonePackage::query()
+            ->when($search !== '', function ($query) use ($search) {
+                $term = mb_strtolower($search);
+                $query->where(function ($innerQuery) use ($search, $term) {
+                    $innerQuery->whereRaw('LOWER(code) like ?', ['%' . $term . '%'])
+                        ->orWhereRaw('LOWER(name) like ?', ['%' . $term . '%'])
+                        ->orWhereRaw('LOWER(network_code) like ?', ['%' . $term . '%'])
+                        ->orWhereRaw('CAST(monthly_price AS CHAR) like ?', ['%' . $search . '%']);
+                });
+            })
+            ->orderBy('network_code')
+            ->orderBy('monthly_price')
+            ->paginate(20);
+
+        return view('admin.phone-packages', compact('packages', 'search'));
+    })->name('phone-packages');
+
+    Route::get('/phone-packages/create', function () use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin('manager')) {
+            return $redirect;
+        }
+
+        return view('admin.phone-packages-form', [
+            'package' => new PhonePackage(),
+            'action' => route('admin.phone-packages.store'),
+            'method' => 'post',
+        ]);
+    })->name('phone-packages.create');
+
+    Route::post('/phone-packages', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin('manager')) {
+            return $redirect;
+        }
+
+        $data = $request->validate([
+            'code' => ['required', 'string', 'max:80', Rule::unique('phone_packages', 'code')],
+            'service_type' => ['required', 'string', Rule::in([PhoneNumber::SERVICE_TYPE_POSTPAID])],
+            'network_code' => ['required', 'string', Rule::in(PhoneNumber::supportedNetworkCodes())],
+            'name' => ['required', 'string', 'max:255'],
+            'monthly_price' => ['required', 'integer', 'min:1'],
+            'data_quota' => ['nullable', 'string', 'max:255'],
+            'speed_after_quota' => ['nullable', 'string', 'max:255'],
+            'voice_minutes' => ['nullable', 'string', 'max:255'],
+            'benefits' => ['nullable', 'string', 'max:4000'],
+            'conditions' => ['nullable', 'string', 'max:4000'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $data['code'] = strtoupper(trim($data['code']));
+        $data['is_active'] = $request->boolean('is_active');
+        PhonePackage::query()->create($data);
+
+        return redirect()->route('admin.phone-packages')->with('status_message', 'สร้างแพ็กเกจเรียบร้อยแล้ว');
+    })->name('phone-packages.store');
+
+    Route::get('/phone-packages/{phonePackage}/edit', function (PhonePackage $phonePackage) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin('manager')) {
+            return $redirect;
+        }
+
+        return view('admin.phone-packages-form', [
+            'package' => $phonePackage,
+            'action' => route('admin.phone-packages.update', $phonePackage),
+            'method' => 'put',
+        ]);
+    })->name('phone-packages.edit');
+
+    Route::put('/phone-packages/{phonePackage}', function (Request $request, PhonePackage $phonePackage) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin('manager')) {
+            return $redirect;
+        }
+
+        $data = $request->validate([
+            'code' => ['required', 'string', 'max:80', Rule::unique('phone_packages', 'code')->ignore($phonePackage->id)],
+            'service_type' => ['required', 'string', Rule::in([PhoneNumber::SERVICE_TYPE_POSTPAID])],
+            'network_code' => ['required', 'string', Rule::in(PhoneNumber::supportedNetworkCodes())],
+            'name' => ['required', 'string', 'max:255'],
+            'monthly_price' => ['required', 'integer', 'min:1'],
+            'data_quota' => ['nullable', 'string', 'max:255'],
+            'speed_after_quota' => ['nullable', 'string', 'max:255'],
+            'voice_minutes' => ['nullable', 'string', 'max:255'],
+            'benefits' => ['nullable', 'string', 'max:4000'],
+            'conditions' => ['nullable', 'string', 'max:4000'],
+            'is_active' => ['nullable', 'boolean'],
+        ]);
+
+        $data['code'] = strtoupper(trim($data['code']));
+        $data['is_active'] = $request->boolean('is_active');
+        $phonePackage->update($data);
+
+        return redirect()->route('admin.phone-packages.edit', $phonePackage)->with('status_message', 'อัปเดตแพ็กเกจเรียบร้อยแล้ว');
+    })->name('phone-packages.update');
+
     Route::get('/tests', function (Request $request) use ($ensureAdmin, $resolveTestDiscovery) {
         abort_if(app()->isProduction(), 404);
 
@@ -1411,6 +1545,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
 
         $numbers = PhoneNumber::query()
+            ->with('package')
             ->when($selectedServiceType !== null, function ($query) use ($selectedServiceType) {
                 $query->where('service_type', $selectedServiceType);
             })
@@ -1425,7 +1560,13 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                         ->orWhereRaw('LOWER(service_type) like ?', ['%' . $searchTerm . '%'])
                         ->orWhereRaw('LOWER(plan_name) like ?', ['%' . $searchTerm . '%'])
                         ->orWhereRaw('LOWER(status) like ?', ['%' . $searchTerm . '%'])
-                        ->orWhereRaw('CAST(sale_price AS CHAR) like ?', ['%' . $search . '%']);
+                        ->orWhereRaw('CAST(sale_price AS CHAR) like ?', ['%' . $search . '%'])
+                        ->orWhereRaw('CAST(initial_payment_price AS CHAR) like ?', ['%' . $search . '%'])
+                        ->orWhereHas('package', function ($packageQuery) use ($search, $searchTerm) {
+                            $packageQuery->whereRaw('LOWER(code) like ?', ['%' . $searchTerm . '%'])
+                                ->orWhereRaw('LOWER(name) like ?', ['%' . $searchTerm . '%'])
+                                ->orWhereRaw('CAST(monthly_price AS CHAR) like ?', ['%' . $search . '%']);
+                        });
                 });
             })
             ->orderBy('phone_number')
@@ -1502,6 +1643,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
 
         $orders = CustomerOrder::query()
+            ->with('package')
             ->latest()
             ->paginate(50);
 
@@ -1513,7 +1655,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             return $redirect;
         }
 
-        $customers = Customer::query()
+        $customers = BillingCustomer::query()
             ->where('is_active', true)
             ->orderByRaw('LOWER(COALESCE(company_name, first_name, last_name, ""))')
             ->get();
@@ -1663,7 +1805,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             return $redirect;
         }
 
-        $customers = Customer::query()
+        $customers = BillingCustomer::query()
             ->orderByDesc('is_active')
             ->orderByRaw('LOWER(COALESCE(company_name, first_name, last_name, ""))')
             ->get();
@@ -1699,7 +1841,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ]);
         }
 
-        Customer::query()->create([
+        BillingCustomer::query()->create([
             'company_name' => $companyName !== '' ? $companyName : null,
             'first_name' => $firstName !== '' ? $firstName : null,
             'last_name' => $lastName !== '' ? $lastName : null,
@@ -1754,7 +1896,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             $lastName = trim(implode(' ', $contactParts)) ?: null;
         }
 
-        $customer = Customer::query()->create([
+        $customer = BillingCustomer::query()->create([
             'company_name' => $companyName,
             'first_name' => $firstName,
             'last_name' => $lastName,
@@ -1782,7 +1924,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         ]);
     })->name('customers.quick-store');
 
-    Route::put('/customers/{customer}/quick-update', function (Request $request, Customer $customer) use ($ensureAdmin) {
+    Route::put('/customers/{customer}/quick-update', function (Request $request, BillingCustomer $customer) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {
             return response()->json([
                 'message' => 'Unauthorized',
@@ -1848,7 +1990,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         ]);
     })->name('customers.quick-update');
 
-    Route::put('/customers/{customer}', function (Request $request, Customer $customer) use ($ensureAdmin) {
+    Route::put('/customers/{customer}', function (Request $request, BillingCustomer $customer) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
         }
@@ -1900,12 +2042,28 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             return $redirect;
         }
 
+        $order->loadMissing('package');
+
         if (Schema::hasTable('line_notification_logs')) {
             $order->load([
                 'lineNotificationLogs' => fn ($query) => $query->latest()->limit(20),
             ]);
         } else {
             $order->setRelation('lineNotificationLogs', collect());
+        }
+
+        if (Schema::hasTable('customer_order_activity_logs')) {
+            $activityLogs = CustomerOrderActivityLog::query()
+                ->whereHas('customerOrder', function ($q) use ($order) {
+                    $q->where('ordered_number', $order->ordered_number);
+                })
+                ->with(['user', 'customerOrder'])
+                ->latest()
+                ->limit(50)
+                ->get();
+            $order->setRelation('activityLogs', $activityLogs);
+        } else {
+            $order->setRelation('activityLogs', collect());
         }
 
         $paymentSlip = $resolveOrderPaymentSlip($order);
@@ -1961,6 +2119,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             return $redirect;
         }
 
+        $order->loadMissing('package');
+
         return view('admin.orders-edit', compact('order'));
     })->name('orders.edit');
 
@@ -1971,7 +2131,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         $data = $request->validate([
             'ordered_number' => ['required', 'string', 'max:20'],
-            'selected_package' => ['required', 'integer', 'min:1'],
+            'initial_payment_price' => ['required', 'integer', 'min:1'],
+            'package_code' => ['nullable', 'string', 'max:60'],
+            'package_name' => ['nullable', 'string', 'max:255'],
+            'monthly_price' => ['nullable', 'integer', 'min:0'],
             'title_prefix' => ['nullable', 'string', 'max:50'],
             'first_name' => ['nullable', 'string', 'max:120'],
             'last_name' => ['nullable', 'string', 'max:120'],
@@ -1996,16 +2159,39 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $previousStatus = (string) $order->status;
         $adminUserId = session('admin_user_id');
         $matchedPhoneNumber = $orderedNumber !== ''
-            ? PhoneNumber::query()->where('phone_number', $orderedNumber)->first()
+            ? PhoneNumber::query()->with('package')->where('phone_number', $orderedNumber)->first()
             : null;
+        $serviceType = $matchedPhoneNumber
+            ? $normalizeServiceType($matchedPhoneNumber->service_type)
+            : $normalizeServiceType((string) $order->service_type);
+        $initialPayment = (int) $data['initial_payment_price'];
+        $matchedPackage = $matchedPhoneNumber?->package ?? $order->package;
+        $packageSnapshot = [
+            'package_id' => null,
+            'package_code' => null,
+            'package_name' => null,
+            'monthly_price' => null,
+        ];
+
+        if ($serviceType === PhoneNumber::SERVICE_TYPE_POSTPAID) {
+            $packageSnapshot = [
+                'package_id' => $matchedPackage?->id,
+                'package_code' => $matchedPackage?->code ?: (trim((string) ($data['package_code'] ?? '')) ?: null),
+                'package_name' => $matchedPackage?->name ?: (trim((string) ($data['package_name'] ?? '')) ?: null),
+                'monthly_price' => $matchedPackage?->monthly_price
+                    ?? (array_key_exists('monthly_price', $data) && $data['monthly_price'] !== null
+                        ? (int) $data['monthly_price']
+                        : null),
+            ];
+        }
 
         $order->fill([
             'phone_number_id' => $matchedPhoneNumber?->id,
             'ordered_number' => $orderedNumber !== '' ? $orderedNumber : trim((string) $data['ordered_number']),
-            'service_type' => $matchedPhoneNumber
-                ? $normalizeServiceType($matchedPhoneNumber->service_type)
-                : (string) $order->service_type,
-            'selected_package' => (int) $data['selected_package'],
+            'service_type' => $serviceType,
+            'selected_package' => $initialPayment,
+            'initial_payment_price' => $initialPayment,
+            ...$packageSnapshot,
             'title_prefix' => trim((string) ($data['title_prefix'] ?? '')) ?: null,
             'first_name' => trim((string) ($data['first_name'] ?? '')) ?: null,
             'last_name' => trim((string) ($data['last_name'] ?? '')) ?: null,
@@ -2020,11 +2206,32 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'appointment_time_slot' => trim((string) ($data['appointment_time_slot'] ?? '')) ?: null,
             'status' => trim((string) $data['status']),
         ]);
-        $order->save();
 
         if ($request->hasFile('payment_slip')) {
             $order->payment_slip_path = $storeOrderPaymentSlip($order, $request->file('payment_slip'));
-            $order->save();
+        }
+
+        $dirty = $order->getDirty();
+        $changes = [];
+        foreach ($dirty as $key => $newValue) {
+            $oldValue = $order->getOriginal($key);
+            if ($oldValue != $newValue) {
+                $changes[$key] = [
+                    'old' => $oldValue,
+                    'new' => $newValue,
+                ];
+            }
+        }
+
+        $order->save();
+
+        if (! empty($changes)) {
+            CustomerOrderActivityLog::query()->create([
+                'customer_order_id' => $order->id,
+                'user_id' => is_numeric($adminUserId) ? (int) $adminUserId : null,
+                'action' => 'updated',
+                'changes' => $changes,
+            ]);
         }
 
         $syncPhoneNumberStatusFromOrder(
@@ -3795,6 +4002,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
 
         $numbers = PhoneNumber::query()
+            ->with('package')
             ->where('status', PhoneNumber::STATUS_HOLD)
             ->orderByDesc('id')
             ->get();
@@ -3949,6 +4157,19 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         return view('admin.activity-logs', compact('logs'));
     })->name('activity-logs');
+
+    Route::get('/orders-activity-logs', function () use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        $logs = CustomerOrderActivityLog::query()
+            ->with(['customerOrder', 'user'])
+            ->latest()
+            ->paginate(50);
+
+        return view('admin.orders-activity-logs', compact('logs'));
+    })->name('orders.activity-logs');
 
 
 });
@@ -4218,27 +4439,59 @@ Route::get('/emergency-restore', function() {
     $output = "<h1>Emergency Restoration</h1>";
     
     $files = [
-        ['command' => 'numbers:import-true-csv', 'file' => 'TRUE เติมเงินปกขาว-ม่วง.csv'],
-        ['command' => 'numbers:import-true-prepaid', 'file' => 'TRUE เติมเงิน064-080.xlsx'],
-        ['command' => 'numbers:import-true-prepaid', 'file' => 'ทรูเติมเงิน(ชุดใหม่).xlsx'],
+        ['command' => 'numbers:import-true-csv', 'pattern' => '*เติมเงินปกขาว-ม่วง.csv'],
+        ['command' => 'numbers:import-true-prepaid', 'pattern' => '*เติมเงิน064-080.xlsx'],
+        ['command' => 'numbers:import-true-prepaid', 'pattern' => '*ทรูเติมเงิน(ชุดใหม่).xlsx'],
+        ['command' => 'numbers:import-true-postpaid', 'pattern' => '*เบอร์รายเดือนล่าสุด 31-3-69.xlsx'],
+        ['command' => 'numbers:import-postpaid-snapshot', 'pattern' => 'output/*postpaid_sync_2026-03-31.sql'],
     ];
 
     foreach ($files as $f) {
-        $output .= "<h2>Running: {$f['command']} with {$f['file']}</h2>";
-        try {
-            // Check if file exists in base path
-            if (!file_exists(base_path($f['file']))) {
-                $output .= "<p style='color:orange'>File not found: {$f['file']}</p>";
-                continue;
+        $matches = glob(base_path($f['pattern']));
+        $filePath = $matches[0] ?? null;
+        
+        if ($filePath) {
+            $relativeFile = str_replace(base_path() . '/', '', $filePath);
+            $output .= "<h2>Running: {$f['command']} with {$relativeFile}</h2>";
+            try {
+                \Illuminate\Support\Facades\Artisan::call($f['command'], ['file' => $relativeFile]);
+                $output .= "<pre>" . \Illuminate\Support\Facades\Artisan::output() . "</pre>";
+            } catch (\Exception $e) {
+                $output .= "<p style='color:red'>Error: " . $e->getMessage() . "</p>";
             }
-            
-            \Illuminate\Support\Facades\Artisan::call($f['command'], ['file' => $f['file']]);
-            $output .= "<pre>" . \Illuminate\Support\Facades\Artisan::output() . "</pre>";
-        } catch (\Exception $e) {
-            $output .= "<p style='color:red'>Error: " . $e->getMessage() . "</p>";
+        } else {
+            $output .= "<h2>Searching for: {$f['command']} ({$f['pattern']})</h2>";
+            $output .= "<p style='color:orange'>File not found matching pattern: {$f['pattern']}</p>";
         }
     }
 
     $output .= "<br><a href='/'>Go to Home</a>";
+    
+    // Add current stats
+    try {
+        $stats = \App\Models\PhoneNumber::select('service_type', \Illuminate\Support\Facades\DB::raw('count(*) as total'))
+            ->groupBy('service_type')
+            ->get();
+        $output .= "<h2>Current Database Stats:</h2><ul>";
+        foreach ($stats as $s) {
+            $output .= "<li>{$s->service_type}: {$s->total}</li>";
+        }
+        $output .= "</ul>";
+    } catch (\Exception $e) {
+        $output .= "<p style='color:red'>Could not fetch stats: " . $e->getMessage() . "</p>";
+    }
+    
     return $output;
 });
+
+// EMERGENCY MIGRATION ROUTE
+Route::get('/emergency-migrate', function () {
+    try {
+        Artisan::call('migrate', ['--force' => true]);
+        return "Migration successful!<br><pre>" . Artisan::output() . "</pre>";
+    } catch (\Exception $e) {
+        return "Migration failed: " . $e->getMessage();
+    }
+});
+
+

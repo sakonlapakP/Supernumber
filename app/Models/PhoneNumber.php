@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 use App\Traits\UnixTimestampSerializable;
@@ -44,14 +45,19 @@ class PhoneNumber extends Model
         'number_sum',
         'service_type',
         'network_code',
+        'package_id',
         'plan_name',
         'sale_price',
+        'initial_payment_price',
         'status',
     ];
 
     protected function casts(): array
     {
         return [
+            'package_id' => 'integer',
+            'sale_price' => 'integer',
+            'initial_payment_price' => 'integer',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
@@ -61,6 +67,7 @@ class PhoneNumber extends Model
     protected static function booted(): void
     {
         static::saving(function (self $phoneNumber): void {
+            // Keep imported/admin-entered numbers normalized before any catalog query depends on them.
             $serviceType = self::normalizeServiceType($phoneNumber->service_type);
             $phoneNumber->service_type = $serviceType ?? self::SERVICE_TYPE_POSTPAID;
             $phoneNumber->network_code = self::normalizeNetworkCode($phoneNumber->network_code) ?? self::NETWORK_TRUE_DTAC;
@@ -79,7 +86,10 @@ class PhoneNumber extends Model
     public function scopeAvailable(Builder $query): Builder
     {
         return $query
-            ->whereNotNull('sale_price')
+            ->where(function (Builder $query): void {
+                $query->whereNotNull('initial_payment_price')
+                    ->orWhereNotNull('sale_price');
+            })
             ->where('status', self::STATUS_ACTIVE);
     }
 
@@ -126,6 +136,7 @@ class PhoneNumber extends Model
 
     public static function buildSearchPattern(array $filters): ?string
     {
+        // Catalog digit filters become a SQL LIKE mask where "_" means "any digit" at that position.
         $positions = array_fill(1, self::PHONE_NUMBER_LENGTH, '_');
         $prefix = self::digitsOnly($filters['prefix'] ?? '');
 
@@ -176,13 +187,20 @@ class PhoneNumber extends Model
 
     public function getPackageLabelAttribute(): string
     {
-        return self::buildPackageLabel($this->plan_name, $this->sale_price);
+        if ($this->is_postpaid) {
+            $package = $this->package;
+            if ($package) {
+                return self::buildPackageLabel($package->name, $package->monthly_price);
+            }
+        }
+
+        return self::buildPackageLabel($this->plan_name, $this->monthly_package_price);
     }
 
     public function getOfferLabelAttribute(): string
     {
         if ($this->is_prepaid) {
-            $price = self::packagePrice($this->sale_price);
+            $price = $this->initial_payment_amount;
 
             return $price !== null ? number_format($price) . ' บาท' : 'เบอร์เติมเงิน';
         }
@@ -192,7 +210,18 @@ class PhoneNumber extends Model
 
     public function getPaymentLabelAttribute(): string
     {
-        $price = self::packagePrice($this->sale_price);
+        $price = $this->initial_payment_amount;
+
+        if ($price === null) {
+            return '-';
+        }
+
+        return number_format($price) . ' บาท';
+    }
+
+    public function getInitialPaymentLabelAttribute(): string
+    {
+        $price = $this->initial_payment_amount;
 
         if ($price === null) {
             return '-';
@@ -202,32 +231,26 @@ class PhoneNumber extends Model
             return number_format($price) . ' บาท';
         }
 
-        return number_format($price) . ' บาท / เดือน';
-    }
+        $monthlyPrice = $this->monthly_package_price;
+        $monthlyLabel = $monthlyPrice !== null ? ' เดือนละ ' . number_format($monthlyPrice) . '/เดือน' : '';
 
-    public function getInitialPaymentLabelAttribute(): string
-    {
-        $price = self::packagePrice($this->sale_price);
-
-        if ($price === null || $this->is_prepaid) {
-            return '-';
-        }
-
-        return number_format($price) . ' บาท เดือนละ ' . number_format($price) . '/เดือน';
+        return number_format($price) . ' บาท' . $monthlyLabel;
     }
 
     public function getInitialPaymentHtmlAttribute(): string
     {
-        $price = self::packagePrice($this->sale_price);
+        $price = $this->initial_payment_amount;
 
         if ($price === null || $this->is_prepaid) {
             return '-';
         }
 
         $priceText = number_format($price);
-        $compactClass = $price >= 2000 ? ' card-meta-price-strong--compact' : '';
+        $monthlyPrice = $this->monthly_package_price;
+        $monthlyText = $monthlyPrice !== null ? number_format($monthlyPrice) : $priceText;
+        $compactClass = ($monthlyPrice ?? $price) >= 2000 ? ' card-meta-price-strong--compact' : '';
 
-        return $priceText . ' บาท <strong class="card-meta-price-strong' . $compactClass . '">เดือนละ ' . $priceText . '/เดือน</strong>';
+        return $priceText . ' บาท <strong class="card-meta-price-strong' . $compactClass . '">เดือนละ ' . $monthlyText . '/เดือน</strong>';
     }
 
     public function getNormalizedPackagePriceAttribute(): ?int
@@ -236,7 +259,28 @@ class PhoneNumber extends Model
             return null;
         }
 
-        return self::normalizePackagePrice($this->sale_price);
+        return self::normalizePackagePrice($this->monthly_package_price);
+    }
+
+    public function getInitialPaymentAmountAttribute(): ?int
+    {
+        return self::packagePrice($this->initial_payment_price ?? $this->sale_price);
+    }
+
+    public function getMonthlyPackagePriceAttribute(): ?int
+    {
+        if (! $this->is_postpaid) {
+            return null;
+        }
+
+        return self::packagePrice($this->package?->monthly_price ?? $this->sale_price);
+    }
+
+    public function getMonthlyPackageLabelAttribute(): string
+    {
+        $price = $this->monthly_package_price;
+
+        return $price !== null ? number_format($price) . ' บาท / เดือน' : '-';
     }
 
     public function getIsPostpaidAttribute(): bool
@@ -285,6 +329,10 @@ class PhoneNumber extends Model
         $price = self::packagePrice($salePrice);
 
         if ($planName !== '' && $price !== null) {
+            if (preg_match('/(?:^|\s)' . preg_quote((string) $price, '/') . '$/u', $planName) === 1) {
+                return $planName;
+            }
+
             return $planName . ' ' . $price;
         }
 
@@ -323,13 +371,15 @@ class PhoneNumber extends Model
     public static function packageLabelsForQuery(Builder $query): array
     {
         return (clone $query)
-            ->select('plan_name', 'sale_price')
+            ->with('package')
+            ->select('plan_name', 'sale_price', 'package_id', 'service_type')
             ->distinct()
             ->orderBy('sale_price')
             ->orderBy('plan_name')
             ->get()
-            ->map(fn (self $phoneNumber) => self::buildPackageLabel($phoneNumber->plan_name, $phoneNumber->sale_price))
+            ->map(fn (self $phoneNumber) => $phoneNumber->package_label)
             ->reject(fn (string $label) => $label === '-')
+            ->unique()
             ->values()
             ->all();
     }
@@ -367,6 +417,7 @@ class PhoneNumber extends Model
             return [];
         }
 
+        // Numerology topics are scored from the final seven digits; the last pair is weighted higher.
         $lastSeven = substr($digits, -7);
         $pairs = [];
         for ($index = 0; $index < 6; $index++) {
@@ -557,6 +608,20 @@ class PhoneNumber extends Model
         ];
     }
 
+    public static function statusLabelOptions(): array
+    {
+        return [
+            self::STATUS_ACTIVE => 'ว่าง / พร้อมขาย',
+            self::STATUS_HOLD => 'จอง / รอตรวจสอบ',
+            self::STATUS_SOLD => 'ขายแล้ว',
+        ];
+    }
+
+    public function getStatusLabelAttribute(): string
+    {
+        return self::statusLabelOptions()[$this->status] ?? $this->status;
+    }
+
     public function statusLogs(): HasMany
     {
         return $this->hasMany(PhoneNumberStatusLog::class);
@@ -565,6 +630,11 @@ class PhoneNumber extends Model
     public function orders(): HasMany
     {
         return $this->hasMany(CustomerOrder::class);
+    }
+
+    public function package(): BelongsTo
+    {
+        return $this->belongsTo(PhonePackage::class, 'package_id');
     }
 
     protected static function firstDigit(mixed $value): string

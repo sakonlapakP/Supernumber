@@ -96,12 +96,22 @@ class LineOrderNotifier
         $slipUrl = $this->resolveSlipUrl($order);
         $slipImageUrl = $this->resolveLineImageUrl($order);
 
+        // Text is always sent; slip images are attached only when LINE can fetch a public HTTPS image.
+        $paymentLines = [
+            'ยอดชำระแรก: ' . $order->payment_label,
+        ];
+
+        if ($order->is_postpaid) {
+            $paymentLines[] = 'แพ็กเกจ: ' . $order->package_label;
+            $paymentLines[] = 'ค่าบริการรายเดือน: ' . $order->monthly_payment_label;
+        }
+
         $lines = array_merge([
             $headline,
             'Order #' . $order->id,
             'เบอร์: ' . ($order->ordered_number ?: '-'),
             'ประเภท: ' . $order->service_type_label,
-            'ยอดชำระ: ' . $order->payment_label,
+        ], $paymentLines, [
             'ชื่อ: ' . $fullName,
             'โทรติดต่อ: ' . ($order->current_phone ?: '-'),
             'นัดรับซิม: ' . trim($appointment) ?: '-',
@@ -148,6 +158,7 @@ class LineOrderNotifier
             'order' => $order,
         ], absolute: false));
 
+        // Signed slip URLs let LINE view protected files without requiring an admin session.
         if ($this->isPublicHttpsUrl($signedUrl)) {
             return $signedUrl;
         }

@@ -1,12 +1,12 @@
 @extends('layouts.admin')
 
-@section('title', 'Supernumber Admin | Lead เลือกเบอร์')
+@section('title', 'Supernumber Admin | ข้อมูลลูกค้าที่ใช้ระบบเลือกเบอร์อัตโนมัติ')
 
 @section('content')
   <div class="admin-page-head">
     <div>
-      <h1>Lead เลือกเบอร์</h1>
-      <p class="admin-subtitle">รายการลูกค้าที่กรอกฟอร์มหน้าเลือกเบอร์ พร้อม filter สำหรับค้นหาชื่อ เบอร์ และอีเมลได้ทันที</p>
+      <h1>ข้อมูลลูกค้าที่ใช้ระบบเลือกเบอร์อัตโนมัติ</h1>
+      <p class="admin-subtitle">รายการลูกค้าที่กรอกฟอร์มหน้าเลือกเบอร์ พร้อม filter สำหรับค้นหาข้อมูลได้ทันที</p>
     </div>
     <div class="admin-summary">
       แสดง
@@ -154,7 +154,7 @@
     </div>
 
     @if ($leads->hasPages())
-      <nav class="admin-pagination" aria-label="เปลี่ยนหน้ารายการ lead เลือกเบอร์">
+      <nav class="admin-pagination" aria-label="เปลี่ยนหน้ารายการลูกค้าเลือกเบอร์อัตโนมัติ">
         @if ($leads->onFirstPage())
           <span>ก่อนหน้า</span>
         @else

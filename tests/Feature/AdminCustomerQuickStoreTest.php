@@ -45,7 +45,7 @@ class AdminCustomerQuickStoreTest extends TestCase
             'is_active' => true,
         ]);
 
-        $customer = Customer::query()->create([
+        $customer = BillingCustomer::query()->create([
             'company_name' => 'บริษัท เดิม จำกัด',
             'tax_id' => '0105551111111',
             'address' => 'กรุงเทพมหานคร',

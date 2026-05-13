@@ -6,9 +6,9 @@
 @endphp
 
 @section('title', 'Supernumber ศูนย์รวมเบอร์มงคลอันดับ 1')
-@section('meta_description', 'ดูดวงเบอร์มือถือฟรี วิเคราะห์เสริมพลัง ดึงดูดโอกาส และปลดล็อกเส้นทางสำเร็จด้วยเบอร์มงคลที่ใช่สำหรับคุณ')
+@section('meta_description', 'Supernumber ศูนย์รวมเบอร์มงคลอันดับ 1 แค่เปลี่ยนเบอร์ชีวิตคุณก็เปลี่ยน วิเคราะห์เบอร์มือถือฟรี ช่วยเสริมพลังให้ทุกก้าวสำคัญเพิ่มโอกาสและปลดล็อกเส้นทางสำเร็จ')
 @section('og_title', 'Supernumber ศูนย์รวมเบอร์มงคลอันดับ 1')
-@section('og_description', 'ดูดวงเบอร์มือถือฟรี วิเคราะห์เสริมพลัง ดึงดูดโอกาส และปลดล็อกเส้นทางสำเร็จด้วยเบอร์มงคลที่ใช่สำหรับคุณ')
+@section('og_description', 'Supernumber ศูนย์รวมเบอร์มงคลอันดับ 1 แค่เปลี่ยนเบอร์ชีวิตคุณก็เปลี่ยน วิเคราะห์เบอร์มือถือฟรี ช่วยเสริมพลังให้ทุกก้าวสำคัญเพิ่มโอกาสและปลดล็อกเส้นทางสำเร็จ')
 @section('canonical', url('/'))
 @section('og_url', url('/'))
 @section('og_image', $homeBannerUrl)
@@ -66,6 +66,9 @@
       }
       body.home-scale-soft .hero-title {
         white-space: nowrap !important;
+      }
+      body.home-scale-soft .hero-form {
+        max-width: 60% !important;
       }
     }
 
@@ -397,7 +400,7 @@
         </h1>
         <p class="hero-kicker">แค่เปลี่ยนเบอร์ชีวิตคุณก็เปลี่ยน</p>
         <p class="hero-subtitle">
-          ดูดวงเบอร์มือถือฟรี วิเคราะห์เสริมพลัง ดึงดูดโอกาส และปลดล็อกเส้นทางสำเร็จ
+          วิเคราะห์เบอร์มือถือฟรี ช่วยเสริมพลังให้ทุกก้าวสำคัญเพิ่มโอกาสและปลดล็อกเส้นทางสำเร็จ
         </p>
         <form class="hero-form" action="{{ route('evaluate') }}" method="get">
           <label class="hero-label" for="phone">กรอกเบอร์มือถือ</label>
@@ -643,22 +646,24 @@
               <div class="card-grid home-card-grid listing-card-grid" id="home-postpaid-grid" data-view="grid">
                 @foreach ($initialPostpaidNumbers as $number)
                   <article class="number-card number-card--listing number-card--home">
-                    <div class="card-top">{{ $number['formatted_number'] }}</div>
-                    @if (! empty($number['supported_topic_icons']))
-                      @php
-                        $topicIcons = collect($number['supported_topic_icons']);
-                        $visibleTopicIcons = $topicIcons->take(4);
-                        $hasMoreTopicIcons = $topicIcons->count() > 4;
-                      @endphp
-                      <div class="card-topic-icons" aria-label="หมวดที่เบอร์นี้ช่วย">
-                        @foreach ($visibleTopicIcons as $topic)
-                          <span class="card-topic-icon" title="{{ $topic['topic'] }}" aria-label="{{ $topic['topic'] }}">{{ $topic['icon'] }}</span>
-                        @endforeach
-                        @if ($hasMoreTopicIcons)
-                          <span class="card-topic-icon card-topic-icon--more" aria-label="มีหมวดที่ช่วยเพิ่มเติม">+</span>
-                        @endif
-                      </div>
-                    @endif
+                    <div class="card-left-group">
+                      <div class="card-top">{{ $number['formatted_number'] }}</div>
+                      @if (! empty($number['supported_topic_icons']))
+                        @php
+                          $topicIcons = collect($number['supported_topic_icons']);
+                          $visibleTopicIcons = $topicIcons->take(4);
+                          $hasMoreTopicIcons = $topicIcons->count() > 4;
+                        @endphp
+                        <div class="card-topic-icons" aria-label="หมวดที่เบอร์นี้ช่วย">
+                          @foreach ($visibleTopicIcons as $topic)
+                            <span class="card-topic-icon" title="{{ $topic['topic'] }}" aria-label="{{ $topic['topic'] }}">{{ $topic['icon'] }}</span>
+                          @endforeach
+                          @if ($hasMoreTopicIcons)
+                            <span class="card-topic-icon card-topic-icon--more" aria-label="มีหมวดที่ช่วยเพิ่มเติม">+</span>
+                          @endif
+                        </div>
+                      @endif
+                    </div>
                     <div class="card-body">
                       <div class="card-meta-stack">
                         <span class="card-tier card-tier--network"><span class="card-network-main">{{ $number['network_label'] }}</span><span class="card-network-suffix">{{ $number['service_type_label'] }}</span></span>

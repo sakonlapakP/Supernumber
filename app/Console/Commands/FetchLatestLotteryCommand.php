@@ -69,6 +69,7 @@ class FetchLatestLotteryCommand extends Command
             
             // If API provides a date, and it's close to our target (holiday shift), use API date
             if ($sourceDate && abs($sourceDate->diffInDays($targetDate)) <= 5) {
+                // GLO can shift draw dates around holidays; store under the official API date when it is nearby.
                 $targetDate = $sourceDate;
                 
                 // RE-CHECK existing record because targetDate changed
@@ -201,6 +202,7 @@ class FetchLatestLotteryCommand extends Command
 
         $article = Article::query()->where('slug', $targetSlug)->first();
 
+        // The lottery article is deterministic per draw so reruns update the same article and cover assets.
         // Build content with prizes for the test
         $content = "รายงานผลสลากกินแบ่งรัฐบาล งวดวันที่ {$drawDate->format('d/m/Y')}<br>";
         foreach ($result->prizes as $prize) {

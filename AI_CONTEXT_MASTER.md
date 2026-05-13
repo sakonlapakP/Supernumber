@@ -80,4 +80,8 @@ Managed in `app/Models/User.php`:
 
 ---
 
-*Last Updated: 2026-05-10*
+## 8. Detailed Documentation | เอกสารรายละเอียดเพิ่มเติม
+- **Phone Number Status:** [number.md](file:///Users/efaum/Sites/localhost/Supernumber/number.md)
+- **Customer Order Status:** [order.md](file:///Users/efaum/Sites/localhost/Supernumber/order.md)
+
+*Last Updated: 2026-05-13*

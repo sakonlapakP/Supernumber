@@ -34,7 +34,7 @@ class ImportTruePrepaidCsvCommand extends Command
 
         if ($columns === null) {
             fclose($handle);
-            $this->error('CSV header must include เบอร์ and ราคา columns.');
+            $this->error('CSV header must include เบอร์ and ยอดจ่ายก้อนแรก/ราคา columns.');
 
             return self::FAILURE;
         }
@@ -71,7 +71,7 @@ class ImportTruePrepaidCsvCommand extends Command
             }
 
             $records[$phoneNumber] = [
-                'number_sum' => $sum ?: PhoneNumber::calculateNumberSum($phoneNumber),
+                'number_sum' => PhoneNumber::calculateNumberSum($phoneNumber),
                 'sale_price' => $salePrice,
             ];
             $stats['total']++;
@@ -100,6 +100,8 @@ class ImportTruePrepaidCsvCommand extends Command
                     'network_code' => 'true_dtac',
                     'plan_name' => 'เติมเงิน',
                     'sale_price' => $data['sale_price'],
+                    'initial_payment_price' => $data['sale_price'],
+                    'package_id' => null,
                     'status' => PhoneNumber::STATUS_ACTIVE,
                 ];
 
@@ -145,7 +147,7 @@ class ImportTruePrepaidCsvCommand extends Command
                 $matched['phone'] = $index;
             }
 
-            if ($label === 'ราคา') {
+            if (in_array($label, ['ยอดจ่ายก้อนแรก', 'ยอดชำระก้อนแรก', 'ยอดชำระแรก', 'ราคา'], true)) {
                 $matched['price'] = $index;
             }
 
@@ -182,13 +184,13 @@ class ImportTruePrepaidCsvCommand extends Command
 
     private function normalizeInteger(mixed $value): ?int
     {
-        $digits = preg_replace('/\D+/', '', (string) $value) ?? '';
+        $normalized = str_replace([',', 'บาท', ' '], '', trim((string) $value));
 
-        if ($digits === '') {
+        if ($normalized === '' || ! is_numeric($normalized)) {
             return null;
         }
 
-        return (int) $digits;
+        return (int) round((float) $normalized);
     }
 
     private function shouldSkipStatus(string $status): bool

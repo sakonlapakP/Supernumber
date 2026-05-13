@@ -39,8 +39,9 @@
         <h2 class="admin-feature-card__title">
           ค้นหาเบอร์
           <span class="admin-feature-card__hint" style="margin: 0 0 0 10px; display: inline; font-size: 0.9em; font-weight: 400;">
-            ผลรวม, เครือข่าย, แพ็กเกจ, ราคา หรือสถานะ
+            ผลรวม, เครือข่าย, แพ็กเกจ, ราคาเบอร์ หรือสถานะ
             @if ($selectedServiceTypeLabel !== null)
+
               | กำลังกรอง: {{ $selectedServiceTypeLabel }}
             @endif
           </span>
@@ -59,7 +60,7 @@
           type="text"
           name="q"
           value="{{ $search ?? '' }}"
-          placeholder="เช่น 064929, dtac, 1499, active"
+          placeholder="เช่น 064929, dtac, 1499, ว่าง"
         />
       </div>
       <button type="submit" class="admin-button admin-button--compact">ค้นหา</button>
@@ -75,7 +76,7 @@
             <th>ผลรวม</th>
             <th>ประเภท</th>
             <th>เครือข่าย</th>
-            <th>ราคา / แพ็กเกจ</th>
+            <th>แพ็กเกจ / ราคาเบอร์</th>
             <th>สถานะ</th>
             <th>จัดการ</th>
           </tr>
@@ -89,17 +90,22 @@
               <td>{{ $number->number_sum ?: '-' }}</td>
               <td>{{ $number->service_type_label }}</td>
               <td>{{ $number->network_label }}</td>
-              <td>{{ $number->payment_label }}</td>
+              <td>
+                <div>{{ $number->is_postpaid ? $number->package_label : 'เติมเงิน' }}</div>
+                <div class="admin-muted" style="font-size: 0.88rem;">
+                  ราคาเบอร์ {{ $number->payment_label }}
+
+                </div>
+              </td>
               <td>
                 @php
-                  $status = trim((string) ($number->status ?: '-'));
-                  $statusClass = match (strtolower($status)) {
-                    'active' => 'admin-status-pill admin-status-pill--active',
-                    'hold' => 'admin-status-pill admin-status-pill--hold',
+                  $statusClass = match ($number->status) {
+                    \App\Models\PhoneNumber::STATUS_ACTIVE => 'admin-status-pill admin-status-pill--active',
+                    \App\Models\PhoneNumber::STATUS_HOLD => 'admin-status-pill admin-status-pill--hold',
                     default => 'admin-status-pill',
                   };
                 @endphp
-                <span class="{{ $statusClass }}">{{ $status }}</span>
+                <span class="{{ $statusClass }}">{{ $number->status_label }}</span>
               </td>
               <td class="admin-action-cell">
                 <a

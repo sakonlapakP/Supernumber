@@ -38,9 +38,9 @@ class CustomerSubmission extends Model
         ];
     }
 
-    public function customer(): BelongsTo
+    public function billingCustomer(): BelongsTo
     {
-        return $this->belongsTo(Customer::class);
+        return $this->belongsTo(BillingCustomer::class, 'customer_id');
     }
 
     public static function formTypeLabels(): array

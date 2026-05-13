@@ -437,13 +437,15 @@
       @if ($isDefaultSplitLayout)
         <div class="numbers-default-columns" id="numbers-catalog-grid" data-view="{{ $selectedView }}">
           <section class="numbers-default-column numbers-default-column--prepaid">
-            <div class="numbers-default-column__head">
-              <h3>เบอร์เติมเงิน</h3>
-              <p>แสดงก่อนเมื่อยังไม่ได้ค้นหา</p>
+            <div class="home-number-group__head" style="margin-bottom: 24px;">
+              <div class="home-number-group__copy">
+                <h3 class="home-number-group__title" style="font-size: 24px; color: #1a1612;">เบอร์เติมเงินพร้อมใช้</h3>
+                <p class="home-number-group__hint" style="font-size: 14px; color: #7a6c62;">เบอร์เติมเงินสามารถย้ายค่ายได้</p>
+              </div>
             </div>
             <div class="numbers-catalog-grid listing-card-grid is-default-split" data-view="{{ $selectedView }}">
               @foreach ($defaultPrepaidNumbers as $number)
-                <article class="number-card number-card--listing number-card--catalog">
+                <article class="number-card number-card--listing number-card--home">
                   <div class="card-left-group">
                     <div class="card-top">{{ $number->formatted_number }}</div>
                     @if ($number->supported_topic_icons !== [])
@@ -480,13 +482,15 @@
           </section>
 
           <section class="numbers-default-column numbers-default-column--postpaid">
-            <div class="numbers-default-column__head">
-              <h3>เบอร์รายเดือน</h3>
-              <p>แสดงถัดลงมาเมื่อยังไม่ได้ค้นหา</p>
+            <div class="home-number-group__head" style="margin-bottom: 24px;">
+              <div class="home-number-group__copy">
+                <h3 class="home-number-group__title" style="font-size: 24px; color: #1a1612;">เบอร์รายเดือนแนะนำ</h3>
+                <p class="home-number-group__hint" style="font-size: 14px; color: #7a6c62;">รวมเบอร์รายเดือนที่พร้อมเลือกแพ็กเกจ</p>
+              </div>
             </div>
             <div class="numbers-catalog-grid listing-card-grid is-default-split" data-view="{{ $selectedView }}">
               @foreach ($defaultPostpaidNumbers as $number)
-                <article class="number-card number-card--listing number-card--catalog">
+                <article class="number-card number-card--listing number-card--home">
                   <div class="card-left-group">
                     <div class="card-top">{{ $number->formatted_number }}</div>
                     @if ($number->supported_topic_icons !== [])
@@ -525,7 +529,7 @@
       @else
         <div class="numbers-catalog-grid listing-card-grid" id="numbers-catalog-grid" data-view="{{ $selectedView }}">
           @forelse ($numbers as $number)
-            <article class="number-card number-card--listing number-card--catalog">
+            <article class="number-card number-card--listing number-card--home">
               <div class="card-left-group">
                 <div class="card-top">{{ $number->formatted_number }}</div>
                 @if ($number->supported_topic_icons !== [])

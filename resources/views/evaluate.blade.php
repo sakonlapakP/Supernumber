@@ -37,7 +37,7 @@
     }
     $score = min(100, (int) round($rawScore));
 
-    $currentNumberModel = \App\Models\PhoneNumber::query()->where('phone_number', $number)->first();
+    $currentNumberModel = \App\Models\PhoneNumber::query()->with('package')->where('phone_number', $number)->first();
     $hasManualAnalysis = $currentNumberModel && !empty($currentNumberModel->description);
 
     $isHighQuality = $score >= 75 || $hasManualAnalysis;
@@ -82,7 +82,7 @@
     "@type": "Offer",
     "url": "{{ route('evaluate', ['phone' => $number]) }}",
     "priceCurrency": "THB",
-    "price": "{{ $currentNumberModel ? (int)$currentNumberModel->sale_price : 0 }}",
+    "price": "{{ $currentNumberModel ? (int)($currentNumberModel->initial_payment_amount ?? 0) : 0 }}",
     "availability": "{{ ($currentNumberModel && $currentNumberModel->status === \App\Models\PhoneNumber::STATUS_ACTIVE) ? 'https://schema.org/InStock' : 'https://schema.org/OutOfStock' }}",
     "itemCondition": "https://schema.org/NewCondition"
   }
@@ -112,6 +112,8 @@
 }
 </script>
 @endsection
+
+@section('body_class', 'home-scale-soft')
 
 @section('content')
   <style>
@@ -183,13 +185,14 @@
   @php
     $currentServiceType = $currentNumberModel?->service_type ?? \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID;
     $currentPackage = $currentNumberModel?->is_prepaid
-        ? ((int) ($currentNumberModel->sale_price ?? 0))
-        : ($currentNumberModel?->normalized_package_price ?? 699);
+        ? ((int) ($currentNumberModel->initial_payment_amount ?? 0))
+        : ($currentNumberModel?->monthly_package_price ?? 699);
     if ($currentPackage < 1) {
         $currentPackage = 699;
     }
 
     $recommendedNumbers = \App\Models\PhoneNumber::query()
+        ->with('package')
         ->available()
         ->supportedNetwork()
         ->when($currentNumberModel !== null, function ($query) use ($currentServiceType) {
@@ -206,6 +209,7 @@
             ->push($number)
             ->all();
         $extraNumbers = \App\Models\PhoneNumber::query()
+            ->with('package')
             ->available()
             ->supportedNetwork()
             ->when($currentNumberModel !== null, function ($query) use ($currentServiceType) {
@@ -617,25 +621,27 @@
 
       <section class="recommend-section" aria-labelledby="recommend-title">
         <h2 id="recommend-title">{{ $recommendHeading }}</h2>
-        <div class="card-grid recommend-grid">
+        <div class="card-grid recommend-grid home-card-grid" data-view="grid">
           @forelse ($recommendedNumbers as $recommended)
-            <article class="number-card number-card--recommend">
-              <div class="card-top">{{ $recommended->formatted_number }}</div>
-              @if ($recommended->supported_topic_icons !== [])
-                @php
-                  $topicIcons = collect($recommended->supported_topic_icons);
-                  $visibleTopicIcons = $topicIcons->take(4);
-                  $hasMoreTopicIcons = $topicIcons->count() > 4;
-                @endphp
-                <div class="card-topic-icons" aria-label="หมวดที่เบอร์นี้ช่วย">
-                  @foreach ($visibleTopicIcons as $topic)
-                    <span class="card-topic-icon" title="{{ $topic['topic'] }}" aria-label="{{ $topic['topic'] }}">{{ $topic['icon'] }}</span>
-                  @endforeach
-                  @if ($hasMoreTopicIcons)
-                    <span class="card-topic-icon card-topic-icon--more" aria-label="มีหมวดที่ช่วยเพิ่มเติม">+</span>
-                  @endif
-                </div>
-              @endif
+            <article class="number-card number-card--listing number-card--home">
+              <div class="card-left-group">
+                <div class="card-top">{{ $recommended->formatted_number }}</div>
+                @if ($recommended->supported_topic_icons !== [])
+                  @php
+                    $topicIcons = collect($recommended->supported_topic_icons);
+                    $visibleTopicIcons = $topicIcons->take(4);
+                    $hasMoreTopicIcons = $topicIcons->count() > 4;
+                  @endphp
+                  <div class="card-topic-icons" aria-label="หมวดที่เบอร์นี้ช่วย">
+                    @foreach ($visibleTopicIcons as $topic)
+                      <span class="card-topic-icon" title="{{ $topic['topic'] }}" aria-label="{{ $topic['topic'] }}">{{ $topic['icon'] }}</span>
+                    @endforeach
+                    @if ($hasMoreTopicIcons)
+                      <span class="card-topic-icon card-topic-icon--more" aria-label="มีหมวดที่ช่วยเพิ่มเติม">+</span>
+                    @endif
+                  </div>
+                @endif
+              </div>
               <div class="card-body">
                 <div class="card-meta-stack">
                   <span class="card-tier card-tier--network"><span class="card-network-main">{{ $recommended->network_label }}</span><span class="card-network-suffix">{{ $recommended->service_type_label }}</span></span>
