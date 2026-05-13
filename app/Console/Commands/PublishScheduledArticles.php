@@ -30,12 +30,23 @@ class PublishScheduledArticles extends Command
     public function handle()
     {
         $articles = Article::query()
-            ->where('is_published', true)
-            ->where('is_auto_post', true) // Only publish articles allowed for auto-posting
+            ->where('is_auto_post', true)
             ->where('notified_at', null)
             ->where(function ($query) {
-                $query->whereNull('published_at')
-                    ->orWhere('published_at', '<=', now('Asia/Bangkok'));
+                // Case 1: Already marked as published, just needs notification/auto-posting
+                $query->where(function ($q) {
+                    $q->where('is_published', true)
+                        ->where(function ($inner) {
+                            $inner->whereNull('published_at')
+                                ->orWhere('published_at', '<=', now('Asia/Bangkok'));
+                        });
+                })
+                // Case 2: Still a Draft but scheduled time has reached -> Flip to Published
+                ->orWhere(function ($q) {
+                    $q->where('is_published', false)
+                        ->whereNotNull('published_at')
+                        ->where('published_at', '<=', now('Asia/Bangkok'));
+                });
             })
             ->get();
 
@@ -48,10 +59,20 @@ class PublishScheduledArticles extends Command
             try {
                 \Illuminate\Support\Facades\DB::transaction(function () use ($article) {
                     // To prevent duplicate sends from parallel executions, we check again and update atomically
+                    $updateData = [
+                        'notified_at' => now('Asia/Bangkok'),
+                        'updated_at' => now('Asia/Bangkok'),
+                    ];
+
+                    // If it was a Draft, flip it to Published
+                    if (!$article->is_published) {
+                        $updateData['is_published'] = true;
+                    }
+
                     $updated = \Illuminate\Support\Facades\DB::table('articles')
                         ->where('id', $article->id)
                         ->whereNull('notified_at')
-                        ->update(['notified_at' => now('Asia/Bangkok'), 'updated_at' => now('Asia/Bangkok')]);
+                        ->update($updateData);
 
                     if (!$updated) {
                         return; // Another process already handled this article
