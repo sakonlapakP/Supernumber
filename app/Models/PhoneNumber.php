@@ -613,7 +613,7 @@ class PhoneNumber extends Model
     public static function statusLabelOptions(): array
     {
         return [
-            self::STATUS_ACTIVE => 'ว่าง / พร้อมขาย',
+            self::STATUS_ACTIVE => 'ว่าง',
             self::STATUS_HOLD => 'จอง / รอตรวจสอบ',
             self::STATUS_SOLD => 'ขายแล้ว',
             self::STATUS_UNACTIVE => 'ปิดใช้งาน',
