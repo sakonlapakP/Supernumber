@@ -22,3 +22,17 @@
 Homestead.json
 Homestead.yaml
 Thumbs.db
+
+# Local database dumps (may contain customer PII)
+/*.sql
+/output/*.sql
+
+# Scratch/debug scripts
+/scratch/
+
+# Temporary screenshots used during development
+/tmp-*.png
+
+# Raw data import files (Excel, CSV) — large and may contain personal data
+/*.xlsx
+/*.csv

@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Cron Route Secret
+    |--------------------------------------------------------------------------
+    |
+    | This secret is used to protect cron trigger endpoints like /cron/publish
+    | and /cron/clear-all-caches. Set CRON_SECRET in your .env file to a long
+    | random string. Generate one with: openssl rand -hex 32
+    |
+    */
+    'cron_secret' => env('CRON_SECRET', ''),
+
 ];

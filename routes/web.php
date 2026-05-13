@@ -208,8 +208,8 @@ $moveTmpImagesToPermanent = function (string $content, string $articleSlug, int 
         if ($disk->exists($tmpPath)) {
             // Check if destination already exists (to avoid collision)
             if (! $disk->exists($newPath)) {
-                $disk->copy($tmpPath, $newPath); // Copy instead of move for safety during testing, or use move
-                // $disk->delete($tmpPath); 
+                $disk->copy($tmpPath, $newPath);
+                $disk->delete($tmpPath);
             }
             return $newPath;
         }
@@ -4312,7 +4312,8 @@ Route::post('/direct-create-article', function (Request $request) use ($ensureAd
 })->name('articles.store.bypass');
 
 Route::get('/cron/publish/{secret}', function ($secret) {
-    if ($secret !== 'supernumber_secret_789') {
+    $expectedSecret = config('app.cron_secret', env('CRON_SECRET', ''));
+    if ($expectedSecret === '' || $secret !== $expectedSecret) {
         return response()->json(['error' => 'Invalid secret'], 403);
     }
     
@@ -4348,7 +4349,8 @@ Route::get('/cron/publish/{secret}', function ($secret) {
 });
 
 Route::get('/cron/clear-all-caches/{secret}', function ($secret) {
-    if ($secret !== 'supernumber_secret_789') {
+    $expectedSecret = config('app.cron_secret', env('CRON_SECRET', ''));
+    if ($expectedSecret === '' || $secret !== $expectedSecret) {
         return "Invalid Secret";
     }
     
@@ -4360,37 +4362,11 @@ Route::get('/cron/clear-all-caches/{secret}', function ($secret) {
     return "SUCCESS: All caches have been cleared! Now your button should appear. <br><a href='/admin/articles'>กลับหน้าบทความ</a>";
 });
 
-Route::get('/cron/git-sync/{secret}', function ($secret) {
-    if ($secret !== 'supernumber_secret_789') return "Invalid Secret";
-    
-    $files = [
-        'resources/views/admin/articles.blade.php' => 'https://raw.githubusercontent.com/sakonlapakP/Supernumber/main/resources/views/admin/articles.blade.php',
-        'resources/views/admin/article-edit.blade.php' => 'https://raw.githubusercontent.com/sakonlapakP/Supernumber/main/resources/views/admin/article-edit.blade.php',
-        'app/Http/Controllers/PublicController.php' => 'https://raw.githubusercontent.com/sakonlapakP/Supernumber/main/app/Http/Controllers/PublicController.php',
-        'public/.htaccess' => 'https://raw.githubusercontent.com/sakonlapakP/Supernumber/main/public/.htaccess',
-        'resources/views/articles/show.blade.php' => 'https://raw.githubusercontent.com/sakonlapakP/Supernumber/main/resources/views/articles/show.blade.php',
-        'resources/views/layouts/app.blade.php' => 'https://raw.githubusercontent.com/sakonlapakP/Supernumber/main/resources/views/layouts/app.blade.php',
-    ];
-    
-    $output = "";
-    foreach ($files as $localPath => $remoteUrl) {
-        $fullPath = base_path($localPath);
-        $content = @file_get_contents($remoteUrl);
-        if ($content) {
-            file_put_contents($fullPath, $content);
-            $output .= "✅ Updated: $localPath<br>";
-        } else {
-            $output .= "❌ Failed: $localPath (Check GitHub URL)<br>";
-        }
-    }
-    
-    \Illuminate\Support\Facades\Artisan::call('view:clear');
-    
-    return $output . "<br><b>All Sync Completed!</b> <br><a href='/admin/articles'>กลับหน้าบทความ</a>";
-});
+// NOTE: /cron/git-sync was removed — writing arbitrary remote content to server files is a Remote Code Execution risk.
 
 Route::get('/cron/fix-storage-link/{secret}', function ($secret) {
-    if ($secret !== 'supernumber_secret_789') return "Invalid Secret";
+    $expectedSecret = config('app.cron_secret', env('CRON_SECRET', ''));
+    if ($expectedSecret === '' || $secret !== $expectedSecret) return "Invalid Secret";
     
     $publicStoragePath = public_path('storage');
     $status = [];
@@ -4420,8 +4396,9 @@ Route::get('/cron/fix-storage-link/{secret}', function ($secret) {
 });
 
 Route::get('/maintenance/db-convert-timestamps', function(Illuminate\Http\Request $request) {
-    // Simple security check via query parameter
-    if ($request->query('secret') !== 'convert_2026') {
+    // This route was used for a one-time migration. Kept for reference but now requires proper admin auth.
+    $expectedSecret = config('app.cron_secret', env('CRON_SECRET', ''));
+    if ($expectedSecret === '' || $request->query('secret') !== $expectedSecret) {
         return "Unauthorized. Please provide valid secret.";
     }
 
@@ -4435,7 +4412,11 @@ Route::get('/maintenance/db-convert-timestamps', function(Illuminate\Http\Reques
     }
 });
 
-Route::get('/emergency-restore', function() {
+Route::get('/emergency-restore', function() use ($ensureAdmin) {
+    if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+        return $redirect;
+    }
+
     $output = "<h1>Emergency Restoration</h1>";
     
     $files = [
@@ -4484,8 +4465,12 @@ Route::get('/emergency-restore', function() {
     return $output;
 });
 
-// EMERGENCY MIGRATION ROUTE
-Route::get('/emergency-migrate', function () {
+// EMERGENCY MIGRATION ROUTE — requires manager login
+Route::get('/emergency-migrate', function () use ($ensureAdmin) {
+    if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+        return $redirect;
+    }
+
     try {
         Artisan::call('migrate', ['--force' => true]);
         return "Migration successful!<br><pre>" . Artisan::output() . "</pre>";
