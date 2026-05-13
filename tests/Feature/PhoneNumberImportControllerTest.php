@@ -12,7 +12,7 @@ class PhoneNumberImportControllerTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_import_marks_missing_active_numbers_as_unactive(): void
+    public function test_import_marks_missing_numbers_of_the_uploaded_type_as_unactive(): void
     {
         $kept = PhoneNumber::query()->create([
             'phone_number' => '0811111111',
@@ -35,6 +35,13 @@ class PhoneNumberImportControllerTest extends TestCase
             'status' => PhoneNumber::STATUS_HOLD,
         ]);
 
+        $missingSold = PhoneNumber::query()->create([
+            'phone_number' => '0855555555',
+            'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
+            'network_code' => PhoneNumber::NETWORK_AIS,
+            'status' => PhoneNumber::STATUS_SOLD,
+        ]);
+
         $otherServiceType = PhoneNumber::query()->create([
             'phone_number' => '0844444444',
             'service_type' => PhoneNumber::SERVICE_TYPE_POSTPAID,
@@ -43,7 +50,7 @@ class PhoneNumberImportControllerTest extends TestCase
         ]);
 
         $controller = new PhoneNumberImportController();
-        $method = new ReflectionMethod($controller, 'retireMissingActiveNumbers');
+        $method = new ReflectionMethod($controller, 'retireMissingNumbers');
         $method->setAccessible(true);
 
         $retiredCount = $method->invoke(
@@ -52,10 +59,11 @@ class PhoneNumberImportControllerTest extends TestCase
             [$kept->phone_number]
         );
 
-        $this->assertSame(1, $retiredCount);
+        $this->assertSame(3, $retiredCount);
         $this->assertSame(PhoneNumber::STATUS_ACTIVE, $kept->fresh()->status);
         $this->assertSame(PhoneNumber::STATUS_UNACTIVE, $missingActive->fresh()->status);
-        $this->assertSame(PhoneNumber::STATUS_HOLD, $missingHold->fresh()->status);
+        $this->assertSame(PhoneNumber::STATUS_UNACTIVE, $missingHold->fresh()->status);
+        $this->assertSame(PhoneNumber::STATUS_UNACTIVE, $missingSold->fresh()->status);
         $this->assertSame(PhoneNumber::STATUS_ACTIVE, $otherServiceType->fresh()->status);
     }
 

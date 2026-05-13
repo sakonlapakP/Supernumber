@@ -87,17 +87,17 @@ class PhoneNumberImportController extends Controller
 
         try {
             $stats = DB::transaction(function () use ($prepaidData, $postpaidData, $hasPrepaidFile, $hasPostpaidFile) {
-                $retiredActive = 0;
+                $retiredMissing = 0;
 
                 if ($hasPrepaidFile) {
-                    $retiredActive += $this->retireMissingActiveNumbers(
+                    $retiredMissing += $this->retireMissingNumbers(
                         PhoneNumber::SERVICE_TYPE_PREPAID,
                         array_column($prepaidData['records'], 'phone_number')
                     );
                 }
 
                 if ($hasPostpaidFile) {
-                    $retiredActive += $this->retireMissingActiveNumbers(
+                    $retiredMissing += $this->retireMissingNumbers(
                         PhoneNumber::SERVICE_TYPE_POSTPAID,
                         array_column($postpaidData['records'], 'phone_number')
                     );
@@ -110,7 +110,7 @@ class PhoneNumberImportController extends Controller
                     'created' => $prepaidStats['created'] + $postpaidStats['created'],
                     'updated' => $prepaidStats['updated'] + $postpaidStats['updated'],
                     'unchanged' => $prepaidStats['unchanged'] + $postpaidStats['unchanged'],
-                    'retired_active' => $retiredActive,
+                    'retired_missing' => $retiredMissing,
                 ];
             });
 
@@ -121,7 +121,7 @@ class PhoneNumberImportController extends Controller
                     number_format($stats['created']),
                     number_format($stats['updated']),
                     number_format($stats['unchanged']),
-                    number_format($stats['retired_active'])
+                    number_format($stats['retired_missing'])
                 )
             );
         } catch (\Throwable $e) {
@@ -363,12 +363,11 @@ class PhoneNumberImportController extends Controller
         return $errors;
     }
 
-    private function retireMissingActiveNumbers(string $serviceType, array $importedPhones): int
+    private function retireMissingNumbers(string $serviceType, array $importedPhones): int
     {
         return PhoneNumber::query()
             ->where('service_type', $serviceType)
             ->whereNotIn('phone_number', array_values(array_unique($importedPhones)))
-            ->where('status', PhoneNumber::STATUS_ACTIVE)
             ->update([
                 'status' => PhoneNumber::STATUS_UNACTIVE,
                 'updated_at' => now(),
