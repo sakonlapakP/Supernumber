@@ -11,9 +11,11 @@ jobs:
   web-deploy:
     name: 🎉 Deploying to Production
     runs-on: ubuntu-latest
+    env:
+      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
     - name: 🚚 Get latest code
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         fetch-depth: 0
 
@@ -33,7 +35,7 @@ jobs:
              -d "{\"project\": \"Supernumber\", \"message\": \"กำลังเริ่ม Deploy เว็บไซต์ซูเปอร์นัมเบอร์ครับพี่อั้ม\", \"apiKey\": \"efaum-secret-key-789\"}"
 
     - name: 📂 Sync to public_html
-      uses: SamKirkland/FTP-Deploy-Action@v4.3.4
+      uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:
         server: ${{ secrets.FTP_SERVER }}
         username: ${{ secrets.FTP_USERNAME }}
