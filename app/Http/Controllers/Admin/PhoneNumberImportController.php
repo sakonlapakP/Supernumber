@@ -28,6 +28,7 @@ class PhoneNumberImportController extends Controller
             fputs($file, "\xEF\xBB\xBF"); // UTF-8 BOM
             fputcsv($file, ['เบอร์', 'ยอดจ่ายก้อนแรก', 'แพ็กเกจ', 'เครือข่าย', 'สถานะ']);
             fputcsv($file, ['0812345678', '999', '-', 'true', 'active']);
+            fputcsv($file, ['0822345678', '', '-', 'ais', 'active']);
             fputcsv($file, ['0912345678', '999', 'TRUE-SV-1499', 'true', 'active']);
             fclose($file);
         };
@@ -38,12 +39,25 @@ class PhoneNumberImportController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'prepaid_file' => ['required', 'file', 'mimes:csv,txt'],
-            'postpaid_file' => ['required', 'file', 'mimes:csv,txt'],
+            'prepaid_file' => ['nullable', 'file', 'mimes:csv,txt'],
+            'postpaid_file' => ['nullable', 'file', 'mimes:csv,txt'],
         ]);
 
-        $prepaidData = $this->parseCsv($request->file('prepaid_file')->getRealPath(), PhoneNumber::SERVICE_TYPE_PREPAID);
-        $postpaidData = $this->parseCsv($request->file('postpaid_file')->getRealPath(), PhoneNumber::SERVICE_TYPE_POSTPAID);
+        $hasPrepaidFile = $request->hasFile('prepaid_file');
+        $hasPostpaidFile = $request->hasFile('postpaid_file');
+
+        if (! $hasPrepaidFile && ! $hasPostpaidFile) {
+            return back()->withErrors([
+                'error' => 'กรุณาอัปโหลดไฟล์ CSV อย่างน้อย 1 ไฟล์',
+            ])->withInput();
+        }
+
+        $prepaidData = $hasPrepaidFile
+            ? $this->parseCsv($request->file('prepaid_file')->getRealPath(), PhoneNumber::SERVICE_TYPE_PREPAID)
+            : ['records' => [], 'errors' => []];
+        $postpaidData = $hasPostpaidFile
+            ? $this->parseCsv($request->file('postpaid_file')->getRealPath(), PhoneNumber::SERVICE_TYPE_POSTPAID)
+            : ['records' => [], 'errors' => []];
         $crossFileErrors = $this->findCrossFileDuplicates($prepaidData['records'], $postpaidData['records']);
 
         $validationErrors = [];
@@ -72,19 +86,22 @@ class PhoneNumberImportController extends Controller
         }
 
         try {
-            $stats = DB::transaction(function () use ($prepaidData, $postpaidData) {
-                $importedPhones = array_values(array_unique(array_merge(
-                    array_column($prepaidData['records'], 'phone_number'),
-                    array_column($postpaidData['records'], 'phone_number')
-                )));
+            $stats = DB::transaction(function () use ($prepaidData, $postpaidData, $hasPrepaidFile, $hasPostpaidFile) {
+                $retiredActive = 0;
 
-                $retiredActive = PhoneNumber::query()
-                    ->whereNotIn('phone_number', $importedPhones)
-                    ->where('status', PhoneNumber::STATUS_ACTIVE)
-                    ->update([
-                        'status' => PhoneNumber::STATUS_SOLD,
-                        'updated_at' => now(),
-                    ]);
+                if ($hasPrepaidFile) {
+                    $retiredActive += $this->retireMissingActiveNumbers(
+                        PhoneNumber::SERVICE_TYPE_PREPAID,
+                        array_column($prepaidData['records'], 'phone_number')
+                    );
+                }
+
+                if ($hasPostpaidFile) {
+                    $retiredActive += $this->retireMissingActiveNumbers(
+                        PhoneNumber::SERVICE_TYPE_POSTPAID,
+                        array_column($postpaidData['records'], 'phone_number')
+                    );
+                }
 
                 $prepaidStats = $this->upsertRecords($prepaidData['records'], PhoneNumber::SERVICE_TYPE_PREPAID);
                 $postpaidStats = $this->upsertRecords($postpaidData['records'], PhoneNumber::SERVICE_TYPE_POSTPAID);
@@ -127,8 +144,14 @@ class PhoneNumberImportController extends Controller
         $headers[0] = preg_replace('/^\xEF\xBB\xBF/', '', $headers[0]);
 
         $headerMap = $this->matchHeaders($headers);
-        if (!isset($headerMap['phone']) || !isset($headerMap['initial_payment'])) {
-            return ['records' => [], 'errors' => ['ไฟล์ CSV ต้องมีคอลัมน์ "เบอร์" และ "ยอดจ่ายก้อนแรก"']];
+        if (!isset($headerMap['phone'])) {
+            fclose($handle);
+            return ['records' => [], 'errors' => ['ไฟล์ CSV ต้องมีคอลัมน์ "เบอร์"']];
+        }
+
+        if ($serviceType === PhoneNumber::SERVICE_TYPE_POSTPAID && ! isset($headerMap['initial_payment'])) {
+            fclose($handle);
+            return ['records' => [], 'errors' => ['ไฟล์ CSV รายเดือนต้องมีคอลัมน์ "ยอดจ่ายก้อนแรก"']];
         }
 
         $records = [];
@@ -145,7 +168,12 @@ class PhoneNumberImportController extends Controller
             }
 
             $phone = $this->normalizePhoneNumber($row[$headerMap['phone']] ?? '');
-            $initialPaymentPrice = $this->normalizeInteger($row[$headerMap['initial_payment']] ?? '');
+            $initialPaymentRaw = isset($headerMap['initial_payment'])
+                ? trim((string) ($row[$headerMap['initial_payment']] ?? ''))
+                : '';
+            $initialPaymentPrice = isset($headerMap['initial_payment'])
+                ? $this->normalizeInteger($initialPaymentRaw)
+                : null;
             $package = isset($headerMap['package']) ? trim($row[$headerMap['package']] ?? '') : null;
             $status = isset($headerMap['status']) ? trim($row[$headerMap['status']] ?? '') : 'active';
             $resolvedStatus = $this->resolveStatus($status);
@@ -162,7 +190,12 @@ class PhoneNumberImportController extends Controller
                 continue;
             }
 
-            if ($initialPaymentPrice === null) {
+            if ($initialPaymentPrice === null && ! in_array($initialPaymentRaw, ['', '-'], true)) {
+                $errors[] = "แถวที่ {$rowCount}: ยอดจ่ายก้อนแรกไม่ถูกต้อง";
+                continue;
+            }
+
+            if ($initialPaymentPrice === null && $serviceType === PhoneNumber::SERVICE_TYPE_POSTPAID) {
                 $errors[] = "แถวที่ {$rowCount}: ยอดจ่ายก้อนแรกไม่ถูกต้อง";
                 continue;
             }
@@ -269,6 +302,10 @@ class PhoneNumberImportController extends Controller
     {
         $normalized = str_replace([',', 'บาท', ' '], '', trim($value));
 
+        if ($normalized === '' || $normalized === '-') {
+            return null;
+        }
+
         if (preg_match('/^\d+(?:\.\d+)?$/', $normalized) !== 1) {
             return null;
         }
@@ -323,6 +360,18 @@ class PhoneNumberImportController extends Controller
         }
 
         return $errors;
+    }
+
+    private function retireMissingActiveNumbers(string $serviceType, array $importedPhones): int
+    {
+        return PhoneNumber::query()
+            ->where('service_type', $serviceType)
+            ->whereNotIn('phone_number', array_values(array_unique($importedPhones)))
+            ->where('status', PhoneNumber::STATUS_ACTIVE)
+            ->update([
+                'status' => PhoneNumber::STATUS_SOLD,
+                'updated_at' => now(),
+            ]);
     }
 
     private function upsertRecords(array $records, string $serviceType): array

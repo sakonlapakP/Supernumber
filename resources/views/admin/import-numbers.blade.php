@@ -48,19 +48,19 @@
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
           <div class="admin-field">
             <label for="prepaid_file">ไฟล์เบอร์เติมเงิน (Prepaid CSV)</label>
-            <input type="file" id="prepaid_file" name="prepaid_file" class="admin-input" accept=".csv" required>
+            <input type="file" id="prepaid_file" name="prepaid_file" class="admin-input" accept=".csv">
             <span class="admin-feature-card__hint">ตัวอย่าง Header: เบอร์, ยอดจ่ายก้อนแรก, แพ็กเกจ, เครือข่าย, สถานะ</span>
           </div>
 
           <div class="admin-field">
             <label for="postpaid_file">ไฟล์เบอร์รายเดือน (Postpaid CSV)</label>
-            <input type="file" id="postpaid_file" name="postpaid_file" class="admin-input" accept=".csv" required>
+            <input type="file" id="postpaid_file" name="postpaid_file" class="admin-input" accept=".csv">
             <span class="admin-feature-card__hint">ตัวอย่าง Header: เบอร์, ยอดจ่ายก้อนแรก, แพ็กเกจ, เครือข่าย, สถานะ</span>
           </div>
         </div>
 
         <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--admin-border);">
-          <button type="submit" class="admin-button" id="start-import-btn" onclick="return confirm('ยืนยันการลบข้อมูลเบอร์เดิมทั้งหมดและนำเข้าใหม่?')">
+          <button type="submit" class="admin-button" id="start-import-btn" onclick="return confirm('ยืนยันการนำเข้าไฟล์? ระบบจะปิดเฉพาะเบอร์ active ประเภทเดียวกับไฟล์ที่อัปโหลดและไม่อยู่ในไฟล์นั้น')">
             <span style="display: flex; align-items: center; gap: 8px;">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><polyline points="1 20 1 14 7 14"></polyline><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path></svg>
               เริ่มนำเข้าข้อมูล (Start Import)
@@ -78,12 +78,13 @@
       </div>
       <div class="admin-muted" style="font-size: 14px; line-height: 1.8;">
         <p>1. ไฟล์ต้องเป็นนามสกุล <strong>.csv</strong> เท่านั้น</p>
-        <p>2. คอลัมน์ที่จำเป็นต้องมี: <strong>เบอร์</strong> (เช่น 0812345678), <strong>ยอดจ่ายก้อนแรก</strong> (ตัวเลขเท่านั้น) และ <strong>แพ็กเกจ</strong></p>
-        <p>3. เบอร์เติมเงินให้เว้นแพ็กเกจว่างหรือใส่ <strong>-</strong>; เบอร์รายเดือนต้องใส่ <strong>รหัสแพ็กเกจ</strong> เช่น TRUE-SV-1499</p>
+        <p>2. คอลัมน์ที่จำเป็นต้องมี: <strong>เบอร์</strong> (เช่น 0812345678) และ <strong>แพ็กเกจ</strong>; คอลัมน์ <strong>ยอดจ่ายก้อนแรก</strong> จำเป็นสำหรับรายเดือน แต่เติมเงินเว้นว่างได้</p>
+        <p>3. เบอร์เติมเงินให้เว้นแพ็กเกจว่างหรือใส่ <strong>-</strong>; ถ้าไม่มียอดจ่ายก้อนแรก ระบบจะบันทึกเบอร์ไว้แต่ยังไม่แสดงเป็นเบอร์พร้อมขายหน้าเว็บ</p>
         <p>4. คอลัมน์เสริม: <strong>เครือข่าย</strong> (true, ais, dtac) และ <strong>สถานะ</strong> (active, sold, hold หรือ ว่าง, จอง, ขายแล้ว)</p>
         <p>5. หากไม่ระบุสถานะ ระบบจะกำหนดให้เป็น <strong>active (ว่าง)</strong> โดยอัตโนมัติ</p>
-        <p>6. ข้อมูลในไฟล์ทั้งสองควรมีคอลัมน์เหมือนกันเพื่อให้ระบบประมวลผลได้อย่างถูกต้อง</p>
-        <p>7. สามารถกดปุ่ม <strong>"ดาวน์โหลดไฟล์ตัวอย่าง"</strong> ด้านบนเพื่อดูรูปแบบไฟล์ที่ถูกต้องได้ครับ</p>
+        <p>6. อัปโหลดได้ทีละประเภทหรือสองประเภทพร้อมกัน ระบบจะปิดเฉพาะเบอร์ active ของประเภทที่อัปโหลดแต่ไม่อยู่ในไฟล์นั้น</p>
+        <p>7. ข้อมูลในไฟล์ทั้งสองควรมีคอลัมน์เหมือนกันเพื่อให้ระบบประมวลผลได้อย่างถูกต้อง</p>
+        <p>8. สามารถกดปุ่ม <strong>"ดาวน์โหลดไฟล์ตัวอย่าง"</strong> ด้านบนเพื่อดูรูปแบบไฟล์ที่ถูกต้องได้ครับ</p>
       </div>
     </section>
   </div>
