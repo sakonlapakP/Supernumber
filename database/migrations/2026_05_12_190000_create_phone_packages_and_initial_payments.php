@@ -112,9 +112,6 @@ return new class extends Migration
         $now = now();
         $networks = [
             PhoneNumber::NETWORK_TRUE => 'TRUE',
-            PhoneNumber::NETWORK_DTAC => 'DTAC',
-            PhoneNumber::NETWORK_AIS => 'AIS',
-            PhoneNumber::NETWORK_TRUE_DTAC => 'TRUE-DTAC',
         ];
         $conditions = implode("\n", [
             'แพคเกจนี้สำหรับเบอร์ใหม่/ย้ายค่ายที่ร่วมรายการ',
@@ -174,14 +171,18 @@ return new class extends Migration
                     $networkCode = strtolower(trim((string) $number->network_code)) ?: PhoneNumber::NETWORK_TRUE_DTAC;
                     $package = $packagePrice !== null
                         ? ($packagesByNetworkAndPrice->get($networkCode . ':' . $packagePrice)?->first()
-                            ?? $packagesByNetworkAndPrice->get(PhoneNumber::NETWORK_TRUE_DTAC . ':' . $packagePrice)?->first())
+                            ?? $packagesByNetworkAndPrice->get(PhoneNumber::NETWORK_TRUE . ':' . $packagePrice)?->first())
                         : null;
+
+                    $initialPaymentPrice = $package?->monthly_price !== null
+                        ? PhoneNumber::postpaidInitialPaymentForMonthlyPrice((int) $package->monthly_price)
+                        : $salePrice;
 
                     DB::table('phone_numbers')
                         ->where('id', $number->id)
                         ->update([
                             'package_id' => $package?->id,
-                            'initial_payment_price' => $salePrice,
+                            'initial_payment_price' => $initialPaymentPrice,
                         ]);
                 }
             });

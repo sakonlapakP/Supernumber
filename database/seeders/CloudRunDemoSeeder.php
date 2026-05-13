@@ -45,7 +45,7 @@ class CloudRunDemoSeeder extends Seeder
         ];
         $packages = PhonePackage::query()
             ->where('service_type', PhoneNumber::SERVICE_TYPE_POSTPAID)
-            ->where('network_code', PhoneNumber::NETWORK_TRUE_DTAC)
+            ->where('network_code', PhoneNumber::NETWORK_TRUE)
             ->whereIn('monthly_price', $prices)
             ->get()
             ->keyBy('monthly_price');
@@ -63,7 +63,7 @@ class CloudRunDemoSeeder extends Seeder
                 'network_code' => PhoneNumber::NETWORK_TRUE_DTAC,
                 'plan_name' => $package?->name ?? PhoneNumber::PACKAGE_NAME,
                 'sale_price' => $price,
-                'initial_payment_price' => $price,
+                'initial_payment_price' => PhoneNumber::postpaidInitialPaymentForMonthlyPrice($price),
                 'package_id' => $package?->id,
                 'status' => PhoneNumber::STATUS_ACTIVE,
                 'created_at' => $now,

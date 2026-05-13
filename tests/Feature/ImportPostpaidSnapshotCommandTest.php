@@ -36,7 +36,7 @@ SQL);
             'network_code' => PhoneNumber::NETWORK_TRUE_DTAC,
             'plan_name' => 'True Super Value 1199',
             'sale_price' => 1199,
-            'initial_payment_price' => 1199,
+            'initial_payment_price' => 2999,
             'status' => PhoneNumber::STATUS_ACTIVE,
         ]);
 
@@ -83,7 +83,7 @@ SQL);
             'id' => $heldPostpaid->id,
             'plan_name' => 'True Super Value 1199',
             'sale_price' => 1199,
-            'initial_payment_price' => 1199,
+            'initial_payment_price' => 2999,
             'status' => PhoneNumber::STATUS_HOLD,
         ]);
 

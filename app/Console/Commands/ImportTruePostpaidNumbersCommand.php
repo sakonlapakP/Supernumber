@@ -94,7 +94,9 @@ class ImportTruePostpaidNumbersCommand extends Command
                     $stats['converted_to_postpaid']++;
                 }
 
-                $package = $this->resolvePackage((int) $row['sale_price']);
+                $monthlyPrice = (int) $row['sale_price'];
+                $initialPaymentPrice = PhoneNumber::postpaidInitialPaymentForMonthlyPrice($monthlyPrice);
+                $package = $this->resolvePackage($monthlyPrice);
 
                 $payload = [
                     'number_sum' => PhoneNumber::calculateNumberSum($phoneNumber),
@@ -102,7 +104,7 @@ class ImportTruePostpaidNumbersCommand extends Command
                     'network_code' => PhoneNumber::NETWORK_TRUE_DTAC,
                     'plan_name' => $package?->name ?? 'รายเดือน',
                     'sale_price' => $row['sale_price'],
-                    'initial_payment_price' => $row['sale_price'],
+                    'initial_payment_price' => $initialPaymentPrice,
                     'package_id' => $package?->id,
                     'status' => $status,
                 ];
@@ -489,7 +491,7 @@ class ImportTruePostpaidNumbersCommand extends Command
     {
         return PhonePackage::query()
             ->where('service_type', PhoneNumber::SERVICE_TYPE_POSTPAID)
-            ->where('network_code', PhoneNumber::NETWORK_TRUE_DTAC)
+            ->where('network_code', PhoneNumber::NETWORK_TRUE)
             ->where('monthly_price', $monthlyPrice)
             ->where('is_active', true)
             ->first();

@@ -33,6 +33,31 @@
     <div class="admin-alert admin-alert--success">{{ session('status_message') }}</div>
   @endif
 
+  <style>
+    .admin-numbers-table th,
+    .admin-numbers-table td {
+      padding: 9px 10px;
+      vertical-align: middle;
+    }
+
+    .admin-numbers-table .admin-number {
+      font-size: 15px;
+    }
+
+    .admin-numbers-table .admin-status-pill {
+      min-height: 22px;
+      padding: 2px 9px;
+      font-size: 11px;
+    }
+
+    .admin-numbers-table .admin-button--compact {
+      min-height: 30px;
+      padding: 5px 10px;
+      border-radius: 10px;
+      font-size: 12px;
+    }
+  </style>
+
   <section class="admin-card admin-feature-card admin-feature-card--compact">
     <div class="admin-feature-card__head">
       <div>
@@ -69,14 +94,14 @@
 
   <section class="admin-card admin-table-card">
     <div class="admin-table-wrap">
-      <table class="admin-table">
+      <table class="admin-table admin-numbers-table">
         <thead>
           <tr>
             <th>เบอร์</th>
-            <th>ผลรวม</th>
             <th>ประเภท</th>
             <th>เครือข่าย</th>
-            <th>แพ็กเกจ / ราคาเบอร์</th>
+            <th>แพ็กเกจ</th>
+            <th>ราคาเบอร์</th>
             <th>สถานะ</th>
             <th>จัดการ</th>
           </tr>
@@ -87,16 +112,10 @@
               <td>
                 <div class="admin-number">{{ $number->formatted_number }}</div>
               </td>
-              <td>{{ $number->number_sum ?: '-' }}</td>
               <td>{{ $number->service_type_label }}</td>
               <td>{{ $number->network_label }}</td>
-              <td>
-                <div>{{ $number->is_postpaid ? $number->package_label : 'เติมเงิน' }}</div>
-                <div class="admin-muted" style="font-size: 0.88rem;">
-                  ราคาเบอร์ {{ $number->payment_label }}
-
-                </div>
-              </td>
+              <td>{{ $number->is_postpaid ? $number->package_label : '-' }}</td>
+              <td>{{ $number->payment_label }}</td>
               <td>
                 @php
                   $statusClass = match ($number->status) {

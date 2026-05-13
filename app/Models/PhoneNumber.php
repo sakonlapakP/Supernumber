@@ -25,6 +25,11 @@ class PhoneNumber extends Model
     public const PACKAGE_PRICE_BASIC = 699;
     public const PACKAGE_PRICE_STANDARD = 1199;
     public const PACKAGE_PRICE_PREMIUM = 1499;
+    public const POSTPAID_INITIAL_PAYMENT_BY_MONTHLY_PRICE = [
+        self::PACKAGE_PRICE_BASIC => 1999,
+        self::PACKAGE_PRICE_STANDARD => 2999,
+        self::PACKAGE_PRICE_PREMIUM => 3999,
+    ];
     public const STATUS_ACTIVE = 'active';
     public const STATUS_HOLD = 'hold';
     public const STATUS_SOLD = 'sold';
@@ -546,6 +551,15 @@ class PhoneNumber extends Model
             ['value' => 'prepaid_50000_100000', 'label' => '50,000 - 100,000', 'min' => 50000, 'max' => 100001],
             ['value' => 'prepaid_over_100000', 'label' => 'มากกว่า 100,000', 'min' => 100000, 'max' => null],
         ];
+    }
+
+    public static function postpaidInitialPaymentForMonthlyPrice(?int $monthlyPrice): ?int
+    {
+        if ($monthlyPrice === null) {
+            return null;
+        }
+
+        return self::POSTPAID_INITIAL_PAYMENT_BY_MONTHLY_PRICE[$monthlyPrice] ?? $monthlyPrice;
     }
 
     /**

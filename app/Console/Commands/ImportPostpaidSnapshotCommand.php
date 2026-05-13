@@ -81,7 +81,9 @@ class ImportPostpaidSnapshotCommand extends Command
                     $stats['preserved_status']++;
                 }
 
-                $package = $this->resolvePackage((int) $price);
+                $monthlyPrice = (int) $price;
+                $initialPaymentPrice = PhoneNumber::postpaidInitialPaymentForMonthlyPrice($monthlyPrice);
+                $package = $this->resolvePackage($monthlyPrice);
 
                 $payload = [
                     'number_sum' => PhoneNumber::calculateNumberSum($phoneNumber),
@@ -89,7 +91,7 @@ class ImportPostpaidSnapshotCommand extends Command
                     'network_code' => PhoneNumber::NETWORK_TRUE_DTAC,
                     'plan_name' => $package?->name ?? PhoneNumber::PACKAGE_NAME,
                     'sale_price' => $price,
-                    'initial_payment_price' => $price,
+                    'initial_payment_price' => $initialPaymentPrice,
                     'package_id' => $package?->id,
                     'status' => $status,
                 ];
@@ -192,7 +194,7 @@ class ImportPostpaidSnapshotCommand extends Command
     {
         return PhonePackage::query()
             ->where('service_type', PhoneNumber::SERVICE_TYPE_POSTPAID)
-            ->where('network_code', PhoneNumber::NETWORK_TRUE_DTAC)
+            ->where('network_code', PhoneNumber::NETWORK_TRUE)
             ->where('monthly_price', $monthlyPrice)
             ->where('is_active', true)
             ->first();
