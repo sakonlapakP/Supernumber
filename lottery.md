@@ -127,3 +127,86 @@ $squareSvg = $service->generateSquareSvg($lotteryResult);
 $landscapeSvg = $service->generateLandscapeSvg($lotteryResult);
 ```
 
+---
+
+## LINE Notification Flow
+
+เมื่อผลหวยออก ระบบจะส่งข้อความเข้า LINE group อัตโนมัติผ่าน `LineLotteryNotifier`
+
+### Trigger
+
+`FetchLatestLotteryCommand` (`lottery:fetch-latest`) รันทุก 5 นาที ช่วง 15:45–16:20 น. (Asia/Bangkok)  
+หากผลหวยครบแล้ว จะ trigger:
+
+```php
+app(LineLotteryNotifier::class)->notifyAdminArticleReady($article, $targetDate);
+app(LineLotteryNotifier::class)->sendCompleted($result);
+```
+
+### Services
+
+| Service | Method | ส่งไปที่ | destinationKey |
+|---------|--------|----------|----------------|
+| `LineLotteryNotifier` | `sendCompleted()` | LINE Lottery Group | `lottery` |
+| `LineLotteryNotifier` | `notifyAdminArticleReady()` | LINE Admin Group | `admin` |
+| `LineLotteryNotifier` | `sendUnavailableAfterRetryWindow()` | LINE Lottery Group | `lottery` |
+
+- `destinationKey` resolve จาก `config('services.line.groups.{key}')` → fallback เป็น `LINE_GROUP_ID` ถ้าไม่มี
+- ส่งผ่าน `LineNotifier::queueMessages()` → บันทึกลง `line_notification_logs` → ส่งทันทีผ่าน LINE Messaging API (push)
+
+### ข้อความที่ส่ง (`sendCompleted`)
+
+- Text: ผลรางวัลครบ (รางวัลที่ 1, เลขหน้า/ท้าย 3 ตัว, เลขท้าย 2 ตัว, ข้างเคียง) — template จาก `config('services.lottery.line_template')`
+- Image: รูป square PNG/SVG ที่ upload แล้ว (ถ้ามี `manualImageUrl`) หรือ fallback จาก `LineLotteryImageService::buildLineImageUrl()`
+
+### Manual Share จาก Admin Panel
+
+ใน `/admin/articles` มีปุ่ม **LINE** สีเขียว (สำหรับบทความที่ published แล้ว):
+
+- **บทความหวย** (slug ตรงกับ `thai-goverment-lottery-{YYYYMM}(first|second)`): ส่งผลหวยครบผ่าน `LineLotteryNotifier::sendCompleted()`
+- **บทความทั่วไป**: ส่งชื่อบทความ + URL ผ่าน `LineNotifier::queueMessages('article_shared', ...)`
+
+Route: `POST /admin/articles/{article}/share-line` → `admin.articles.share-line`
+
+### ENV ที่เกี่ยวข้อง
+
+```env
+LINE_CHANNEL_ACCESS_TOKEN=...
+LINE_GROUP_ID=C...              # กลุ่มหลัก (fallback)
+LINE_LOTTERY_GROUP_ID=C...      # กลุ่มประกาศหวย (ถ้าว่าง ใช้ LINE_GROUP_ID)
+LINE_NOTIFICATION_TEST_MODE=false
+LINE_ADMIN_USER_ID=             # ถ้า test mode เปิด จะส่งหาคนนี้แทน
+```
+
+---
+
+## Facebook Share Flow (Admin Manual)
+
+ปุ่ม **แชร์** (สีน้ำเงิน) ใน `/admin/articles` สำหรับบทความหวยที่ผลครบแล้ว
+
+### ขั้นตอน
+
+1. Admin กดปุ่มแชร์ → `renderAndShareSocial()` ตรวจว่าหวยออกครบ 100% (`$lotteryIsComplete`)
+2. ถ้า cover image เป็น SVG → browser วาดรูปด้วย Canvg library (CDN)
+   - ดึง SVG ผ่าน `/admin/articles/get-svg-proxy?path=...`
+   - inject Kanit-700 font → render บน `<canvas>` 1200×1200
+   - แปลงเป็น PNG base64 → POST ไป `/admin/articles/{id}/upload-rendered-image`
+   - server บันทึก PNG ทับ SVG path → อัปเดต `cover_image_square_path` ใน DB
+3. Form submit ไป `/admin/articles/{article}/share-social`
+4. `FacebookPagePoster::postArticle()` อ่านไฟล์ PNG จาก storage → upload ไป Facebook Graph API v19.0 `/photos`
+
+### ข้อกำหนด
+
+- Image ต้องเป็น `.png` หรือ `.jpg` (ไม่ใช่ SVG) — หาก SVG ยังอยู่จะ abort
+- ปุ่มแชร์จะ disabled ถ้าหวยยังออกไม่ครบ
+- หาก render fail → แจ้ง admin ผ่าน LINE (`report-render-error`)
+
+### ENV ที่เกี่ยวข้อง
+
+```env
+FACEBOOK_PAGE_ID=...
+FACEBOOK_PAGE_ACCESS_TOKEN=...
+```
+
+Permissions ที่ต้องการ: `pages_manage_posts`, `pages_read_engagement`
+
