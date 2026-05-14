@@ -163,6 +163,42 @@ Route: `POST /admin/articles/{article}/broadcast-line` (admin.articles.broadcast
 
 ---
 
+## ตารางแผนการเผยแพร่บทความ (`article_plans`)
+
+ตาราง DB ที่เก็บแผนงาน — แสดงใน `/admin/articles` ส่วนล่าง
+
+### Migration
+
+สร้างตารางด้วย:
+
+```
+php artisan migrate
+```
+
+Migration file: `database/migrations/2026_05_11_090708_create_article_plans_table.php`
+
+### Seeder
+
+ข้อมูลแผนปี **69 (2026)** และ **70 (2027)** อยู่ใน `ArticlePlanSeeder` แยกตามปีในไฟล์เดียวกัน:
+
+```
+php artisan db:seed --class=ArticlePlanSeeder
+```
+
+ข้อมูลใน Seeder:
+- ปี 69 (2026): พ.ค. – ธ.ค. รวม 8 เดือน, 44 items
+- ปี 70 (2027): ม.ค. – เม.ย. รวม 4 เดือน, 20 items
+
+> ⚠️ Seeder ไม่มี `truncate` ก่อน insert — ถ้ารันซ้ำจะ duplicate ข้อมูล ควรรันครั้งเดียวบน DB ที่ยังว่างอยู่
+
+### การทำงาน
+
+- Query ดึงข้อมูล `whereYear('publish_date', now()->year)` — แสดงเฉพาะปีปัจจุบัน (Gregorian)
+- Manager เพิ่ม/แก้ไข/ลบแผนงานได้ผ่านปุ่ม "+ เพิ่มแผนงาน" ในหน้า admin
+- Row ที่มีบทความแล้ว (ตรวจจาก `published_at` date หรือ slug pattern ของหวย) จะแสดง ✅
+
+---
+
 ## ENV ที่เกี่ยวข้อง
 
 ```env
