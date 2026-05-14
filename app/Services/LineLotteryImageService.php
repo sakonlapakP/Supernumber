@@ -190,7 +190,7 @@ class LineLotteryImageService
             imagesetthickness($image, 2);
             imagerectangle($image, 38, 38, $width - 39, $height - 39, imagecolorallocatealpha($image, 186, 142, 77, 52));
             imagesetthickness($image, 1);
-            imageline($image, 965, 0, 850, 380, imagecolorallocatealpha($image, 245, 199, 109, 108));
+            imageline($image, 965, 0, 850, 380, imagecolorallocatealpha($image, 245, 199, 109, 118));
 
             $this->drawTopBrand($image, $gold, $goldDark);
 
@@ -211,8 +211,8 @@ class LineLotteryImageService
                 $backThree[] = '-';
             }
 
-            $this->drawCenteredTextWithOutline($image, 'ผลสลากกินแบ่งรัฐบาล', $this->fontPath('Kanit-700.ttf'), 46, 600, 272, $white, $outline, 4);
-            $this->drawCenteredThaiTextWithManualMaiEk($image, 'งวดประจำวันที่ '.$thaiDate, $this->fontPath('Kanit-600.ttf'), 26, 600, 322, $muted, $outline, 2);
+            $this->drawCenteredText($image, 'ผลสลากกินแบ่งรัฐบาล', $this->fontPath('Kanit-700.ttf'), 46, 600, 272, $white);
+            $this->drawCenteredThaiTextWithManualMaiEk($image, 'งวดประจำวันที่ '.$thaiDate, $this->fontPath('Kanit-600.ttf'), 26, 600, 322, $muted);
 
             $this->drawRoundedRectangle($image, 75, 370, 1125, 630, 12, $panel, true);
             $this->drawCenteredThaiTextWithManualMaiEk($image, 'รางวัลที่ 1', $this->fontPath('Kanit-600.ttf'), 42, 600, 445, $panelDark);
