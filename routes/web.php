@@ -794,6 +794,13 @@ Route::get('/articles/{slug}', [PublicController::class, 'showArticle'])->name('
 
 Route::post('/articles/{slug}/comments', [PublicController::class, 'storeArticleComment'])->name('articles.comments.store');
 
+Route::post('/articles/{slug}/track-share', function (Request $request, string $slug) {
+    $validated = $request->validate(['platform' => 'required|in:facebook,twitter,line,whatsapp,copy']);
+    $article = \App\Models\Article::where('slug', $slug)->firstOrFail();
+    \App\Models\ArticleShare::create(['article_id' => $article->id, 'platform' => $validated['platform']]);
+    return response()->json(['success' => true]);
+})->name('articles.track-share');
+
 Route::get('/evaluate', [PublicController::class, 'evaluate'])->name('evaluate');
 
 Route::get('/evaluateBadNumber', [PublicController::class, 'evaluateBad'])->name('evaluate.bad');
@@ -2770,6 +2777,35 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
     })->name('utils.storage-link');
 
+    Route::post('/utils/optimize-clear', function () use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        try {
+            $exitCode = Artisan::call('optimize:clear');
+            $output = trim((string) Artisan::output());
+
+            if ($exitCode !== 0) {
+                return back()->withErrors([
+                    'optimize_clear' => $output !== '' ? $output : 'เรียก optimize:clear ไม่สำเร็จ',
+                ]);
+            }
+
+            return back()
+                ->with('status_message', 'สั่ง optimize:clear เรียบร้อยแล้ว')
+                ->with('optimize_clear_output', $output);
+        } catch (\Throwable $e) {
+            Log::warning('Manual optimize:clear failed.', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->withErrors([
+                'optimize_clear' => $e->getMessage(),
+            ]);
+        }
+    })->name('utils.optimize-clear');
+
     Route::get('/articles', function (Request $request) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
@@ -3370,6 +3406,17 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->route('admin.articles')
             ->with('status_message', 'สร้างบทความเรียบร้อย');
     })->name('articles.store');
+
+    Route::get('/articles/analytics/shares', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) return $redirect;
+
+        $articles = Article::with([
+            'shares' => fn($q) => $q->selectRaw('article_id, platform, COUNT(*) as count')
+                ->groupBy('article_id', 'platform')
+        ])->get();
+
+        return view('admin.articles-shares', compact('articles'));
+    })->name('admin.articles.shares');
 
     Route::get('/articles/{article}/edit', function (Article $article) use ($ensureAdmin, $resolvePlannedArticlePublishedAt) {
         if ($redirect = $ensureAdmin()) {
@@ -4479,4 +4526,3 @@ Route::get('/emergency-migrate', function () use ($ensureAdmin) {
         return "Migration failed: " . $e->getMessage();
     }
 });
-

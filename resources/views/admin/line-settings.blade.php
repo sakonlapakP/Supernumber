@@ -278,19 +278,23 @@
       </table>
     </div>
   </section>
-  <section class="admin-card admin-feature-card" style="margin-top: 18px;">
-    <div class="admin-page-head" style="margin-bottom: 18px;">
-      <div>
-        <h2 style="margin: 0; font-size: 1.1rem;">เครื่องมือจัดการระบบ</h2>
-        <p class="admin-subtitle" style="margin-top: 6px;">ใช้สำหรับสแกนหาไฟล์รูปภาพที่อาจจะหายไปหลังย้าย Server หรืออัปเดตระบบฐานข้อมูล</p>
-      </div>
-    </div>
+	  <section class="admin-card admin-feature-card" style="margin-top: 18px;">
+	    <div class="admin-page-head" style="margin-bottom: 18px;">
+	      <div>
+	        <h2 style="margin: 0; font-size: 1.1rem;">เครื่องมือจัดการระบบ</h2>
+	        <p class="admin-subtitle" style="margin-top: 6px;">ใช้สำหรับสแกนหาไฟล์รูปภาพที่อาจจะหายไปหลังย้าย Server หรืออัปเดตระบบฐานข้อมูล</p>
+	      </div>
+	    </div>
 
-    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-      <a href="/admin/utils/storage-link" class="admin-button admin-button--muted">🔧 ซ่อมรูปแตก (Storage Link)</a>
-      <a href="/admin/utils/migrate" class="admin-button admin-button--secondary">🚀 อัปเกรดฐานข้อมูล / แก้ไขโครงสร้าง</a>
-    </div>
-  </section>
+	    <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+	      <a href="/admin/utils/storage-link" class="admin-button admin-button--muted">🔧 ซ่อมรูปแตก (Storage Link)</a>
+	      <a href="/admin/utils/migrate" class="admin-button admin-button--secondary">🚀 อัปเกรดฐานข้อมูล / แก้ไขโครงสร้าง</a>
+	      <form action="{{ route('admin.utils.optimize-clear') }}" method="post" style="margin: 0; display: inline-block;">
+	        @csrf
+	        <button type="submit" class="admin-button admin-button--secondary">🧹 ล้าง Cache (optimize:clear)</button>
+	      </form>
+	    </div>
+	  </section>
 
   <script>
     function copyToClipboard(text, btn) {
