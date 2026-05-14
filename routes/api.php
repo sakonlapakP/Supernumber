@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\TarotReadingController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ArticleController;
+use App\Http\Controllers\Api\ArticlePlanController;
 use App\Http\Middleware\ApiTokenAuth;
 use Illuminate\Support\Facades\Route;
 
@@ -17,6 +18,7 @@ Route::middleware(ApiTokenAuth::class)->group(function () {
     Route::get('articles', [ArticleController::class, 'index'])->name('api.articles.index');
     Route::get('articles/{article}', [ArticleController::class, 'show'])->name('api.articles.show');
     Route::get('articles/{article}/preview-url', [ArticleController::class, 'previewUrl'])->name('api.articles.preview-url');
+    Route::get('article-plans', [ArticlePlanController::class, 'index'])->name('api.article-plans.index');
 
     // Write access restricted to Admin and Manager
     Route::middleware('role:admin,manager')->group(function () {
@@ -25,6 +27,9 @@ Route::middleware(ApiTokenAuth::class)->group(function () {
         Route::delete('articles/{article}', [ArticleController::class, 'destroy'])->name('api.articles.destroy');
         Route::post('articles/import-json', [ArticleController::class, 'importJson'])->name('api.articles.import-json');
         Route::post('articles/{article}/share', [ArticleController::class, 'share'])->name('api.articles.share');
+        Route::post('article-plans', [ArticlePlanController::class, 'store'])->name('api.article-plans.store');
+        Route::match(['put', 'patch'], 'article-plans/{articlePlan}', [ArticlePlanController::class, 'update'])->name('api.article-plans.update');
+        Route::delete('article-plans/{articlePlan}', [ArticlePlanController::class, 'destroy'])->name('api.article-plans.destroy');
     });
 
     // --- User Management (Manager Only) ---

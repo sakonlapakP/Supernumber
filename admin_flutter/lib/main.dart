@@ -6,6 +6,7 @@ import 'screens/article_list_screen.dart';
 import 'providers/auth_provider.dart';
 import 'providers/article_provider.dart';
 import 'providers/user_provider.dart';
+import 'providers/article_plan_provider.dart';
 
 void main() {
   runApp(
@@ -14,6 +15,7 @@ void main() {
         ChangeNotifierProvider(create: (_) => AuthProvider()),
         ChangeNotifierProvider(create: (_) => ArticleProvider()),
         ChangeNotifierProvider(create: (_) => UserProvider()),
+        ChangeNotifierProvider(create: (_) => ArticlePlanProvider()),
       ],
       child: const SupernumberAdminApp(),
     ),
