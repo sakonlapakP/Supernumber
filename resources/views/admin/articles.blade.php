@@ -37,8 +37,14 @@
 
        $groupedPlans = $articlePlans->groupBy(function($plan) use ($thaiMonths) {
            $date = \Carbon\Carbon::parse($plan->publish_date);
-           return $thaiMonths[$date->month] . ' ' . ($date->year + 543 - 2500); 
+           return $thaiMonths[$date->month];
        });
+
+       $thaiYear     = $planYear + 543 - 2500; // e.g. 2026 → 69
+       $prevYear     = $planYear > 2026 ? $planYear - 1 : null;
+       $nextYear     = $planYear < 2037 ? $planYear + 1 : null;
+       $prevThaiYear = $prevYear ? $prevYear + 543 - 2500 : null;
+       $nextThaiYear = $nextYear ? $nextYear + 543 - 2500 : null;
 
        $isManager = session('admin_user_role') === \App\Models\User::ROLE_MANAGER;
     @endphp
@@ -881,6 +887,7 @@
     <div class="admin-card article-admin-card">
       <div class="article-admin-toolbar" style="padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <form action="{{ route('admin.articles') }}" method="GET" style="display: flex; gap: 12px; align-items: center; flex: 1; max-width: 600px;">
+          <input type="hidden" name="plan_year" value="{{ $planYear }}">
           <input type="text" id="article-search" placeholder="ค้นหาหัวข้อบทความ..." class="admin-input" style="flex: 1;">
           <select id="plan-month-filter" name="month_plan" class="admin-input" style="width: 180px; background-color: #fff; cursor: pointer; border-color: #e2e8f0; font-weight: 600; color: #1e293b;" onchange="this.form.submit()">
             <option value="">ทั้งหมด (แผนงาน)</option>
@@ -1160,9 +1167,23 @@
       <div class="plan-header">
         <h3 class="plan-title">
           <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 24px; height: 24px; color: #7c3aed;"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z" /></svg>
-          ตารางแผนการเผยแพร่บทความ (1 ม.ค. - 31 ธ.ค. {{ now()->format('Y') + 543 }})
+          ตารางแผนการเผยแพร่บทความ ปี {{ $thaiYear }} (1 ม.ค. - 31 ธ.ค. {{ $thaiYear }})
         </h3>
-        <div style="display: flex; align-items: center; gap: 15px;">
+        <div style="display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+          {{-- Year Switcher --}}
+          <div style="display: flex; align-items: center; gap: 6px; background: #f1f5f9; border-radius: 10px; padding: 4px;">
+            @if($prevYear)
+              <a href="{{ route('admin.articles', array_merge(request()->except(['plan_year','month_plan']), ['plan_year' => $prevYear])) }}" style="display: flex; align-items: center; padding: 4px 10px; border-radius: 7px; background: white; border: 1px solid #e2e8f0; color: #475569; font-weight: 700; font-size: 13px; text-decoration: none; transition: all 0.15s;">&lsaquo; {{ $prevThaiYear }}</a>
+            @else
+              <span style="padding: 4px 10px; border-radius: 7px; color: #cbd5e1; font-weight: 700; font-size: 13px;">&lsaquo;</span>
+            @endif
+            <span style="padding: 4px 12px; font-weight: 800; font-size: 14px; color: #7c3aed;">ปี {{ $thaiYear }}</span>
+            @if($nextYear)
+              <a href="{{ route('admin.articles', array_merge(request()->except(['plan_year','month_plan']), ['plan_year' => $nextYear])) }}" style="display: flex; align-items: center; padding: 4px 10px; border-radius: 7px; background: white; border: 1px solid #e2e8f0; color: #475569; font-weight: 700; font-size: 13px; text-decoration: none; transition: all 0.15s;">{{ $nextThaiYear }} &rsaquo;</a>
+            @else
+              <span style="padding: 4px 10px; border-radius: 7px; color: #cbd5e1; font-weight: 700; font-size: 13px;">&rsaquo;</span>
+            @endif
+          </div>
           @if($isManager)
             <button type="button" class="admin-button" style="background: #7c3aed; padding: 6px 12px; font-size: 13px;" onclick="openAddPlanModal()">+ เพิ่มแผนงาน</button>
           @endif
