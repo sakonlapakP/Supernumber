@@ -3157,53 +3157,53 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
     Route::post('/articles/{article}/share-line', function (Request $request, \App\Models\Article $article) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) return $redirect;
-        
+
         Log::info("Manual LINE Share: Article ID [{$article->id}], Title [{$article->title}]");
 
-        $manualImageUrl = $request->input('manual_image_url');
-        if ($manualImageUrl && !str_starts_with($manualImageUrl, 'http')) {
-            $manualImageUrl = \Illuminate\Support\Facades\Storage::disk('public')->url($manualImageUrl);
-        }
+        $articleUrl = route('articles.show', $article->slug);
+        $isLotteryArticle = (bool) preg_match('/thai-goverment-lottery-\d{6}(first|second)/', $article->slug);
 
-        // Find lottery result by published_at date or slug pattern
-        $date = $article->published_at ? $article->published_at->toDateString() : null;
-        $lotteryResult = null;
-        
-        Log::info("Manual LINE Share: Searching for date [{$date}] or slug [{$article->slug}]");
-
-        if ($date) {
-            $lotteryResult = \App\Models\LotteryResult::where('draw_date', $date)->first();
-        }
-        
-        if (!$lotteryResult) {
-            if (preg_match('/(\d{4})(\d{2})/', $article->slug, $matches)) {
-                $yearMonth = $matches[1] . '-' . $matches[2];
-                $lotteryResult = \App\Models\LotteryResult::where('draw_date', 'like', $yearMonth . '%')
-                    ->orderBy('draw_date', 'desc')
-                    ->first();
+        if ($isLotteryArticle) {
+            // บทความหวย: ค้นหา LotteryResult เพื่อดึง Thai date
+            $lotteryResult = null;
+            $date = $article->published_at ? $article->published_at->toDateString() : null;
+            if ($date) {
+                $lotteryResult = \App\Models\LotteryResult::where('draw_date', $date)->first();
             }
+            if (!$lotteryResult && preg_match('/(\d{4})(\d{2})/', $article->slug, $m)) {
+                $lotteryResult = \App\Models\LotteryResult::where('draw_date', 'like', $m[1] . '-' . $m[2] . '%')
+                    ->orderBy('draw_date', 'desc')->first();
+            }
+
+            // สร้าง Thai date
+            $thaiMonths = [1=>'มกราคม',2=>'กุมภาพันธ์',3=>'มีนาคม',4=>'เมษายน',5=>'พฤษภาคม',6=>'มิถุนายน',7=>'กรกฎาคม',8=>'สิงหาคม',9=>'กันยายน',10=>'ตุลาคม',11=>'พฤศจิกายน',12=>'ธันวาคม'];
+            $drawDate = $lotteryResult
+                ? (\Carbon\Carbon::parse($lotteryResult->draw_date))
+                : ($article->published_at ?? now());
+            $thaiDate = $drawDate->format('j') . ' ' . ($thaiMonths[(int)$drawDate->format('n')] ?? '') . ' ' . ((int)$drawDate->format('Y') + 543);
+
+            $template = config('services.lottery.line_template_lottery_manual');
+            $text = str_replace(['{thai_draw_date}', '{article_url}'], [$thaiDate, $articleUrl], $template);
+
+            Log::info("Manual LINE Share (Lottery): Sending with Thai date [{$thaiDate}]");
+        } else {
+            // บทความทั่วไป: ส่งแค่ชื่อ + URL ไม่มีรูป
+            $template = config('services.lottery.line_template_regular_manual');
+            $text = str_replace(['{title}', '{article_url}'], [$article->title, $articleUrl], $template);
+
+            Log::info("Manual LINE Share (Regular): Sending text-only message.");
         }
 
-        if ($lotteryResult) {
-            Log::info("Manual LINE Share: Found LotteryResult ID [{$lotteryResult->id}]. Sending notification...");
-            app(\App\Services\LineLotteryNotifier::class)->sendCompleted($lotteryResult, $manualImageUrl);
-            return back()->with('status_message', 'ส่งข้อมูลเข้า LINE เรียบร้อยแล้ว ✅');
-        }
+        $log = app(\App\Services\LineNotifier::class)->queueMessages(
+            'article_shared',
+            [['type' => 'text', 'text' => $text]],
+            $article
+        );
 
-        // General article: push title + URL (+ image if available) to the default LINE group
-        Log::info("Manual LINE Share: No LotteryResult found. Sending general article notification for Article ID [{$article->id}].");
-        $messages = [];
-        if ($manualImageUrl) {
-            $messages[] = ['type' => 'image', 'originalContentUrl' => $manualImageUrl, 'previewImageUrl' => $manualImageUrl];
-        }
-        $messages[] = [
-            'type' => 'text',
-            'text' => "📝 บทความใหม่\n{$article->title}\n\n" . route('articles.show', $article->slug),
-        ];
-        $log = app(\App\Services\LineNotifier::class)->queueMessages('article_shared', $messages, $article);
         if ($log === null) {
             return back()->withErrors(['share_line' => 'LINE ยังไม่ได้ตั้งค่า หรือไม่สามารถส่งข้อความได้']);
         }
+
         return back()->with('status_message', 'ส่งข้อมูลเข้า LINE เรียบร้อยแล้ว ✅');
     })->name('articles.share-line');
 
