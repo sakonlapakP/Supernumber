@@ -1523,11 +1523,16 @@
             </form>
         </div>
     </div>
+  {{-- Hidden elements for canvas rendering --}}
+  <div id="render-overlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.75); z-index:9999; align-items:center; justify-content:center; flex-direction:column; gap:16px;">
+    <p id="render-status" style="color:#fff; font-size:18px; font-weight:600;"></p>
+  </div>
+  <canvas id="render-canvas" style="display:none;"></canvas>
 @endsection
 
 @push('scripts')
   <script src="https://cdn.jsdelivr.net/npm/canvg@3.0.10/lib/umd.js"></script>
-  
+
     <script>
     (function() {
         // --- ส่วนควบคุมการแสดงผลและพื้นที่วาดรูป ---
