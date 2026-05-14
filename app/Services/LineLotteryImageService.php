@@ -574,15 +574,14 @@ SVG;
             <stop offset="40%" stop-color="#261a11" />
             <stop offset="100%" stop-color="#100a06" />
         </radialGradient>
-        <linearGradient id="diagonalFade" x1="965" y1="0" x2="838" y2="630" gradientUnits="userSpaceOnUse">
+        <linearGradient id="diagonalFade" x1="965" y1="0" x2="910" y2="315" gradientUnits="userSpaceOnUse">
             <stop offset="0%" stop-color="#f5c76d" stop-opacity="0.32" />
-            <stop offset="42%" stop-color="#f5c76d" stop-opacity="0.06" />
-            <stop offset="58%" stop-color="#f5c76d" stop-opacity="0.06" />
-            <stop offset="100%" stop-color="#f5c76d" stop-opacity="0.32" />
+            <stop offset="65%" stop-color="#f5c76d" stop-opacity="0.14" />
+            <stop offset="100%" stop-color="#f5c76d" stop-opacity="0" />
         </linearGradient>
     </defs>
     <rect width="1200" height="630" fill="url(#bgGrad)" />
-    <line x1="965" y1="0" x2="838" y2="630" stroke="url(#diagonalFade)" stroke-width="2" />
+    <line x1="965" y1="0" x2="910" y2="315" stroke="url(#diagonalFade)" stroke-width="2" />
     <rect x="6" y="6" width="1188" height="618" fill="none" stroke="#c59d62" stroke-width="3" />
     <rect x="38" y="38" width="1124" height="554" fill="none" stroke="#ba8e4d" stroke-width="2" opacity="0.4" />
 
@@ -596,8 +595,8 @@ SVG;
     <text x="600" y="360" font-family="Kanit" font-size="52" font-weight="700" fill="#120907" stroke="#120907" stroke-width="8" stroke-linejoin="round" text-anchor="middle">สลากกินแบ่งรัฐบาลล่าสุด</text>
     <text x="600" y="360" font-family="Kanit" font-size="52" font-weight="700" fill="#ffffff" text-anchor="middle">สลากกินแบ่งรัฐบาลล่าสุด</text>
 
-    <text x="600" y="470" font-family="Kanit" font-size="95" font-weight="700" fill="#120907" stroke="#120907" stroke-width="12" stroke-linejoin="round" text-anchor="middle">งวดประจำวันที่ {$thaiDate}</text>
-    <text x="600" y="470" font-family="Kanit" font-size="95" font-weight="700" fill="#f7d58f" text-anchor="middle">งวดประจำวันที่ {$thaiDate}</text>
+    <text x="600" y="470" font-family="Kanit" font-size="68" font-weight="700" fill="#120907" stroke="#120907" stroke-width="9" stroke-linejoin="round" text-anchor="middle">งวดประจำวันที่ {$thaiDate}</text>
+    <text x="600" y="470" font-family="Kanit" font-size="68" font-weight="700" fill="#f7d58f" text-anchor="middle">งวดประจำวันที่ {$thaiDate}</text>
 
     <rect x="360" y="542" width="480" height="70" fill="#160c08" />
     <text x="600" y="592" font-family="Kanit" font-size="44" font-weight="700" fill="#ffffff" text-anchor="middle">supernumber.co.th</text>
