@@ -88,11 +88,11 @@ return [
         // ใช้สำหรับ Facebook share บทความหวย (manual)
         'fb_template_lottery' => env('LOTTERY_MSG_FB_LOTTERY', "ตรวจสลากกินแบ่งรัฐบาล\nงวดประจำวันที่ {thai_draw_date}\n\nใครถูกรางวัลกันบ้าง โชคดี ร่ำรวย รับทรัพย์ กันทุกคน ครับ 🙏🙏🙏\n\nสนใจเปลี่ยนเบอร์เสริมด้านการเงิน\nTel : 0963232656, 0963232665\nLine : @supernumber\n\n{article_url}"),
         // ใช้สำหรับ Facebook share บทความทั่วไป
-        'fb_template_regular' => env('LOTTERY_MSG_FB_REGULAR', "{title}\n\n{article_url}"),
+        'fb_template_regular' => env('LOTTERY_MSG_FB_REGULAR', "{title}\n\n{excerpt}\n\n{article_url}"),
         // ใช้สำหรับ LINE share บทความหวย (manual) — ข้อความเดียวกับ Facebook lottery แต่ไม่มีรูป
         'line_template_lottery_manual' => env('LOTTERY_MSG_LINE_LOTTERY_MANUAL', "ตรวจสลากกินแบ่งรัฐบาล\nงวดประจำวันที่ {thai_draw_date}\n\nใครถูกรางวัลกันบ้าง โชคดี ร่ำรวย รับทรัพย์ กันทุกคน ครับ 🙏🙏🙏\n\nสนใจเปลี่ยนเบอร์เสริมด้านการเงิน\nTel : 0963232656, 0963232665\nLine : @supernumber\n\n{article_url}"),
-        // ใช้สำหรับ LINE share บทความทั่วไป (manual) — แค่ชื่อ + URL ไม่มีรูป
-        'line_template_regular_manual' => env('LOTTERY_MSG_LINE_REGULAR_MANUAL', "📝 บทความใหม่\n{title}\n\n{article_url}"),
+        // ใช้สำหรับ LINE share บทความทั่วไป (manual) — แค่ชื่อ + excerpt + URL ไม่มีรูป
+        'line_template_regular_manual' => env('LOTTERY_MSG_LINE_REGULAR_MANUAL', "📝 บทความใหม่\n{title}\n\n{excerpt}\n\n{article_url}"),
     ],
 
 ];

@@ -3187,9 +3187,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
             Log::info("Manual LINE Share (Lottery): Sending with Thai date [{$thaiDate}]");
         } else {
-            // บทความทั่วไป: ส่งแค่ชื่อ + URL ไม่มีรูป
+            // บทความทั่วไป: ส่งชื่อ + excerpt + URL ไม่มีรูป
             $template = config('services.lottery.line_template_regular_manual');
-            $text = str_replace(['{title}', '{article_url}'], [$article->title, $articleUrl], $template);
+            $excerpt = $article->excerpt ? strip_tags($article->excerpt) : '';
+            $text = str_replace(['{title}', '{excerpt}', '{article_url}'], [$article->title, $excerpt, $articleUrl], $template);
 
             Log::info("Manual LINE Share (Regular): Sending text-only message.");
         }

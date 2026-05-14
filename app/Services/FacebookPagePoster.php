@@ -103,10 +103,11 @@ class FacebookPagePoster
     private function buildRegularMessage(Article $article, string $articleUrl): string
     {
         $template = config('services.lottery.fb_template_regular');
+        $excerpt = $article->excerpt ? strip_tags($article->excerpt) : '';
 
         return str_replace(
-            ['{title}', '{article_url}'],
-            [$article->title, $articleUrl],
+            ['{title}', '{excerpt}', '{article_url}'],
+            [$article->title, $excerpt, $articleUrl],
             $template
         );
     }
