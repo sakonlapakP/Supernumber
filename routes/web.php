@@ -3151,10 +3151,24 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         if ($lotteryResult) {
             Log::info("Manual LINE Share: Found LotteryResult ID [{$lotteryResult->id}]. Sending notification...");
             app(\App\Services\LineLotteryNotifier::class)->sendCompleted($lotteryResult, $manualImageUrl);
-            return back()->with('success', 'ส่งข้อมูลเข้า LINE เรียบร้อยแล้ว');
+            return back()->with('status_message', 'ส่งข้อมูลเข้า LINE เรียบร้อยแล้ว ✅');
         }
 
-        return back()->withErrors(['share_line' => 'ไม่พบข้อมูลหวยที่ตรงกับบทความนี้']);
+        // General article: push title + URL (+ image if available) to the default LINE group
+        Log::info("Manual LINE Share: No LotteryResult found. Sending general article notification for Article ID [{$article->id}].");
+        $messages = [];
+        if ($manualImageUrl) {
+            $messages[] = ['type' => 'image', 'originalContentUrl' => $manualImageUrl, 'previewImageUrl' => $manualImageUrl];
+        }
+        $messages[] = [
+            'type' => 'text',
+            'text' => "📝 บทความใหม่\n{$article->title}\n\n" . route('articles.show', $article->slug),
+        ];
+        $log = app(\App\Services\LineNotifier::class)->queueMessages('article_shared', $messages, $article);
+        if ($log === null) {
+            return back()->withErrors(['share_line' => 'LINE ยังไม่ได้ตั้งค่า หรือไม่สามารถส่งข้อความได้']);
+        }
+        return back()->with('status_message', 'ส่งข้อมูลเข้า LINE เรียบร้อยแล้ว ✅');
     })->name('articles.share-line');
 
     Route::post('/articles/{article}/broadcast-line', function (Request $request, \App\Models\Article $article) use ($ensureAdmin) {

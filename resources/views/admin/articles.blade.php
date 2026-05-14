@@ -71,6 +71,12 @@
       </div>
     @endif
 
+    @if ($errors->any())
+      <div class="admin-alert" style="background: #fff4f4; border-color: #ffcccc; color: #cc0000;">
+        {{ $errors->first() }}
+      </div>
+    @endif
+
     @if(!config('services.line.group_id') && !config('services.line.groups.lottery'))
       <div style="background: #fff4f4; border: 1px solid #ffcccc; color: #cc0000; padding: 15px; border-radius: 8px; margin-bottom: 20px; font-weight: bold; display: flex; align-items: center; gap: 10px;">
         <span>⚠️ ยังไม่ได้ตั้งค่า LINE Group ID! ปุ่มส่ง LINE จะใช้งานไม่ได้จนกว่าจะตั้งค่าในเมนู <a href="{{ route('admin.line-settings') }}" style="color: #1877F2; text-decoration: underline;">ตั้งค่า LINE</a></span>
@@ -1021,6 +1027,20 @@
                       <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185zm3.933 12.814a2.25 2.25 0 10-3.933-2.185 2.25 2.25 0 003.933 2.185z" /></svg>
                       แชร์
                     </button>
+                  @endif
+                  @if($article->is_published && $article->slug)
+                    <form action="{{ route('admin.articles.share-line', $article) }}" method="POST" style="display: inline;" onsubmit="return confirm('ส่งบทความนี้เข้า LINE Group?')">
+                      @csrf
+                      <input type="hidden" name="manual_image_url" value="{{ $article->cover_image_square_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($article->cover_image_square_path) : ($article->cover_image_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($article->cover_image_path) : '') }}">
+                      <button type="submit"
+                              class="admin-button admin-button--compact"
+                              style="background: #06C755; color: #fff; border-color: #06C755;"
+                              title="ส่งเข้า LINE Group"
+                              aria-label="ส่งเข้า LINE">
+                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.630 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
+                        LINE
+                      </button>
+                    </form>
                   @endif
                   @if(in_array(session('admin_user_role'), [\App\Models\User::ROLE_MANAGER, \App\Models\User::ROLE_ADMIN], true))
                     <form action="{{ route('admin.articles.delete', $article) }}" method="POST" style="display: inline;" onsubmit="return confirm('ยืนยันลบบทความนี้? การลบจะลบไฟล์รูปและคอมเมนต์ที่เกี่ยวข้องด้วย')">
