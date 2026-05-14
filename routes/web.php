@@ -2849,17 +2849,20 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 ];
             });
 
+        $planYear = (int) $request->input('plan_year', now()->year);
+        $planYear = max(2026, min(2037, $planYear));
+
         $articlePlans = collect();
-        if (\Illuminate\Support\Facades\Schema::hasTable('article_plans')) {
+        $tableExists = \Illuminate\Support\Facades\Schema::hasTable('article_plans');
+        if ($tableExists) {
             $articlePlans = \App\Models\ArticlePlan::query()
-                ->whereYear('publish_date', now()->year)
+                ->whereYear('publish_date', $planYear)
                 ->orderBy('publish_date')
                 ->orderBy('publish_time')
                 ->get();
         }
 
-        $tableExists = \Illuminate\Support\Facades\Schema::hasTable('article_plans');
-        return view('admin.articles', compact('articles', 'existingArticlesInfo', 'articlePlans', 'tableExists'));
+        return view('admin.articles', compact('articles', 'existingArticlesInfo', 'articlePlans', 'tableExists', 'planYear'));
     })->name('articles');
 
     Route::post('/article-plans', [\App\Http\Controllers\Admin\ArticlePlanController::class, 'store'])->name('article-plans.store');

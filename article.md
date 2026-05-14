@@ -84,6 +84,8 @@ AND (
 
 ## Facebook Share Flow
 
+`FacebookPagePoster::postArticle()` detect ประเภท article จาก slug pattern และใช้ message template ที่เหมาะสม:
+
 ### บทความหวย (slug ตรงกับ `thai-goverment-lottery-{YYYYMM}(first|second)`)
 
 1. ตรวจสอบว่าหวยออกครบ 100% (`$lotteryIsComplete`) — ถ้าไม่ครบ จะ block
@@ -96,13 +98,29 @@ AND (
    - server บันทึกไฟล์ลง `storage/app/public/`
    - อัปเดต `cover_image_square_path` ใน DB
 4. Form submit → `POST /admin/articles/{article}/share-social`
-5. `FacebookPagePoster::postArticle()` → Facebook Graph API v19.0 `/photos`
+5. `FacebookPagePoster::postArticle()` สร้างข้อความจาก `services.lottery.fb_template_lottery`:
+   ```
+   ตรวจสลากกินแบ่งรัฐบาล
+   งวดประจำวันที่ {thai_draw_date}
+
+   ใครถูกรางวัลกันบ้าง โชคดี ร่ำรวย รับทรัพย์ กันทุกคน ครับ 🙏🙏🙏
+
+   สนใจเปลี่ยนเบอร์เสริมด้านการเงิน
+   Tel : 0963232656, 0963232665
+   Line : @supernumber
+
+   {article_url}
+   ```
+6. Upload `cover_image_square_path` (PNG) → Facebook Graph API v19.0 `/photos`
 
 ### บทความทั่วไป
 
 - Form submit โดยตรง (ไม่ต้อง render)
+- ข้อความจาก `services.lottery.fb_template_regular`: `{title}\n\n{excerpt}\n\n{article_url}`
 - ใช้ `cover_image_landscape_path` หรือ `cover_image_path`
 - ต้องเป็นไฟล์ `.png` หรือ `.jpg` — SVG จะถูก abort
+
+config key: `services.lottery.fb_template_regular` (env: `LOTTERY_MSG_FB_REGULAR`)
 
 ### Error Handling
 
@@ -115,26 +133,41 @@ AND (
 
 Route: `POST /admin/articles/{article}/share-line` (admin.articles.share-line)
 
+ทั้งสองประเภทส่งแค่ข้อความ (text only) ไม่แนบรูป — URL ใน LINE จะแสดง preview รูปบทความผ่าน OG meta tags
+
 ### บทความหวย
 
-ค้นหา `LotteryResult` จาก `published_at` date หรือ slug pattern แล้วส่งผ่าน:
+ค้นหา `LotteryResult` จาก `published_at` date หรือ slug pattern เพื่อดึง Thai date:
 
-```php
-app(LineLotteryNotifier::class)->sendCompleted($lotteryResult, $manualImageUrl);
+```
+ตรวจสลากกินแบ่งรัฐบาล
+งวดประจำวันที่ {thai_draw_date}
+
+ใครถูกรางวัลกันบ้าง โชคดี ร่ำรวย รับทรัพย์ กันทุกคน ครับ 🙏🙏🙏
+
+สนใจเปลี่ยนเบอร์เสริมด้านการเงิน
+Tel : 0963232656, 0963232665
+Line : @supernumber
+
+{article_url}
 ```
 
-ส่งผลหวยครบ (รางวัลที่ 1, เลขหน้า/ท้าย 3 ตัว ฯลฯ) + รูป
+config key: `services.lottery.line_template_lottery_manual`
 
 ### บทความทั่วไป
 
-```php
-app(LineNotifier::class)->queueMessages('article_shared', [
-    ['type' => 'image', ...],   // ถ้ามีรูป
-    ['type' => 'text', 'text' => "📝 บทความใหม่\n{title}\n\n{url}"],
-]);
+```
+📝 บทความใหม่
+{title}
+
+{excerpt}
+
+{article_url}
 ```
 
-ส่งชื่อบทความ + ลิงก์ + รูปปก (ถ้ามี) เข้า default LINE Group
+config key: `services.lottery.line_template_regular_manual` (env: `LOTTERY_MSG_LINE_REGULAR_MANUAL`)
+
+ส่งผ่าน `LineNotifier::queueMessages('article_shared', [...], $article)` เข้า default LINE Group
 
 ---
 
@@ -179,4 +212,10 @@ LINE_ADMIN_USER_ID=
 
 # Cron
 CRON_SECRET=supernumber_secret_789
+
+# Message Templates (optional — ถ้าไม่ set ใช้ default ใน config/services.php)
+LOTTERY_MSG_FB_LOTTERY=...          # FB message สำหรับบทความหวย
+LOTTERY_MSG_FB_REGULAR=...          # FB message สำหรับบทความทั่วไป
+LOTTERY_MSG_LINE_LOTTERY_MANUAL=... # LINE message สำหรับบทความหวย (manual share)
+LOTTERY_MSG_LINE_REGULAR_MANUAL=... # LINE message สำหรับบทความทั่วไป (manual share)
 ```
