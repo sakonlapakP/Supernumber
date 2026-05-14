@@ -189,8 +189,8 @@ class LineLotteryImageService
             imagerectangle($image, 6, 6, $width - 7, $height - 7, $goldDark);
             imagesetthickness($image, 2);
             imagerectangle($image, 38, 38, $width - 39, $height - 39, imagecolorallocatealpha($image, 186, 142, 77, 52));
-            imageline($image, 965, 0, 850, 380, imagecolorallocatealpha($image, 245, 199, 109, 88));
             imagesetthickness($image, 1);
+            imageline($image, 965, 0, 850, 380, imagecolorallocatealpha($image, 245, 199, 109, 108));
 
             $this->drawTopBrand($image, $gold, $goldDark);
 
@@ -241,15 +241,70 @@ class LineLotteryImageService
 
     private function paintBackground($image, int $width, int $height): void
     {
+        // Match SVG radialGradient cx=50% cy=15% r=85% with stops:
+        //   0%   #5a4227
+        //   40%  #261a11
+        //   100% #100a06
+        // SVG percentage on r (objectBoundingBox) is relative to sqrt(w² + h²)/sqrt(2),
+        // which equals the side length for a square canvas — so r=85% of 1200 = 1020.
+        $cx = (int) round($width * 0.50);
+        $cy = (int) round($height * 0.15);
+        $maxR = (int) round($width * 0.85);
+
+        $stops = [
+            [0.00, 0x5a, 0x42, 0x27],
+            [0.40, 0x26, 0x1a, 0x11],
+            [1.00, 0x10, 0x0a, 0x06],
+        ];
+
+        // Precompute a 1-D lookup table of packed RGB values keyed by integer distance.
+        $gradient = [];
+        for ($d = 0; $d <= $maxR; $d++) {
+            [$r, $g, $b] = $this->resolveGradientStop($stops, $d / $maxR);
+            $gradient[$d] = ($r << 16) | ($g << 8) | $b;
+        }
+        $outerColor = $gradient[$maxR];
+
         for ($y = 0; $y < $height; $y++) {
-            $ratio = $y / max($height - 1, 1);
-            $red = (int) round(16 + (($ratio * 42)));
-            $green = (int) round(9 + (($ratio * 24)));
-            $blue = (int) round(7 + (($ratio * 13)));
-            $lineColor = imagecolorallocate($image, $red, $green, $blue);
-            imageline($image, 0, $y, $width, $y, $lineColor);
+            $dy = $y - $cy;
+            $dy2 = $dy * $dy;
+            for ($x = 0; $x < $width; $x++) {
+                $dx = $x - $cx;
+                $d = (int) sqrt($dx * $dx + $dy2);
+                imagesetpixel($image, $x, $y, $d >= $maxR ? $outerColor : $gradient[$d]);
+            }
+        }
+    }
+
+    /**
+     * @param array<int, array{0: float, 1: int, 2: int, 3: int}> $stops
+     * @return array{0: int, 1: int, 2: int}
+     */
+    private function resolveGradientStop(array $stops, float $t): array
+    {
+        if ($t <= $stops[0][0]) {
+            return [$stops[0][1], $stops[0][2], $stops[0][3]];
         }
 
+        $count = count($stops);
+        for ($i = 1; $i < $count; $i++) {
+            if ($t <= $stops[$i][0]) {
+                $prev = $stops[$i - 1];
+                $cur = $stops[$i];
+                $range = $cur[0] - $prev[0];
+                $local = $range > 0 ? ($t - $prev[0]) / $range : 0.0;
+
+                return [
+                    (int) round($prev[1] + ($cur[1] - $prev[1]) * $local),
+                    (int) round($prev[2] + ($cur[2] - $prev[2]) * $local),
+                    (int) round($prev[3] + ($cur[3] - $prev[3]) * $local),
+                ];
+            }
+        }
+
+        $last = $stops[$count - 1];
+
+        return [$last[1], $last[2], $last[3]];
     }
 
     private function drawTopBrand($image, int $gold, int $goldDark): void
@@ -456,37 +511,69 @@ class LineLotteryImageService
         ?int $outlineColor,
         int $outlineWidth
     ): void {
+        $markSize = max(12, (int) round($size * 0.85));
+
+        $boxTha  = imagettfbbox($size, 0, $fontPath, 'ท');
+        $boxThi  = imagettfbbox($size, 0, $fontPath, 'ที');
+        $boxMark = imagettfbbox($markSize, 0, $fontPath, '่');
+
+        if ($boxTha === false || $boxThi === false) {
+            return;
+        }
+
+        // Visual-centre offsets relative to each glyph's drawing position.
+        // For a glyph drawn at cursor X, its visual centre = X + (box[0] + box[4]) / 2,
+        // accounting for left/right side bearings (important for combining marks like ่
+        // which often have negative box[0]).
+        $thaCentre  = ($boxTha[0] + $boxTha[4]) / 2;
+        $markCentre = ($boxMark !== false) ? ($boxMark[0] + $boxMark[4]) / 2 : 0.0;
+
+        // imagettfbbox y-values: negative = above baseline.
+        // [5]=upper-right y, [7]=upper-left y — the minimum (most negative) is the topmost pixel.
+        $thiTop = min($boxThi[5], $boxThi[7]);
+        $thaTop = min($boxTha[5], $boxTha[7]);
+
+        // When FreeType correctly positions sara-ii (ี) above ท via mark-to-base GPOS,
+        // the measured top of "ที" is noticeably higher than just "ท".
+        // Place mai-ek baseline just above that measured sara-ii top.
+        // If the difference is negligible FreeType didn't expose it — use a Kanit-tuned ratio.
+        if ($thiTop < $thaTop - 2) {
+            $markY = $baselineY + $thiTop - (int) round($size * 0.06);
+        } else {
+            // Empirical fallback: mai-ek sits ~1.05× font-size above the text baseline for Kanit.
+            $markY = $baselineY - (int) round($size * 1.05);
+        }
+
         $offset = 0;
+        while (($pos = mb_strpos($originalText, 'ที่', $offset, 'UTF-8')) !== false) {
+            // The display string has every "ที่" replaced with "ที", so measure the prefix the same way.
+            $prefix = str_replace('ที่', 'ที', mb_substr($originalText, 0, $pos, 'UTF-8'));
 
-        while (($position = mb_strpos($originalText, 'ที่', $offset, 'UTF-8')) !== false) {
-            $prefix = str_replace('ที่', 'ที', mb_substr($originalText, 0, $position, 'UTF-8'));
-            $prefixBox = imagettfbbox($size, 0, $fontPath, $prefix);
-            $baseBox = imagettfbbox($size, 0, $fontPath, 'ท');
-
-            if ($prefixBox === false || $baseBox === false) {
-                return;
+            $prefixWidth = 0;
+            if ($prefix !== '') {
+                $prefixBox = imagettfbbox($size, 0, $fontPath, $prefix);
+                if ($prefixBox === false) {
+                    return;
+                }
+                $prefixWidth = (int) abs($prefixBox[4] - $prefixBox[0]);
             }
 
-            $prefixWidth = (int) abs($prefixBox[4] - $prefixBox[0]);
-            $baseWidth = (int) abs($baseBox[4] - $baseBox[0]);
-            $markSize = max(12, (int) round($size * 0.72));
-            $markX = $startX + $prefixWidth + (int) round($baseWidth * 0.22);
-            $markY = $baselineY - (int) round($size * 0.74);
+            // Align the mai-ek's visual centre with ท's visual centre.
+            $markX = $startX + $prefixWidth + (int) round($thaCentre - $markCentre);
 
             if ($outlineColor !== null && $outlineWidth > 0) {
-                for ($offsetX = -$outlineWidth; $offsetX <= $outlineWidth; $offsetX++) {
-                    for ($offsetY = -$outlineWidth; $offsetY <= $outlineWidth; $offsetY++) {
-                        if ($offsetX === 0 && $offsetY === 0) {
+                for ($dx = -$outlineWidth; $dx <= $outlineWidth; $dx++) {
+                    for ($dy = -$outlineWidth; $dy <= $outlineWidth; $dy++) {
+                        if ($dx === 0 && $dy === 0) {
                             continue;
                         }
-
-                        imagettftext($image, $markSize, 0, $markX + $offsetX, $markY + $offsetY, $outlineColor, $fontPath, '่');
+                        imagettftext($image, $markSize, 0, $markX + $dx, $markY + $dy, $outlineColor, $fontPath, '่');
                     }
                 }
             }
 
             imagettftext($image, $markSize, 0, $markX, $markY, $fillColor, $fontPath, '่');
-            $offset = $position + mb_strlen('ที่', 'UTF-8');
+            $offset = $pos + mb_strlen('ที่', 'UTF-8');
         }
     }
 
