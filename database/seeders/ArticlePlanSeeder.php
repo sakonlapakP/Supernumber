@@ -13,14 +13,11 @@ use Illuminate\Database\Seeder;
  * individual items via the edit modal on /admin/articles.
  *
  * Run: php artisan db:seed --class=ArticlePlanSeeder
- * WARNING: truncates article_plans before inserting.
  */
 class ArticlePlanSeeder extends Seeder
 {
     public function run(): void
     {
-        ArticlePlan::truncate();
-
         // Template: month => [[day, time, type, topic, is_lottery], ...]
         // {ty} = Thai year short (69, 70, ...)
         $templates = [
@@ -127,13 +124,17 @@ class ArticlePlanSeeder extends Seeder
                     $topic = str_replace('{ty}', $ty, $topicTpl);
                     $date  = sprintf('%04d-%02d-%02d', $year, $month, $day);
 
-                    ArticlePlan::create([
-                        'publish_date' => $date,
-                        'publish_time' => $time,
-                        'type'         => $type,
-                        'topic'        => $topic,
-                        'is_lottery'   => $isLottery,
-                    ]);
+                    ArticlePlan::updateOrCreate(
+                        [
+                            'publish_date' => $date,
+                            'publish_time' => $time,
+                            'topic' => $topic,
+                        ],
+                        [
+                            'type' => $type,
+                            'is_lottery' => $isLottery,
+                        ]
+                    );
                 }
             }
         }
