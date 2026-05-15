@@ -24,11 +24,11 @@ class ArticleListScreen extends StatefulWidget {
 class _ArticleListScreenState extends State<ArticleListScreen> {
   String? _selectedMonthPlan;
   int _selectedPlanYear = DateTime.now().year;
-  final List<String> _monthPlans = [
-    'พฤษภาคม 69', 'มิถุนายน 69', 'กรกฎาคม 69', 'สิงหาคม 69',
-    'กันยายน 69', 'ตุลาคม 69', 'พฤศจิกายน 69', 'ธันวาคม 69',
-    'มกราคม 70', 'กุมภาพันธ์ 70', 'มีนาคม 70', 'เมษายน 70'
-  ];
+  static const Map<int, String> _thaiMonths = {
+    1: 'มกราคม', 2: 'กุมภาพันธ์', 3: 'มีนาคม', 4: 'เมษายน',
+    5: 'พฤษภาคม', 6: 'มิถุนายน', 7: 'กรกฎาคม', 8: 'สิงหาคม',
+    9: 'กันยายน', 10: 'ตุลาคม', 11: 'พฤศจิกายน', 12: 'ธันวาคม',
+  };
 
 
   @override
@@ -474,7 +474,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                     value: null,
                     child: Text('ทั้งหมด (แผนงาน)', style: GoogleFonts.kanit()),
                   ),
-                  ..._monthPlans.map<DropdownMenuItem<String>>((String value) {
+                  ..._monthPlansForSelectedYear().map<DropdownMenuItem<String>>((String value) {
                     return DropdownMenuItem<String>(
                       value: value,
                       child: Text(value, style: GoogleFonts.kanit()),
@@ -652,6 +652,10 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                     articles: provider.articles,
                     onYearChanged: (year) {
                       setState(() => _selectedPlanYear = year);
+                      if (_selectedMonthPlan != null && !_monthPlansForSelectedYear().contains(_selectedMonthPlan)) {
+                        _selectedMonthPlan = null;
+                      }
+                      context.read<ArticleProvider>().fetchArticles(monthPlan: _selectedMonthPlan);
                       context.read<ArticlePlanProvider>().fetchPlans(year: year);
                     },
                   ),
@@ -670,6 +674,12 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
         label: const Text('เขียนบทความ'),
       ),
     );
+  }
+
+  List<String> _monthPlansForSelectedYear() {
+    return _thaiMonths.values
+        .map((m) => '$m ${(_selectedPlanYear + 543) % 100}')
+        .toList();
   }
 }
 
@@ -916,6 +926,12 @@ class _ContentPlanSection extends StatelessWidget {
           grouped.putIfAbsent(label, () => []).add(p);
         }
 
+        final selectedGroup = selectedMonth == null
+            ? planProvider.plans
+            : (grouped[selectedMonth!.split(' ').first] ?? <ArticlePlan>[]);
+        final totalPlanned = selectedGroup.length;
+        final totalDone = selectedGroup.where((p) => p.type == 'หวย' || _isDoneByRule(p)).length;
+
         return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
           Row(children: [
             Container(
@@ -946,11 +962,29 @@ class _ContentPlanSection extends StatelessWidget {
               ),
           ]),
           const SizedBox(height: 16),
+          Row(
+            children: [
+              Text('แผนทั้งหมด $totalPlanned', style: GoogleFonts.kanit(fontWeight: FontWeight.w600)),
+              const SizedBox(width: 12),
+              Text('ทำแล้ว $totalDone', style: GoogleFonts.kanit(fontWeight: FontWeight.w600, color: const Color(0xFF1B8B6F))),
+            ],
+          ),
+          const SizedBox(height: 10),
           if (planProvider.isLoading) const Center(child: CircularProgressIndicator()),
           ...grouped.entries.map((e) => _MonthPlanCard(monthName: e.key, items: e.value, articles: articles, year: selectedYear)),
         ]);
       },
     );
+  }
+
+  bool _isDoneByRule(ArticlePlan item) {
+    final planDate = DateFormat('yyyy-MM-dd').format(item.publishDate);
+    for (final a in articles) {
+      if (a.publishedAt != null && DateFormat('yyyy-MM-dd').format(a.publishedAt!) == planDate) {
+        return true;
+      }
+    }
+    return item.publishDate.isBefore(DateTime.now());
   }
 
   Future<void> _openPlanDialog(BuildContext context, int year, {ArticlePlan? plan}) async {
