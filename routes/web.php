@@ -29,6 +29,7 @@ use App\Services\LineLotteryImageService;
 use App\Services\LineOrderNotifier;
 use App\Services\SalesDocumentPdfService;
 use App\Services\TurnstileVerifier;
+use Database\Seeders\ArticlePlanSeeder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Carbon;
@@ -2613,6 +2614,19 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             $summary['deleted_imports']
         ));
     })->name('facebook-imports.refresh-articles');
+
+    Route::get('/article-plans/seed', function () use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        app(ArticlePlanSeeder::class)->run();
+        $count = \App\Models\ArticlePlan::query()->count();
+
+        return redirect()
+            ->route('admin.articles')
+            ->with('status_message', "เติมแผนงานบทความเรียบร้อยแล้ว (รวม {$count} รายการ)");
+    })->name('article-plans.seed');
 
     Route::post('/lottery/fetch-force', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
