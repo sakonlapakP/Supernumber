@@ -51,10 +51,11 @@
 
   <section class="admin-card admin-table-card">
     <div class="admin-table-wrap">
-      <table class="admin-table" style="min-width: 960px;">
+      <table class="admin-table" style="min-width: 1120px;">
         <thead>
           <tr>
             <th>#</th>
+            <th>รูป</th>
             <th>Facebook Post ID</th>
             <th>เวลาโพสต์</th>
             <th>ข้อความ</th>
@@ -64,8 +65,48 @@
         </thead>
         <tbody>
           @forelse ($posts as $post)
+            @php
+              $imageUrl = trim((string) ($post->full_picture ?? ''));
+              $attachments = is_array($post->attachments_json) ? $post->attachments_json : [];
+
+              if ($imageUrl === '' && isset($attachments['data']) && is_array($attachments['data'])) {
+                foreach ($attachments['data'] as $attachmentItem) {
+                  if (! is_array($attachmentItem)) {
+                    continue;
+                  }
+
+                  $candidate = trim((string) data_get($attachmentItem, 'media.image.src', ''));
+                  if ($candidate === '') {
+                    $candidate = trim((string) data_get($attachmentItem, 'media.source', ''));
+                  }
+                  if ($candidate === '') {
+                    $candidate = trim((string) data_get($attachmentItem, 'url', ''));
+                  }
+
+                  if ($candidate !== '') {
+                    $imageUrl = $candidate;
+                    break;
+                  }
+                }
+              }
+            @endphp
             <tr>
               <td>{{ $post->id }}</td>
+              <td>
+                @if ($imageUrl !== '')
+                  <a href="{{ $imageUrl }}" target="_blank" rel="noopener">
+                    <img
+                      src="{{ $imageUrl }}"
+                      alt="รูปโพสต์ {{ $post->facebook_post_id }}"
+                      loading="lazy"
+                      referrerpolicy="no-referrer"
+                      style="width: 92px; height: 92px; object-fit: cover; border-radius: 12px; border: 1px solid #e2e8f0; background: #f8fafc;"
+                    />
+                  </a>
+                @else
+                  <span class="admin-muted">-</span>
+                @endif
+              </td>
               <td style="font-family: monospace; font-size: 12px;">{{ $post->facebook_post_id }}</td>
               <td>{{ optional($post->facebook_created_time)->timezone('Asia/Bangkok')->format('d/m/Y H:i') ?: '-' }}</td>
               <td>{{ \Illuminate\Support\Str::limit(trim((string) ($post->message ?: $post->story ?: '-')), 160) }}</td>
@@ -80,7 +121,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="6" class="admin-muted">ยังไม่มีข้อมูลที่ดึงจาก Facebook</td>
+              <td colspan="7" class="admin-muted">ยังไม่มีข้อมูลที่ดึงจาก Facebook</td>
             </tr>
           @endforelse
         </tbody>
