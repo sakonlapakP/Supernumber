@@ -234,6 +234,12 @@ class _FacebookImportsScreenState extends State<FacebookImportsScreen> {
     return DateFormat('yyyy-MM-dd').format(value);
   }
 
+  int _resolveGridColumnCount(double width) {
+    if (width >= 1200) return 3;
+    if (width >= 760) return 2;
+    return 1;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -290,44 +296,66 @@ class _FacebookImportsScreenState extends State<FacebookImportsScreen> {
       );
     }
 
-    final itemCount = provider.posts.length + (provider.isLoadingMore ? 2 : 1);
-
     return RefreshIndicator(
       onRefresh: _applyFilter,
-      child: ListView.separated(
+      child: CustomScrollView(
         controller: _scrollController,
-        padding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
-        itemCount: itemCount,
-        separatorBuilder: (context, index) => const SizedBox(height: 10),
-        itemBuilder: (context, index) {
-          if (index == 0) {
-            return _SelectionActionBar(
-              selectedCount: provider.selectedCount,
-              totalCount: provider.posts.length,
-              hasSelection: provider.hasSelection,
-              onSelectAll: provider.selectAllLoaded,
-              onClearSelection: provider.clearSelection,
-              onDeleteSelected: () => _deleteSelected(provider),
-            );
-          }
+        physics: const AlwaysScrollableScrollPhysics(),
+        slivers: [
+          SliverToBoxAdapter(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(12, 8, 12, 10),
+              child: _SelectionActionBar(
+                selectedCount: provider.selectedCount,
+                totalCount: provider.posts.length,
+                hasSelection: provider.hasSelection,
+                onSelectAll: provider.selectAllLoaded,
+                onClearSelection: provider.clearSelection,
+                onDeleteSelected: () => _deleteSelected(provider),
+              ),
+            ),
+          ),
+          SliverPadding(
+            padding: const EdgeInsets.fromLTRB(12, 0, 12, 20),
+            sliver: SliverLayoutBuilder(
+              builder: (context, constraints) {
+                final columns = _resolveGridColumnCount(
+                  constraints.crossAxisExtent,
+                );
 
-          if (provider.isLoadingMore && index == itemCount - 1) {
-            return const Padding(
-              padding: EdgeInsets.symmetric(vertical: 12),
-              child: Center(child: CircularProgressIndicator()),
-            );
-          }
-
-          final post = provider.posts[index - 1];
-          return _FacebookPostCard(
-            post: post,
-            isSelected: provider.isSelected(post.id),
-            onToggleSelection: () => provider.toggleSelection(post.id),
-            onDelete: () => _deletePost(post),
-            onOpenImage: () => _openExternalUrl(post.imageUrl),
-            onOpenPost: () => _openExternalUrl(post.permalinkUrl),
-          );
-        },
+                return SliverGrid(
+                  delegate: SliverChildBuilderDelegate((context, index) {
+                    final post = provider.posts[index];
+                    return _FacebookPostCard(
+                      post: post,
+                      isSelected: provider.isSelected(post.id),
+                      onToggleSelection: () =>
+                          provider.toggleSelection(post.id),
+                      onDelete: () => _deletePost(post),
+                      onOpenImage: () => _openExternalUrl(post.imageUrl),
+                      onOpenPost: () => _openExternalUrl(post.permalinkUrl),
+                    );
+                  }, childCount: provider.posts.length),
+                  gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: columns,
+                    mainAxisSpacing: 10,
+                    crossAxisSpacing: 10,
+                    childAspectRatio: columns == 3
+                        ? 0.74
+                        : (columns == 2 ? 0.9 : 1.8),
+                  ),
+                );
+              },
+            ),
+          ),
+          if (provider.isLoadingMore)
+            const SliverToBoxAdapter(
+              child: Padding(
+                padding: EdgeInsets.only(bottom: 20),
+                child: Center(child: CircularProgressIndicator()),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -540,15 +568,39 @@ class _FacebookPostCard extends StatelessWidget {
       ),
       child: Padding(
         padding: const EdgeInsets.all(12),
-        child: Row(
+        child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Checkbox(
-              value: isSelected,
-              onChanged: (_) => onToggleSelection(),
-              activeColor: const Color(0xFF1D4ED8),
+            Row(
+              children: [
+                Checkbox(
+                  value: isSelected,
+                  onChanged: (_) => onToggleSelection(),
+                  activeColor: const Color(0xFF1D4ED8),
+                ),
+                Expanded(
+                  child: Text(
+                    post.facebookPostId,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: GoogleFonts.kanit(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 13,
+                      color: const Color(0xFF1E2D45),
+                    ),
+                  ),
+                ),
+                IconButton(
+                  onPressed: onDelete,
+                  tooltip: 'ลบข้อมูลโพสต์',
+                  icon: const Icon(
+                    Icons.delete_outline_rounded,
+                    color: Color(0xFFB91C1C),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(width: 4),
+            const SizedBox(height: 6),
             InkWell(
               onTap: post.imageUrl == null ? null : onOpenImage,
               borderRadius: BorderRadius.circular(10),
@@ -557,72 +609,38 @@ class _FacebookPostCard extends StatelessWidget {
                 child: _Thumbnail(imageUrl: post.imageUrl),
               ),
             ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          post.facebookPostId,
-                          style: GoogleFonts.kanit(
-                            fontWeight: FontWeight.w700,
-                            fontSize: 13,
-                            color: const Color(0xFF1E2D45),
-                          ),
-                        ),
-                      ),
-                      IconButton(
-                        onPressed: onDelete,
-                        tooltip: 'ลบข้อมูลโพสต์',
-                        icon: const Icon(
-                          Icons.delete_outline_rounded,
-                          color: Color(0xFFB91C1C),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'โพสต์: ${DateFormatter.formatBangkok(post.facebookCreatedTime, format: 'dd/MM/yyyy HH:mm')}',
-                    style: GoogleFonts.kanit(
-                      fontSize: 12,
-                      color: const Color(0xFF64748B),
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    'ซิงก์: ${DateFormatter.formatBangkok(post.lastSyncedAt, format: 'dd/MM/yyyy HH:mm')}',
-                    style: GoogleFonts.kanit(
-                      fontSize: 12,
-                      color: const Color(0xFF64748B),
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    post.previewText,
-                    maxLines: 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.kanit(
-                      fontSize: 14,
-                      color: const Color(0xFF334155),
-                      height: 1.3,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: OutlinedButton.icon(
-                      onPressed: post.permalinkUrl == null ? null : onOpenPost,
-                      icon: const Icon(Icons.open_in_new_rounded, size: 16),
-                      label: Text('เปิดโพสต์', style: GoogleFonts.kanit()),
-                    ),
-                  ),
-                ],
+            const SizedBox(height: 8),
+            Text(
+              'โพสต์: ${DateFormatter.formatBangkok(post.facebookCreatedTime, format: 'dd/MM/yyyy HH:mm')}',
+              style: GoogleFonts.kanit(
+                fontSize: 12,
+                color: const Color(0xFF64748B),
               ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              'ซิงก์: ${DateFormatter.formatBangkok(post.lastSyncedAt, format: 'dd/MM/yyyy HH:mm')}',
+              style: GoogleFonts.kanit(
+                fontSize: 12,
+                color: const Color(0xFF64748B),
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              post.previewText,
+              maxLines: 3,
+              overflow: TextOverflow.ellipsis,
+              style: GoogleFonts.kanit(
+                fontSize: 14,
+                color: const Color(0xFF334155),
+                height: 1.3,
+              ),
+            ),
+            const SizedBox(height: 8),
+            OutlinedButton.icon(
+              onPressed: post.permalinkUrl == null ? null : onOpenPost,
+              icon: const Icon(Icons.open_in_new_rounded, size: 16),
+              label: Text('เปิดโพสต์', style: GoogleFonts.kanit()),
             ),
           ],
         ),
@@ -640,8 +658,8 @@ class _Thumbnail extends StatelessWidget {
   Widget build(BuildContext context) {
     if (imageUrl == null || imageUrl!.trim().isEmpty) {
       return Container(
-        width: 86,
-        height: 86,
+        width: double.infinity,
+        height: 150,
         color: const Color(0xFFF1F5F9),
         alignment: Alignment.center,
         child: const Icon(
@@ -653,12 +671,12 @@ class _Thumbnail extends StatelessWidget {
 
     return Image.network(
       imageUrl!,
-      width: 86,
-      height: 86,
+      width: double.infinity,
+      height: 150,
       fit: BoxFit.cover,
       errorBuilder: (context, error, stackTrace) => Container(
-        width: 86,
-        height: 86,
+        width: double.infinity,
+        height: 150,
         color: const Color(0xFFF1F5F9),
         alignment: Alignment.center,
         child: const Icon(
@@ -669,8 +687,8 @@ class _Thumbnail extends StatelessWidget {
       loadingBuilder: (context, child, progress) {
         if (progress == null) return child;
         return Container(
-          width: 86,
-          height: 86,
+          width: double.infinity,
+          height: 150,
           color: const Color(0xFFF8FAFC),
           alignment: Alignment.center,
           child: const SizedBox(

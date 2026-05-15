@@ -68,7 +68,7 @@ class FacebookImportProvider with ChangeNotifier {
         '/facebook-imports',
         queryParameters: {
           'page': page,
-          'per_page': 30,
+          'per_page': 50,
           if (_search.isNotEmpty) 'q': _search,
           if (_fromDate.isNotEmpty) 'from': _fromDate,
           if (_toDate.isNotEmpty) 'to': _toDate,
@@ -141,9 +141,11 @@ class FacebookImportProvider with ChangeNotifier {
     try {
       final response = await ApiService.dio.delete('/facebook-imports/$id');
       if (response.statusCode == 200) {
-        _posts.removeWhere((post) => post.id == id);
-        _selectedIds.remove(id);
-        notifyListeners();
+        await fetchFirstPage(
+          search: _search,
+          fromDate: _fromDate,
+          toDate: _toDate,
+        );
         return true;
       }
 
@@ -175,9 +177,11 @@ class FacebookImportProvider with ChangeNotifier {
       );
 
       if (response.statusCode == 200) {
-        _posts.removeWhere((post) => _selectedIds.contains(post.id));
-        _selectedIds.clear();
-        notifyListeners();
+        await fetchFirstPage(
+          search: _search,
+          fromDate: _fromDate,
+          toDate: _toDate,
+        );
         return true;
       }
 
