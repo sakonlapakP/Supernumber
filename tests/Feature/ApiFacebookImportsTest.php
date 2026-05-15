@@ -125,6 +125,40 @@ class ApiFacebookImportsTest extends TestCase
         $this->assertDatabaseHas('facebook_imported_posts', ['id' => $third->id]);
     }
 
+    public function test_manager_can_bulk_delete_ignoring_missing_ids(): void
+    {
+        $first = FacebookImportedPost::query()->create([
+            'facebook_post_id' => 'page_ignore_1',
+            'message' => 'โพสต์สำหรับลบแบบข้ามที่ไม่มี 1',
+            'facebook_created_time' => now()->subDay(),
+            'last_synced_at' => now(),
+        ]);
+        $second = FacebookImportedPost::query()->create([
+            'facebook_post_id' => 'page_ignore_2',
+            'message' => 'โพสต์สำหรับลบแบบข้ามที่ไม่มี 2',
+            'facebook_created_time' => now()->subHours(20),
+            'last_synced_at' => now(),
+        ]);
+
+        $missingId = 999999;
+
+        $token = $this->issueTokenForRole(User::ROLE_MANAGER);
+
+        $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->postJson('/api/facebook-imports/bulk-delete-ignore-missing', [
+                'ids' => [$first->id, $second->id, $missingId],
+            ])
+            ->assertOk()
+            ->assertJsonPath('deleted_count', 2)
+            ->assertJsonPath('missing_count', 1)
+            ->assertJsonFragment([
+                'missing_ids' => [$missingId],
+            ]);
+
+        $this->assertDatabaseMissing('facebook_imported_posts', ['id' => $first->id]);
+        $this->assertDatabaseMissing('facebook_imported_posts', ['id' => $second->id]);
+    }
+
     private function issueTokenForRole(string $role): string
     {
         $username = 'api-' . $role . '-' . uniqid();

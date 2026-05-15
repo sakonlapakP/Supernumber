@@ -94,6 +94,43 @@ class FacebookImportedPostController extends Controller
         ]);
     }
 
+    public function bulkDestroyIgnoreMissing(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:2000'],
+            'ids.*' => ['required', 'integer', 'min:1'],
+        ]);
+
+        $ids = collect($validated['ids'])
+            ->map(static fn ($id): int => (int) $id)
+            ->unique()
+            ->values();
+
+        $existingIds = FacebookImportedPost::query()
+            ->whereIn('id', $ids)
+            ->pluck('id')
+            ->map(static fn ($id): int => (int) $id)
+            ->values();
+
+        $missingIds = $ids->diff($existingIds)->values();
+
+        $deletedCount = 0;
+        if ($existingIds->isNotEmpty()) {
+            $deletedCount = FacebookImportedPost::query()
+                ->whereIn('id', $existingIds)
+                ->delete();
+        }
+
+        return response()->json([
+            'message' => 'ลบโพสต์ตามรายการ (ข้าม id ที่ไม่มี) เรียบร้อยแล้ว',
+            'deleted_count' => $deletedCount,
+            'requested_count' => $ids->count(),
+            'found_count' => $existingIds->count(),
+            'missing_count' => $missingIds->count(),
+            'missing_ids' => $missingIds->all(),
+        ]);
+    }
+
     private function resolveImageUrl(FacebookImportedPost $post): ?string
     {
         $imageUrl = trim((string) ($post->full_picture ?? ''));

@@ -43,6 +43,7 @@ Route::middleware(ApiTokenAuth::class)->group(function () {
         Route::get('facebook-imports', [FacebookImportedPostController::class, 'index'])->name('api.facebook-imports.index');
         Route::delete('facebook-imports/{facebookImportedPost}', [FacebookImportedPostController::class, 'destroy'])->name('api.facebook-imports.destroy');
         Route::post('facebook-imports/bulk-delete', [FacebookImportedPostController::class, 'bulkDestroy'])->name('api.facebook-imports.bulk-destroy');
+        Route::post('facebook-imports/bulk-delete-ignore-missing', [FacebookImportedPostController::class, 'bulkDestroyIgnoreMissing'])->name('api.facebook-imports.bulk-destroy-ignore-missing');
     });
 });
 
