@@ -11,6 +11,7 @@ use App\Models\CustomerOrder;
 use App\Models\CustomerOrderActivityLog;
 use App\Models\CustomerSubmission;
 use App\Models\EstimateLead;
+use App\Models\FacebookImportedPost;
 use App\Models\LotteryResult;
 use App\Models\LineWebhookEvent;
 use App\Models\SalesDocument;
@@ -21,6 +22,7 @@ use App\Services\EnvironmentEditor;
 use App\Services\AdminLogViewer;
 use App\Services\ArticleContentSanitizer;
 use App\Services\EstimateRecommendationService;
+use App\Services\FacebookPostImporter;
 use App\Services\Ga4AnalyticsService;
 use App\Services\LineEstimateLeadNotifier;
 use App\Services\LineLotteryImageService;
@@ -2549,6 +2551,114 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->with('status_message', 'บันทึกการตั้งค่าเรียบร้อยแล้ว');
     })->name('line-settings.update');
 
+    Route::get('/facebook-imports', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        $search = trim((string) $request->query('q', ''));
+        $fromDate = trim((string) $request->query('from', ''));
+        $toDate = trim((string) $request->query('to', ''));
+
+        $posts = FacebookImportedPost::query()
+            ->when($search !== '', function ($query) use ($search) {
+                $searchTerm = mb_strtolower($search);
+                $query->where(function ($innerQuery) use ($search, $searchTerm) {
+                    $innerQuery->whereRaw('LOWER(COALESCE(message, "")) like ?', ['%' . $searchTerm . '%'])
+                        ->orWhereRaw('LOWER(COALESCE(story, "")) like ?', ['%' . $searchTerm . '%'])
+                        ->orWhereRaw('LOWER(facebook_post_id) like ?', ['%' . $searchTerm . '%'])
+                        ->orWhereRaw('LOWER(COALESCE(permalink_url, "")) like ?', ['%' . $searchTerm . '%'])
+                        ->orWhereRaw('CAST(id AS CHAR) like ?', ['%' . $search . '%']);
+                });
+            })
+            ->when($fromDate !== '', function ($query) use ($fromDate) {
+                $query->whereDate('facebook_created_time', '>=', $fromDate);
+            })
+            ->when($toDate !== '', function ($query) use ($toDate) {
+                $query->whereDate('facebook_created_time', '<=', $toDate);
+            })
+            ->orderByDesc('facebook_created_time')
+            ->orderByDesc('id')
+            ->paginate(30)
+            ->withQueryString();
+
+        $totals = [
+            'all' => FacebookImportedPost::query()->count(),
+            'latest_sync_at' => FacebookImportedPost::query()->max('last_synced_at'),
+        ];
+
+        return view('admin.facebook-imports', compact('posts', 'search', 'fromDate', 'toDate', 'totals'));
+    })->name('facebook-imports');
+
+    Route::post('/facebook-imports/sync', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        $data = $request->validate([
+            'node_id' => ['nullable', 'string', 'max:255'],
+            'edge' => ['required', 'string', Rule::in(['feed', 'posts'])],
+            'since' => ['nullable', 'date'],
+            'until' => ['nullable', 'date', 'after_or_equal:since'],
+            'limit' => ['required', 'integer', 'min:1', 'max:100'],
+            'max_pages' => ['required', 'integer', 'min:1', 'max:5000'],
+            'access_token' => ['nullable', 'string', 'max:5000'],
+        ]);
+
+        $nodeId = trim((string) ($data['node_id'] ?? ''));
+        if ($nodeId === '') {
+            $nodeId = trim((string) config('services.facebook.page_id', ''));
+        }
+
+        $accessToken = trim((string) ($data['access_token'] ?? ''));
+        if ($accessToken === '') {
+            $accessToken = trim((string) config('services.facebook.graph_access_token', config('services.facebook.page_access_token', '')));
+        }
+
+        if ($nodeId === '') {
+            return back()->withErrors(['facebook_import_sync' => 'ยังไม่มี Facebook Node ID กรุณากำหนด FB_PAGE_ID หรือกรอกในฟอร์ม']);
+        }
+
+        if ($accessToken === '') {
+            return back()->withErrors(['facebook_import_sync' => 'ยังไม่มี Access Token กรุณาตั้งค่า FB_GRAPH_ACCESS_TOKEN หรือกรอกในฟอร์ม']);
+        }
+
+        try {
+            $result = app(FacebookPostImporter::class)->import([
+                'node_id' => $nodeId,
+                'source_node_type' => 'page',
+                'access_token' => $accessToken,
+                'edge' => (string) $data['edge'],
+                'since' => trim((string) ($data['since'] ?? '')),
+                'until' => trim((string) ($data['until'] ?? '')),
+                'limit' => (int) ($data['limit'] ?? 100),
+                'max_pages' => (int) ($data['max_pages'] ?? 250),
+                'api_version' => (string) config('services.facebook.graph_api_version', 'v20.0'),
+            ]);
+        } catch (\Throwable $e) {
+            return back()
+                ->withInput($request->except('access_token'))
+                ->withErrors(['facebook_import_sync' => $e->getMessage()]);
+        }
+
+        $statusMessage = sprintf(
+            'ดึงข้อมูลสำเร็จ: เพิ่มใหม่ %d, อัปเดต %d, ข้าม %d, รวมที่รับจาก API %d แถว (%d หน้า)',
+            (int) ($result['inserted'] ?? 0),
+            (int) ($result['updated'] ?? 0),
+            (int) ($result['skipped'] ?? 0),
+            (int) ($result['rows_received'] ?? 0),
+            (int) ($result['pages_fetched'] ?? 0)
+        );
+
+        if (! empty($result['next_url'])) {
+            $statusMessage .= ' (หยุดเพราะถึง max_pages)';
+        }
+
+        return redirect()
+            ->route('admin.facebook-imports')
+            ->with('status_message', $statusMessage);
+    })->name('facebook-imports.sync');
+
     Route::post('/lottery/fetch-force', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
             return $redirect;
@@ -4542,5 +4652,44 @@ Route::get('/emergency-migrate', function () use ($ensureAdmin) {
         return "Migration successful!<br><pre>" . Artisan::output() . "</pre>";
     } catch (\Exception $e) {
         return "Migration failed: " . $e->getMessage();
+    }
+});
+
+// ONE-TIME OPS ROUTE (temporary): migrate + import facebook posts on production without SSH.
+Route::get('/ops/facebook-import-once-20260515-a7f4de91', function (Request $request) {
+    $key = trim((string) $request->query('key', ''));
+    $expectedKey = 'sn-fb-import-20260515-key-2f6e0a6a';
+
+    if ($key !== $expectedKey) {
+        return response()->json(['ok' => false, 'error' => 'Unauthorized'], 403);
+    }
+
+    try {
+        Artisan::call('migrate', ['--force' => true]);
+
+        $until = trim((string) $request->query('until', '2025-01-01'));
+        $maxPages = max(1, min(5000, (int) $request->query('max_pages', 20)));
+
+        $result = app(FacebookPostImporter::class)->import([
+            'node_id' => (string) config('services.facebook.page_id', ''),
+            'source_node_type' => 'page',
+            'access_token' => (string) config('services.facebook.graph_access_token', config('services.facebook.page_access_token', '')),
+            'edge' => 'feed',
+            'until' => $until,
+            'limit' => 100,
+            'max_pages' => $maxPages,
+            'api_version' => (string) config('services.facebook.graph_api_version', 'v20.0'),
+        ]);
+
+        return response()->json([
+            'ok' => true,
+            'result' => $result,
+            'total_rows' => FacebookImportedPost::query()->count(),
+        ]);
+    } catch (\Throwable $e) {
+        return response()->json([
+            'ok' => false,
+            'error' => $e->getMessage(),
+        ], 500);
     }
 });

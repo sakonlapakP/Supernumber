@@ -1008,6 +1008,11 @@
               'active' => request()->routeIs('admin.line-settings*'),
             ],
             [
+              'label' => 'นำเข้าโพสต์ Facebook',
+              'url' => route('admin.facebook-imports'),
+              'active' => request()->routeIs('admin.facebook-imports*'),
+            ],
+            [
               'label' => 'ผู้ใช้งาน',
               'url' => route('admin.users'),
               'active' => request()->routeIs('admin.users'),
