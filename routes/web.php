@@ -2615,6 +2615,47 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         ));
     })->name('facebook-imports.refresh-articles');
 
+    Route::get('/articles/move-local-images-to-public', function () use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        $exitCode = Artisan::call('articles:move-local-images-to-public');
+        $output = trim((string) Artisan::output());
+
+        if ($exitCode !== 0) {
+            return back()->withErrors([
+                'article_images_public_disk' => $output !== '' ? $output : 'ย้ายรูป article ไป public disk ไม่สำเร็จ',
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.articles')
+            ->with('status_message', $output !== '' ? $output : 'ย้ายรูป article ไป public disk เรียบร้อยแล้ว');
+    })->name('articles.move-local-images-to-public');
+
+    Route::get('/articles/sync-facebook-by-title', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        $limit = max(1, min(500, (int) $request->query('limit', 200)));
+        $exitCode = Artisan::call('articles:sync-facebook-by-title', [
+            '--limit' => $limit,
+        ]);
+        $output = trim((string) Artisan::output());
+
+        if ($exitCode !== 0) {
+            return back()->withErrors([
+                'article_sync_facebook_by_title' => $output !== '' ? $output : 'อัปเดต article จาก Facebook ไม่สำเร็จ',
+            ]);
+        }
+
+        return redirect()
+            ->route('admin.articles')
+            ->with('status_message', $output !== '' ? $output : 'อัปเดต article จาก Facebook เรียบร้อยแล้ว');
+    })->name('articles.sync-facebook-by-title');
+
     Route::get('/article-plans/seed', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
             return $redirect;
