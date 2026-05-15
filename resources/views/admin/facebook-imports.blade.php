@@ -3,10 +3,6 @@
 @section('title', 'Supernumber Admin | นำเข้าโพสต์ Facebook')
 
 @section('content')
-  @php
-    $defaultNodeId = (string) config('services.facebook.page_id', '');
-  @endphp
-
   <div class="admin-page-head">
     <div>
       <h1>นำเข้าโพสต์ Facebook</h1>
@@ -26,62 +22,6 @@
   @if ($errors->any())
     <div class="admin-alert admin-alert--error">{{ $errors->first() }}</div>
   @endif
-
-  <section class="admin-card admin-feature-card">
-    <div class="admin-feature-card__head">
-      <div>
-        <h2 class="admin-feature-card__title">Sync From Facebook</h2>
-        <p class="admin-feature-card__hint">ระบบจะวนเรียก `paging.next` อัตโนมัติจนหมดหรือถึง `max_pages`</p>
-      </div>
-    </div>
-
-    <form action="{{ route('admin.facebook-imports.sync') }}" method="post" class="admin-form">
-      @csrf
-      <div class="admin-field">
-        <label for="node_id">Facebook Node ID (Page ID)</label>
-        <input id="node_id" class="admin-input" type="text" name="node_id" value="{{ old('node_id', $defaultNodeId) }}" placeholder="เช่น 123456789012345" />
-      </div>
-
-      <div class="admin-field">
-        <label for="access_token">Access Token (เว้นว่างเพื่อใช้ค่าจากระบบ)</label>
-        <textarea id="access_token" class="admin-input" name="access_token" rows="3" placeholder="ใส่เฉพาะกรณีต้อง override token ชั่วคราว"></textarea>
-      </div>
-
-      <div class="admin-form admin-form--inline" style="grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px;">
-        <div class="admin-field">
-          <label for="edge">Edge</label>
-          <select id="edge" name="edge" class="admin-select">
-            <option value="feed" {{ old('edge', 'feed') === 'feed' ? 'selected' : '' }}>feed</option>
-            <option value="posts" {{ old('edge') === 'posts' ? 'selected' : '' }}>posts</option>
-          </select>
-        </div>
-
-        <div class="admin-field">
-          <label for="limit">Limit / page</label>
-          <input id="limit" class="admin-input" type="number" name="limit" min="1" max="100" value="{{ old('limit', 100) }}" />
-        </div>
-
-        <div class="admin-field">
-          <label for="max_pages">Max pages</label>
-          <input id="max_pages" class="admin-input" type="number" name="max_pages" min="1" max="5000" value="{{ old('max_pages', 250) }}" />
-        </div>
-
-        <div class="admin-field">
-          <label for="until">Until</label>
-          <input id="until" class="admin-input" type="date" name="until" value="{{ old('until') }}" />
-        </div>
-      </div>
-
-      <div class="admin-field">
-        <label for="since">Since (optional)</label>
-        <input id="since" class="admin-input" type="date" name="since" value="{{ old('since') }}" />
-      </div>
-
-      <div>
-        <button type="submit" class="admin-button">เริ่มดึงข้อมูล Facebook</button>
-      </div>
-    </form>
-  </section>
 
   <section class="admin-card admin-feature-card">
     <div class="admin-feature-card__head">

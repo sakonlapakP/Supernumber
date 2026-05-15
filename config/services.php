@@ -60,8 +60,6 @@ return [
     'facebook' => [
         'page_id' => env('FB_PAGE_ID'),
         'page_access_token' => env('FB_PAGE_ACCESS_TOKEN'),
-        'graph_access_token' => env('FB_GRAPH_ACCESS_TOKEN', env('FB_PAGE_ACCESS_TOKEN')),
-        'graph_api_version' => env('FB_GRAPH_API_VERSION', 'v20.0'),
     ],
 
     'gemini' => [
