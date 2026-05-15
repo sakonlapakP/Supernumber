@@ -28,6 +28,9 @@
       <div>
         <h2 class="admin-feature-card__title">ค้นหารายการที่ดึงแล้ว</h2>
       </div>
+      <a href="{{ route('admin.facebook-imports.refresh-preview') }}" class="admin-button admin-button--compact" style="background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%); color: #fff; border: none; text-decoration: none;">
+        ดูตัวอย่างก่อนอัปโหลด
+      </a>
     </div>
 
     <form action="{{ route('admin.facebook-imports') }}" method="get" class="admin-form admin-form--inline" style="grid-template-columns: minmax(0, 1fr) 180px 180px auto; gap: 12px;">

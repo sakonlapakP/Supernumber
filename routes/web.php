@@ -21,6 +21,7 @@ use App\Services\CustomerSubmissionRecorder;
 use App\Services\EnvironmentEditor;
 use App\Services\AdminLogViewer;
 use App\Services\ArticleContentSanitizer;
+use App\Services\FacebookContentRefreshService;
 use App\Services\EstimateRecommendationService;
 use App\Services\Ga4AnalyticsService;
 use App\Services\LineEstimateLeadNotifier;
@@ -2588,6 +2589,30 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         return view('admin.facebook-imports', compact('posts', 'search', 'fromDate', 'toDate', 'totals'));
     })->name('facebook-imports');
+
+    Route::get('/facebook-imports/refresh-preview', function (Request $request, FacebookContentRefreshService $refreshService) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        $summary = $refreshService->preview(is_numeric(session('admin_user_id')) ? (int) session('admin_user_id') : null);
+
+        return view('admin.facebook-imports-refresh-preview', compact('summary'));
+    })->name('facebook-imports.refresh-preview');
+
+    Route::post('/facebook-imports/refresh-articles', function (Request $request, FacebookContentRefreshService $refreshService) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        $summary = $refreshService->refresh(is_numeric(session('admin_user_id')) ? (int) session('admin_user_id') : null);
+
+        return back()->with('status_message', sprintf(
+            'อัปโหลดคอนเทนต์เข้า articles แล้ว %d รายการ ลบโพสต์ Facebook ที่ใช้แล้ว %d รายการ',
+            $summary['processed'],
+            $summary['deleted_imports']
+        ));
+    })->name('facebook-imports.refresh-articles');
 
     Route::post('/lottery/fetch-force', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
