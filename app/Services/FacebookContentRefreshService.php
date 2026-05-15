@@ -8,6 +8,8 @@ use App\Models\FacebookImportedPost;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class FacebookContentRefreshService
@@ -420,6 +422,7 @@ class FacebookContentRefreshService
         $meta = $this->topicMetadata($topicKey);
         $latestDate = $this->resolvePostDate($latestImport) ?? Carbon::now('Asia/Bangkok');
         $earliestDate = $this->resolvePostDate($earliestImport) ?? $latestDate;
+        $storedImagePath = $this->storePostImage($latestImport, (string) $meta['slug'], $latestDate);
 
         $latestBeYear = $latestDate->copy()->timezone('Asia/Bangkok')->year + 543;
         $earliestBeYear = $earliestDate->copy()->timezone('Asia/Bangkok')->year + 543;
@@ -431,11 +434,11 @@ class FacebookContentRefreshService
             $meta['title_suffix']
         );
 
-        $contentHtml = $this->buildArticleContentHtml($meta['display_name'], $latestDate, $earliestDate, $latestImport);
+        $contentHtml = $this->buildArticleContentHtml($meta['display_name'], $latestDate, $earliestDate, $latestImport, $storedImagePath);
         $excerpt = $this->buildExcerpt($latestImport, $title);
         $metaDescription = $this->buildMetaDescription($meta['display_name'], $latestBeYear, $excerpt);
 
-        return [
+        $articleData = [
             'title' => $title,
             'slug' => $meta['slug'],
             'excerpt' => $excerpt,
@@ -448,6 +451,14 @@ class FacebookContentRefreshService
             'published_at' => $earliestDate->copy()->timezone(config('app.timezone')),
             'author_user_id' => $authorUserId,
         ];
+
+        if ($storedImagePath !== null) {
+            $articleData['cover_image_path'] = $storedImagePath;
+            $articleData['cover_image_square_path'] = $storedImagePath;
+            $articleData['cover_image_landscape_path'] = $storedImagePath;
+        }
+
+        return $articleData;
     }
 
     /**
@@ -614,7 +625,7 @@ class FacebookContentRefreshService
         ];
     }
 
-    private function buildArticleContentHtml(string $displayName, Carbon $latestDate, Carbon $earliestDate, FacebookImportedPost $latestImport): string
+    private function buildArticleContentHtml(string $displayName, Carbon $latestDate, Carbon $earliestDate, FacebookImportedPost $latestImport, ?string $storedImagePath): string
     {
         $latestYear = $latestDate->copy()->timezone('Asia/Bangkok')->year + 543;
         $earliestYear = $earliestDate->copy()->timezone('Asia/Bangkok')->year + 543;
@@ -633,7 +644,7 @@ class FacebookContentRefreshService
             $displayName
         );
 
-        return implode("\n", [
+        $contentBlocks = [
             sprintf('<h2>%s %d</h2>', e($displayName), $latestYear),
             '<p>' . e($intro) . '</p>',
             '<h3>ทำไมคอนเทนต์ชุดนี้จึงควรถูกรีเฟรช</h3>',
@@ -665,7 +676,78 @@ class FacebookContentRefreshService
             '<p><strong>Q:</strong> ทำไมต้องคงวันเผยแพร่แรกสุดไว้?<br><strong>A:</strong> เพื่อรักษาอายุหน้าเดิมและสัญญาณความน่าเชื่อถือ ขณะเดียวกันก็ยังอัปเดตเนื้อหาให้ทันสมัยได้</p>',
             '<p><strong>Q:</strong> อะไรคือสิ่งที่ผู้อ่านได้ประโยชน์ที่สุด?<br><strong>A:</strong> ได้อ่านข้อมูลที่สดใหม่ขึ้น โดยไม่เสียบริบทของหน้าเดิมที่อ้างอิงมานานแล้ว</p>',
             '<p>' . e($closing) . '</p>',
-        ]);
+        ];
+
+        if ($storedImagePath !== null) {
+            array_splice($contentBlocks, 2, 0, [
+                '<figure><img src="' . e(asset('storage/' . ltrim($storedImagePath, '/'))) . '" alt="' . e($displayName) . '" loading="lazy" /><figcaption>' . e('ภาพจากโพสต์ต้นฉบับ Facebook') . '</figcaption></figure>',
+            ]);
+        }
+
+        return implode("\n", $contentBlocks);
+    }
+
+    private function storePostImage(FacebookImportedPost $post, string $slug, Carbon $date): ?string
+    {
+        $sourceImageUrl = $this->resolveImageUrl($post);
+        if ($sourceImageUrl === null) {
+            return null;
+        }
+
+        try {
+            $response = Http::timeout(20)->get($sourceImageUrl);
+            if (! $response->successful()) {
+                return null;
+            }
+
+            $contentType = (string) $response->header('Content-Type', '');
+            $ext = 'jpg';
+            if (str_contains($contentType, 'png')) {
+                $ext = 'png';
+            } elseif (str_contains($contentType, 'webp')) {
+                $ext = 'webp';
+            }
+
+            $year = $date->copy()->timezone('Asia/Bangkok')->format('Y');
+            $path = "articles/{$year}/{$slug}/facebook-cover-{$post->id}.{$ext}";
+            Storage::disk('public')->put($path, $response->body());
+
+            return $path;
+        } catch (\Throwable) {
+            return null;
+        }
+    }
+
+    private function resolveImageUrl(FacebookImportedPost $post): ?string
+    {
+        $imageUrl = trim((string) ($post->full_picture ?? ''));
+        if ($imageUrl !== '') {
+            return $imageUrl;
+        }
+
+        $attachments = is_array($post->attachments_json) ? $post->attachments_json : [];
+        if (! isset($attachments['data']) || ! is_array($attachments['data'])) {
+            return null;
+        }
+
+        foreach ($attachments['data'] as $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+
+            $candidate = trim((string) data_get($item, 'media.image.src', ''));
+            if ($candidate === '') {
+                $candidate = trim((string) data_get($item, 'media.source', ''));
+            }
+            if ($candidate === '') {
+                $candidate = trim((string) data_get($item, 'url', ''));
+            }
+            if ($candidate !== '') {
+                return $candidate;
+            }
+        }
+
+        return null;
     }
 
     /**
