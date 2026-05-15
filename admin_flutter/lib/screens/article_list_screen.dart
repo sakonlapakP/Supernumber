@@ -13,6 +13,7 @@ import '../utils/date_formatter.dart';
 import 'article_edit_screen.dart';
 import 'article_json_import_screen.dart';
 import 'admin_register_screen.dart';
+import 'facebook_imports_screen.dart';
 
 class ArticleListScreen extends StatefulWidget {
   const ArticleListScreen({super.key});
@@ -25,18 +26,28 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
   String? _selectedMonthPlan;
   int _selectedPlanYear = DateTime.now().year;
   static const Map<int, String> _thaiMonths = {
-    1: 'มกราคม', 2: 'กุมภาพันธ์', 3: 'มีนาคม', 4: 'เมษายน',
-    5: 'พฤษภาคม', 6: 'มิถุนายน', 7: 'กรกฎาคม', 8: 'สิงหาคม',
-    9: 'กันยายน', 10: 'ตุลาคม', 11: 'พฤศจิกายน', 12: 'ธันวาคม',
+    1: 'มกราคม',
+    2: 'กุมภาพันธ์',
+    3: 'มีนาคม',
+    4: 'เมษายน',
+    5: 'พฤษภาคม',
+    6: 'มิถุนายน',
+    7: 'กรกฎาคม',
+    8: 'สิงหาคม',
+    9: 'กันยายน',
+    10: 'ตุลาคม',
+    11: 'พฤศจิกายน',
+    12: 'ธันวาคม',
   };
-
 
   @override
   void initState() {
     super.initState();
     // ดึงข้อมูลอัตโนมัติเมื่อเข้าหน้าจอนี้
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<ArticleProvider>().fetchArticles(monthPlan: _selectedMonthPlan);
+      context.read<ArticleProvider>().fetchArticles(
+        monthPlan: _selectedMonthPlan,
+      );
       context.read<ArticlePlanProvider>().fetchPlans(year: _selectedPlanYear);
     });
   }
@@ -66,12 +77,14 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
     );
 
     if (!mounted) return;
-    await context.read<ArticleProvider>().fetchArticles(monthPlan: _selectedMonthPlan);
+    await context.read<ArticleProvider>().fetchArticles(
+      monthPlan: _selectedMonthPlan,
+    );
   }
 
   Future<void> _openArticlePreview(Article article) async {
     final provider = context.read<ArticleProvider>();
-    
+
     // Show loading indicator
     ScaffoldMessenger.of(context).showSnackBar(
       const SnackBar(
@@ -81,11 +94,15 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
     );
 
     final url = await provider.fetchPreviewUrl(article);
-    
+
     if (url == null) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(provider.lastErrorMessage ?? 'บทความนี้ยังไม่มี slug สำหรับเปิดดู')),
+        SnackBar(
+          content: Text(
+            provider.lastErrorMessage ?? 'บทความนี้ยังไม่มี slug สำหรับเปิดดู',
+          ),
+        ),
       );
       return;
     }
@@ -199,7 +216,10 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                 ),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: const Icon(Icons.auto_awesome_rounded, color: Colors.white),
+              child: const Icon(
+                Icons.auto_awesome_rounded,
+                color: Colors.white,
+              ),
             ),
             const SizedBox(width: 12),
             Text(
@@ -243,9 +263,13 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(16),
                       ),
-                      side: const BorderSide(color: Color(0xFFE0E7FF), width: 2),
+                      side: const BorderSide(
+                        color: Color(0xFFE0E7FF),
+                        width: 2,
+                      ),
                     ),
-                    onPressed: () => _copyPrompt(subjectController.text, 'short'),
+                    onPressed: () =>
+                        _copyPrompt(subjectController.text, 'short'),
                     child: Text(
                       'บทความสั้น',
                       style: GoogleFonts.kanit(
@@ -265,7 +289,8 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                         borderRadius: BorderRadius.circular(16),
                       ),
                     ),
-                    onPressed: () => _copyPrompt(subjectController.text, 'long'),
+                    onPressed: () =>
+                        _copyPrompt(subjectController.text, 'long'),
                     child: Text(
                       'บทความยาว',
                       style: GoogleFonts.kanit(fontWeight: FontWeight.bold),
@@ -290,7 +315,8 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
         ? 'CONTENT_MUST_BE_1000_WORDS_MINIMUM | NO_YEAR_IN_SLUG | HTML_FORMAT_ONLY'
         : 'NO_YEAR_IN_SLUG | HTML_FORMAT_ONLY';
 
-    final promptTemplate = """ช่วยเขียนบทความเกี่ยวกับ $subject หาจากแหล่งข้อมูลที่น่าเชื่อถือเท่านั้น ใน Format [
+    final promptTemplate =
+        """ช่วยเขียนบทความเกี่ยวกับ $subject หาจากแหล่งข้อมูลที่น่าเชื่อถือเท่านั้น ใน Format [
   {
    "_constraints": "$constraints",
     "title": "พาดหัวที่ดึงดูดใจ (ใส่ปี พ.ศ. ได้)",
@@ -379,23 +405,48 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
               ),
               if (auth.user?['role'] == 'manager')
                 ListTile(
+                  leading: const Icon(Icons.facebook_rounded),
+                  title: Text(
+                    'โพสต์ Facebook ที่นำเข้า',
+                    style: GoogleFonts.kanit(),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const FacebookImportsScreen(),
+                      ),
+                    );
+                  },
+                ),
+              if (auth.user?['role'] == 'manager')
+                ListTile(
                   leading: const Icon(Icons.person_add_alt_1_outlined),
                   title: Text('เพิ่มผู้ดูแลระบบ', style: GoogleFonts.kanit()),
                   onTap: () {
                     Navigator.pop(context);
                     Navigator.push(
                       context,
-                      MaterialPageRoute(builder: (context) => const AdminRegisterScreen()),
+                      MaterialPageRoute(
+                        builder: (context) => const AdminRegisterScreen(),
+                      ),
                     );
                   },
                 ),
               const Spacer(),
               const Divider(),
               ListTile(
-                leading: const Icon(Icons.logout_rounded, color: Color(0xFFC54B3D)),
+                leading: const Icon(
+                  Icons.logout_rounded,
+                  color: Color(0xFFC54B3D),
+                ),
                 title: Text(
                   'ออกจากระบบ',
-                  style: GoogleFonts.kanit(color: const Color(0xFFC54B3D), fontWeight: FontWeight.bold),
+                  style: GoogleFonts.kanit(
+                    color: const Color(0xFFC54B3D),
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
                 onTap: () => auth.logout(),
               ),
@@ -455,7 +506,10 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                 value: _selectedMonthPlan,
                 hint: Text(
                   'ทั้งหมด (แผนงาน)',
-                  style: GoogleFonts.kanit(fontSize: 13, fontWeight: FontWeight.w600),
+                  style: GoogleFonts.kanit(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
                 icon: const Icon(Icons.calendar_month_rounded, size: 16),
                 style: GoogleFonts.kanit(
@@ -467,19 +521,23 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                   setState(() {
                     _selectedMonthPlan = newValue;
                   });
-                  context.read<ArticleProvider>().fetchArticles(monthPlan: newValue);
+                  context.read<ArticleProvider>().fetchArticles(
+                    monthPlan: newValue,
+                  );
                 },
                 items: [
                   DropdownMenuItem<String>(
                     value: null,
                     child: Text('ทั้งหมด (แผนงาน)', style: GoogleFonts.kanit()),
                   ),
-                  ..._monthPlansForSelectedYear().map<DropdownMenuItem<String>>((String value) {
-                    return DropdownMenuItem<String>(
-                      value: value,
-                      child: Text(value, style: GoogleFonts.kanit()),
-                    );
-                  }),
+                  ..._monthPlansForSelectedYear().map<DropdownMenuItem<String>>(
+                    (String value) {
+                      return DropdownMenuItem<String>(
+                        value: value,
+                        child: Text(value, style: GoogleFonts.kanit()),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -495,7 +553,9 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                   child: FilledButton.icon(
                     onPressed: _openJsonImport,
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF7C3AED).withValues(alpha: 0.1),
+                      backgroundColor: const Color(
+                        0xFF7C3AED,
+                      ).withValues(alpha: 0.1),
                       foregroundColor: const Color(0xFF7C3AED),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
@@ -529,7 +589,9 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                   child: FilledButton.icon(
                     onPressed: _showAiPromptDialog,
                     style: FilledButton.styleFrom(
-                      backgroundColor: const Color(0xFF6366F1).withValues(alpha: 0.1),
+                      backgroundColor: const Color(
+                        0xFF6366F1,
+                      ).withValues(alpha: 0.1),
                       foregroundColor: const Color(0xFF6366F1),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
@@ -593,11 +655,15 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                   ),
                   const SizedBox(height: 24),
                   OutlinedButton.icon(
-                    onPressed: () => provider.fetchArticles(monthPlan: _selectedMonthPlan),
+                    onPressed: () =>
+                        provider.fetchArticles(monthPlan: _selectedMonthPlan),
                     icon: const Icon(Icons.refresh_rounded, size: 20),
                     label: const Text('ลองโหลดใหม่อีกครั้ง'),
                     style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 24,
+                        vertical: 12,
+                      ),
                       side: const BorderSide(color: Color(0xFFE2E8F0)),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -611,7 +677,8 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
           }
 
           return RefreshIndicator(
-            onRefresh: () => provider.fetchArticles(monthPlan: _selectedMonthPlan),
+            onRefresh: () =>
+                provider.fetchArticles(monthPlan: _selectedMonthPlan),
             child: SingleChildScrollView(
               padding: const EdgeInsets.all(16),
               physics: const AlwaysScrollableScrollPhysics(),
@@ -621,24 +688,32 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                   LayoutBuilder(
                     builder: (context, constraints) {
                       final isWide = constraints.maxWidth > 900;
-                      final isNarrowTablet = constraints.maxWidth > 600 && constraints.maxWidth <= 900;
-                      
+                      final isNarrowTablet =
+                          constraints.maxWidth > 600 &&
+                          constraints.maxWidth <= 900;
+
                       return GridView.builder(
                         shrinkWrap: true,
                         physics: const NeverScrollableScrollPhysics(),
                         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
                           crossAxisCount: isWide ? 2 : (isNarrowTablet ? 2 : 1),
-                          childAspectRatio: isWide ? 2.5 : (isNarrowTablet ? 2.0 : 2.8),
+                          childAspectRatio: isWide
+                              ? 2.5
+                              : (isNarrowTablet ? 2.0 : 2.8),
                           crossAxisSpacing: 12,
                           mainAxisSpacing: 12,
                         ),
                         itemCount: provider.articles.length,
                         itemBuilder: (context, index) => _ArticleItem(
                           article: provider.articles[index],
-                          onTap: () => _openArticleEditor(provider.articles[index]),
-                          onView: () => _openArticlePreview(provider.articles[index]),
-                          onEdit: () => _openArticleEditor(provider.articles[index]),
-                          onShare: () => _shareArticle(provider.articles[index]),
+                          onTap: () =>
+                              _openArticleEditor(provider.articles[index]),
+                          onView: () =>
+                              _openArticlePreview(provider.articles[index]),
+                          onEdit: () =>
+                              _openArticleEditor(provider.articles[index]),
+                          onShare: () =>
+                              _shareArticle(provider.articles[index]),
                           onDelete: () =>
                               _confirmDeleteArticle(provider.articles[index]),
                         ),
@@ -652,11 +727,18 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                     articles: provider.articles,
                     onYearChanged: (year) {
                       setState(() => _selectedPlanYear = year);
-                      if (_selectedMonthPlan != null && !_monthPlansForSelectedYear().contains(_selectedMonthPlan)) {
+                      if (_selectedMonthPlan != null &&
+                          !_monthPlansForSelectedYear().contains(
+                            _selectedMonthPlan,
+                          )) {
                         _selectedMonthPlan = null;
                       }
-                      context.read<ArticleProvider>().fetchArticles(monthPlan: _selectedMonthPlan);
-                      context.read<ArticlePlanProvider>().fetchPlans(year: year);
+                      context.read<ArticleProvider>().fetchArticles(
+                        monthPlan: _selectedMonthPlan,
+                      );
+                      context.read<ArticlePlanProvider>().fetchPlans(
+                        year: year,
+                      );
                     },
                   ),
                   const SizedBox(height: 80), // Space for FAB
@@ -734,13 +816,17 @@ class _ArticleItem extends StatelessWidget {
                           maxLines: 2,
                           overflow: TextOverflow.ellipsis,
                         ),
-                        if (cardConstraints.maxHeight > 80 && cardConstraints.maxWidth > 200) ...[
+                        if (cardConstraints.maxHeight > 80 &&
+                            cardConstraints.maxWidth > 200) ...[
                           const SizedBox(height: 4),
                           Text(
                             article.excerpt ?? 'ไม่มีคำโปรย...',
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(color: Color(0xFF7488A8), fontSize: 11),
+                            style: const TextStyle(
+                              color: Color(0xFF7488A8),
+                              fontSize: 11,
+                            ),
                           ),
                         ],
                       ],
@@ -819,7 +905,7 @@ String _formatArticleDate(Article article) {
   if (date != null) {
     return DateFormatter.formatArticleList(date);
   }
-  
+
   // ถ้ายังไม่มีวันเผยแพร่ (เป็นฉบับร่างที่ยังไม่ได้กำหนดวัน) ให้ใช้วันที่สร้างแทน
   final created = article.createdAt;
   return created != null ? DateFormatter.formatArticleList(created) : '-';
@@ -930,49 +1016,88 @@ class _ContentPlanSection extends StatelessWidget {
             ? planProvider.plans
             : (grouped[selectedMonth!.split(' ').first] ?? <ArticlePlan>[]);
         final totalPlanned = selectedGroup.length;
-        final totalDone = selectedGroup.where((p) => p.type == 'หวย' || _isDoneByRule(p)).length;
+        final totalDone = selectedGroup
+            .where((p) => p.type == 'หวย' || _isDoneByRule(p))
+            .length;
 
-        return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Container(
-              padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF223A63).withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Icon(Icons.assignment_outlined, color: Color(0xFF223A63), size: 20),
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF223A63).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(
+                    Icons.assignment_outlined,
+                    color: Color(0xFF223A63),
+                    size: 20,
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'CONTENT ROADMAP',
+                  style: GoogleFonts.kanit(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const Spacer(),
+                DropdownButton<int>(
+                  value: selectedYear,
+                  items: List.generate(12, (i) => 2026 + i)
+                      .map(
+                        (y) => DropdownMenuItem(
+                          value: y,
+                          child: Text('ปี ${y + 543 - 2500}'),
+                        ),
+                      )
+                      .toList(),
+                  onChanged: (v) {
+                    if (v == null) return;
+                    onYearChanged(v);
+                  },
+                ),
+                if (auth.user?['role'] == 'manager')
+                  IconButton(
+                    onPressed: () => _openPlanDialog(context, selectedYear),
+                    icon: const Icon(Icons.add_circle_outline),
+                  ),
+              ],
             ),
-            const SizedBox(width: 12),
-            Text('CONTENT ROADMAP', style: GoogleFonts.kanit(fontSize: 18, fontWeight: FontWeight.bold)),
-            const Spacer(),
-            DropdownButton<int>(
-              value: selectedYear,
-              items: List.generate(12, (i) => 2026 + i)
-                  .map((y) => DropdownMenuItem(value: y, child: Text('ปี ${y + 543 - 2500}')))
-                  .toList(),
-              onChanged: (v) {
-                if (v == null) return;
-                onYearChanged(v);
-              },
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                Text(
+                  'แผนทั้งหมด $totalPlanned',
+                  style: GoogleFonts.kanit(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(width: 12),
+                Text(
+                  'ทำแล้ว $totalDone',
+                  style: GoogleFonts.kanit(
+                    fontWeight: FontWeight.w600,
+                    color: const Color(0xFF1B8B6F),
+                  ),
+                ),
+              ],
             ),
-            if (auth.user?['role'] == 'manager')
-              IconButton(
-                onPressed: () => _openPlanDialog(context, selectedYear),
-                icon: const Icon(Icons.add_circle_outline),
+            const SizedBox(height: 10),
+            if (planProvider.isLoading)
+              const Center(child: CircularProgressIndicator()),
+            ...grouped.entries.map(
+              (e) => _MonthPlanCard(
+                monthName: e.key,
+                items: e.value,
+                articles: articles,
+                year: selectedYear,
               ),
-          ]),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              Text('แผนทั้งหมด $totalPlanned', style: GoogleFonts.kanit(fontWeight: FontWeight.w600)),
-              const SizedBox(width: 12),
-              Text('ทำแล้ว $totalDone', style: GoogleFonts.kanit(fontWeight: FontWeight.w600, color: const Color(0xFF1B8B6F))),
-            ],
-          ),
-          const SizedBox(height: 10),
-          if (planProvider.isLoading) const Center(child: CircularProgressIndicator()),
-          ...grouped.entries.map((e) => _MonthPlanCard(monthName: e.key, items: e.value, articles: articles, year: selectedYear)),
-        ]);
+            ),
+          ],
+        );
       },
     );
   }
@@ -980,67 +1105,123 @@ class _ContentPlanSection extends StatelessWidget {
   bool _isDoneByRule(ArticlePlan item) {
     final planDate = DateFormat('yyyy-MM-dd').format(item.publishDate);
     for (final a in articles) {
-      if (a.publishedAt != null && DateFormat('yyyy-MM-dd').format(a.publishedAt!) == planDate) {
+      if (a.publishedAt != null &&
+          DateFormat('yyyy-MM-dd').format(a.publishedAt!) == planDate) {
         return true;
       }
     }
     return item.publishDate.isBefore(DateTime.now());
   }
 
-  Future<void> _openPlanDialog(BuildContext context, int year, {ArticlePlan? plan}) async {
+  Future<void> _openPlanDialog(
+    BuildContext context,
+    int year, {
+    ArticlePlan? plan,
+  }) async {
     DateTime selectedDate = plan?.publishDate ?? DateTime.now();
-    TimeOfDay selectedTime = _parseTime(plan?.publishTime) ?? const TimeOfDay(hour: 9, minute: 0);
-    final dateCtrl = TextEditingController(text: DateFormat('yyyy-MM-dd').format(selectedDate));
+    TimeOfDay selectedTime =
+        _parseTime(plan?.publishTime) ?? const TimeOfDay(hour: 9, minute: 0);
+    final dateCtrl = TextEditingController(
+      text: DateFormat('yyyy-MM-dd').format(selectedDate),
+    );
     final timeCtrl = TextEditingController(text: _formatTime(selectedTime));
     final typeCtrl = TextEditingController(text: plan?.type ?? '');
     final topicCtrl = TextEditingController(text: plan?.topic ?? '');
     bool isLottery = plan?.isLottery ?? false;
-    final ok = await showDialog<bool>(context: context, builder: (ctx) => StatefulBuilder(builder: (ctx, setS) => AlertDialog(
-      title: Text(plan == null ? 'เพิ่มแผน' : 'แก้ไขแผน'),
-      content: Column(mainAxisSize: MainAxisSize.min, children: [
-        TextField(
-          controller: dateCtrl,
-          readOnly: true,
-          decoration: const InputDecoration(labelText: 'วันที่'),
-          onTap: () async {
-            final picked = await showDatePicker(
-              context: ctx,
-              initialDate: selectedDate,
-              firstDate: DateTime(2026, 1, 1),
-              lastDate: DateTime(2037, 12, 31),
-            );
-            if (picked == null) return;
-            selectedDate = picked;
-            dateCtrl.text = DateFormat('yyyy-MM-dd').format(picked);
-          },
+    final ok = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => StatefulBuilder(
+        builder: (ctx, setS) => AlertDialog(
+          title: Text(plan == null ? 'เพิ่มแผน' : 'แก้ไขแผน'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: dateCtrl,
+                readOnly: true,
+                decoration: const InputDecoration(labelText: 'วันที่'),
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: ctx,
+                    initialDate: selectedDate,
+                    firstDate: DateTime(2026, 1, 1),
+                    lastDate: DateTime(2037, 12, 31),
+                  );
+                  if (picked == null) return;
+                  selectedDate = picked;
+                  dateCtrl.text = DateFormat('yyyy-MM-dd').format(picked);
+                },
+              ),
+              TextField(
+                controller: timeCtrl,
+                readOnly: true,
+                decoration: const InputDecoration(labelText: 'เวลา'),
+                onTap: () async {
+                  final picked = await showTimePicker(
+                    context: ctx,
+                    initialTime: selectedTime,
+                  );
+                  if (picked == null) return;
+                  selectedTime = picked;
+                  timeCtrl.text = _formatTime(picked);
+                },
+              ),
+              TextField(
+                controller: typeCtrl,
+                decoration: const InputDecoration(labelText: 'ประเภท'),
+              ),
+              TextField(
+                controller: topicCtrl,
+                decoration: const InputDecoration(labelText: 'หัวข้อ'),
+              ),
+              SwitchListTile(
+                value: isLottery,
+                onChanged: (v) => setS(() => isLottery = v),
+                title: const Text('เป็นบทความหวย'),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx, false),
+              child: const Text('ยกเลิก'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(ctx, true),
+              child: const Text('บันทึก'),
+            ),
+          ],
         ),
-        TextField(
-          controller: timeCtrl,
-          readOnly: true,
-          decoration: const InputDecoration(labelText: 'เวลา'),
-          onTap: () async {
-            final picked = await showTimePicker(context: ctx, initialTime: selectedTime);
-            if (picked == null) return;
-            selectedTime = picked;
-            timeCtrl.text = _formatTime(picked);
-          },
-        ),
-        TextField(controller: typeCtrl, decoration: const InputDecoration(labelText: 'ประเภท')),
-        TextField(controller: topicCtrl, decoration: const InputDecoration(labelText: 'หัวข้อ')),
-        SwitchListTile(value: isLottery, onChanged: (v)=>setS(()=>isLottery=v), title: const Text('เป็นบทความหวย')),
-      ]),
-      actions: [TextButton(onPressed: ()=>Navigator.pop(ctx,false), child: const Text('ยกเลิก')), FilledButton(onPressed: ()=>Navigator.pop(ctx,true), child: const Text('บันทึก'))],
-    )));
+      ),
+    );
     if (ok != true) return;
     if (!context.mounted) return;
     if (topicCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('กรุณากรอกหัวข้อ')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('กรุณากรอกหัวข้อ')));
       return;
     }
-    final payload = {'publish_date': dateCtrl.text.trim(), 'publish_time': timeCtrl.text.trim(), 'type': typeCtrl.text.trim(), 'topic': topicCtrl.text.trim(), 'is_lottery': isLottery};
+    final payload = {
+      'publish_date': dateCtrl.text.trim(),
+      'publish_time': timeCtrl.text.trim(),
+      'type': typeCtrl.text.trim(),
+      'topic': topicCtrl.text.trim(),
+      'is_lottery': isLottery,
+    };
     final p = context.read<ArticlePlanProvider>();
-    final success = plan == null ? await p.createPlan(payload, year) : await p.updatePlan(plan.id, payload, year);
-    if (context.mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(success ? 'บันทึกสำเร็จ' : (p.lastErrorMessage ?? 'ไม่สำเร็จ'))));
+    final success = plan == null
+        ? await p.createPlan(payload, year)
+        : await p.updatePlan(plan.id, payload, year);
+    if (context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            success ? 'บันทึกสำเร็จ' : (p.lastErrorMessage ?? 'ไม่สำเร็จ'),
+          ),
+        ),
+      );
+    }
   }
 
   String _formatTime(TimeOfDay value) {
@@ -1065,40 +1246,82 @@ class _MonthPlanCard extends StatelessWidget {
   final List<ArticlePlan> items;
   final List<Article> articles;
   final int year;
-  const _MonthPlanCard({required this.monthName, required this.items, required this.articles, required this.year});
+  const _MonthPlanCard({
+    required this.monthName,
+    required this.items,
+    required this.articles,
+    required this.year,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Container(margin: const EdgeInsets.only(bottom: 16), child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      Text(monthName, style: GoogleFonts.kanit(fontWeight: FontWeight.bold)),
-      ...items.map((item) {
-        final isDone = _isDone(item);
-        final role = context.read<AuthProvider>().user?['role'];
-        final isManager = role == 'manager';
-        return ListTile(
-          title: Text(item.topic),
-          subtitle: Text('${DateFormat('yyyy-MM-dd').format(item.publishDate)} ${item.publishTime} • ${item.type ?? '-'}'),
-          trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-            Icon(isDone ? Icons.check_circle : Icons.radio_button_unchecked, color: isDone ? Colors.green : Colors.grey),
-            if (isManager)
-              IconButton(onPressed: () => (context.findAncestorWidgetOfExactType<_ContentPlanSection>())?._openPlanDialog(context, year, plan: item), icon: const Icon(Icons.edit_outlined)),
-            if (isManager)
-              IconButton(onPressed: () async { await context.read<ArticlePlanProvider>().deletePlan(item.id, year); }, icon: const Icon(Icons.delete_outline)),
-          ]),
-        );
-      }),
-    ]));
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            monthName,
+            style: GoogleFonts.kanit(fontWeight: FontWeight.bold),
+          ),
+          ...items.map((item) {
+            final isDone = _isDone(item);
+            final role = context.read<AuthProvider>().user?['role'];
+            final isManager = role == 'manager';
+            return ListTile(
+              title: Text(item.topic),
+              subtitle: Text(
+                '${DateFormat('yyyy-MM-dd').format(item.publishDate)} ${item.publishTime} • ${item.type ?? '-'}',
+              ),
+              trailing: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    isDone ? Icons.check_circle : Icons.radio_button_unchecked,
+                    color: isDone ? Colors.green : Colors.grey,
+                  ),
+                  if (isManager)
+                    IconButton(
+                      onPressed: () =>
+                          (context
+                                  .findAncestorWidgetOfExactType<
+                                    _ContentPlanSection
+                                  >())
+                              ?._openPlanDialog(context, year, plan: item),
+                      icon: const Icon(Icons.edit_outlined),
+                    ),
+                  if (isManager)
+                    IconButton(
+                      onPressed: () async {
+                        await context.read<ArticlePlanProvider>().deletePlan(
+                          item.id,
+                          year,
+                        );
+                      },
+                      icon: const Icon(Icons.delete_outline),
+                    ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
   }
 
   bool _isDone(ArticlePlan item) {
     final planDate = DateFormat('yyyy-MM-dd').format(item.publishDate);
     if (item.publishDate.isBefore(DateTime.now())) return true;
     for (final a in articles) {
-      if (a.publishedAt != null && DateFormat('yyyy-MM-dd').format(a.publishedAt!) == planDate) return true;
+      if (a.publishedAt != null &&
+          DateFormat('yyyy-MM-dd').format(a.publishedAt!) == planDate) {
+        return true;
+      }
       if (item.isLottery && a.slug != null) {
         final monthStr = item.publishDate.month.toString().padLeft(2, '0');
         final isRound1 = item.publishDate.day <= 15;
-        final pattern = 'thai-goverment-lottery-${item.publishDate.year}$monthStr${isRound1 ? 'first' : 'second'}';
+        final pattern =
+            'thai-goverment-lottery-${item.publishDate.year}$monthStr${isRound1 ? 'first' : 'second'}';
         if (a.slug == pattern) return true;
       }
     }

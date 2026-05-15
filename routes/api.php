@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\TarotReadingController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\ArticlePlanController;
+use App\Http\Controllers\Api\FacebookImportedPostController;
 use App\Http\Middleware\ApiTokenAuth;
 use Illuminate\Support\Facades\Route;
 
@@ -39,6 +40,7 @@ Route::middleware(ApiTokenAuth::class)->group(function () {
         Route::get('users/{user}', [\App\Http\Controllers\Api\UserController::class, 'show'])->name('api.users.show');
         Route::match(['put', 'patch'], 'users/{user}', [\App\Http\Controllers\Api\UserController::class, 'update'])->name('api.users.update');
         Route::delete('users/{user}', [\App\Http\Controllers\Api\UserController::class, 'destroy'])->name('api.users.destroy');
+        Route::get('facebook-imports', [FacebookImportedPostController::class, 'index'])->name('api.facebook-imports.index');
     });
 });
 
