@@ -60,6 +60,40 @@ class FacebookImportedPostController extends Controller
         return response()->json($paginator);
     }
 
+    public function destroy(FacebookImportedPost $facebookImportedPost)
+    {
+        $deletedId = $facebookImportedPost->id;
+        $facebookImportedPost->delete();
+
+        return response()->json([
+            'message' => 'ลบโพสต์ Facebook เรียบร้อยแล้ว',
+            'deleted_id' => $deletedId,
+        ]);
+    }
+
+    public function bulkDestroy(Request $request)
+    {
+        $validated = $request->validate([
+            'ids' => ['required', 'array', 'min:1', 'max:500'],
+            'ids.*' => ['required', 'integer', 'exists:facebook_imported_posts,id'],
+        ]);
+
+        $ids = collect($validated['ids'])
+            ->map(static fn ($id): int => (int) $id)
+            ->unique()
+            ->values();
+
+        $deletedCount = FacebookImportedPost::query()
+            ->whereIn('id', $ids)
+            ->delete();
+
+        return response()->json([
+            'message' => 'ลบโพสต์ที่เลือกเรียบร้อยแล้ว',
+            'deleted_count' => $deletedCount,
+            'requested_count' => $ids->count(),
+        ]);
+    }
+
     private function resolveImageUrl(FacebookImportedPost $post): ?string
     {
         $imageUrl = trim((string) ($post->full_picture ?? ''));

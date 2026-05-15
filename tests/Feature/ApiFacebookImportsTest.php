@@ -69,6 +69,62 @@ class ApiFacebookImportsTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_manager_can_delete_single_facebook_import_post(): void
+    {
+        $post = FacebookImportedPost::query()->create([
+            'facebook_post_id' => 'page_delete_1',
+            'message' => 'โพสต์สำหรับลบเดี่ยว',
+            'facebook_created_time' => now()->subDay(),
+            'last_synced_at' => now(),
+        ]);
+
+        $token = $this->issueTokenForRole(User::ROLE_MANAGER);
+
+        $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->deleteJson('/api/facebook-imports/' . $post->id)
+            ->assertOk()
+            ->assertJsonPath('deleted_id', $post->id);
+
+        $this->assertDatabaseMissing('facebook_imported_posts', [
+            'id' => $post->id,
+        ]);
+    }
+
+    public function test_manager_can_bulk_delete_selected_facebook_import_posts(): void
+    {
+        $first = FacebookImportedPost::query()->create([
+            'facebook_post_id' => 'page_bulk_1',
+            'message' => 'โพสต์สำหรับลบชุด 1',
+            'facebook_created_time' => now()->subDay(),
+            'last_synced_at' => now(),
+        ]);
+        $second = FacebookImportedPost::query()->create([
+            'facebook_post_id' => 'page_bulk_2',
+            'message' => 'โพสต์สำหรับลบชุด 2',
+            'facebook_created_time' => now()->subHours(20),
+            'last_synced_at' => now(),
+        ]);
+        $third = FacebookImportedPost::query()->create([
+            'facebook_post_id' => 'page_bulk_3',
+            'message' => 'โพสต์สำหรับคงไว้',
+            'facebook_created_time' => now()->subHours(10),
+            'last_synced_at' => now(),
+        ]);
+
+        $token = $this->issueTokenForRole(User::ROLE_MANAGER);
+
+        $this->withHeader('Authorization', 'Bearer ' . $token)
+            ->postJson('/api/facebook-imports/bulk-delete', [
+                'ids' => [$first->id, $second->id],
+            ])
+            ->assertOk()
+            ->assertJsonPath('deleted_count', 2);
+
+        $this->assertDatabaseMissing('facebook_imported_posts', ['id' => $first->id]);
+        $this->assertDatabaseMissing('facebook_imported_posts', ['id' => $second->id]);
+        $this->assertDatabaseHas('facebook_imported_posts', ['id' => $third->id]);
+    }
+
     private function issueTokenForRole(string $role): string
     {
         $username = 'api-' . $role . '-' . uniqid();

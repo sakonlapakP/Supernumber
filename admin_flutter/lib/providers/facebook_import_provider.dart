@@ -6,6 +6,7 @@ import '../services/api_service.dart';
 
 class FacebookImportProvider with ChangeNotifier {
   final List<FacebookImportPost> _posts = [];
+  final Set<int> _selectedIds = <int>{};
   bool _isLoading = false;
   bool _isLoadingMore = false;
   bool _hasMore = true;
@@ -21,6 +22,9 @@ class FacebookImportProvider with ChangeNotifier {
   bool get isLoadingMore => _isLoadingMore;
   bool get hasMore => _hasMore;
   String? get lastErrorMessage => _lastErrorMessage;
+  Set<int> get selectedIds => Set.unmodifiable(_selectedIds);
+  bool get hasSelection => _selectedIds.isNotEmpty;
+  int get selectedCount => _selectedIds.length;
 
   Future<void> fetchFirstPage({
     String search = '',
@@ -37,6 +41,7 @@ class FacebookImportProvider with ChangeNotifier {
     _lastPage = 1;
     _hasMore = true;
     _posts.clear();
+    _selectedIds.clear();
     notifyListeners();
 
     await _fetchPage(1, append: false);
@@ -102,6 +107,89 @@ class FacebookImportProvider with ChangeNotifier {
     } catch (_) {
       _lastErrorMessage = 'ไม่สามารถดึงข้อมูลโพสต์ Facebook ได้';
     }
+  }
+
+  bool isSelected(int id) => _selectedIds.contains(id);
+
+  void toggleSelection(int id) {
+    if (_selectedIds.contains(id)) {
+      _selectedIds.remove(id);
+    } else {
+      _selectedIds.add(id);
+    }
+    notifyListeners();
+  }
+
+  void clearSelection() {
+    if (_selectedIds.isEmpty) return;
+    _selectedIds.clear();
+    notifyListeners();
+  }
+
+  void selectAllLoaded() {
+    if (_posts.isEmpty) return;
+    _selectedIds
+      ..clear()
+      ..addAll(_posts.map((post) => post.id));
+    notifyListeners();
+  }
+
+  Future<bool> deletePost(int id) async {
+    _lastErrorMessage = null;
+    notifyListeners();
+
+    try {
+      final response = await ApiService.dio.delete('/facebook-imports/$id');
+      if (response.statusCode == 200) {
+        _posts.removeWhere((post) => post.id == id);
+        _selectedIds.remove(id);
+        notifyListeners();
+        return true;
+      }
+
+      _lastErrorMessage = 'ลบโพสต์ไม่สำเร็จ (${response.statusCode})';
+    } on DioException catch (e) {
+      _lastErrorMessage = _extractErrorMessage(e);
+    } catch (_) {
+      _lastErrorMessage = 'ลบโพสต์ไม่สำเร็จ กรุณาลองใหม่อีกครั้ง';
+    }
+
+    notifyListeners();
+    return false;
+  }
+
+  Future<bool> deleteSelected() async {
+    if (_selectedIds.isEmpty) {
+      return false;
+    }
+
+    _lastErrorMessage = null;
+    notifyListeners();
+
+    final ids = _selectedIds.toList();
+
+    try {
+      final response = await ApiService.dio.post(
+        '/facebook-imports/bulk-delete',
+        data: {'ids': ids},
+      );
+
+      if (response.statusCode == 200) {
+        _posts.removeWhere((post) => _selectedIds.contains(post.id));
+        _selectedIds.clear();
+        notifyListeners();
+        return true;
+      }
+
+      _lastErrorMessage = 'ลบโพสต์ที่เลือกไม่สำเร็จ (${response.statusCode})';
+    } on DioException catch (e) {
+      _lastErrorMessage = _extractErrorMessage(e);
+    } catch (_) {
+      _lastErrorMessage = 'ลบโพสต์ที่เลือกไม่สำเร็จ กรุณาลองใหม่อีกครั้ง';
+    }
+
+    notifyListeners();
+    return false;
   }
 
   int? _asInt(dynamic value) {

@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:intl/intl.dart';
@@ -107,11 +109,6 @@ class _FacebookImportsScreenState extends State<FacebookImportsScreen> {
     await _applyFilter();
   }
 
-  String _formatDateOnly(DateTime? value) {
-    if (value == null) return '';
-    return DateFormat('yyyy-MM-dd').format(value);
-  }
-
   Future<void> _openExternalUrl(String? url) async {
     if (url == null || url.trim().isEmpty) return;
 
@@ -124,6 +121,117 @@ class _FacebookImportsScreenState extends State<FacebookImportsScreen> {
     ScaffoldMessenger.of(
       context,
     ).showSnackBar(const SnackBar(content: Text('เปิดลิงก์ไม่สำเร็จ')));
+  }
+
+  Future<void> _deletePost(FacebookImportPost post) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            'ยืนยันการลบ',
+            style: GoogleFonts.kanit(fontWeight: FontWeight.w700),
+          ),
+          content: Text(
+            'ต้องการลบโพสต์ ${post.facebookPostId} ออกจากฐานข้อมูลหรือไม่?',
+            style: GoogleFonts.kanit(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('ยกเลิก', style: GoogleFonts.kanit()),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFB91C1C),
+              ),
+              child: Text(
+                'ลบ',
+                style: GoogleFonts.kanit(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final provider = context.read<FacebookImportProvider>();
+    final deleted = await provider.deletePost(post.id);
+    if (!mounted) return;
+
+    if (deleted) {
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('ลบโพสต์เรียบร้อยแล้ว')));
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(content: Text(provider.lastErrorMessage ?? 'ลบโพสต์ไม่สำเร็จ')),
+    );
+  }
+
+  Future<void> _deleteSelected(FacebookImportProvider provider) async {
+    if (!provider.hasSelection) return;
+
+    final selectedCount = provider.selectedCount;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(
+            'ยืนยันการลบหลายรายการ',
+            style: GoogleFonts.kanit(fontWeight: FontWeight.w700),
+          ),
+          content: Text(
+            'ต้องการลบโพสต์ที่เลือกทั้งหมด $selectedCount รายการหรือไม่?',
+            style: GoogleFonts.kanit(),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(false),
+              child: Text('ยกเลิก', style: GoogleFonts.kanit()),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(true),
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFB91C1C),
+              ),
+              child: Text(
+                'ลบทั้งหมด',
+                style: GoogleFonts.kanit(fontWeight: FontWeight.w700),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+
+    if (confirmed != true || !mounted) return;
+
+    final deleted = await provider.deleteSelected();
+    if (!mounted) return;
+
+    if (deleted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('ลบโพสต์ที่เลือกแล้ว $selectedCount รายการ')),
+      );
+      return;
+    }
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(provider.lastErrorMessage ?? 'ลบโพสต์ที่เลือกไม่สำเร็จ'),
+      ),
+    );
+  }
+
+  String _formatDateOnly(DateTime? value) {
+    if (value == null) return '';
+    return DateFormat('yyyy-MM-dd').format(value);
   }
 
   @override
@@ -182,24 +290,40 @@ class _FacebookImportsScreenState extends State<FacebookImportsScreen> {
       );
     }
 
+    final itemCount = provider.posts.length + (provider.isLoadingMore ? 2 : 1);
+
     return RefreshIndicator(
       onRefresh: _applyFilter,
       child: ListView.separated(
         controller: _scrollController,
         padding: const EdgeInsets.fromLTRB(12, 8, 12, 20),
-        itemCount: provider.posts.length + (provider.isLoadingMore ? 1 : 0),
+        itemCount: itemCount,
         separatorBuilder: (context, index) => const SizedBox(height: 10),
         itemBuilder: (context, index) {
-          if (index >= provider.posts.length) {
+          if (index == 0) {
+            return _SelectionActionBar(
+              selectedCount: provider.selectedCount,
+              totalCount: provider.posts.length,
+              hasSelection: provider.hasSelection,
+              onSelectAll: provider.selectAllLoaded,
+              onClearSelection: provider.clearSelection,
+              onDeleteSelected: () => _deleteSelected(provider),
+            );
+          }
+
+          if (provider.isLoadingMore && index == itemCount - 1) {
             return const Padding(
               padding: EdgeInsets.symmetric(vertical: 12),
               child: Center(child: CircularProgressIndicator()),
             );
           }
 
-          final post = provider.posts[index];
+          final post = provider.posts[index - 1];
           return _FacebookPostCard(
             post: post,
+            isSelected: provider.isSelected(post.id),
+            onToggleSelection: () => provider.toggleSelection(post.id),
+            onDelete: () => _deletePost(post),
             onOpenImage: () => _openExternalUrl(post.imageUrl),
             onOpenPost: () => _openExternalUrl(post.permalinkUrl),
           );
@@ -246,69 +370,143 @@ class _FilterPanel extends StatelessWidget {
         border: Border.all(color: const Color(0xFFD7E1F0)),
         borderRadius: BorderRadius.circular(16),
       ),
-      child: Column(
-        children: [
-          TextField(
-            controller: searchController,
-            textInputAction: TextInputAction.search,
-            onSubmitted: (_) => onApply(),
-            decoration: const InputDecoration(
-              hintText: 'ค้นหา message, story, post id',
-              prefixIcon: Icon(Icons.search_rounded),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final rowWidth = math.max(constraints.maxWidth, 980.0);
+          return SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: SizedBox(
+              width: rowWidth,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: searchController,
+                      textInputAction: TextInputAction.search,
+                      onSubmitted: (_) => onApply(),
+                      decoration: const InputDecoration(
+                        hintText: 'ค้นหา message, story, post id',
+                        prefixIcon: Icon(Icons.search_rounded),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 160,
+                    child: OutlinedButton.icon(
+                      onPressed: isLoading ? null : onPickFromDate,
+                      icon: const Icon(Icons.calendar_today_rounded, size: 16),
+                      label: Text(
+                        fromDate == null
+                            ? 'จากวันที่'
+                            : DateFormat('dd/MM/yyyy').format(fromDate!),
+                        style: dateTextStyle,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 160,
+                    child: OutlinedButton.icon(
+                      onPressed: isLoading ? null : onPickToDate,
+                      icon: const Icon(Icons.event_rounded, size: 16),
+                      label: Text(
+                        toDate == null
+                            ? 'ถึงวันที่'
+                            : DateFormat('dd/MM/yyyy').format(toDate!),
+                        style: dateTextStyle,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 110,
+                    child: OutlinedButton(
+                      onPressed: isLoading ? null : onClear,
+                      child: Text('ล้างค่า', style: GoogleFonts.kanit()),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 120,
+                    child: FilledButton(
+                      onPressed: isLoading ? null : onApply,
+                      child: Text(
+                        'ค้นหา',
+                        style: GoogleFonts.kanit(fontWeight: FontWeight.w700),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: isLoading ? null : onPickFromDate,
-                  icon: const Icon(Icons.calendar_today_rounded, size: 16),
-                  label: Text(
-                    fromDate == null
-                        ? 'จากวันที่'
-                        : DateFormat('dd/MM/yyyy').format(fromDate!),
-                    style: dateTextStyle,
-                  ),
-                ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _SelectionActionBar extends StatelessWidget {
+  final int selectedCount;
+  final int totalCount;
+  final bool hasSelection;
+  final VoidCallback onSelectAll;
+  final VoidCallback onClearSelection;
+  final VoidCallback onDeleteSelected;
+
+  const _SelectionActionBar({
+    required this.selectedCount,
+    required this.totalCount,
+    required this.hasSelection,
+    required this.onSelectAll,
+    required this.onClearSelection,
+    required this.onDeleteSelected,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        border: Border.all(color: const Color(0xFFD7E1F0)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Row(
+          children: [
+            Text(
+              'เลือกแล้ว $selectedCount จาก $totalCount รายการ',
+              style: GoogleFonts.kanit(
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF334155),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: OutlinedButton.icon(
-                  onPressed: isLoading ? null : onPickToDate,
-                  icon: const Icon(Icons.event_rounded, size: 16),
-                  label: Text(
-                    toDate == null
-                        ? 'ถึงวันที่'
-                        : DateFormat('dd/MM/yyyy').format(toDate!),
-                    style: dateTextStyle,
-                  ),
-                ),
+            ),
+            const SizedBox(width: 16),
+            TextButton(
+              onPressed: onSelectAll,
+              child: Text('เลือกทั้งหมด', style: GoogleFonts.kanit()),
+            ),
+            TextButton(
+              onPressed: hasSelection ? onClearSelection : null,
+              child: Text('ยกเลิกเลือก', style: GoogleFonts.kanit()),
+            ),
+            const SizedBox(width: 8),
+            FilledButton.icon(
+              onPressed: hasSelection ? onDeleteSelected : null,
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFFB91C1C),
               ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: isLoading ? null : onClear,
-                  child: Text('ล้างค่า', style: GoogleFonts.kanit()),
-                ),
+              icon: const Icon(Icons.delete_outline_rounded, size: 16),
+              label: Text(
+                'ลบที่เลือก',
+                style: GoogleFonts.kanit(fontWeight: FontWeight.w700),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FilledButton(
-                  onPressed: isLoading ? null : onApply,
-                  child: Text(
-                    'ค้นหา',
-                    style: GoogleFonts.kanit(fontWeight: FontWeight.w700),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ],
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -316,11 +514,17 @@ class _FilterPanel extends StatelessWidget {
 
 class _FacebookPostCard extends StatelessWidget {
   final FacebookImportPost post;
+  final bool isSelected;
+  final VoidCallback onToggleSelection;
+  final VoidCallback onDelete;
   final VoidCallback onOpenImage;
   final VoidCallback onOpenPost;
 
   const _FacebookPostCard({
     required this.post,
+    required this.isSelected,
+    required this.onToggleSelection,
+    required this.onDelete,
     required this.onOpenImage,
     required this.onOpenPost,
   });
@@ -339,6 +543,12 @@ class _FacebookPostCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            Checkbox(
+              value: isSelected,
+              onChanged: (_) => onToggleSelection(),
+              activeColor: const Color(0xFF1D4ED8),
+            ),
+            const SizedBox(width: 4),
             InkWell(
               onTap: post.imageUrl == null ? null : onOpenImage,
               borderRadius: BorderRadius.circular(10),
@@ -352,13 +562,28 @@ class _FacebookPostCard extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    post.facebookPostId,
-                    style: GoogleFonts.kanit(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      color: const Color(0xFF1E2D45),
-                    ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          post.facebookPostId,
+                          style: GoogleFonts.kanit(
+                            fontWeight: FontWeight.w700,
+                            fontSize: 13,
+                            color: const Color(0xFF1E2D45),
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: onDelete,
+                        tooltip: 'ลบข้อมูลโพสต์',
+                        icon: const Icon(
+                          Icons.delete_outline_rounded,
+                          color: Color(0xFFB91C1C),
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 2),
                   Text(
