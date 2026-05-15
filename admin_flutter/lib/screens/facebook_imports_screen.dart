@@ -341,8 +341,8 @@ class _FacebookImportsScreenState extends State<FacebookImportsScreen> {
                     mainAxisSpacing: 10,
                     crossAxisSpacing: 10,
                     childAspectRatio: columns == 3
-                        ? 0.74
-                        : (columns == 2 ? 0.9 : 1.8),
+                        ? 0.95
+                        : (columns == 2 ? 1.05 : 1.75),
                   ),
                 );
               },
@@ -567,7 +567,7 @@ class _FacebookPostCard extends StatelessWidget {
         side: const BorderSide(color: Color(0xFFD7E1F0)),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(10),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -600,7 +600,7 @@ class _FacebookPostCard extends StatelessWidget {
                 ),
               ],
             ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 4),
             InkWell(
               onTap: post.imageUrl == null ? null : onOpenImage,
               borderRadius: BorderRadius.circular(10),
@@ -609,7 +609,7 @@ class _FacebookPostCard extends StatelessWidget {
                 child: _Thumbnail(imageUrl: post.imageUrl),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 6),
             Text(
               'โพสต์: ${DateFormatter.formatBangkok(post.facebookCreatedTime, format: 'dd/MM/yyyy HH:mm')}',
               style: GoogleFonts.kanit(
@@ -628,7 +628,7 @@ class _FacebookPostCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               post.previewText,
-              maxLines: 3,
+              maxLines: 2,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.kanit(
                 fontSize: 14,
@@ -656,48 +656,50 @@ class _Thumbnail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final imageRadius = BorderRadius.circular(10);
+
     if (imageUrl == null || imageUrl!.trim().isEmpty) {
-      return Container(
-        width: double.infinity,
-        height: 150,
-        color: const Color(0xFFF1F5F9),
-        alignment: Alignment.center,
-        child: const Icon(
-          Icons.image_not_supported_outlined,
-          color: Color(0xFF94A3B8),
+      return AspectRatio(
+        aspectRatio: 16 / 9,
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFFF1F5F9),
+            borderRadius: imageRadius,
+          ),
+          alignment: Alignment.center,
+          child: const Icon(
+            Icons.image_not_supported_outlined,
+            color: Color(0xFF94A3B8),
+          ),
         ),
       );
     }
 
-    return Image.network(
-      imageUrl!,
-      width: double.infinity,
-      height: 150,
-      fit: BoxFit.cover,
-      errorBuilder: (context, error, stackTrace) => Container(
-        width: double.infinity,
-        height: 150,
-        color: const Color(0xFFF1F5F9),
-        alignment: Alignment.center,
-        child: const Icon(
-          Icons.broken_image_outlined,
-          color: Color(0xFF94A3B8),
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: Container(
+        decoration: BoxDecoration(
+          color: const Color(0xFFF8FAFC),
+          borderRadius: imageRadius,
+        ),
+        child: Image.network(
+          imageUrl!,
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) => const Center(
+            child: Icon(Icons.broken_image_outlined, color: Color(0xFF94A3B8)),
+          ),
+          loadingBuilder: (context, child, progress) {
+            if (progress == null) return child;
+            return const Center(
+              child: SizedBox(
+                width: 18,
+                height: 18,
+                child: CircularProgressIndicator(strokeWidth: 2),
+              ),
+            );
+          },
         ),
       ),
-      loadingBuilder: (context, child, progress) {
-        if (progress == null) return child;
-        return Container(
-          width: double.infinity,
-          height: 150,
-          color: const Color(0xFFF8FAFC),
-          alignment: Alignment.center,
-          child: const SizedBox(
-            width: 18,
-            height: 18,
-            child: CircularProgressIndicator(strokeWidth: 2),
-          ),
-        );
-      },
     );
   }
 }
