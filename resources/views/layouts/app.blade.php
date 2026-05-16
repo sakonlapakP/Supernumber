@@ -22,7 +22,7 @@
     <meta property="og:image" content="@yield('og_image', asset('images/home_banner.jpg'))" />
     @hasSection('og_image_secure_url')
     <meta property="og:image:secure_url" content="@yield('og_image_secure_url')" />
-    @endif
+    @endhasSection
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="theme-color" content="@yield('theme_color', '#2a2321')" />
     <link rel="shortcut icon" type="image/x-icon" href="{{ $versionedStaticPath('favicon-v2.ico') }}" />
