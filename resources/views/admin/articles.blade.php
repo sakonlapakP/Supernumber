@@ -2,12 +2,14 @@
 
 @section('content')
     @php
+       $isManager = session('admin_user_role') === \App\Models\User::ROLE_MANAGER;
+
        $thaiMonths = [
            1 => 'มกราคม', 2 => 'กุมภาพันธ์', 3 => 'มีนาคม', 4 => 'เมษายน',
            5 => 'พฤษภาคม', 6 => 'มิถุนายน', 7 => 'กรกฎาคม', 8 => 'สิงหาคม',
            9 => 'กันยายน', 10 => 'ตุลาคม', 11 => 'พฤศจิกายน', 12 => 'ธันวาคม'
        ];
-       
+
        $selectedMonth = request('month_plan');
        
        $checkItemDone = function($item) use ($existingArticlesInfo) {
@@ -943,20 +945,21 @@
 
     <link rel="stylesheet" href="{{ asset('css/planning-calendar.css') }}?v={{ filemtime(public_path('css/planning-calendar.css')) }}">
 
-    @if(!$tableExists)
-      <div class="admin-alert admin-alert--warning" style="margin-bottom: 20px; background: #fffbeb; border: 1px solid #fef3c7; color: #92400e; padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 24px; height: 24px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
-        <div>
-          <strong style="display: block;">ยังไม่ได้รัน Migration!</strong>
-          <span style="font-size: 14px;">กรุณารันคำสั่ง <code>php artisan migrate</code> เพื่อเปิดใช้งานระบบแผนการเผยแพร่บทความครับ</span>
+    @if($tableExists && $isManager)
+      @if(!$tableExists)
+        <div class="admin-alert admin-alert--warning" style="margin-bottom: 20px; background: #fffbeb; border: 1px solid #fef3c7; color: #92400e; padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 24px; height: 24px;"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" /></svg>
+          <div>
+            <strong style="display: block;">ยังไม่ได้รัน Migration!</strong>
+            <span style="font-size: 14px;">กรุณารันคำสั่ง <code>php artisan migrate</code> เพื่อเปิดใช้งานระบบแผนการเผยแพร่บทความครับ</span>
+          </div>
         </div>
-      </div>
-    @endif
+      @endif
 
-    {{-- ═══════════════════════════════════════════════════════════════════════
-         Planning Interface — Calendar / Timeline / Table
-         ═══════════════════════════════════════════════════════════════════════ --}}
-    <section class="admin-card content-plan-card"
+      {{-- ═══════════════════════════════════════════════════════════════════════
+           Planning Interface — Calendar / Timeline / Table
+           ═══════════════════════════════════════════════════════════════════════ --}}
+      <section class="admin-card content-plan-card"
              data-planning-interface
              data-csrf="{{ csrf_token() }}"
              data-api-base="{{ url('/admin/articles/api/plans') }}"
@@ -1173,11 +1176,13 @@
         </div>
       </div>
 
-    </section>
+      </section>
+    @endif
 
     {{-- ═══════════════════════════════════════════════════════════════════════
          Plan Detail Modal (AJAX — populated by JS)
          ═══════════════════════════════════════════════════════════════════════ --}}
+    @if($tableExists && $isManager)
     <div id="planning-detail-overlay" class="plan-detail-overlay">
       <div class="plan-detail-modal">
         <div class="plan-detail-header">
@@ -1195,6 +1200,8 @@
         </div>
       </div>
     </div>
+    @endif
+
     <div class="admin-card article-admin-card">
       <div class="article-admin-toolbar" style="padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
         <form action="{{ route('admin.articles') }}" method="GET" style="display: flex; gap: 8px; align-items: center; flex: 1; flex-wrap: wrap;">
@@ -1302,7 +1309,7 @@
                     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
                     แก้ไข
                   </a>
-                  @if(in_array(session('admin_user_role'), [\App\Models\User::ROLE_MANAGER, \App\Models\User::ROLE_ADMIN], true))
+                  @if(session('admin_user_role') === \App\Models\User::ROLE_MANAGER)
                     <form action="{{ route('admin.articles.delete', $article) }}" method="POST" style="display: inline;" onsubmit="return confirm('ยืนยันลบบทความนี้? การลบจะลบไฟล์รูปและคอมเมนต์ที่เกี่ยวข้องด้วย')">
                       @csrf
                       @method('DELETE')

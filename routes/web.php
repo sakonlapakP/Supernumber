@@ -3166,15 +3166,56 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.articles', compact('articles', 'existingArticlesInfo', 'articlePlans', 'tableExists', 'planYear'));
     })->name('articles');
 
-    Route::post('/article-plans', [\App\Http\Controllers\Admin\ArticlePlanController::class, 'store'])->name('article-plans.store');
-    Route::put('/article-plans/{articlePlan}', [\App\Http\Controllers\Admin\ArticlePlanController::class, 'update'])->name('article-plans.update');
-    Route::delete('/article-plans/{articlePlan}', [\App\Http\Controllers\Admin\ArticlePlanController::class, 'destroy'])->name('article-plans.destroy');
+    // Manager-only article plan management
+    Route::post('/article-plans', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+        return app(\App\Http\Controllers\Admin\ArticlePlanController::class)->store($request);
+    })->name('article-plans.store');
 
-    // Plan API endpoints (AJAX / calendar interface)
-    Route::get('/articles/api/plans/month/{year}/{month}', [\App\Http\Controllers\Admin\PlanApiController::class, 'forMonth'])->name('api.plans.month');
-    Route::get('/articles/api/plans/week/{year}/{week}', [\App\Http\Controllers\Admin\PlanApiController::class, 'forWeek'])->name('api.plans.week');
-    Route::get('/articles/api/plans/upcoming', [\App\Http\Controllers\Admin\PlanApiController::class, 'upcoming'])->name('api.plans.upcoming');
-    Route::patch('/articles/api/plans/{plan}/status', [\App\Http\Controllers\Admin\PlanApiController::class, 'updateStatus'])->name('api.plans.update-status');
+    Route::put('/article-plans/{articlePlan}', function (Request $request, \App\Models\ArticlePlan $articlePlan) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+        return app(\App\Http\Controllers\Admin\ArticlePlanController::class)->update($request, $articlePlan);
+    })->name('article-plans.update');
+
+    Route::delete('/article-plans/{articlePlan}', function (\App\Models\ArticlePlan $articlePlan) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+        return app(\App\Http\Controllers\Admin\ArticlePlanController::class)->destroy($articlePlan);
+    })->name('article-plans.destroy');
+
+    // Plan API endpoints (AJAX / calendar interface) - Manager only
+    Route::get('/articles/api/plans/month/{year}/{month}', function ($year, $month) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+        return app(\App\Http\Controllers\Admin\PlanApiController::class)->forMonth($year, $month);
+    })->name('api.plans.month');
+
+    Route::get('/articles/api/plans/week/{year}/{week}', function ($year, $week) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+        return app(\App\Http\Controllers\Admin\PlanApiController::class)->forWeek($year, $week);
+    })->name('api.plans.week');
+
+    Route::get('/articles/api/plans/upcoming', function () use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+        return app(\App\Http\Controllers\Admin\PlanApiController::class)->upcoming();
+    })->name('api.plans.upcoming');
+
+    Route::patch('/articles/api/plans/{plan}/status', function (Request $request, \App\Models\ArticlePlan $plan) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+        return app(\App\Http\Controllers\Admin\PlanApiController::class)->updateStatus($request, $plan);
+    })->name('api.plans.update-status');
 
     Route::post('/articles/check-slug', function (Request $request) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {

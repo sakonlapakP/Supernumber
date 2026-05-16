@@ -234,6 +234,10 @@ class _FacebookImportsScreenState extends State<FacebookImportsScreen> {
     return DateFormat('yyyy-MM-dd').format(value);
   }
 
+  String _reviewUrl(int id) {
+    return 'https://www.supernumber.co.th/admin/facebook-imports/$id/review';
+  }
+
   int _resolveGridColumnCount(double width) {
     if (width >= 1200) return 3;
     if (width >= 760) return 2;
@@ -334,6 +338,7 @@ class _FacebookImportsScreenState extends State<FacebookImportsScreen> {
                       onDelete: () => _deletePost(post),
                       onOpenImage: () => _openExternalUrl(post.imageUrl),
                       onOpenPost: () => _openExternalUrl(post.permalinkUrl),
+                      onReview: () => _openExternalUrl(_reviewUrl(post.id)),
                     );
                   }, childCount: provider.posts.length),
                   gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
@@ -341,8 +346,8 @@ class _FacebookImportsScreenState extends State<FacebookImportsScreen> {
                     mainAxisSpacing: 10,
                     crossAxisSpacing: 10,
                     childAspectRatio: columns == 3
-                        ? 0.95
-                        : (columns == 2 ? 1.05 : 1.75),
+                        ? 1.2
+                        : (columns == 2 ? 1.3 : 2.2),
                   ),
                 );
               },
@@ -547,6 +552,7 @@ class _FacebookPostCard extends StatelessWidget {
   final VoidCallback onDelete;
   final VoidCallback onOpenImage;
   final VoidCallback onOpenPost;
+  final VoidCallback onReview;
 
   const _FacebookPostCard({
     required this.post,
@@ -555,6 +561,7 @@ class _FacebookPostCard extends StatelessWidget {
     required this.onDelete,
     required this.onOpenImage,
     required this.onOpenPost,
+    required this.onReview,
   });
 
   @override
@@ -628,19 +635,30 @@ class _FacebookPostCard extends StatelessWidget {
             const SizedBox(height: 8),
             Text(
               post.previewText,
-              maxLines: 2,
+              maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: GoogleFonts.kanit(
-                fontSize: 14,
+                fontSize: 13,
                 color: const Color(0xFF334155),
                 height: 1.3,
               ),
             ),
             const SizedBox(height: 8),
-            OutlinedButton.icon(
-              onPressed: post.permalinkUrl == null ? null : onOpenPost,
-              icon: const Icon(Icons.open_in_new_rounded, size: 16),
-              label: Text('เปิดโพสต์', style: GoogleFonts.kanit()),
+            Wrap(
+              spacing: 8,
+              runSpacing: 8,
+              children: [
+                OutlinedButton.icon(
+                  onPressed: onReview,
+                  icon: const Icon(Icons.rate_review_outlined, size: 16),
+                  label: Text('Review', style: GoogleFonts.kanit()),
+                ),
+                OutlinedButton.icon(
+                  onPressed: post.permalinkUrl == null ? null : onOpenPost,
+                  icon: const Icon(Icons.open_in_new_rounded, size: 16),
+                  label: Text('เปิดโพสต์', style: GoogleFonts.kanit()),
+                ),
+              ],
             ),
           ],
         ),
@@ -660,7 +678,7 @@ class _Thumbnail extends StatelessWidget {
 
     if (imageUrl == null || imageUrl!.trim().isEmpty) {
       return AspectRatio(
-        aspectRatio: 16 / 9,
+        aspectRatio: 2.2,
         child: Container(
           decoration: BoxDecoration(
             color: const Color(0xFFF1F5F9),
@@ -676,7 +694,7 @@ class _Thumbnail extends StatelessWidget {
     }
 
     return AspectRatio(
-      aspectRatio: 16 / 9,
+      aspectRatio: 2.2,
       child: Container(
         decoration: BoxDecoration(
           color: const Color(0xFFF8FAFC),

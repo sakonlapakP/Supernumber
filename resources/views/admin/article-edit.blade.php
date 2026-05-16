@@ -5,6 +5,7 @@
 @section('content')
   @php
     $canToggleArticleVisibility = in_array(session('admin_user_role'), [\App\Models\User::ROLE_MANAGER, \App\Models\User::ROLE_ADMIN], true);
+    $canDeleteArticle = session('admin_user_role') === \App\Models\User::ROLE_MANAGER;
     $imageGuidelines = old('image_guidelines', $article->image_guidelines ?? []);
     $landscapePrompt = is_array($imageGuidelines) ? ($imageGuidelines['landscape_prompt'] ?? '') : '';
     $squarePrompt = is_array($imageGuidelines) ? ($imageGuidelines['square_prompt'] ?? '') : '';
@@ -285,7 +286,7 @@
             {{ $article->is_published ? 'ซ่อนบทความ' : 'เผยแพร่บทความ' }}
           </button>
         @endif
-        @if($canToggleArticleVisibility)
+        @if($canDeleteArticle)
           <button
             type="submit"
             form="article-delete-form"
@@ -307,7 +308,9 @@
       >
         @csrf
       </form>
+    @endif
 
+    @if($canDeleteArticle)
       <form
         id="article-delete-form"
         action="{{ route('admin.articles.delete', $article) }}"
