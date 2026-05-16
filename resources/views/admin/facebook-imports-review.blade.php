@@ -122,6 +122,18 @@
     .review-field:first-child {
       margin-top: 0;
     }
+    .review-prompt-section {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      margin-bottom: 28px;
+      padding-bottom: 20px;
+      border-bottom: 1px solid #e2e8f0;
+      flex-wrap: wrap;
+    }
+    .review-prompt-section > * {
+      flex-shrink: 0;
+    }
     .review-actions {
       display: flex;
       flex-wrap: wrap;
@@ -220,6 +232,16 @@
       .review-action {
         min-width: calc(50% - 6px);
       }
+      .review-prompt-section {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      .prompt-length-toggle {
+        width: 100%;
+      }
+      #btn-gen-prompt {
+        width: 100%;
+      }
     }
 
     /* iPhone */
@@ -255,6 +277,13 @@
       .prompt-length-option {
         flex: 1;
         justify-content: center;
+      }
+      .review-prompt-section {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      #btn-gen-prompt {
+        width: 100%;
       }
       .review-actions {
         gap: 10px;
@@ -452,6 +481,34 @@
       <form id="review-form" action="{{ route('admin.facebook-imports.approve', $post->id) }}" method="post" class="admin-form">
         @csrf
 
+        {{-- Generate Prompt + JSON Import --}}
+        <div class="review-prompt-section">
+          <div class="prompt-length-toggle">
+            <label class="prompt-length-option">
+              <input type="radio" name="prompt_length" value="short" checked style="accent-color:#7c3aed;"> สั้น <span style="font-weight:400;color:#a78bfa;">(150-300)</span>
+            </label>
+            <label class="prompt-length-option">
+              <input type="radio" name="prompt_length" value="long" style="accent-color:#7c3aed;"> ยาว <span style="font-weight:400;color:#a78bfa;">(500-1000)</span>
+            </label>
+          </div>
+          <button type="button" id="btn-gen-prompt" class="review-action"
+            style="background:#7c3aed;color:#fff;">
+            ✨ Generate Prompt Article
+          </button>
+        </div>
+
+        {{-- JSON Import --}}
+        <div class="json-import-section">
+          <p class="json-import-title">📥 นำเข้า JSON จาก AI</p>
+          <textarea
+            id="json-import-input"
+            class="json-import-textarea"
+            placeholder='วาง JSON ที่ได้จาก AI ตรงนี้ แล้วกด "นำเข้า" เพื่อกรอกข้อมูลอัตโนมัติ...'
+          ></textarea>
+          <p id="json-import-error" class="json-import-error"></p>
+          <button type="button" id="btn-json-import" class="json-import-btn">นำเข้า JSON → กรอกฟอร์ม</button>
+        </div>
+
         <div class="review-field">
           <label class="admin-label" for="title">หัวข้อบทความ <span style="color:#dc2626">*</span></label>
           <input
@@ -582,18 +639,6 @@
         </div>
 
         <div class="review-actions">
-          <div class="prompt-length-toggle">
-            <label class="prompt-length-option">
-              <input type="radio" name="prompt_length" value="short" checked style="accent-color:#7c3aed;"> สั้น <span style="font-weight:400;color:#a78bfa;">(150-300)</span>
-            </label>
-            <label class="prompt-length-option">
-              <input type="radio" name="prompt_length" value="long" style="accent-color:#7c3aed;"> ยาว <span style="font-weight:400;color:#a78bfa;">(500-1000)</span>
-            </label>
-          </div>
-          <button type="button" id="btn-gen-prompt" class="review-action"
-            style="background:#7c3aed;color:#fff;order:-1;">
-            ✨ Generate Prompt Article
-          </button>
           <button type="submit" name="_action" value="draft" class="review-action review-action--draft">
             บันทึก Draft
           </button>
@@ -644,18 +689,6 @@
             </button>
           </form>
         </div>
-        {{-- JSON Import --}}
-        <div class="json-import-section">
-          <p class="json-import-title">📥 นำเข้า JSON จาก AI</p>
-          <textarea
-            id="json-import-input"
-            class="json-import-textarea"
-            placeholder='วาง JSON ที่ได้จาก AI ตรงนี้ แล้วกด "นำเข้า" เพื่อกรอกข้อมูลอัตโนมัติ...'
-          ></textarea>
-          <p id="json-import-error" class="json-import-error"></p>
-          <button type="button" id="btn-json-import" class="json-import-btn">นำเข้า JSON → กรอกฟอร์ม</button>
-        </div>
-
       </form>
     </section>
 

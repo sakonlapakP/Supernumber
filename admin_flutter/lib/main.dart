@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/article_list_screen.dart';
@@ -9,7 +10,10 @@ import 'providers/user_provider.dart';
 import 'providers/article_plan_provider.dart';
 import 'providers/facebook_import_provider.dart';
 
-void main() {
+Future<void> main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting();
+
   runApp(
     MultiProvider(
       providers: [
