@@ -33,12 +33,22 @@
     @hasSection('preload_image')
       <link rel="preload" as="image" href="@yield('preload_image')" />
     @endif
+    {{-- Fonts: preconnect early, load non-blocking --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="{{ $versionedStaticPath('css/supernumber.css') }}" />
-    <link rel="stylesheet" href="{{ $versionedStaticPath('css/cardNumber.css') }}" />
-    <link rel="stylesheet" href="{{ $versionedStaticPath('css/cardList.css') }}" />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"></noscript>
+
+    {{-- Critical CSS: inline or load synchronously --}}
+    <link rel="preload" as="style" href="{{ $versionedStaticPath('css/supernumber.css') }}" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{{ $versionedStaticPath('css/supernumber.css') }}"></noscript>
+
+    {{-- Non-critical CSS: load asynchronously --}}
+    <link rel="preload" as="style" href="{{ $versionedStaticPath('css/cardNumber.css') }}" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{{ $versionedStaticPath('css/cardNumber.css') }}"></noscript>
+
+    <link rel="preload" as="style" href="{{ $versionedStaticPath('css/cardList.css') }}" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link rel="stylesheet" href="{{ $versionedStaticPath('css/cardList.css') }}"></noscript>
     @stack('styles')
     <style>
         /* Precision Branding Overrides */
