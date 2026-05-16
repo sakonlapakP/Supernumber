@@ -194,4 +194,73 @@ class ContactMessageStoreTest extends TestCase
         $blockedResponse->assertSessionHasErrors('contact');
         $this->assertSame(5, ContactMessage::query()->count());
     }
+
+    public function test_it_rejects_qr_code_generator_spam(): void
+    {
+        $this->mockTurnstileSuccess();
+
+        $response = $this->from('/contact-us')->post('/contact-us', [
+            'name' => 'QRTool Generator',
+            'phone' => '0812345678',
+            'message' => 'Create dynamic QR code with our QR code generator. Free online link shortener and dynamic QR code for your business.',
+            'cf-turnstile-response' => 'test-token',
+        ]);
+
+        $response->assertRedirect('/contact-us');
+        $response->assertSessionHas('contact_status_message');
+        $this->assertSame(0, ContactMessage::query()->count());
+    }
+
+    public function test_it_rejects_gibberish_names(): void
+    {
+        $this->mockTurnstileSuccess();
+
+        $response = $this->from('/contact-us')->post('/contact-us', [
+            'name' => 'NAYUYUTY676374NERTHRYTH',
+            'phone' => '0812345678',
+            'message' => 'ต้องการติดต่อ',
+            'cf-turnstile-response' => 'test-token',
+        ]);
+
+        $response->assertRedirect('/contact-us');
+        $response->assertSessionHas('contact_status_message');
+        $this->assertSame(0, ContactMessage::query()->count());
+    }
+
+    public function test_it_rejects_payment_gateway_spam(): void
+    {
+        $this->mockTurnstileSuccess();
+
+        $response = $this->from('/contact-us')->post('/contact-us', [
+            'name' => 'PaymentPro Services',
+            'phone' => '0891234567',
+            'message' => 'Looking for a fast payment processor? Check out our payment gateway solution for handling online payments securely.',
+            'cf-turnstile-response' => 'test-token',
+        ]);
+
+        $response->assertRedirect('/contact-us');
+        $response->assertSessionHas('contact_status_message');
+        $this->assertSame(0, ContactMessage::query()->count());
+    }
+
+    public function test_it_rejects_long_english_spam(): void
+    {
+        $this->mockTurnstileSuccess();
+
+        $longSpamMessage = 'This free QR code generator online provides the best output. Generate QR with logo in center instantly. ' .
+                          'The free dynamic QR code is useful for analytics. Looking for a free QR generator without registration? ' .
+                          'Handle dynamic QR code to boost your sales. Start using QR generator online now. Create a dynamic QR code ' .
+                          'for success. The best link shortening service is free.';
+
+        $response = $this->from('/contact-us')->post('/contact-us', [
+            'name' => 'Davidcet',
+            'phone' => '0812345678',
+            'message' => $longSpamMessage,
+            'cf-turnstile-response' => 'test-token',
+        ]);
+
+        $response->assertRedirect('/contact-us');
+        $response->assertSessionHas('contact_status_message');
+        $this->assertSame(0, ContactMessage::query()->count());
+    }
 }

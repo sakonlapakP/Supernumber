@@ -44,6 +44,32 @@ class ContactSpamFilter
         'world talks about the ai revolution',
     ];
 
+    private const SERVICE_SPAM_KEYWORDS = [
+        'qr code',
+        'link shortener',
+        'short link',
+        'instagram link',
+        'dynamic qr',
+        'anonymous link',
+        'anonymous instagram',
+        'link generator',
+        'url shortener',
+        'bit.ly',
+        'tinyurl',
+        'shorturl',
+    ];
+
+    private const CRYPTO_PAYMENT_KEYWORDS = [
+        'payment processor',
+        'payment gateway',
+        'online payment',
+        'payment processing',
+        'crypto',
+        'bitcoin',
+        'ethereum',
+        'blockchain',
+    ];
+
     /**
      * @return array{blocked: bool, score: int, reasons: array<int, string>}
      */
@@ -86,13 +112,39 @@ class ContactSpamFilter
             $reasons[] = 'automation_keyword';
         }
 
+        $serviceSpamHits = $this->countKeywordHits($normalizedMessage, self::SERVICE_SPAM_KEYWORDS);
+        if ($serviceSpamHits >= 3) {
+            $score += 5;
+            $reasons[] = 'service_spam_pitch';
+        } elseif ($serviceSpamHits >= 2) {
+            $score += 3;
+            $reasons[] = 'service_spam_keywords';
+        } elseif ($serviceSpamHits === 1) {
+            $score += 1;
+            $reasons[] = 'service_spam_mention';
+        }
+
+        $cryptoHits = $this->countKeywordHits($normalizedMessage, self::CRYPTO_PAYMENT_KEYWORDS);
+        if ($cryptoHits >= 2) {
+            $score += 4;
+            $reasons[] = 'crypto_payment_pitch';
+        } elseif ($cryptoHits === 1) {
+            $score += 2;
+            $reasons[] = 'crypto_payment_mention';
+        }
+
         if (! preg_match('/\p{Thai}/u', $message) && mb_strlen($message) >= 280) {
             $score += 2;
             $reasons[] = 'long_non_thai_message';
         }
 
+        if ($this->hasExcessiveCapitals($message)) {
+            $score += 2;
+            $reasons[] = 'excessive_capitals';
+        }
+
         if ($this->looksGeneratedName($name)) {
-            $score += 1;
+            $score += 2;
             $reasons[] = 'generated_name';
         }
 
@@ -102,7 +154,7 @@ class ContactSpamFilter
         }
 
         return [
-            'blocked' => $adultHits > 0 || $score >= 6,
+            'blocked' => $adultHits > 0 || $score >= 5,
             'score' => $score,
             'reasons' => array_values(array_unique($reasons)),
         ];
@@ -146,13 +198,41 @@ class ContactSpamFilter
             return false;
         }
 
+        // Check for consecutive repeated digits (like 676374)
+        if (preg_match('/\d{4,}/', $trimmed)) {
+            return true;
+        }
+
+        // Check for 2+ consecutive digits scattered in name
         if (preg_match('/\d{2,}/', $trimmed)) {
             return true;
         }
 
-        return ! preg_match('/\s/u', $trimmed)
-            && preg_match('/[a-z]/iu', $trimmed)
-            && preg_match('/\d/u', $trimmed);
+        // Check for gibberish pattern: no spaces, mix of alpha and numbers
+        if (! preg_match('/\s/u', $trimmed) && preg_match('/[a-z]/iu', $trimmed) && preg_match('/\d/u', $trimmed)) {
+            return true;
+        }
+
+        // Check for names that look like concatenated words/gibberish (many capital letters in middle)
+        $capitals = mb_strlen(preg_replace('/[^A-Z]/', '', $trimmed));
+        if ($capitals >= 3 && mb_strlen($trimmed) <= 20) {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function hasExcessiveCapitals(string $message): bool
+    {
+        $letters = preg_replace('/[^a-z]/iu', '', $message) ?? '';
+        if (mb_strlen($letters) < 50) {
+            return false;
+        }
+
+        $capitals = mb_strlen(preg_replace('/[^A-Z]/', '', $message));
+        $ratio = $capitals / mb_strlen($letters);
+
+        return $ratio > 0.4;
     }
 
     private function hasSuspiciousPhone(string $phone): bool
