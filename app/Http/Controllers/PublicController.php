@@ -23,6 +23,7 @@ use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 
@@ -289,9 +290,15 @@ class PublicController extends Controller
      */
     public function articles()
     {
-        $articles = Article::query()
-            ->published()
-            ->orderByRaw('COALESCE(content_updated_at, published_at) DESC')
+        $articlesQuery = Article::query()->published();
+
+        if (Schema::hasColumn('articles', 'content_updated_at')) {
+            $articlesQuery->orderByRaw('COALESCE(content_updated_at, published_at) DESC');
+        } else {
+            $articlesQuery->orderByRaw('COALESCE(published_at, created_at) DESC');
+        }
+
+        $articles = $articlesQuery
             ->latest('id')
             ->paginate(9);
 
