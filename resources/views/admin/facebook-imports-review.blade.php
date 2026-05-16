@@ -10,12 +10,15 @@
       'approved'  => ['label' => 'อนุมัติแล้ว',    'color' => '#059669', 'bg' => '#ecfdf5'],
       'published' => ['label' => 'เผยแพร่แล้ว',    'color' => '#1d4ed8', 'bg' => '#eff6ff'],
     ];
-    $statusInfo  = $statusLabels[$post->status] ?? $statusLabels['pending'];
-    $fbImageUrl  = $post->resolveImageUrl();
-    $fbDate      = $post->facebook_created_time
-      ? $post->facebook_created_time->timezone('Asia/Bangkok')->format('d/m/Y H:i')
-      : '-';
-    $fbMessage   = trim((string) ($post->message ?: $post->story ?: ''));
+    $statusInfo    = $statusLabels[$post->status] ?? $statusLabels['pending'];
+    $fbImageUrl    = $post->resolveImageUrl();
+    $fbCreatedTime = $post->facebook_created_time
+      ? $post->facebook_created_time->timezone('Asia/Bangkok')
+      : null;
+    $fbDate        = $fbCreatedTime ? $fbCreatedTime->format('d/m/Y H:i') : '-';
+    $fbDatetimeLocal = $fbCreatedTime ? $fbCreatedTime->format('Y-m-d\TH:i') : '';
+    $fbMessage     = trim((string) ($post->message ?: $post->story ?: ''));
+    $fbCreatedIso  = $fbCreatedTime ? $fbCreatedTime->toIso8601String() : '';
   @endphp
 
   <style>
@@ -157,6 +160,86 @@
     @media (max-width: 900px) {
       .review-layout { grid-template-columns: 1fr; }
       .review-fb-panel { position: static; }
+    }
+
+    /* Prompt modal */
+    .prompt-overlay {
+      display: none;
+      position: fixed; inset: 0;
+      background: rgba(15,23,42,0.55);
+      z-index: 9000;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .prompt-overlay.is-open { display: flex; }
+    .prompt-modal {
+      background: #fff;
+      border-radius: 14px;
+      box-shadow: 0 20px 60px rgba(15,23,42,0.25);
+      width: 100%;
+      max-width: 760px;
+      max-height: 88vh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .prompt-modal__head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 18px 22px;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .prompt-modal__title { font-size: 16px; font-weight: 800; color: #1e293b; margin: 0; }
+    .prompt-modal__close {
+      border: none; background: #f1f5f9; color: #64748b;
+      width: 32px; height: 32px; border-radius: 50%;
+      font-size: 18px; line-height: 1; cursor: pointer;
+    }
+    .prompt-modal__body { flex: 1; overflow-y: auto; padding: 18px 22px; }
+    .prompt-modal__textarea {
+      width: 100%; min-height: 340px; font-family: monospace;
+      font-size: 13px; line-height: 1.6; color: #1e293b;
+      border: 1px solid #e2e8f0; border-radius: 8px;
+      padding: 14px; resize: vertical; box-sizing: border-box;
+    }
+    .prompt-modal__foot {
+      padding: 14px 22px;
+      border-top: 1px solid #e2e8f0;
+      display: flex; gap: 10px;
+    }
+    .prompt-copy-btn {
+      background: #1f3f6d; color: #fff; border: none;
+      padding: 10px 22px; border-radius: 8px; font-size: 14px;
+      font-weight: 700; cursor: pointer;
+    }
+    .prompt-copy-btn.copied { background: #059669; }
+
+    /* JSON import */
+    .json-import-section {
+      margin-top: 28px;
+      padding: 20px;
+      border: 2px dashed #cbd5e1;
+      border-radius: 10px;
+      background: #f8fafc;
+    }
+    .json-import-title {
+      font-size: 14px; font-weight: 800; color: #475569; margin: 0 0 12px;
+    }
+    .json-import-textarea {
+      width: 100%; min-height: 120px; font-family: monospace;
+      font-size: 12px; border: 1px solid #cbd5e1; border-radius: 6px;
+      padding: 10px; box-sizing: border-box; resize: vertical;
+    }
+    .json-import-btn {
+      margin-top: 10px; padding: 9px 20px;
+      background: #0f766e; color: #fff; border: none;
+      border-radius: 8px; font-size: 13px; font-weight: 700;
+      cursor: pointer;
+    }
+    .json-import-error {
+      margin-top: 8px; font-size: 12px; color: #dc2626; font-weight: 600; display: none;
     }
 
     /* RTE */
@@ -365,24 +448,32 @@
                 id="published_at"
                 name="published_at"
                 class="admin-input"
-                value="{{ old('published_at', $article && $article->published_at ? $article->published_at->format('Y-m-d\TH:i') : '') }}"
+                value="{{ old('published_at', $article && $article->published_at ? $article->published_at->format('Y-m-d\TH:i') : $fbDatetimeLocal) }}"
               />
+              <p style="margin:5px 0 0;font-size:11px;color:#94a3b8;">⚠ ตรวจสอบวันก่อน Generate Prompt เพราะงานเทศกาลแต่ละปีวันต่างกัน</p>
             </div>
-            <div class="publish-toggle">
-              <input type="hidden" name="is_published" value="0" />
-              <input
-                type="checkbox"
-                id="is_published"
-                name="is_published"
-                value="1"
-                {{ old('is_published', $article->is_published ?? false) ? 'checked' : '' }}
-              />
-              <label for="is_published">เผยแพร่ทันที</label>
+            <div style="display:flex;flex-direction:column;gap:8px;padding-bottom:10px;">
+              <div class="publish-toggle">
+                <input type="hidden" name="is_published" value="0" />
+                <input type="checkbox" id="is_published" name="is_published" value="1"
+                  {{ old('is_published', $article->is_published ?? false) ? 'checked' : '' }} />
+                <label for="is_published">เผยแพร่ทันที</label>
+              </div>
+              <div class="publish-toggle">
+                <input type="hidden" name="is_auto_post" value="0" />
+                <input type="checkbox" id="is_auto_post" name="is_auto_post" value="1"
+                  {{ old('is_auto_post', $article->is_auto_post ?? true) ? 'checked' : '' }} />
+                <label for="is_auto_post">Auto-post Social</label>
+              </div>
             </div>
           </div>
         </div>
 
         <div class="review-actions">
+          <button type="button" id="btn-gen-prompt" class="review-action"
+            style="background:#7c3aed;color:#fff;order:-1;">
+            ✨ Generate Prompt Article
+          </button>
           <button type="submit" name="_action" value="draft" class="review-action review-action--draft">
             บันทึก Draft
           </button>
@@ -416,10 +507,40 @@
             </a>
           @endif
         </div>
+        {{-- JSON Import --}}
+        <div class="json-import-section">
+          <p class="json-import-title">📥 นำเข้า JSON จาก AI</p>
+          <textarea
+            id="json-import-input"
+            class="json-import-textarea"
+            placeholder='วาง JSON ที่ได้จาก AI ตรงนี้ แล้วกด "นำเข้า" เพื่อกรอกข้อมูลอัตโนมัติ...'
+          ></textarea>
+          <p id="json-import-error" class="json-import-error"></p>
+          <button type="button" id="btn-json-import" class="json-import-btn">นำเข้า JSON → กรอกฟอร์ม</button>
+        </div>
+
       </form>
     </section>
 
   </div>
+
+  {{-- Generate Prompt Modal --}}
+  <div id="prompt-overlay" class="prompt-overlay" role="dialog" aria-modal="true">
+    <div class="prompt-modal">
+      <div class="prompt-modal__head">
+        <h3 class="prompt-modal__title">✨ Prompt สำหรับ AI</h3>
+        <button class="prompt-modal__close" id="btn-close-prompt" aria-label="ปิด">×</button>
+      </div>
+      <div class="prompt-modal__body">
+        <textarea id="prompt-output" class="prompt-modal__textarea" readonly></textarea>
+      </div>
+      <div class="prompt-modal__foot">
+        <button class="prompt-copy-btn" id="btn-copy-prompt">คัดลอก Prompt</button>
+        <span id="copy-feedback" style="font-size:13px;color:#059669;font-weight:700;align-self:center;display:none;">✓ คัดลอกแล้ว!</span>
+      </div>
+    </div>
+  </div>
+
 @endsection
 
 @push('scripts')
@@ -492,6 +613,163 @@
         slugFeedback.textContent = '';
       }
     }, 500);
+  });
+
+  // ─────────────────────────────────────────────
+  // GENERATE PROMPT
+  // ─────────────────────────────────────────────
+  const fbMessage      = @json($fbMessage);
+  const fbCreatedIso   = @json($fbCreatedIso);
+  const fbDateDisplay  = @json($fbDate);
+
+  document.getElementById('btn-gen-prompt').addEventListener('click', () => {
+    const publishedAt = document.getElementById('published_at').value;
+    if (!publishedAt) {
+      alert('กรุณากรอกวันที่เผยแพร่ก่อน แล้วค่อย Generate Prompt\n(ตรวจสอบวันงานเทศกาลให้ถูกต้องก่อนด้วย)');
+      document.getElementById('published_at').focus();
+      return;
+    }
+
+    const publishedDate = publishedAt.slice(0, 10); // YYYY-MM-DD
+
+    const prompt = `ช่วยเขียนบทความใหม่จากเนื้อหาต้นฉบับด้านล่างนี้ให้สมบูรณ์และน่าสนใจ โดยอ้างอิงข้อมูลจากแหล่งที่น่าเชื่อถือเท่านั้น เขียนเป็นภาษาไทย
+
+──── เนื้อหาต้นฉบับจาก Facebook (โพสต์เมื่อ ${fbDateDisplay}) ────
+${fbMessage}
+──────────────────────────────────────────────────────────────────────
+
+ให้ตอบกลับเป็น JSON array รูปแบบนี้เท่านั้น ห้ามมีข้อความอื่นนอก JSON:
+
+[
+  {
+    "_constraints": "CONTENT_MUST_BE_1000_WORDS_MINIMUM | NO_YEAR_IN_SLUG | HTML_FORMAT_ONLY | THAI_LANGUAGE_ONLY | EVERGREEN_CONTENT_NO_DATE_REFERENCES",
+    "title": "พาดหัวที่ดึงดูดใจ ใส่ปี พ.ศ. ได้ถ้าเหมาะสม",
+    "slug": "url-slug-ภาษาอังกฤษ-ห้ามใส่ปี-คั่นด้วย-hyphen",
+    "excerpt": "คำเกริ่นนำ 1-2 ประโยค ดึงดูดให้อ่านต่อ ไม่เกิน 160 ตัวอักษร",
+    "content": "<h2>หัวข้อหลัก</h2><p>เนื้อหา HTML ใช้ h2 h3 p ul li เท่านั้น ห้ามใช้ h1 ความยาวไม่ต่ำกว่า 1000 คำ</p>",
+    "meta_description": "สรุปเนื้อหาสำหรับ Google Search ความยาว 120-155 ตัวอักษร",
+    "keywords": "keyword หลัก 1, keyword หลัก 2, keyword หลัก 3, keyword หลัก 4, keyword หลัก 5",
+    "lsi_keywords": "คำค้นหาเกี่ยวข้อง 1, คำที่ 2, คำที่ 3, คำที่ 4, คำที่ 5, คำที่ 6, คำที่ 7, คำที่ 8, คำที่ 9, คำที่ 10",
+    "is_published": false,
+    "published_at": "${publishedDate}T08:00:00+07:00",
+    "is_auto_post": true,
+    "image_guidelines": {
+      "landscape_prompt": "Describe an image in English that visually represents this article topic, landscape 16:9 ratio, photorealistic style, no text in image",
+      "square_prompt": "Describe an image in English that visually represents this article topic, square 1:1 ratio, photorealistic style, no text in image"
+    }
+  }
+]`;
+
+    document.getElementById('prompt-output').value = prompt;
+    document.getElementById('prompt-overlay').classList.add('is-open');
+  });
+
+  document.getElementById('btn-close-prompt').addEventListener('click', () => {
+    document.getElementById('prompt-overlay').classList.remove('is-open');
+  });
+  document.getElementById('prompt-overlay').addEventListener('click', (e) => {
+    if (e.target === e.currentTarget) e.currentTarget.classList.remove('is-open');
+  });
+
+  document.getElementById('btn-copy-prompt').addEventListener('click', async () => {
+    const text = document.getElementById('prompt-output').value;
+    await navigator.clipboard.writeText(text);
+    const btn = document.getElementById('btn-copy-prompt');
+    const fb  = document.getElementById('copy-feedback');
+    btn.textContent = '✓ คัดลอกแล้ว!';
+    btn.classList.add('copied');
+    fb.style.display = 'inline';
+    setTimeout(() => {
+      btn.textContent = 'คัดลอก Prompt';
+      btn.classList.remove('copied');
+      fb.style.display = 'none';
+    }, 2500);
+  });
+
+  // ─────────────────────────────────────────────
+  // JSON IMPORT → auto-fill form
+  // ─────────────────────────────────────────────
+  document.getElementById('btn-json-import').addEventListener('click', () => {
+    const raw       = document.getElementById('json-import-input').value.trim();
+    const errorEl   = document.getElementById('json-import-error');
+    errorEl.style.display = 'none';
+
+    if (!raw) {
+      errorEl.textContent = 'กรุณาวาง JSON ก่อน';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    let data;
+    try {
+      const parsed = JSON.parse(raw);
+      data = Array.isArray(parsed) ? parsed[0] : parsed;
+    } catch {
+      errorEl.textContent = 'JSON ไม่ถูกต้อง กรุณาตรวจสอบรูปแบบ';
+      errorEl.style.display = 'block';
+      return;
+    }
+
+    // Fill text fields
+    const setVal = (id, val) => {
+      const el = document.getElementById(id);
+      if (el && val !== undefined && val !== null) el.value = val;
+    };
+
+    setVal('title',            data.title);
+    setVal('slug',             data.slug);
+    setVal('excerpt',          data.excerpt);
+    setVal('meta_description', data.meta_description);
+    setVal('keywords',         data.keywords);
+    setVal('lsi_keywords',     data.lsi_keywords);
+
+    // Content → RTE
+    if (data.content) {
+      editor.innerHTML        = data.content;
+      hiddenTxt.value         = data.content;
+    }
+
+    // published_at
+    if (data.published_at) {
+      const dt = data.published_at.slice(0, 16).replace(' ', 'T');
+      setVal('published_at', dt);
+    }
+
+    // Checkboxes
+    if (data.is_published !== undefined) {
+      document.getElementById('is_published').checked = !!data.is_published;
+    }
+    if (data.is_auto_post !== undefined) {
+      document.getElementById('is_auto_post').checked = !!data.is_auto_post;
+    }
+
+    // image_guidelines (hidden inputs — stored in hidden fields for approve route)
+    if (data.image_guidelines) {
+      let lgEl = document.getElementById('landscape_prompt');
+      let sqEl = document.getElementById('square_prompt');
+      if (!lgEl) {
+        lgEl = Object.assign(document.createElement('input'), { type:'hidden', id:'landscape_prompt', name:'image_guidelines[landscape_prompt]' });
+        document.getElementById('review-form').appendChild(lgEl);
+      }
+      if (!sqEl) {
+        sqEl = Object.assign(document.createElement('input'), { type:'hidden', id:'square_prompt', name:'image_guidelines[square_prompt]' });
+        document.getElementById('review-form').appendChild(sqEl);
+      }
+      lgEl.value = data.image_guidelines.landscape_prompt ?? '';
+      sqEl.value = data.image_guidelines.square_prompt    ?? '';
+    }
+
+    // Mark slug as manual so it won't be overwritten
+    slugManual = true;
+
+    // Clear import area and show success
+    document.getElementById('json-import-input').value = '';
+    errorEl.textContent    = '✓ กรอกข้อมูลเรียบร้อย ตรวจสอบแล้วกด Approve ได้เลย';
+    errorEl.style.color    = '#059669';
+    errorEl.style.display  = 'block';
+
+    // Scroll to title
+    document.getElementById('title').scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
 </script>
 @endpush

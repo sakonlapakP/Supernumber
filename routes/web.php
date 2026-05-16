@@ -2688,15 +2688,19 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $post = \App\Models\FacebookImportedPost::findOrFail($id);
 
         $validated = $request->validate([
-            'title'            => ['required', 'string', 'max:255'],
-            'slug'             => ['required', 'string', 'max:255'],
-            'excerpt'          => ['nullable', 'string'],
-            'content'          => ['nullable', 'string'],
-            'meta_description' => ['nullable', 'string', 'max:500'],
-            'keywords'         => ['nullable', 'string', 'max:500'],
-            'lsi_keywords'     => ['nullable', 'string', 'max:1000'],
-            'published_at'     => ['nullable', 'date'],
-            'is_published'     => ['nullable'],
+            'title'                              => ['required', 'string', 'max:255'],
+            'slug'                               => ['required', 'string', 'max:255'],
+            'excerpt'                            => ['nullable', 'string'],
+            'content'                            => ['nullable', 'string'],
+            'meta_description'                   => ['nullable', 'string', 'max:500'],
+            'keywords'                           => ['nullable', 'string', 'max:500'],
+            'lsi_keywords'                       => ['nullable', 'string', 'max:1000'],
+            'published_at'                       => ['nullable', 'date'],
+            'is_published'                       => ['nullable'],
+            'is_auto_post'                       => ['nullable'],
+            'image_guidelines'                   => ['nullable', 'array'],
+            'image_guidelines.landscape_prompt'  => ['nullable', 'string'],
+            'image_guidelines.square_prompt'     => ['nullable', 'string'],
         ]);
 
         $isPublished = $request->boolean('is_published');
@@ -2713,8 +2717,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'keywords'         => $validated['keywords'] ?? null,
             'lsi_keywords'     => $validated['lsi_keywords'] ?? null,
             'is_published'     => $isPublished,
+            'is_auto_post'     => $request->boolean('is_auto_post'),
             'published_at'     => $publishedAt,
             'author_user_id'   => session('admin_user_id'),
+            'image_guidelines' => $validated['image_guidelines'] ?? null,
         ];
 
         if ($post->article_id && ($article = \App\Models\Article::find($post->article_id))) {
