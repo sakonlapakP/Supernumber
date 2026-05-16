@@ -21,7 +21,7 @@
 @section('seo_schema')
 <script type="application/ld+json">
 {
-  "@context": "https://schema.org",
+  "@@context": "https://schema.org",
   "@type": "BlogPosting",
   "headline": {{ json_encode($article->title) }},
   "description": {{ json_encode($article->meta_description ?: ($article->excerpt ?: '')) }},
