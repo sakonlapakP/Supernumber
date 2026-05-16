@@ -130,6 +130,9 @@
       padding-top: 20px;
       border-top: 1px solid #e2e8f0;
     }
+    .review-actions > * {
+      flex-shrink: 0;
+    }
     .review-action {
       display: inline-flex;
       align-items: center;
@@ -157,9 +160,118 @@
       letter-spacing: 0.08em;
       text-transform: uppercase;
     }
-    @media (max-width: 900px) {
-      .review-layout { grid-template-columns: 1fr; }
-      .review-fb-panel { position: static; }
+    .prompt-length-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      order: -1;
+      border: 1px solid #7c3aed;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .prompt-length-option {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 700;
+      background: #f5f3ff;
+      color: #7c3aed;
+    }
+    .prompt-length-option + .prompt-length-option {
+      border-left: 1px solid #7c3aed;
+    }
+    .prompt-length-option span {
+      font-weight: 400;
+      color: #a78bfa;
+    }
+
+    /* iPad landscape */
+    @media (min-width: 768px) and (max-width: 1366px) and (orientation: landscape) {
+      .review-layout {
+        grid-template-columns: minmax(280px, 340px) minmax(0, 1fr);
+        gap: 20px;
+      }
+      .review-form-section {
+        padding: 20px;
+      }
+      .admin-rte__editor {
+        min-height: 320px;
+      }
+    }
+
+    /* iPad portrait */
+    @media (min-width: 768px) and (max-width: 1194px) and (orientation: portrait) {
+      .review-layout {
+        grid-template-columns: 1fr;
+      }
+      .review-fb-panel {
+        position: static;
+      }
+      .review-form-section {
+        padding: 20px;
+      }
+      .publish-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .review-action {
+        min-width: calc(50% - 6px);
+      }
+    }
+
+    /* iPhone */
+    @media (max-width: 767px) {
+      .review-layout {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+      .review-fb-panel {
+        position: static;
+      }
+      .review-fb-panel .admin-card,
+      .review-form-section {
+        padding: 16px;
+      }
+      .fb-message {
+        max-height: 260px;
+      }
+      .publish-row {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      .publish-toggle {
+        padding-bottom: 0;
+      }
+      .prompt-length-toggle,
+      .review-action {
+        width: 100%;
+      }
+      .prompt-length-toggle {
+        justify-content: stretch;
+      }
+      .prompt-length-option {
+        flex: 1;
+        justify-content: center;
+      }
+      .review-actions {
+        gap: 10px;
+      }
+      .admin-rte__editor {
+        min-height: 260px;
+        font-size: 14px;
+      }
+      .prompt-modal__body,
+      .prompt-modal__head,
+      .prompt-modal__foot {
+        padding-left: 14px;
+        padding-right: 14px;
+      }
+      .prompt-modal__textarea {
+        min-height: 260px;
+      }
     }
 
     /* Prompt modal */
@@ -470,11 +582,11 @@
         </div>
 
         <div class="review-actions">
-          <div style="display:flex;align-items:center;gap:0;order:-1;border:1px solid #7c3aed;border-radius:8px;overflow:hidden;">
-            <label style="display:flex;align-items:center;gap:6px;padding:10px 14px;cursor:pointer;font-size:13px;font-weight:700;background:#f5f3ff;color:#7c3aed;">
+          <div class="prompt-length-toggle">
+            <label class="prompt-length-option">
               <input type="radio" name="prompt_length" value="short" checked style="accent-color:#7c3aed;"> สั้น <span style="font-weight:400;color:#a78bfa;">(150-300)</span>
             </label>
-            <label style="display:flex;align-items:center;gap:6px;padding:10px 14px;cursor:pointer;font-size:13px;font-weight:700;border-left:1px solid #7c3aed;background:#f5f3ff;color:#7c3aed;">
+            <label class="prompt-length-option">
               <input type="radio" name="prompt_length" value="long" style="accent-color:#7c3aed;"> ยาว <span style="font-weight:400;color:#a78bfa;">(500-1000)</span>
             </label>
           </div>
@@ -514,6 +626,23 @@
               เปิดหน้าแก้ไขบทความ ↗
             </a>
           @endif
+
+          <form
+            id="delete-form"
+            action="{{ route('admin.facebook-imports.delete', $post->id) }}"
+            method="post"
+            style="margin:0;"
+          >
+            @csrf
+            <button
+              type="button"
+              class="review-action"
+              style="background:#fff;color:#dc2626;border:1px solid #fca5a5;"
+              onclick="if(confirm('ลบโพสต์นี้ออกจากระบบ? จะไม่สามารถกู้คืนได้')) document.getElementById('delete-form').submit();"
+            >
+              🗑 ไม่ดำเนินการ / ลบ
+            </button>
+          </form>
         </div>
         {{-- JSON Import --}}
         <div class="json-import-section">

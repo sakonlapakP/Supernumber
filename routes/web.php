@@ -2739,6 +2739,19 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->with('status_message', 'บันทึกบทความเรียบร้อยแล้ว' . ($isPublished ? ' (เผยแพร่แล้ว)' : ' (Draft)'));
     })->name('facebook-imports.approve');
 
+    Route::post('/facebook-imports/{id}/delete', function (Request $request, int $id) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        $post = \App\Models\FacebookImportedPost::findOrFail($id);
+        $post->delete();
+
+        return redirect()
+            ->route('admin.facebook-imports')
+            ->with('status_message', "ลบโพสต์ #{$id} ออกจากระบบแล้ว");
+    })->name('facebook-imports.delete');
+
     Route::get('/articles/move-local-images-to-public', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
             return $redirect;
