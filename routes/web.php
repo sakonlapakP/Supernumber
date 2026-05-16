@@ -2407,6 +2407,31 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         ]);
     })->name('analytics');
 
+    Route::get('/analytics/realtime', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        $ga4 = app(Ga4AnalyticsService::class);
+        $realtimeData = null;
+        $realtimeError = null;
+
+        if ($ga4->isReportingConfigured()) {
+            try {
+                $realtimeData = $ga4->fetchRealtime();
+            } catch (\Throwable $e) {
+                \Illuminate\Support\Facades\Log::warning('GA4 realtime fetch failed.', ['error' => $e->getMessage()]);
+                $realtimeError = $e->getMessage();
+            }
+        }
+
+        return view('admin.analytics-realtime', [
+            'ga4ConfiguredForReporting' => $ga4->isReportingConfigured(),
+            'realtimeData' => $realtimeData,
+            'realtimeError' => $realtimeError,
+        ]);
+    })->name('analytics.realtime');
+
     Route::post('/analytics/settings', function (Request $request) use ($ensureAdmin, $resolveEnvironmentEditor) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
             return $redirect;
