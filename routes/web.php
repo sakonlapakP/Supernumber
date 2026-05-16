@@ -2432,6 +2432,25 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         ]);
     })->name('analytics.realtime');
 
+    Route::get('/analytics/settings', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        $ga4 = app(Ga4AnalyticsService::class);
+
+        return view('admin.analytics-settings', [
+            'ga4Settings' => [
+                'measurement_id' => $ga4->measurementId(),
+                'property_id' => $ga4->propertyId(),
+                'service_account_json' => $ga4->editableServiceAccountJson(),
+            ],
+            'ga4ConfiguredForTracking' => $ga4->isClientTrackingConfigured(),
+            'ga4ConfiguredForReporting' => $ga4->isReportingConfigured(),
+            'ga4ServiceAccountEmail' => $ga4->serviceAccountEmail(),
+        ]);
+    })->name('analytics.settings');
+
     Route::post('/analytics/settings', function (Request $request) use ($ensureAdmin, $resolveEnvironmentEditor) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
             return $redirect;
@@ -2481,7 +2500,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
 
         return redirect()
-            ->route('admin.analytics')
+            ->route('admin.analytics.settings')
             ->with('status_message', 'บันทึก GA4 settings เรียบร้อยแล้ว');
     })->name('analytics.settings.update');
 
