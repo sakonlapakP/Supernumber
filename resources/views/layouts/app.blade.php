@@ -356,6 +356,57 @@
 
     <script>
       (() => {
+        let startTime = performance.now();
+        let maxScrollPct = 0;
+        const reachedMilestones = new Set();
+        const scrollMilestones = [25, 50, 75, 90];
+
+        const getScrollDepth = () => {
+          const scrollTop = window.scrollY || 0;
+          const docHeight = Math.max(
+            document.body.scrollHeight,
+            document.documentElement.scrollHeight
+          ) - window.innerHeight;
+          if (docHeight <= 0) return 0;
+          return Math.min(100, Math.round((scrollTop / docHeight) * 100));
+        };
+
+        window.addEventListener("scroll", () => {
+          if (!window.SupernumberAnalytics?.isEnabled()) return;
+          const depth = getScrollDepth();
+          maxScrollPct = Math.max(maxScrollPct, depth);
+          for (const m of scrollMilestones) {
+            if (depth >= m && !reachedMilestones.has(m)) {
+              reachedMilestones.add(m);
+              window.SupernumberAnalytics.track("scroll", { percent_scrolled: m });
+            }
+          }
+        }, { passive: true });
+
+        const sendDuration = () => {
+          if (!window.SupernumberAnalytics?.isEnabled()) return;
+          const msec = Math.round(performance.now() - startTime);
+          if (msec < 1000) return;
+          window.SupernumberAnalytics.track("page_duration", {
+            engagement_time_msec: msec,
+            page_time_seconds: Math.round(msec / 1000),
+            max_scroll_depth_pct: maxScrollPct,
+          });
+        };
+
+        document.addEventListener("visibilitychange", () => {
+          if (document.visibilityState === "hidden") {
+            sendDuration();
+          } else {
+            startTime = performance.now();
+          }
+        });
+        window.addEventListener("pagehide", sendDuration);
+      })();
+    </script>
+
+    <script>
+      (() => {
         const toggle = document.querySelector(".nav-toggle");
         const menu = document.getElementById("mobile-menu");
 

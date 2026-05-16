@@ -107,6 +107,53 @@ class Ga4AnalyticsService
 
     /**
      * @return array{
+     *     activeUsers: int,
+     *     pages: array<int, array<string, float|int|string>>,
+     *     devices: array<int, array<string, float|int|string>>,
+     *     countries: array<int, array<string, float|int|string>>
+     * }
+     */
+    public function fetchRealtime(): array
+    {
+        if (! $this->isReportingConfigured()) {
+            throw new RuntimeException('ยังไม่ได้ตั้งค่า GA4 Property ID หรือ Service Account');
+        }
+
+        $summaryResponse = $this->runRealtimeReport([
+            'metrics' => [['name' => 'activeUsers']],
+        ]);
+
+        $pagesResponse = $this->runRealtimeReport([
+            'dimensions' => [['name' => 'unifiedPageScreen']],
+            'metrics' => [['name' => 'activeUsers']],
+            'orderBys' => [['metric' => ['metricName' => 'activeUsers'], 'desc' => true]],
+            'limit' => 15,
+        ]);
+
+        $devicesResponse = $this->runRealtimeReport([
+            'dimensions' => [['name' => 'deviceCategory']],
+            'metrics' => [['name' => 'activeUsers']],
+            'orderBys' => [['metric' => ['metricName' => 'activeUsers'], 'desc' => true]],
+            'limit' => 5,
+        ]);
+
+        $countriesResponse = $this->runRealtimeReport([
+            'dimensions' => [['name' => 'country']],
+            'metrics' => [['name' => 'activeUsers']],
+            'orderBys' => [['metric' => ['metricName' => 'activeUsers'], 'desc' => true]],
+            'limit' => 5,
+        ]);
+
+        return [
+            'activeUsers' => (int) data_get($this->firstRow($summaryResponse), 'activeUsers', 0),
+            'pages' => $this->rows($pagesResponse),
+            'devices' => $this->rows($devicesResponse),
+            'countries' => $this->rows($countriesResponse),
+        ];
+    }
+
+    /**
+     * @return array{
      *     summary: array<string, float|int>,
      *     daily: array<int, array<string, float|int|string>>,
      *     sources: array<int, array<string, float|int|string>>,
@@ -321,6 +368,33 @@ class Ga4AnalyticsService
             ->acceptJson()
             ->withToken($this->accessToken())
             ->post(sprintf('https://analyticsdata.googleapis.com/v1beta/properties/%s:runReport', $propertyId), $payload);
+
+        if ($response->failed()) {
+            throw new RuntimeException($this->resolveGoogleErrorMessage($response));
+        }
+
+        return $response->json() ?? [];
+    }
+
+    /**
+     * @param  array<string, mixed>  $payload
+     * @return array<string, mixed>
+     */
+    private function runRealtimeReport(array $payload): array
+    {
+        $propertyId = $this->propertyId();
+
+        if ($propertyId === '') {
+            throw new RuntimeException('ยังไม่ได้ตั้งค่า GA4 Property ID');
+        }
+
+        $response = Http::timeout(30)
+            ->acceptJson()
+            ->withToken($this->accessToken())
+            ->post(
+                sprintf('https://analyticsdata.googleapis.com/v1beta/properties/%s:runRealtimeReport', $propertyId),
+                $payload
+            );
 
         if ($response->failed()) {
             throw new RuntimeException($this->resolveGoogleErrorMessage($response));

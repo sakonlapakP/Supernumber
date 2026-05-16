@@ -1000,7 +1000,17 @@
             [
               'label' => 'Analytics GA4',
               'url' => route('admin.analytics'),
-              'active' => request()->routeIs('admin.analytics*'),
+              'active' => request()->routeIs('admin.analytics'),
+            ],
+            [
+              'label' => 'Realtime',
+              'url' => route('admin.analytics.realtime'),
+              'active' => request()->routeIs('admin.analytics.realtime'),
+            ],
+            [
+              'label' => 'ตั้งค่า GA4',
+              'url' => route('admin.analytics.settings'),
+              'active' => request()->routeIs('admin.analytics.settings*'),
             ],
             [
               'label' => 'ตั้งค่าการเชื่อมต่อ API',

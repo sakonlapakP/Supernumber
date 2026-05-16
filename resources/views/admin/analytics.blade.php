@@ -17,23 +17,15 @@
         $seconds = max(0, (int) round((float) $seconds));
         $minutes = intdiv($seconds, 60);
         $remainingSeconds = $seconds % 60;
-
         return sprintf('%02d:%02d', $minutes, $remainingSeconds);
     };
     $formatGaDate = static function (?string $date): string {
         $date = trim((string) $date);
-
-        if ($date === '' || strlen($date) !== 8) {
-            return '-';
-        }
-
+        if ($date === '' || strlen($date) !== 8) return '-';
         try {
             return \Illuminate\Support\Carbon::createFromFormat('Ymd', $date, 'Asia/Bangkok')
-                ->locale('th')
-                ->translatedFormat('j M Y');
-        } catch (\Throwable) {
-            return $date;
-        }
+                ->locale('th')->translatedFormat('j M Y');
+        } catch (\Throwable) { return $date; }
     };
   @endphp
 
@@ -84,34 +76,6 @@
       gap: 18px;
     }
 
-    .analytics-status-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 14px;
-    }
-
-    .analytics-status-pill {
-      display: inline-flex;
-      align-items: center;
-      min-height: 30px;
-      padding: 4px 10px;
-      border-radius: 999px;
-      font-size: 12px;
-      font-weight: 700;
-    }
-
-    .analytics-status-pill--ready {
-      background: #edf9f5;
-      color: #157357;
-      border: 1px solid #c8eadf;
-    }
-
-    .analytics-status-pill--pending {
-      background: #fff8e7;
-      color: #9a6700;
-      border: 1px solid #f0ddb0;
-    }
-
     .analytics-table-note {
       padding: 0 20px 18px;
       color: #7084a3;
@@ -119,14 +83,82 @@
       line-height: 1.6;
     }
 
-    .analytics-range-actions {
+    /* Status bar */
+    .analytics-statusbar {
       display: flex;
-      flex-wrap: wrap;
+      align-items: center;
       gap: 10px;
+      flex-wrap: wrap;
+      padding: 12px 18px;
+      background: #f4f7fc;
+      border: 1px solid #dce6f5;
+      border-radius: 16px;
     }
 
-    .analytics-range-actions .admin-button {
-      min-width: 124px;
+    .analytics-statusbar__chips {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+
+    .analytics-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 1;
+    }
+
+    .analytics-chip--ok {
+      background: #edf9f5;
+      color: #157357;
+      border: 1px solid #c8eadf;
+    }
+
+    .analytics-chip--warn {
+      background: #fff8e7;
+      color: #9a6700;
+      border: 1px solid #f0ddb0;
+    }
+
+    .analytics-chip--neutral {
+      background: #eef2f8;
+      color: #4a6080;
+      border: 1px solid #d4dff0;
+      font-weight: 600;
+    }
+
+    .analytics-chip__dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .analytics-chip--ok .analytics-chip__dot   { background: #22b87d; }
+    .analytics-chip--warn .analytics-chip__dot { background: #e6a700; }
+
+    /* Range + actions row */
+    .analytics-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .analytics-toolbar__range {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .analytics-toolbar__range .admin-button {
+      min-width: 110px;
     }
 
     @media (max-width: 980px) {
@@ -139,17 +171,19 @@
   <div class="admin-page-head">
     <div>
       <h1>Analytics GA4</h1>
-      <p class="admin-subtitle">ดู traffic จาก Google Analytics 4 ควบคู่กับ lead และ order ที่เกิดขึ้นจริงในระบบหลังบ้านของ Supernumber</p>
+      <p class="admin-subtitle">traffic, lead และ order ย้อนหลังของ Supernumber</p>
     </div>
-    <div class="analytics-range-actions">
-      @foreach ($rangeOptions as $rangeValue => $rangeLabel)
-        <a
-          href="{{ route('admin.analytics', ['range' => $rangeValue]) }}"
-          class="admin-button @if ($days === $rangeValue) admin-button--secondary @else admin-button--muted @endif admin-button--compact"
-        >
-          {{ $rangeLabel }}
-        </a>
-      @endforeach
+    <div class="analytics-toolbar">
+      <div class="analytics-toolbar__range">
+        @foreach ($rangeOptions as $rangeValue => $rangeLabel)
+          <a
+            href="{{ route('admin.analytics', ['range' => $rangeValue]) }}"
+            class="admin-button @if ($days === $rangeValue) admin-button--secondary @else admin-button--muted @endif admin-button--compact"
+          >{{ $rangeLabel }}</a>
+        @endforeach
+      </div>
+      <a href="{{ route('admin.analytics.realtime') }}" class="admin-button admin-button--muted admin-button--compact">Realtime</a>
+      <a href="{{ route('admin.analytics.settings') }}" class="admin-button admin-button--muted admin-button--compact">ตั้งค่า GA4</a>
     </div>
   </div>
 
@@ -157,110 +191,30 @@
     <div class="admin-alert admin-alert--success">{{ session('status_message') }}</div>
   @endif
 
-  @if ($errors->any())
-    <div class="admin-alert admin-alert--error">{{ $errors->first() }}</div>
-  @endif
-
   @if ($ga4Error)
     <div class="admin-alert admin-alert--error">GA4 เชื่อมต่อไม่สำเร็จ: {{ $ga4Error }}</div>
   @endif
 
   <div class="analytics-panels">
-    <section class="admin-card admin-feature-card">
-      <div class="admin-feature-card__head">
-        <div>
-          <h2 class="admin-feature-card__title">ตั้งค่า Google Analytics 4</h2>
-          <p class="admin-feature-card__hint">ใส่ Measurement ID สำหรับ tracking หน้าเว็บ และใส่ Property ID พร้อม Service Account สำหรับดึงรายงานเข้า manager dashboard</p>
-        </div>
+
+    {{-- Compact status bar --}}
+    <div class="analytics-statusbar">
+      <div class="analytics-statusbar__chips">
+        <span class="analytics-chip {{ $ga4ConfiguredForTracking ? 'analytics-chip--ok' : 'analytics-chip--warn' }}">
+          <span class="analytics-chip__dot"></span>
+          Tracking: {{ $ga4ConfiguredForTracking ? 'พร้อม' : 'รอตั้งค่า' }}
+        </span>
+        <span class="analytics-chip {{ $ga4ConfiguredForReporting ? 'analytics-chip--ok' : 'analytics-chip--warn' }}">
+          <span class="analytics-chip__dot"></span>
+          Reporting: {{ $ga4ConfiguredForReporting ? 'พร้อม' : 'ยังไม่ครบ' }}
+        </span>
+        @if ($ga4ServiceAccountEmail !== '')
+          <span class="analytics-chip analytics-chip--neutral">{{ $ga4ServiceAccountEmail }}</span>
+        @endif
       </div>
+    </div>
 
-      <form class="admin-form" action="{{ route('admin.analytics.settings.update') }}" method="post">
-        @csrf
-
-        <div class="admin-field">
-          <label for="ga4_measurement_id">GA4 Measurement ID</label>
-          <input
-            id="ga4_measurement_id"
-            class="admin-input"
-            type="text"
-            name="ga4_measurement_id"
-            value="{{ old('ga4_measurement_id', $ga4Settings['measurement_id'] ?? '') }}"
-            placeholder="เช่น G-ABC123XYZ9"
-          />
-          <p class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem;">ค่านี้ใช้ฝัง GA4 ฝั่งหน้าเว็บโดยจะ track แบบตัด query string ออก เพื่อไม่ส่งเบอร์โทรหรือข้อมูลส่วนตัวขึ้น Google Analytics</p>
-        </div>
-
-        <div class="admin-field">
-          <label for="ga4_property_id">GA4 Property ID</label>
-          <input
-            id="ga4_property_id"
-            class="admin-input"
-            type="text"
-            name="ga4_property_id"
-            value="{{ old('ga4_property_id', $ga4Settings['property_id'] ?? '') }}"
-            placeholder="เช่น 123456789"
-          />
-          <p class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem;">Property ID ใช้กับ Google Analytics Data API เพื่อดึงรายงาน traffic, page, event, source และ device เข้า dashboard นี้</p>
-        </div>
-
-        <div class="admin-field">
-          <label for="ga4_service_account_json">GA4 Service Account JSON</label>
-          <textarea
-            id="ga4_service_account_json"
-            class="admin-input"
-            name="ga4_service_account_json"
-            rows="10"
-            placeholder='วาง JSON ของ Google service account ตรงนี้'
-          >{{ old('ga4_service_account_json', $ga4Settings['service_account_json'] ?? '') }}</textarea>
-          <p class="admin-muted" style="margin: 8px 0 0; font-size: 0.9rem;">
-            หลังสร้าง service account แล้ว ให้นำอีเมลของ service account ไปเพิ่มสิทธิ์ใน GA4 property อย่างน้อยระดับ Viewer หรือ Analyst
-            @if ($ga4ServiceAccountEmail !== '')
-              <br />บัญชีที่อ่านได้ตอนนี้: <strong>{{ $ga4ServiceAccountEmail }}</strong>
-            @endif
-          </p>
-        </div>
-
-        <button type="submit" class="admin-button">บันทึก GA4 settings</button>
-      </form>
-    </section>
-
-    <section class="admin-card admin-feature-card">
-      <div class="admin-feature-card__head">
-        <div>
-          <h2 class="admin-feature-card__title">สถานะการเชื่อมต่อ</h2>
-          <p class="admin-feature-card__hint">หน้าเว็บจะเริ่มส่งข้อมูลเมื่อ Measurement ID พร้อม และ dashboard จะอ่านรายงานได้เมื่อ Property ID กับ Service Account ถูกต้อง</p>
-        </div>
-      </div>
-
-      <div class="analytics-status-grid">
-        <div class="analytics-stat-card">
-          <div class="analytics-stat-card__label">Tracking ฝั่งเว็บ</div>
-          <div style="margin-top: 10px;">
-            <span class="analytics-status-pill {{ $ga4ConfiguredForTracking ? 'analytics-status-pill--ready' : 'analytics-status-pill--pending' }}">
-              {{ $ga4ConfiguredForTracking ? 'พร้อมใช้งาน' : 'รอตั้งค่า' }}
-            </span>
-          </div>
-          <div class="analytics-stat-card__hint">Measurement ID: {{ ($ga4Settings['measurement_id'] ?? '') !== '' ? $ga4Settings['measurement_id'] : '-' }}</div>
-        </div>
-
-        <div class="analytics-stat-card">
-          <div class="analytics-stat-card__label">Reporting ใน dashboard</div>
-          <div style="margin-top: 10px;">
-            <span class="analytics-status-pill {{ $ga4ConfiguredForReporting ? 'analytics-status-pill--ready' : 'analytics-status-pill--pending' }}">
-              {{ $ga4ConfiguredForReporting ? 'พร้อมดึงรายงาน' : 'ยังไม่ครบ' }}
-            </span>
-          </div>
-          <div class="analytics-stat-card__hint">Property ID: {{ ($ga4Settings['property_id'] ?? '') !== '' ? $ga4Settings['property_id'] : '-' }}</div>
-        </div>
-
-        <div class="analytics-stat-card">
-          <div class="analytics-stat-card__label">Service account</div>
-          <div class="analytics-stat-card__value" style="font-size: 16px; line-height: 1.4;">{{ $ga4ServiceAccountEmail !== '' ? $ga4ServiceAccountEmail : '-' }}</div>
-          <div class="analytics-stat-card__hint">อีเมลนี้ต้องถูกเพิ่มสิทธิ์ใน property เดียวกับ Property ID ด้านบน</div>
-        </div>
-      </div>
-    </section>
-
+    {{-- Internal summary --}}
     <section class="admin-card admin-feature-card">
       <div class="admin-feature-card__head">
         <div>
@@ -293,80 +247,83 @@
       </div>
     </section>
 
-    <section class="admin-card admin-table-card">
-      <div style="padding: 18px 20px 0;">
-        <h2 style="margin: 0; font-size: 1.1rem;">Lead และ Order ตามวัน</h2>
-        <p class="admin-subtitle" style="margin-top: 6px;">ช่วยดูว่า traffic ที่เข้ามาเปลี่ยนเป็น lead และ order จริงในแต่ละวันมากน้อยแค่ไหน</p>
-      </div>
-      <div class="admin-table-wrap">
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th style="width: 180px;">วันที่</th>
-              <th style="width: 180px;">ข้อความติดต่อ</th>
-              <th style="width: 180px;">Estimate leads</th>
-              <th>Orders created</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse ($internalDaily as $row)
+    <div class="analytics-two-up">
+      <section class="admin-card admin-table-card">
+        <div style="padding: 18px 20px 0;">
+          <h2 style="margin: 0; font-size: 1.1rem;">Lead และ Order ตามวัน</h2>
+          <p class="admin-subtitle" style="margin-top: 6px;">ช่วยดูว่า traffic ที่เข้ามาเปลี่ยนเป็น lead และ order จริงในแต่ละวัน</p>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
               <tr>
-                <td>{{ $row['date'] }}</td>
-                <td>{{ $formatNumber($row['contact_messages'] ?? 0) }}</td>
-                <td>{{ $formatNumber($row['estimate_leads'] ?? 0) }}</td>
-                <td>{{ $formatNumber($row['orders_created'] ?? 0) }}</td>
+                <th>วันที่</th>
+                <th style="width: 130px;">ติดต่อ</th>
+                <th style="width: 130px;">Estimate</th>
+                <th style="width: 130px;">Orders</th>
               </tr>
-            @empty
-              <tr>
-                <td colspan="4" class="admin-muted">ยังไม่มีข้อมูล lead หรือ order ในช่วงเวลาที่เลือก</td>
-              </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
-    </section>
+            </thead>
+            <tbody>
+              @forelse ($internalDaily as $row)
+                <tr>
+                  <td>{{ $row['date'] }}</td>
+                  <td>{{ $formatNumber($row['contact_messages'] ?? 0) }}</td>
+                  <td>{{ $formatNumber($row['estimate_leads'] ?? 0) }}</td>
+                  <td>{{ $formatNumber($row['orders_created'] ?? 0) }}</td>
+                </tr>
+              @empty
+                <tr><td colspan="4" class="admin-muted">ยังไม่มีข้อมูลในช่วงเวลาที่เลือก</td></tr>
+              @endforelse
+            </tbody>
+          </table>
+        </div>
+      </section>
 
-    <section class="admin-card admin-table-card">
-      <div style="padding: 18px 20px 0;">
-        <h2 style="margin: 0; font-size: 1.1rem;">สถานะ Order</h2>
-        <p class="admin-subtitle" style="margin-top: 6px;">ดูคิวงานในระบบจาก order ที่ถูกสร้างในช่วงเวลานี้</p>
-      </div>
-      <div class="admin-table-wrap">
-        <table class="admin-table">
-          <thead>
-            <tr>
-              <th>สถานะ</th>
-              <th style="width: 160px;">จำนวน</th>
-            </tr>
-          </thead>
-          <tbody>
-            @forelse ($orderStatusBreakdown as $status => $count)
+      <section class="admin-card admin-table-card">
+        <div style="padding: 18px 20px 0;">
+          <h2 style="margin: 0; font-size: 1.1rem;">สถานะ Order</h2>
+          <p class="admin-subtitle" style="margin-top: 6px;">ดูคิวงานในระบบจาก order ที่ถูกสร้างในช่วงเวลานี้</p>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
               <tr>
-                <td>{{ \App\Models\CustomerOrder::statusLabelOptions()[$status] ?? $status }}</td>
-                <td>{{ $formatNumber($count) }}</td>
+                <th>สถานะ</th>
+                <th style="width: 120px;">จำนวน</th>
               </tr>
-            @empty
-              <tr>
-                <td colspan="2" class="admin-muted">ยังไม่มี order ในช่วงเวลาที่เลือก</td>
-              </tr>
-            @endforelse
-          </tbody>
-        </table>
-      </div>
-    </section>
+            </thead>
+            <tbody>
+              @forelse ($orderStatusBreakdown as $status => $count)
+                <tr>
+                  <td>{{ \App\Models\CustomerOrder::statusLabelOptions()[$status] ?? $status }}</td>
+                  <td>{{ $formatNumber($count) }}</td>
+                </tr>
+              @empty
+                <tr><td colspan="2" class="admin-muted">ยังไม่มี order ในช่วงเวลาที่เลือก</td></tr>
+              @endforelse
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
 
+    {{-- GA4 data --}}
     <section class="admin-card admin-feature-card">
       <div class="admin-feature-card__head">
         <div>
           <h2 class="admin-feature-card__title">ภาพรวมจาก GA4</h2>
-          <p class="admin-feature-card__hint">ส่วนนี้อ่านจาก Google Analytics Data API โดยใช้ข้อมูลย้อนหลัง {{ $rangeOptions[$days] ?? $days . ' วันล่าสุด' }}</p>
+          <p class="admin-feature-card__hint">ข้อมูลย้อนหลัง {{ $rangeOptions[$days] ?? $days . ' วันล่าสุด' }} จาก Google Analytics Data API</p>
         </div>
       </div>
 
       @if (! $ga4ConfiguredForReporting)
-        <div class="admin-muted">ยังไม่พร้อมดึงรายงานจาก GA4 กรุณาใส่ Property ID และ Service Account JSON ให้ครบก่อน</div>
+        <div class="admin-muted" style="padding: 0 20px 20px;">
+          ยังไม่พร้อมดึงรายงาน —
+          <a href="{{ route('admin.analytics.settings') }}" style="color: var(--admin-primary); font-weight: 700;">ตั้งค่า GA4</a>
+          เพื่อเปิดใช้งาน
+        </div>
       @elseif (! $ga4Dashboard)
-        <div class="admin-muted">ยังไม่มีข้อมูลจาก GA4 ในตอนนี้ หรือระบบกำลังรอการเชื่อมต่อ</div>
+        <div class="admin-muted" style="padding: 0 20px 20px;">ยังไม่มีข้อมูลจาก GA4 ในตอนนี้</div>
       @else
         <div class="analytics-card-grid">
           <article class="analytics-stat-card">
@@ -390,7 +347,7 @@
             <div class="analytics-stat-card__value">{{ $formatPercent($gaSummary['engagementRate'] ?? 0) }}</div>
           </article>
           <article class="analytics-stat-card">
-            <div class="analytics-stat-card__label">Average session duration</div>
+            <div class="analytics-stat-card__label">Avg session duration</div>
             <div class="analytics-stat-card__value">{{ $formatDuration($gaSummary['averageSessionDuration'] ?? 0) }}</div>
           </article>
         </div>
@@ -408,9 +365,9 @@
             <thead>
               <tr>
                 <th style="width: 180px;">วันที่</th>
-                <th style="width: 160px;">Users</th>
-                <th style="width: 160px;">Sessions</th>
-                <th style="width: 160px;">Page views</th>
+                <th style="width: 130px;">Users</th>
+                <th style="width: 130px;">Sessions</th>
+                <th style="width: 130px;">Page views</th>
                 <th>Events</th>
               </tr>
             </thead>
@@ -424,9 +381,7 @@
                   <td>{{ $formatNumber($row['eventCount'] ?? 0) }}</td>
                 </tr>
               @empty
-                <tr>
-                  <td colspan="5" class="admin-muted">GA4 ยังไม่ส่งข้อมูลกลับมาในช่วงเวลานี้</td>
-                </tr>
+                <tr><td colspan="5" class="admin-muted">GA4 ยังไม่ส่งข้อมูลกลับมาในช่วงเวลานี้</td></tr>
               @endforelse
             </tbody>
           </table>
@@ -444,9 +399,9 @@
               <thead>
                 <tr>
                   <th>Source / Medium</th>
-                  <th style="width: 120px;">Sessions</th>
-                  <th style="width: 120px;">Users</th>
-                  <th style="width: 120px;">Engaged</th>
+                  <th style="width: 100px;">Sessions</th>
+                  <th style="width: 100px;">Users</th>
+                  <th style="width: 100px;">Engaged</th>
                 </tr>
               </thead>
               <tbody>
@@ -458,9 +413,7 @@
                     <td>{{ $formatPercent($row['engagementRate'] ?? 0) }}</td>
                   </tr>
                 @empty
-                  <tr>
-                    <td colspan="4" class="admin-muted">ยังไม่มีข้อมูล source / medium</td>
-                  </tr>
+                  <tr><td colspan="4" class="admin-muted">ยังไม่มีข้อมูล source / medium</td></tr>
                 @endforelse
               </tbody>
             </table>
@@ -470,7 +423,6 @@
         <section class="admin-card admin-table-card">
           <div style="padding: 18px 20px 0;">
             <h2 style="margin: 0; font-size: 1.1rem;">อุปกรณ์และประเทศ</h2>
-            <p class="admin-subtitle" style="margin-top: 6px;">สรุปว่า user ใช้อุปกรณ์อะไรและมาจากประเทศไหน</p>
           </div>
           <div class="admin-table-note">อุปกรณ์</div>
           <div class="admin-table-wrap">
@@ -478,8 +430,8 @@
               <thead>
                 <tr>
                   <th>Device</th>
-                  <th style="width: 120px;">Users</th>
-                  <th style="width: 120px;">Sessions</th>
+                  <th style="width: 100px;">Users</th>
+                  <th style="width: 100px;">Sessions</th>
                 </tr>
               </thead>
               <tbody>
@@ -490,9 +442,7 @@
                     <td>{{ $formatNumber($row['sessions'] ?? 0) }}</td>
                   </tr>
                 @empty
-                  <tr>
-                    <td colspan="3" class="admin-muted">ยังไม่มีข้อมูลอุปกรณ์</td>
-                  </tr>
+                  <tr><td colspan="3" class="admin-muted">ยังไม่มีข้อมูลอุปกรณ์</td></tr>
                 @endforelse
               </tbody>
             </table>
@@ -503,8 +453,8 @@
               <thead>
                 <tr>
                   <th>Country</th>
-                  <th style="width: 120px;">Users</th>
-                  <th style="width: 120px;">Sessions</th>
+                  <th style="width: 100px;">Users</th>
+                  <th style="width: 100px;">Sessions</th>
                 </tr>
               </thead>
               <tbody>
@@ -515,9 +465,7 @@
                     <td>{{ $formatNumber($row['sessions'] ?? 0) }}</td>
                   </tr>
                 @empty
-                  <tr>
-                    <td colspan="3" class="admin-muted">ยังไม่มีข้อมูลประเทศ</td>
-                  </tr>
+                  <tr><td colspan="3" class="admin-muted">ยังไม่มีข้อมูลประเทศ</td></tr>
                 @endforelse
               </tbody>
             </table>
@@ -529,16 +477,16 @@
         <section class="admin-card admin-table-card">
           <div style="padding: 18px 20px 0;">
             <h2 style="margin: 0; font-size: 1.1rem;">หน้าที่คนดูมากที่สุด</h2>
-            <p class="admin-subtitle" style="margin-top: 6px;">ช่วยดูว่า content หรือ flow หน้าไหนกำลังดึงคนเข้าเว็บ</p>
+            <p class="admin-subtitle" style="margin-top: 6px;">content หรือ flow หน้าไหนกำลังดึงคนเข้าเว็บ</p>
           </div>
           <div class="admin-table-wrap">
             <table class="admin-table">
               <thead>
                 <tr>
                   <th>Page path</th>
-                  <th style="width: 120px;">Views</th>
-                  <th style="width: 120px;">Users</th>
-                  <th style="width: 140px;">Avg session</th>
+                  <th style="width: 100px;">Views</th>
+                  <th style="width: 100px;">Users</th>
+                  <th style="width: 120px;">Avg session</th>
                 </tr>
               </thead>
               <tbody>
@@ -550,9 +498,7 @@
                     <td>{{ $formatDuration($row['averageSessionDuration'] ?? 0) }}</td>
                   </tr>
                 @empty
-                  <tr>
-                    <td colspan="4" class="admin-muted">ยังไม่มีข้อมูล page path</td>
-                  </tr>
+                  <tr><td colspan="4" class="admin-muted">ยังไม่มีข้อมูล page path</td></tr>
                 @endforelse
               </tbody>
             </table>
@@ -562,15 +508,15 @@
         <section class="admin-card admin-table-card">
           <div style="padding: 18px 20px 0;">
             <h2 style="margin: 0; font-size: 1.1rem;">Events ที่เกิดขึ้นในเว็บ</h2>
-            <p class="admin-subtitle" style="margin-top: 6px;">ใช้ดูว่า event สำคัญ เช่น search, generate_lead หรือ flow สั่งซื้อ เกิดขึ้นมากน้อยแค่ไหน</p>
+            <p class="admin-subtitle" style="margin-top: 6px;">event สำคัญ เช่น search, generate_lead หรือ flow สั่งซื้อ</p>
           </div>
           <div class="admin-table-wrap">
             <table class="admin-table">
               <thead>
                 <tr>
                   <th>Event</th>
-                  <th style="width: 120px;">Count</th>
-                  <th style="width: 120px;">Users</th>
+                  <th style="width: 100px;">Count</th>
+                  <th style="width: 100px;">Users</th>
                 </tr>
               </thead>
               <tbody>
@@ -581,9 +527,7 @@
                     <td>{{ $formatNumber($row['totalUsers'] ?? 0) }}</td>
                   </tr>
                 @empty
-                  <tr>
-                    <td colspan="3" class="admin-muted">ยังไม่มีข้อมูล events</td>
-                  </tr>
+                  <tr><td colspan="3" class="admin-muted">ยังไม่มีข้อมูล events</td></tr>
                 @endforelse
               </tbody>
             </table>
