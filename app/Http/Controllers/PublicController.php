@@ -463,10 +463,9 @@ class PublicController extends Controller
         );
 
         if ($spamResult['blocked']) {
-            // Return the same success message so blocked spam does not learn which rule caught it.
             return redirect()
                 ->route('contact')
-                ->with('contact_status_message', 'ส่งข้อความเรียบร้อยแล้ว ทีมงานจะติดต่อกลับตามข้อมูลที่แจ้งไว้');
+                ->with('contact_spam_blocked', true);
         }
 
         ContactMessage::query()->create([
