@@ -6,13 +6,17 @@ use App\Http\Controllers\Controller;
 use App\Models\ArticlePlan;
 use App\Models\User;
 use Illuminate\Http\Request;
-use Carbon\Carbon;
 
 class ArticlePlanController extends Controller
 {
-    /**
-     * Store a newly created resource in storage.
-     */
+    private const VALID_STATUSES = [
+        ArticlePlan::STATUS_TODO,
+        ArticlePlan::STATUS_IN_PROGRESS,
+        ArticlePlan::STATUS_DONE,
+        ArticlePlan::STATUS_BLOCKED,
+        ArticlePlan::STATUS_CANCELLED,
+    ];
+
     public function store(Request $request)
     {
         if (session('admin_user_role') !== User::ROLE_MANAGER) {
@@ -25,20 +29,24 @@ class ArticlePlanController extends Controller
             'type' => 'nullable|string',
             'topic' => 'required|string',
             'is_lottery' => 'boolean',
+            'status' => 'nullable|string|in:' . implode(',', self::VALID_STATUSES),
+            'assigned_to' => 'nullable|integer|exists:users,id',
+            'due_date' => 'nullable|date',
+            'blocked_reason' => 'nullable|string',
+            'notes' => 'nullable|string',
         ]);
 
-        if (!$request->has('is_lottery')) {
+        if (! $request->has('is_lottery')) {
             $validated['is_lottery'] = false;
         }
+
+        $validated['status'] ??= ArticlePlan::STATUS_TODO;
 
         ArticlePlan::create($validated);
 
         return back()->with('status_message', 'เพิ่มแผนการเผยแพร่เรียบร้อยแล้ว');
     }
 
-    /**
-     * Update the specified resource in storage.
-     */
     public function update(Request $request, ArticlePlan $articlePlan)
     {
         if (session('admin_user_role') !== User::ROLE_MANAGER) {
@@ -51,9 +59,14 @@ class ArticlePlanController extends Controller
             'type' => 'nullable|string',
             'topic' => 'required|string',
             'is_lottery' => 'boolean',
+            'status' => 'nullable|string|in:' . implode(',', self::VALID_STATUSES),
+            'assigned_to' => 'nullable|integer|exists:users,id',
+            'due_date' => 'nullable|date',
+            'blocked_reason' => 'nullable|string',
+            'notes' => 'nullable|string',
         ]);
 
-        if (!$request->has('is_lottery')) {
+        if (! $request->has('is_lottery')) {
             $validated['is_lottery'] = false;
         }
 
@@ -62,9 +75,6 @@ class ArticlePlanController extends Controller
         return back()->with('status_message', 'อัปเดตแผนการเผยแพร่เรียบร้อยแล้ว');
     }
 
-    /**
-     * Remove the specified resource from storage.
-     */
     public function destroy(ArticlePlan $articlePlan)
     {
         if (session('admin_user_role') !== User::ROLE_MANAGER) {

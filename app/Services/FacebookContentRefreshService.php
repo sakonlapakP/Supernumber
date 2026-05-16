@@ -192,7 +192,13 @@ class FacebookContentRefreshService
             return null;
         }
 
-        $articleData = $this->buildArticleData($topicKey, $latestImport, $earliestImport, $authorUserId);
+        // Use the earliest plan date as the canonical year for image storage paths.
+        $earliestPlanDate = $plans
+            ->map(fn (ArticlePlan $plan): Carbon => Carbon::parse($plan->publish_date))
+            ->sort()
+            ->first();
+
+        $articleData = $this->buildArticleData($topicKey, $latestImport, $earliestImport, $authorUserId, $earliestPlanDate);
         $slug = $articleData['slug'];
 
         $existing = Article::query()->where('slug', $slug)->first();
@@ -217,6 +223,19 @@ class FacebookContentRefreshService
             FacebookImportedPost::query()
                 ->whereIn('id', $deletedIds)
                 ->delete();
+
+            // Link all plans in this topic group back to the article and record refresh metadata.
+            $refreshStatus = $created
+                ? ArticlePlan::REFRESH_STATUS_CREATED
+                : ArticlePlan::REFRESH_STATUS_REFRESHED;
+
+            $plans->each(function (ArticlePlan $plan) use ($existing, $refreshStatus): void {
+                $plan->update([
+                    'article_id' => $existing->id,
+                    'refresh_status' => $refreshStatus,
+                    'last_refreshed_at' => now(),
+                ]);
+            });
         }
 
         return [
@@ -417,12 +436,14 @@ class FacebookContentRefreshService
     /**
      * @return array<string, mixed>
      */
-    private function buildArticleData(string $topicKey, FacebookImportedPost $latestImport, FacebookImportedPost $earliestImport, ?int $authorUserId): array
+    private function buildArticleData(string $topicKey, FacebookImportedPost $latestImport, FacebookImportedPost $earliestImport, ?int $authorUserId, ?Carbon $planDate = null): array
     {
         $meta = $this->topicMetadata($topicKey);
         $latestDate = $this->resolvePostDate($latestImport) ?? Carbon::now('Asia/Bangkok');
         $earliestDate = $this->resolvePostDate($earliestImport) ?? $latestDate;
-        $storedImagePath = $this->storePostImage($latestImport, (string) $meta['slug'], $latestDate);
+        // Use plan date for image folder if available so the year matches the plan, not the FB post.
+        $imageDate = $planDate ?? $latestDate;
+        $storedImagePath = $this->storePostImage($latestImport, (string) $meta['slug'], $imageDate);
 
         $latestBeYear = $latestDate->copy()->timezone('Asia/Bangkok')->year + 543;
         $earliestBeYear = $earliestDate->copy()->timezone('Asia/Bangkok')->year + 543;
