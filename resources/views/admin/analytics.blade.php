@@ -161,6 +161,37 @@
       min-width: 110px;
     }
 
+    .analytics-month-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+    }
+
+    .analytics-month-tab {
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1px solid #d4dff0;
+      background: #f4f7fc;
+      font-size: 12px;
+      font-weight: 700;
+      color: #4a6080;
+      cursor: pointer;
+      line-height: 1;
+      transition: background 0.15s, color 0.15s, border-color 0.15s;
+    }
+
+    .analytics-month-tab:hover {
+      background: #e8eef8;
+      border-color: #b8c8e8;
+    }
+
+    .analytics-month-tab--active {
+      background: #223a63;
+      border-color: #223a63;
+      color: #fff;
+    }
+
     @media (max-width: 980px) {
       .analytics-two-up {
         grid-template-columns: minmax(0, 1fr);
@@ -247,11 +278,41 @@
       </div>
     </section>
 
+    @php
+      $dailyByMonth = [];
+      foreach ($internalDaily as $row) {
+          $monthKey = substr($row['date'], 0, 7); // "2026-05"
+          $dailyByMonth[$monthKey][] = $row;
+      }
+      $monthKeys = array_keys($dailyByMonth);
+      $latestMonthKey = end($monthKeys) ?: null;
+
+      $thMonths = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+      $monthLabel = static function (string $key) use ($thMonths): string {
+          [$y, $m] = explode('-', $key);
+          return ($thMonths[(int)$m] ?? $m) . ' ' . ((int)$y + 543);
+      };
+    @endphp
+
     <div class="analytics-two-up">
       <section class="admin-card admin-table-card">
-        <div style="padding: 18px 20px 0;">
-          <h2 style="margin: 0; font-size: 1.1rem;">Lead และ Order ตามวัน</h2>
-          <p class="admin-subtitle" style="margin-top: 6px;">ช่วยดูว่า traffic ที่เข้ามาเปลี่ยนเป็น lead และ order จริงในแต่ละวัน</p>
+        <div style="padding: 18px 20px 10px; display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 0;">
+            <h2 style="margin: 0; font-size: 1.1rem;">Lead และ Order ตามวัน</h2>
+            <p class="admin-subtitle" style="margin-top: 6px;">ช่วยดูว่า traffic ที่เข้ามาเปลี่ยนเป็น lead และ order จริงในแต่ละวัน</p>
+          </div>
+          @if (count($monthKeys) > 1)
+            <div class="analytics-month-tabs" id="daily-month-tabs">
+              @foreach ($monthKeys as $mk)
+                <button
+                  class="analytics-month-tab @if ($mk === $latestMonthKey) analytics-month-tab--active @endif"
+                  data-month="{{ $mk }}"
+                  onclick="switchDailyMonth('{{ $mk }}')"
+                  type="button"
+                >{{ $monthLabel($mk) }}</button>
+              @endforeach
+            </div>
+          @endif
         </div>
         <div class="admin-table-wrap">
           <table class="admin-table">
@@ -263,18 +324,32 @@
                 <th style="width: 130px;">Orders</th>
               </tr>
             </thead>
-            <tbody>
-              @forelse ($internalDaily as $row)
-                <tr>
-                  <td>{{ $row['date'] }}</td>
-                  <td>{{ $formatNumber($row['contact_messages'] ?? 0) }}</td>
-                  <td>{{ $formatNumber($row['estimate_leads'] ?? 0) }}</td>
-                  <td>{{ $formatNumber($row['orders_created'] ?? 0) }}</td>
-                </tr>
-              @empty
+            @foreach ($dailyByMonth as $mk => $monthRows)
+              @php
+                $nonZeroRows = array_filter($monthRows, static fn($r) =>
+                    ($r['contact_messages'] ?? 0) + ($r['estimate_leads'] ?? 0) + ($r['orders_created'] ?? 0) > 0
+                );
+              @endphp
+              <tbody data-month="{{ $mk }}" @if ($mk !== $latestMonthKey) style="display:none" @endif>
+                @if (count($nonZeroRows) > 0)
+                  @foreach ($nonZeroRows as $row)
+                    <tr>
+                      <td>{{ $row['date'] }}</td>
+                      <td>{{ $formatNumber($row['contact_messages'] ?? 0) }}</td>
+                      <td>{{ $formatNumber($row['estimate_leads'] ?? 0) }}</td>
+                      <td>{{ $formatNumber($row['orders_created'] ?? 0) }}</td>
+                    </tr>
+                  @endforeach
+                @else
+                  <tr><td colspan="4" class="admin-muted">ไม่มีข้อมูลในเดือนนี้</td></tr>
+                @endif
+              </tbody>
+            @endforeach
+            @if (count($dailyByMonth) === 0)
+              <tbody>
                 <tr><td colspan="4" class="admin-muted">ยังไม่มีข้อมูลในช่วงเวลาที่เลือก</td></tr>
-              @endforelse
-            </tbody>
+              </tbody>
+            @endif
           </table>
         </div>
       </section>
@@ -536,4 +611,15 @@
       </div>
     @endif
   </div>
+
+  <script>
+    function switchDailyMonth(month) {
+      document.querySelectorAll('[data-month]').forEach(el => {
+        el.style.display = el.dataset.month === month ? '' : 'none';
+      });
+      document.querySelectorAll('.analytics-month-tab').forEach(btn => {
+        btn.classList.toggle('analytics-month-tab--active', btn.dataset.month === month);
+      });
+    }
+  </script>
 @endsection
