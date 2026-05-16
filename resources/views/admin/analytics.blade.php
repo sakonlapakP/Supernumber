@@ -278,110 +278,6 @@
       </div>
     </section>
 
-    @php
-      $dailyByMonth = [];
-      foreach ($internalDaily as $row) {
-          $monthKey = substr($row['date'], 0, 7); // "2026-05"
-          $dailyByMonth[$monthKey][] = $row;
-      }
-      $monthKeys = array_keys($dailyByMonth);
-      $latestMonthKey = end($monthKeys) ?: null;
-
-      $thMonths = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
-      $monthLabel = static function (string $key) use ($thMonths): string {
-          [$y, $m] = explode('-', $key);
-          return ($thMonths[(int)$m] ?? $m) . ' ' . ((int)$y + 543);
-      };
-    @endphp
-
-    <div class="analytics-two-up">
-      <section class="admin-card admin-table-card">
-        <div style="padding: 18px 20px 10px; display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
-          <div style="flex: 1; min-width: 0;">
-            <h2 style="margin: 0; font-size: 1.1rem;">Lead และ Order ตามวัน</h2>
-            <p class="admin-subtitle" style="margin-top: 6px;">ช่วยดูว่า traffic ที่เข้ามาเปลี่ยนเป็น lead และ order จริงในแต่ละวัน</p>
-          </div>
-          @if (count($monthKeys) > 1)
-            <div class="analytics-month-tabs" id="daily-month-tabs">
-              @foreach ($monthKeys as $mk)
-                <button
-                  class="analytics-month-tab @if ($mk === $latestMonthKey) analytics-month-tab--active @endif"
-                  data-month="{{ $mk }}"
-                  onclick="switchDailyMonth('{{ $mk }}')"
-                  type="button"
-                >{{ $monthLabel($mk) }}</button>
-              @endforeach
-            </div>
-          @endif
-        </div>
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>วันที่</th>
-                <th style="width: 130px;">ติดต่อ</th>
-                <th style="width: 130px;">Estimate</th>
-                <th style="width: 130px;">Orders</th>
-              </tr>
-            </thead>
-            @foreach ($dailyByMonth as $mk => $monthRows)
-              @php
-                $nonZeroRows = array_filter($monthRows, static fn($r) =>
-                    ($r['contact_messages'] ?? 0) + ($r['estimate_leads'] ?? 0) + ($r['orders_created'] ?? 0) > 0
-                );
-              @endphp
-              <tbody data-month="{{ $mk }}" @if ($mk !== $latestMonthKey) style="display:none" @endif>
-                @if (count($nonZeroRows) > 0)
-                  @foreach ($nonZeroRows as $row)
-                    <tr>
-                      <td>{{ $row['date'] }}</td>
-                      <td>{{ $formatNumber($row['contact_messages'] ?? 0) }}</td>
-                      <td>{{ $formatNumber($row['estimate_leads'] ?? 0) }}</td>
-                      <td>{{ $formatNumber($row['orders_created'] ?? 0) }}</td>
-                    </tr>
-                  @endforeach
-                @else
-                  <tr><td colspan="4" class="admin-muted">ไม่มีข้อมูลในเดือนนี้</td></tr>
-                @endif
-              </tbody>
-            @endforeach
-            @if (count($dailyByMonth) === 0)
-              <tbody>
-                <tr><td colspan="4" class="admin-muted">ยังไม่มีข้อมูลในช่วงเวลาที่เลือก</td></tr>
-              </tbody>
-            @endif
-          </table>
-        </div>
-      </section>
-
-      <section class="admin-card admin-table-card">
-        <div style="padding: 18px 20px 0;">
-          <h2 style="margin: 0; font-size: 1.1rem;">สถานะ Order</h2>
-          <p class="admin-subtitle" style="margin-top: 6px;">ดูคิวงานในระบบจาก order ที่ถูกสร้างในช่วงเวลานี้</p>
-        </div>
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>สถานะ</th>
-                <th style="width: 120px;">จำนวน</th>
-              </tr>
-            </thead>
-            <tbody>
-              @forelse ($orderStatusBreakdown as $status => $count)
-                <tr>
-                  <td>{{ \App\Models\CustomerOrder::statusLabelOptions()[$status] ?? $status }}</td>
-                  <td>{{ $formatNumber($count) }}</td>
-                </tr>
-              @empty
-                <tr><td colspan="2" class="admin-muted">ยังไม่มี order ในช่วงเวลาที่เลือก</td></tr>
-              @endforelse
-            </tbody>
-          </table>
-        </div>
-      </section>
-    </div>
-
     {{-- GA4 data --}}
     <section class="admin-card admin-feature-card">
       <div class="admin-feature-card__head">
@@ -610,6 +506,110 @@
         </section>
       </div>
     @endif
+
+    {{-- Internal daily + order status --}}
+    @php
+      $dailyByMonth = [];
+      foreach ($internalDaily as $row) {
+          $monthKey = substr($row['date'], 0, 7);
+          $dailyByMonth[$monthKey][] = $row;
+      }
+      $monthKeys = array_keys($dailyByMonth);
+      $latestMonthKey = end($monthKeys) ?: null;
+      $thMonths = ['', 'ม.ค.', 'ก.พ.', 'มี.ค.', 'เม.ย.', 'พ.ค.', 'มิ.ย.', 'ก.ค.', 'ส.ค.', 'ก.ย.', 'ต.ค.', 'พ.ย.', 'ธ.ค.'];
+      $monthLabel = static function (string $key) use ($thMonths): string {
+          [$y, $m] = explode('-', $key);
+          return ($thMonths[(int)$m] ?? $m) . ' ' . ((int)$y + 543);
+      };
+    @endphp
+
+    <div class="analytics-two-up">
+      <section class="admin-card admin-table-card">
+        <div style="padding: 18px 20px 10px; display: flex; align-items: flex-start; gap: 12px; flex-wrap: wrap;">
+          <div style="flex: 1; min-width: 0;">
+            <h2 style="margin: 0; font-size: 1.1rem;">Lead และ Order ตามวัน</h2>
+            <p class="admin-subtitle" style="margin-top: 6px;">ช่วยดูว่า traffic ที่เข้ามาเปลี่ยนเป็น lead และ order จริงในแต่ละวัน</p>
+          </div>
+          @if (count($monthKeys) > 1)
+            <div class="analytics-month-tabs">
+              @foreach ($monthKeys as $mk)
+                <button
+                  class="analytics-month-tab @if ($mk === $latestMonthKey) analytics-month-tab--active @endif"
+                  data-month="{{ $mk }}"
+                  onclick="switchDailyMonth('{{ $mk }}')"
+                  type="button"
+                >{{ $monthLabel($mk) }}</button>
+              @endforeach
+            </div>
+          @endif
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>วันที่</th>
+                <th style="width: 130px;">ติดต่อ</th>
+                <th style="width: 130px;">Estimate</th>
+                <th style="width: 130px;">Orders</th>
+              </tr>
+            </thead>
+            @foreach ($dailyByMonth as $mk => $monthRows)
+              @php
+                $nonZeroRows = array_filter($monthRows, static fn($r) =>
+                    ($r['contact_messages'] ?? 0) + ($r['estimate_leads'] ?? 0) + ($r['orders_created'] ?? 0) > 0
+                );
+              @endphp
+              <tbody data-month="{{ $mk }}" @if ($mk !== $latestMonthKey) style="display:none" @endif>
+                @if (count($nonZeroRows) > 0)
+                  @foreach ($nonZeroRows as $row)
+                    <tr>
+                      <td>{{ $row['date'] }}</td>
+                      <td>{{ $formatNumber($row['contact_messages'] ?? 0) }}</td>
+                      <td>{{ $formatNumber($row['estimate_leads'] ?? 0) }}</td>
+                      <td>{{ $formatNumber($row['orders_created'] ?? 0) }}</td>
+                    </tr>
+                  @endforeach
+                @else
+                  <tr><td colspan="4" class="admin-muted">ไม่มีข้อมูลในเดือนนี้</td></tr>
+                @endif
+              </tbody>
+            @endforeach
+            @if (count($dailyByMonth) === 0)
+              <tbody>
+                <tr><td colspan="4" class="admin-muted">ยังไม่มีข้อมูลในช่วงเวลาที่เลือก</td></tr>
+              </tbody>
+            @endif
+          </table>
+        </div>
+      </section>
+
+      <section class="admin-card admin-table-card">
+        <div style="padding: 18px 20px 0;">
+          <h2 style="margin: 0; font-size: 1.1rem;">สถานะ Order</h2>
+          <p class="admin-subtitle" style="margin-top: 6px;">ดูคิวงานในระบบจาก order ที่ถูกสร้างในช่วงเวลานี้</p>
+        </div>
+        <div class="admin-table-wrap">
+          <table class="admin-table">
+            <thead>
+              <tr>
+                <th>สถานะ</th>
+                <th style="width: 120px;">จำนวน</th>
+              </tr>
+            </thead>
+            <tbody>
+              @forelse ($orderStatusBreakdown as $status => $count)
+                <tr>
+                  <td>{{ \App\Models\CustomerOrder::statusLabelOptions()[$status] ?? $status }}</td>
+                  <td>{{ $formatNumber($count) }}</td>
+                </tr>
+              @empty
+                <tr><td colspan="2" class="admin-muted">ยังไม่มี order ในช่วงเวลาที่เลือก</td></tr>
+              @endforelse
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
   </div>
 
   <script>
