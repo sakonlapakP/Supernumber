@@ -3,6 +3,7 @@
 @section('title', $article->title . ' | Supernumber')
 @section('meta_description', $article->meta_description ?: ($article->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($article->sanitizedContent()), 150)))
 @section('canonical', route('articles.show', $article->slug))
+@section('og_type', 'article')
 @section('og_title', $article->title . ' | Supernumber')
 @section('og_description', $article->meta_description ?: ($article->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($article->sanitizedContent()), 160)))
 @section('og_url', route('articles.show', $article->slug))
@@ -16,6 +17,7 @@
   }
 @endphp
 @section('og_image', $ogImagePath)
+@section('og_image_secure_url', $ogImagePath)
 @section('seo_schema')
 <script type="application/ld+json">
 {

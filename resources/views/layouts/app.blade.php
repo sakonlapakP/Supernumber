@@ -15,11 +15,14 @@
     <meta name="description" content="@yield('meta_description', 'ดูดวงเบอร์มือถือฟรี วิเคราะห์เสริมพลัง และคัดเบอร์มงคลที่เหมาะกับคุณ')" />
     <meta name="robots" content="@yield('robots', 'index, follow')" />
     <link rel="canonical" href="@yield('canonical', url()->current())" />
-    <meta property="og:type" content="website" />
+    <meta property="og:type" content="@yield('og_type', 'website')" />
     <meta property="og:title" content="@yield('og_title', 'Supernumber')" />
     <meta property="og:description" content="@yield('og_description', 'ดูดวงเบอร์มือถือฟรี วิเคราะห์เสริมพลัง และคัดเบอร์มงคลที่เหมาะกับคุณ')" />
     <meta property="og:url" content="@yield('og_url', url()->current())" />
     <meta property="og:image" content="@yield('og_image', asset('images/home_banner.jpg'))" />
+    @hasSection('og_image_secure_url')
+    <meta property="og:image:secure_url" content="@yield('og_image_secure_url')" />
+    @endif
     <meta name="twitter:card" content="summary_large_image" />
     <meta name="theme-color" content="@yield('theme_color', '#2a2321')" />
     <link rel="shortcut icon" type="image/x-icon" href="{{ $versionedStaticPath('favicon-v2.ico') }}" />

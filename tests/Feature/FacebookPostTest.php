@@ -7,8 +7,6 @@ use App\Models\User;
 use App\Services\FacebookPagePoster;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class FacebookPostTest extends TestCase
@@ -18,8 +16,7 @@ class FacebookPostTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        Storage::fake('public');
-        
+
         // เซ็ตค่า Config จำลองสำหรับ Facebook
         config()->set('services.facebook.page_id', '12345');
         config()->set('services.facebook.page_access_token', 'fake-token');
@@ -32,7 +29,7 @@ class FacebookPostTest extends TestCase
     public function test_it_successfully_posts_to_facebook_with_image(): void
     {
         Http::fake([
-            'https://graph.facebook.com/*/photos' => Http::response(['id' => 'fb_photo_123'], 200),
+            'https://graph.facebook.com' => Http::response(['success' => true], 200),
             'https://graph.facebook.com/*/feed' => Http::response(['id' => 'fb_post_123'], 200),
         ]);
 
@@ -41,9 +38,7 @@ class FacebookPostTest extends TestCase
             'slug' => 'fb-success-test',
             'excerpt' => 'Short excerpt',
             'content' => 'Content',
-            'cover_image_landscape_path' => 'articles/2026/test.jpg',
         ]);
-        Storage::disk('public')->put('articles/2026/test.jpg', 'fake image content');
 
         $poster = new FacebookPagePoster();
         $result = $poster->postArticle($article);
@@ -52,72 +47,44 @@ class FacebookPostTest extends TestCase
         $this->assertEquals('fb_post_123', $result['id']);
 
         Http::assertSent(function ($request) {
-            return str_contains($request->url(), '12345/photos') &&
-                   $request->isMultipart() &&
-                   str_contains($request->body(), 'published') &&
-                   str_contains($request->body(), 'fake-token');
+            return $request->url() === 'https://graph.facebook.com'
+                && str_contains($request->body(), 'scrape=true')
+                && str_contains($request->body(), urlencode('https://localhost/articles/fb-success-test'));
         });
 
         Http::assertSent(function ($request) {
             return str_contains($request->url(), '12345/feed')
                 && ! $request->isMultipart()
                 && str_contains($request->body(), 'FB Success Test')
-                && str_contains($request->body(), 'attached_media%5B0%5D')
-                && str_contains($request->body(), 'fb_photo_123');
+                && str_contains($request->body(), 'link=')
+                && str_contains($request->body(), urlencode('https://localhost/articles/fb-success-test'));
         });
     }
 
-    /**
-     * Case 2.2: ทดสอบการระงับการโพสต์ (Abort) หากไม่พบไฟล์รูปภาพ
-     */
-    public function test_it_aborts_posting_to_facebook_if_image_is_missing(): void
+    public function test_it_posts_without_requiring_a_local_image_file(): void
     {
-        Http::fake();
+        Http::fake([
+            'https://graph.facebook.com' => Http::response(['success' => true], 200),
+            'https://graph.facebook.com/*/feed' => Http::response(['id' => 'fb_post_no_image'], 200),
+        ]);
 
         $article = Article::create([
-            'title' => 'FB Missing Image Test',
-            'slug' => 'fb-missing-image-test',
+            'title' => 'FB No Image Test',
+            'slug' => 'fb-no-image-test',
             'content' => 'Some content',
-            'cover_image_landscape_path' => 'articles/2026/non-existent.jpg',
         ]);
 
         $poster = new FacebookPagePoster();
         $result = $poster->postArticle($article);
 
-        $this->assertFalse($result['success']);
-        $this->assertStringContainsString('ไม่พบไฟล์รูปภาพ', $result['error']);
-
-        Http::assertNothingSent();
-    }
-
-    /**
-     * ทดสอบการระงับการโพสต์หากไฟล์เป็น SVG
-     */
-    public function test_it_aborts_posting_to_facebook_if_image_is_svg(): void
-    {
-        Http::fake();
-
-        $article = Article::create([
-            'title' => 'FB SVG Test',
-            'slug' => 'fb-svg-test',
-            'content' => 'Some content',
-            'cover_image_landscape_path' => 'articles/2026/test.svg',
-        ]);
-        Storage::disk('public')->put('articles/2026/test.svg', '<svg>...</svg>');
-
-        $poster = new FacebookPagePoster();
-        $result = $poster->postArticle($article);
-
-        $this->assertFalse($result['success']);
-        $this->assertStringContainsString('ไม่พบไฟล์รูปภาพ', $result['error']);
-        
-        Http::assertNothingSent();
+        $this->assertTrue($result['success']);
+        $this->assertEquals('fb_post_no_image', $result['id']);
     }
 
     public function test_admin_share_social_route_posts_only_to_facebook_page(): void
     {
         Http::fake([
-            'https://graph.facebook.com/*/photos' => Http::response(['id' => 'fb_photo_456'], 200),
+            'https://graph.facebook.com' => Http::response(['success' => true], 200),
             'https://graph.facebook.com/*/feed' => Http::response(['id' => 'fb_post_456'], 200),
         ]);
 
@@ -134,13 +101,7 @@ class FacebookPostTest extends TestCase
             'content' => 'Content',
             'is_published' => true,
             'is_line_broadcasted' => false,
-            'cover_image_path' => 'articles/2026/fb-only-route-test.png',
-            'cover_image_square_path' => 'articles/2026/fb-only-route-test.png',
-            'cover_image_landscape_path' => 'articles/2026/fb-only-route-test-cover.png',
         ]);
-
-        Storage::disk('public')->put('articles/2026/fb-only-route-test.png', 'fake square image content');
-        Storage::disk('public')->put('articles/2026/fb-only-route-test-cover.png', 'fake cover image content');
 
         $response = $this
             ->withSession($this->managerSession($manager))
@@ -158,17 +119,17 @@ class FacebookPostTest extends TestCase
 
         Http::assertSentCount(2);
         Http::assertSent(function ($request) {
-            return str_contains($request->url(), '12345/photos')
-                && $request->isMultipart()
-                && str_contains($request->body(), 'published');
+            return $request->url() === 'https://graph.facebook.com'
+                && str_contains($request->body(), 'scrape=true')
+                && str_contains($request->body(), urlencode('https://localhost/articles/fb-only-route-test'));
         });
 
         Http::assertSent(function ($request) {
             return str_contains($request->url(), '12345/feed')
                 && ! $request->isMultipart()
                 && str_contains($request->body(), 'FB Only Route Test')
-                && str_contains($request->body(), 'attached_media%5B0%5D')
-                && str_contains($request->body(), 'fb_photo_456');
+                && str_contains($request->body(), 'link=')
+                && str_contains($request->body(), urlencode('https://localhost/articles/fb-only-route-test'));
         });
     }
 

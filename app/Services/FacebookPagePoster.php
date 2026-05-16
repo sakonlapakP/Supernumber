@@ -7,7 +7,6 @@ use App\Models\LotteryResult;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 
 class FacebookPagePoster
 {
@@ -20,9 +19,7 @@ class FacebookPagePoster
     ];
 
     /**
-     * โพสต์บทความลง Facebook Page
-     * บทความหวย: ใช้ข้อความ lottery template + รูป square
-     * บทความทั่วไป: ใช้ชื่อบทความ + URL + รูป landscape
+     * โพสต์บทความลง Facebook Page เป็น link post เพื่อให้ขึ้นบน feed ของเพจ
      */
     public function postArticle(Article $article, ?string $manualImageUrl = null): array
     {
@@ -46,50 +43,21 @@ class FacebookPagePoster
         $message = $isLottery
             ? $this->buildLotteryMessage($article, $articleUrl)
             : $this->buildRegularMessage($article, $articleUrl);
+        Log::info("FB Post Debug: Article {$article->id} - Type: " . ($isLottery ? 'lottery' : 'regular') . " - URL: {$articleUrl}");
 
-        $imagePath = $this->resolveImagePath($article, $manualImageUrl, $isLottery);
-
-        Log::info("FB Post Debug: Article {$article->id} - Type: " . ($isLottery ? 'lottery' : 'regular') . " - Image: " . ($imagePath ?: 'NOT_FOUND'));
-
-        if (!$imagePath || str_ends_with(strtolower($imagePath), '.svg')) {
-            Log::error("FB Post: Aborting - Image file not found or is still SVG for article [{$article->id}].");
-            return [
-                'success' => false,
-                'error' => 'ไม่พบไฟล์รูปภาพที่ถูกต้องบนเซิร์ฟเวอร์ (ต้องการ .png หรือ .jpg) ระบบได้ระงับการโพสต์เพื่อป้องกันความผิดพลาดครับ',
-            ];
-        }
-
-        $photoUploadUrl = "https://graph.facebook.com/v19.0/{$pageId}/photos";
         $feedUrl = "https://graph.facebook.com/v19.0/{$pageId}/feed";
 
         try {
-            Log::info("FB Post: Uploading photo from: {$imagePath}");
-            $uploadResponse = Http::attach('source', file_get_contents($imagePath), basename($imagePath))
-                ->post($photoUploadUrl, [
-                    'published' => 'false',
-                    'access_token' => $accessToken,
-                ]);
-
-            if (! $uploadResponse->successful()) {
-                $fbError = $uploadResponse->json('error')['message'] ?? 'Unknown FB API Error';
-                Log::error("FB Photo Upload API error: " . $fbError);
-                return ['success' => false, 'error' => 'Facebook API Error: ' . $fbError];
-            }
-
-            $mediaFbid = (string) $uploadResponse->json('id');
-            if ($mediaFbid === '') {
-                Log::error("FB Photo Upload API error: Missing uploaded media id.");
-                return ['success' => false, 'error' => 'Facebook API Error: Missing uploaded media id'];
-            }
+            $this->refreshLinkPreview($articleUrl, $accessToken);
 
             $feedResponse = Http::asForm()->post($feedUrl, [
-                'message' => $message,
-                'attached_media[0]' => json_encode(['media_fbid' => $mediaFbid], JSON_UNESCAPED_UNICODE),
+                'message' => $this->normalizeMessageForLinkPost($message, $articleUrl),
+                'link' => $articleUrl,
                 'access_token' => $accessToken,
             ]);
 
             if ($feedResponse->successful()) {
-                Log::info("Successfully posted feed story to Facebook Page for article [{$article->id}]. FB Post ID: " . $feedResponse->json('id'));
+                Log::info("Successfully posted link story to Facebook Page for article [{$article->id}]. FB Post ID: " . $feedResponse->json('id'));
                 return ['success' => true, 'id' => $feedResponse->json('id')];
             }
 
@@ -131,28 +99,26 @@ class FacebookPagePoster
         );
     }
 
-    private function resolveImagePath(Article $article, ?string $manualImageUrl, bool $isLottery): ?string
+    private function refreshLinkPreview(string $articleUrl, string $accessToken): void
     {
-        $disk = Storage::disk('public');
+        $response = Http::asForm()->post('https://graph.facebook.com', [
+            'id' => $articleUrl,
+            'scrape' => 'true',
+            'access_token' => $accessToken,
+        ]);
 
-        // manual_image_url จาก browser render มาก่อนเสมอ
-        if ($manualImageUrl) {
-            $relPath = $manualImageUrl;
-            if ($disk->exists($relPath)) {
-                return $disk->path($relPath);
-            }
+        if (! $response->successful()) {
+            $fbError = $response->json('error')['message'] ?? 'Unknown FB scrape error';
+            Log::warning("FB Scrape warning for [{$articleUrl}]: " . $fbError);
         }
+    }
 
-        // บทความหวย → ใช้ square image, บทความทั่วไป → ใช้ landscape image
-        $relPath = $isLottery
-            ? ($article->cover_image_square_path ?: $article->cover_image_path)
-            : ($article->cover_image_landscape_path ?: $article->cover_image_path);
+    private function normalizeMessageForLinkPost(string $message, string $articleUrl): string
+    {
+        $normalized = trim(str_replace($articleUrl, '', $message));
+        $normalized = preg_replace("/\n{3,}/", "\n\n", $normalized);
 
-        if ($relPath && $disk->exists($relPath)) {
-            return $disk->path($relPath);
-        }
-
-        return null;
+        return trim((string) $normalized);
     }
 
     private function resolveLotteryThaiDate(Article $article): string
