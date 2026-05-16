@@ -32,7 +32,8 @@ class FacebookPostTest extends TestCase
     public function test_it_successfully_posts_to_facebook_with_image(): void
     {
         Http::fake([
-            'https://graph.facebook.com/*' => Http::response(['id' => 'fb_post_123'], 200),
+            'https://graph.facebook.com/*/photos' => Http::response(['id' => 'fb_photo_123'], 200),
+            'https://graph.facebook.com/*/feed' => Http::response(['id' => 'fb_post_123'], 200),
         ]);
 
         $article = Article::create([
@@ -51,11 +52,18 @@ class FacebookPostTest extends TestCase
         $this->assertEquals('fb_post_123', $result['id']);
 
         Http::assertSent(function ($request) {
-            // สำหรับ Multipart เราจะเช็คผ่าน body หรือตรวจสอบว่ามีการส่งไฟล์ไปจริง
             return str_contains($request->url(), '12345/photos') &&
                    $request->isMultipart() &&
-                   str_contains($request->body(), 'FB Success Test') &&
+                   str_contains($request->body(), 'published') &&
                    str_contains($request->body(), 'fake-token');
+        });
+
+        Http::assertSent(function ($request) {
+            return str_contains($request->url(), '12345/feed')
+                && ! $request->isMultipart()
+                && str_contains($request->body(), 'FB Success Test')
+                && str_contains($request->body(), 'attached_media%5B0%5D')
+                && str_contains($request->body(), 'fb_photo_123');
         });
     }
 
@@ -109,7 +117,8 @@ class FacebookPostTest extends TestCase
     public function test_admin_share_social_route_posts_only_to_facebook_page(): void
     {
         Http::fake([
-            'https://graph.facebook.com/*' => Http::response(['id' => 'fb_post_456'], 200),
+            'https://graph.facebook.com/*/photos' => Http::response(['id' => 'fb_photo_456'], 200),
+            'https://graph.facebook.com/*/feed' => Http::response(['id' => 'fb_post_456'], 200),
         ]);
 
         $manager = User::factory()->create([
@@ -147,11 +156,19 @@ class FacebookPostTest extends TestCase
 
         $this->assertFalse($article->is_line_broadcasted);
 
-        Http::assertSentCount(1);
+        Http::assertSentCount(2);
         Http::assertSent(function ($request) {
             return str_contains($request->url(), '12345/photos')
                 && $request->isMultipart()
-                && str_contains($request->body(), 'FB Only Route Test');
+                && str_contains($request->body(), 'published');
+        });
+
+        Http::assertSent(function ($request) {
+            return str_contains($request->url(), '12345/feed')
+                && ! $request->isMultipart()
+                && str_contains($request->body(), 'FB Only Route Test')
+                && str_contains($request->body(), 'attached_media%5B0%5D')
+                && str_contains($request->body(), 'fb_photo_456');
         });
     }
 

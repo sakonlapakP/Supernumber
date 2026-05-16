@@ -59,26 +59,45 @@ class FacebookPagePoster
             ];
         }
 
-        $url = "https://graph.facebook.com/v19.0/{$pageId}/photos";
+        $photoUploadUrl = "https://graph.facebook.com/v19.0/{$pageId}/photos";
+        $feedUrl = "https://graph.facebook.com/v19.0/{$pageId}/feed";
 
         try {
             Log::info("FB Post: Uploading photo from: {$imagePath}");
-            $response = Http::attach('source', file_get_contents($imagePath), basename($imagePath))
-                ->post($url, [
-                    'message' => $message,
+            $uploadResponse = Http::attach('source', file_get_contents($imagePath), basename($imagePath))
+                ->post($photoUploadUrl, [
+                    'published' => 'false',
                     'access_token' => $accessToken,
                 ]);
 
-            if ($response->successful()) {
-                Log::info("Successfully posted photo to Facebook Page for article [{$article->id}]. FB ID: " . $response->json('id'));
-                return ['success' => true, 'id' => $response->json('id')];
+            if (! $uploadResponse->successful()) {
+                $fbError = $uploadResponse->json('error')['message'] ?? 'Unknown FB API Error';
+                Log::error("FB Photo Upload API error: " . $fbError);
+                return ['success' => false, 'error' => 'Facebook API Error: ' . $fbError];
             }
 
-            $fbError = $response->json('error')['message'] ?? 'Unknown FB API Error';
-            Log::error("FB Photo Upload API error: " . $fbError);
+            $mediaFbid = (string) $uploadResponse->json('id');
+            if ($mediaFbid === '') {
+                Log::error("FB Photo Upload API error: Missing uploaded media id.");
+                return ['success' => false, 'error' => 'Facebook API Error: Missing uploaded media id'];
+            }
+
+            $feedResponse = Http::asForm()->post($feedUrl, [
+                'message' => $message,
+                'attached_media[0]' => json_encode(['media_fbid' => $mediaFbid], JSON_UNESCAPED_UNICODE),
+                'access_token' => $accessToken,
+            ]);
+
+            if ($feedResponse->successful()) {
+                Log::info("Successfully posted feed story to Facebook Page for article [{$article->id}]. FB Post ID: " . $feedResponse->json('id'));
+                return ['success' => true, 'id' => $feedResponse->json('id')];
+            }
+
+            $fbError = $feedResponse->json('error')['message'] ?? 'Unknown FB API Error';
+            Log::error("FB Feed Publish API error: " . $fbError);
             return ['success' => false, 'error' => 'Facebook API Error: ' . $fbError];
         } catch (\Throwable $e) {
-            Log::error("FB Photo Upload exception: " . $e->getMessage());
+            Log::error("FB Post exception: " . $e->getMessage());
             return ['success' => false, 'error' => 'System Exception: ' . $e->getMessage()];
         }
     }
