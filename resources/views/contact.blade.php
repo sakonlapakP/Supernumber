@@ -35,6 +35,14 @@
         <div class="contact-alert contact-alert--success">{{ session('contact_status_message') }}</div>
       @endif
 
+      @if (session('contact_spam_blocked'))
+        <div class="contact-alert contact-alert--error">
+          ไม่สามารถส่งข้อมูลได้ กรุณาติดต่อเราโดยตรงผ่าน
+          <a href="https://line.me/ti/p/~supernumber" target="_blank" rel="noopener noreferrer">LINE @supernumber</a>
+          หรือโทร <a href="tel:0963232656">0963232656</a>
+        </div>
+      @endif
+
       @if ($errors->any())
         <div class="contact-alert contact-alert--error">{{ $errors->first() }}</div>
       @endif
