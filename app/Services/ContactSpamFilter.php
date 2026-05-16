@@ -213,10 +213,6 @@ class ContactSpamFilter
             return true;
         }
 
-        // Single-word name that is all uppercase (e.g. NAYUYUTY, NATREGTEGH)
-        if (! preg_match('/\s/u', $trimmed) && preg_match('/^[A-Z]{6,}$/u', $trimmed)) {
-            return true;
-        }
 
         return false;
     }
