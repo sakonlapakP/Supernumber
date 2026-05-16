@@ -212,6 +212,15 @@
       .admin-rte__editor {
         min-height: 320px;
       }
+      .review-prompt-section {
+        gap: 10px;
+      }
+      .json-import-section {
+        padding: 16px;
+      }
+      .json-import-textarea {
+        min-height: 100px;
+      }
     }
 
     /* iPad portrait */
@@ -232,15 +241,32 @@
       .review-action {
         min-width: calc(50% - 6px);
       }
+      /* Prompt + JSON section */
       .review-prompt-section {
-        flex-direction: column;
-        align-items: stretch;
+        flex-direction: row;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
       }
       .prompt-length-toggle {
-        width: 100%;
+        flex: 1;
+        min-width: 180px;
       }
       #btn-gen-prompt {
+        flex: 1;
+        min-width: 200px;
+      }
+      .json-import-section {
+        padding: 16px;
+      }
+      .json-import-textarea {
+        min-height: 100px;
+        font-size: 13px;
+      }
+      .json-import-btn {
         width: 100%;
+        padding: 11px 20px;
+        font-size: 14px;
       }
     }
 
@@ -267,31 +293,58 @@
       .publish-toggle {
         padding-bottom: 0;
       }
-      .prompt-length-toggle,
-      .review-action {
-        width: 100%;
+      /* Prompt + JSON section — stacked full-width */
+      .review-prompt-section {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 10px;
+        margin-bottom: 20px;
+        padding-bottom: 16px;
       }
       .prompt-length-toggle {
+        width: 100%;
         justify-content: stretch;
       }
       .prompt-length-option {
         flex: 1;
         justify-content: center;
       }
-      .review-prompt-section {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      #btn-gen-prompt {
+      #btn-gen-prompt,
+      .review-action {
         width: 100%;
+        min-height: 48px;
+        font-size: 15px;
       }
+      /* JSON import */
+      .json-import-section {
+        padding: 14px;
+        margin-top: 0;
+      }
+      .json-import-title {
+        font-size: 13px;
+        margin-bottom: 10px;
+      }
+      .json-import-textarea {
+        min-height: 130px;
+        font-size: 12px;
+      }
+      .json-import-btn {
+        width: 100%;
+        padding: 12px 16px;
+        font-size: 14px;
+        margin-top: 8px;
+        border-radius: 8px;
+      }
+      /* Action buttons */
       .review-actions {
         gap: 10px;
       }
+      /* Editor */
       .admin-rte__editor {
         min-height: 260px;
         font-size: 14px;
       }
+      /* Prompt modal */
       .prompt-modal__body,
       .prompt-modal__head,
       .prompt-modal__foot {
@@ -300,6 +353,11 @@
       }
       .prompt-modal__textarea {
         min-height: 260px;
+        font-size: 12px;
+      }
+      .prompt-copy-btn {
+        width: 100%;
+        padding: 12px;
       }
     }
 
