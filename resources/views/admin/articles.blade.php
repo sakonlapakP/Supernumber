@@ -32,7 +32,7 @@
        };
 
        foreach($articlePlans as $item) {
-           if ($checkItemDone($item)) $totalDone++;
+           if (($item->status ?? null) === 'done' || $checkItemDone($item)) $totalDone++;
        }
 
        $groupedPlans = $articlePlans->groupBy(function($plan) use ($thaiMonths) {
@@ -1150,6 +1150,7 @@
       }
     </style>
 
+    <link rel="stylesheet" href="{{ asset('css/planning-calendar.css') }}?v={{ filemtime(public_path('css/planning-calendar.css')) }}">
 
     @if(!$tableExists)
       <div class="admin-alert admin-alert--warning" style="margin-bottom: 20px; background: #fffbeb; border: 1px solid #fef3c7; color: #92400e; padding: 15px; border-radius: 12px; display: flex; align-items: center; gap: 12px;">
@@ -1161,97 +1162,248 @@
       </div>
     @endif
 
-    <section class="admin-card content-plan-card">
-      <div class="plan-header">
-        <h3 class="plan-title">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 24px; height: 24px; color: #7c3aed;"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5m-9-6h.008v.008H12v-.008zM12 15h.008v.008H12V15zm0 2.25h.008v.008H12v-.008zM9.75 15h.008v.008H9.75V15zm0 2.25h.008v.008H9.75v-.008zM7.5 15h.008v.008H7.5V15zm0 2.25h.008v.008H7.5v-.008zm6.75-4.5h.008v.008h-.008v-.008zm0 2.25h.008v.008h-.008V15zm0 2.25h.008v.008h-.008v-.008zm2.25-4.5h.008v.008H16.5v-.008zm0 2.25h.008v.008H16.5V15z" /></svg>
-          ตารางแผนการเผยแพร่บทความ (1 ม.ค. - 31 ธ.ค. {{ $planYear + 543 }})
+    {{-- ═══════════════════════════════════════════════════════════════════════
+         Planning Interface — Calendar / Timeline / Table
+         ═══════════════════════════════════════════════════════════════════════ --}}
+    <section class="admin-card content-plan-card"
+             data-planning-interface
+             data-csrf="{{ csrf_token() }}"
+             data-api-base="{{ url('/admin/articles/api/plans') }}"
+             data-manager="{{ $isManager ? '1' : '0' }}">
+
+      {{-- ── Plan Section Header ───────────────────────────────────────────── --}}
+      <div class="plan-header plan-header-top">
+        <h3 class="plan-title" style="margin:0;">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:24px;height:24px;color:#7c3aed;"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75m-18 0v-7.5A2.25 2.25 0 015.25 9h13.5A2.25 2.25 0 0121 11.25v7.5" /></svg>
+          ตารางแผนการเผยแพร่บทความ
         </h3>
-        <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-          {{-- Year + Month filter --}}
-          <form action="{{ route('admin.articles') }}" method="GET" style="display: flex; align-items: center; gap: 8px;">
-            <select name="plan_year" class="admin-input" style="width: 95px; font-size: 13px; font-weight: 700; color: #7c3aed; cursor: pointer; padding: 6px 10px; border-color: #ddd6fe;" onchange="this.form.submit()">
+        <div class="plan-header-actions">
+          {{-- View Toggle --}}
+          <div class="planning-toggle-bar">
+            <button class="view-tab" data-view="calendar" title="มุมมองปฏิทิน (← →)">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6.75 3v2.25M17.25 3v2.25M3 18.75V7.5a2.25 2.25 0 012.25-2.25h13.5A2.25 2.25 0 0121 7.5v11.25m-18 0A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75" /></svg>
+              ปฏิทิน
+            </button>
+            <button class="view-tab" data-view="timeline" title="มุมมอง Timeline">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 013 19.875v-6.75zM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V8.625zM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 01-1.125-1.125V4.125z" /></svg>
+              Timeline
+            </button>
+            <button class="view-tab" data-view="table" title="มุมมองตาราง">
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3.375 19.5h17.25m-17.25 0a1.125 1.125 0 01-1.125-1.125M3.375 19.5h7.5c.621 0 1.125-.504 1.125-1.125m-9.75 0V5.625m0 12.75v-1.5c0-.621.504-1.125 1.125-1.125m18.375 2.625V5.625m0 12.75c0 .621-.504 1.125-1.125 1.125m1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125m0 3.75h-7.5A1.125 1.125 0 0112 18.375m9.75-12.75c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125m19.5 0v1.5c0 .621-.504 1.125-1.125 1.125M2.25 5.625v1.5c0 .621.504 1.125 1.125 1.125m0 0h17.25m-17.25 0h7.5c.621 0 1.125.504 1.125 1.125M3.375 8.25c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125m17.25-3.75h-7.5c-.621 0-1.125.504-1.125 1.125m8.625-1.125c.621 0 1.125.504 1.125 1.125v1.5c0 .621-.504 1.125-1.125 1.125" /></svg>
+              ตาราง
+            </button>
+          </div>
+          @if($isManager)
+            <button type="button" class="admin-button" style="background:#7c3aed;padding:6px 14px;font-size:13px;" onclick="openAddPlanModal()">+ เพิ่มแผนงาน</button>
+          @endif
+          <div class="plan-status-summary">
+            เตรียมแล้ว <span style="color:#10b981;">{{ $totalDone }}</span> / {{ $totalPlanned }}
+          </div>
+        </div>
+      </div>
+
+      {{-- ══════════════════════════════════════════════════════════════════════
+           VIEW 1: CALENDAR
+           ══════════════════════════════════════════════════════════════════════ --}}
+      <div class="planning-view" data-view="calendar">
+
+        {{-- Calendar nav --}}
+        <div class="cal-nav">
+          <div class="cal-nav-controls">
+            <button class="cal-nav-btn" data-cal-prev title="เดือนก่อน (←)">&#8592;</button>
+            <span id="cal-nav-label" class="cal-nav-label">กำลังโหลด...</span>
+            <button class="cal-nav-btn" data-cal-next title="เดือนถัดไป (→)">&#8594;</button>
+            <button class="cal-nav-today" data-cal-today>วันนี้</button>
+          </div>
+          <div id="cal-summary" class="cal-summary"></div>
+        </div>
+
+        {{-- Loading indicator --}}
+        <div id="cal-loading" class="cal-loading">
+          <div class="cal-spinner"></div>
+          <span>กำลังโหลดข้อมูล...</span>
+        </div>
+
+        {{-- Calendar grid (populated by JS) --}}
+        <div id="cal-grid" class="cal-grid" hidden></div>
+
+        <p style="font-size:12px;color:#94a3b8;margin-top:12px;font-family:'Kanit',sans-serif;">
+          💡 คลิกวันที่มีแผนเพื่อดูรายละเอียด &nbsp;|&nbsp; ← → เพื่อเปลี่ยนเดือน
+        </p>
+      </div>
+
+      {{-- ══════════════════════════════════════════════════════════════════════
+           VIEW 2: TIMELINE
+           ══════════════════════════════════════════════════════════════════════ --}}
+      <div class="planning-view" data-view="timeline" hidden>
+
+        <div class="timeline-nav">
+          <div class="cal-nav-controls">
+            <button class="cal-nav-btn" data-tl-prev title="สัปดาห์ก่อน (←)">&#8592;</button>
+            <span id="tl-nav-label" class="cal-nav-label" style="min-width:260px;">กำลังโหลด...</span>
+            <button class="cal-nav-btn" data-tl-next title="สัปดาห์ถัดไป (→)">&#8594;</button>
+            <button class="cal-nav-today" data-tl-today>สัปดาห์นี้</button>
+          </div>
+        </div>
+
+        <div class="timeline-scroll">
+          <div id="timeline-grid" class="timeline-grid">
+            <div class="cal-loading" style="grid-column:1/-1;">
+              <div class="cal-spinner"></div>
+              <span>กำลังโหลด Timeline...</span>
+            </div>
+          </div>
+        </div>
+
+        {{-- Workload chart --}}
+        <div class="tl-workload" style="margin-top:16px;">
+          <div class="tl-workload-title">📊 ปริมาณงานรายสัปดาห์</div>
+          <div id="tl-chart" class="tl-chart"></div>
+        </div>
+
+        <p style="font-size:12px;color:#94a3b8;margin-top:12px;font-family:'Kanit',sans-serif;">
+          💡 คลิกที่สัปดาห์เพื่อดูแผนทั้งหมด &nbsp;|&nbsp; ← → เพื่อเลื่อนสัปดาห์
+        </p>
+      </div>
+
+      {{-- ══════════════════════════════════════════════════════════════════════
+           VIEW 3: TABLE (existing plan table, enhanced)
+           ══════════════════════════════════════════════════════════════════════ --}}
+      <div class="planning-view" data-view="table" hidden>
+
+        {{-- Filter bar --}}
+        <div class="plan-filter-bar">
+          <select id="table-status-filter" class="plan-filter-select">
+            <option value="">ทุกสถานะ</option>
+            <option value="todo">⭕ วางแผน</option>
+            <option value="in_progress">📝 กำลังทำ</option>
+            <option value="done">✅ เสร็จ</option>
+            <option value="blocked">🔴 ติดขัด</option>
+            <option value="cancelled">❌ ยกเลิก</option>
+          </select>
+          <select id="table-type-filter" class="plan-filter-select">
+            <option value="">ทุกประเภท</option>
+            <option value="วันสำคัญ">วันสำคัญ</option>
+            <option value="หวย">หวย</option>
+            <option value="Evergreen">Evergreen</option>
+            <option value="วันมู">วันมู</option>
+            <option value="บทวิเคราะห์">บทวิเคราะห์</option>
+          </select>
+
+          {{-- Table-view year/month form (fallback for full list) --}}
+          <form action="{{ route('admin.articles') }}" method="GET" style="display:flex;align-items:center;gap:6px;margin-left:auto;">
+            <select name="plan_year" class="plan-filter-select" style="color:#7c3aed;font-weight:700;" onchange="this.form.submit()">
               @foreach($planYearOptions as $yr => $label)
                 <option value="{{ $yr }}" {{ $planYear === $yr ? 'selected' : '' }}>{{ $label }}</option>
               @endforeach
             </select>
-            <select id="plan-month-filter" name="month_plan" class="admin-input" style="width: 130px; font-size: 13px; font-weight: 600; cursor: pointer; padding: 6px 10px;" onchange="this.form.submit()">
+            <select id="plan-month-filter" name="month_plan" class="plan-filter-select" onchange="this.form.submit()">
               <option value="">ทุกเดือน</option>
               @foreach($groupedPlans->keys() as $monthName)
                 <option value="{{ $monthName }}" {{ request('month_plan') === $monthName ? 'selected' : '' }}>{{ $monthName }}</option>
               @endforeach
             </select>
             <a href="{{ route('admin.articles', ['plan_year' => now()->year, 'month_plan' => $currentMonthName]) }}"
-               style="white-space: nowrap; padding: 7px 12px; border-radius: 10px; font-size: 13px; font-weight: 700; text-decoration: none; border: 1px solid #e2e8f0; transition: all 0.15s;
-                      background: {{ ($planYear === now()->year && request('month_plan') === $currentMonthName) ? '#7c3aed' : '#f1f5f9' }};
-                      color: {{ ($planYear === now()->year && request('month_plan') === $currentMonthName) ? '#fff' : '#475569' }};">
+               style="white-space:nowrap;padding:7px 12px;border-radius:10px;font-size:13px;font-weight:700;text-decoration:none;border:1px solid #e2e8f0;
+                      background:{{ ($planYear === now()->year && request('month_plan') === $currentMonthName) ? '#7c3aed' : '#f1f5f9' }};
+                      color:{{ ($planYear === now()->year && request('month_plan') === $currentMonthName) ? '#fff' : '#475569' }};">
               เดือนนี้
             </a>
           </form>
-          @if($isManager)
-            <button type="button" class="admin-button" style="background: #7c3aed; padding: 6px 12px; font-size: 13px;" onclick="openAddPlanModal()">+ เพิ่มแผนงาน</button>
-          @endif
-          <div class="plan-status-summary">
-            เตรียมแล้ว <span style="color: #10b981;">{{ $totalDone }}</span> / ทั้งหมด {{ $totalPlanned }}
-          </div>
+        </div>
+
+        <div class="plan-table-wrap">
+          <table class="plan-table">
+            <thead>
+              <tr>
+                <th style="width:120px;">เดือน</th>
+                <th style="width:130px;">วันที่ / เวลา</th>
+                <th style="width:100px;">ประเภท</th>
+                <th>หัวข้อ</th>
+                <th style="width:100px;">สถานะ</th>
+                @if($isManager)
+                  <th style="width:80px;">จัดการ</th>
+                @endif
+              </tr>
+            </thead>
+            <tbody>
+              @foreach($groupedPlans as $monthName => $items)
+                <tr class="month-divider" data-month-divider="{{ $monthName }}">
+                  <td colspan="{{ $isManager ? 6 : 5 }}">{{ $monthName }}</td>
+                </tr>
+                @foreach($items as $item)
+                  @php
+                    $isDone = $checkItemDone($item);
+                    $itemStatus = $item->status ?? ($isDone ? 'done' : 'todo');
+                    $isOverdue = !$isDone && \Carbon\Carbon::parse($item->publish_date)->isPast() && !in_array($itemStatus, ['done','cancelled']);
+                    $displayStatus = $isOverdue ? 'overdue' : $itemStatus;
+                    $statusLabels = ['todo'=>'⭕ วางแผน','in_progress'=>'📝 กำลังทำ','done'=>'✅ เสร็จ','blocked'=>'🔴 ติดขัด','cancelled'=>'❌ ยกเลิก','overdue'=>'⚠️ เลยกำหนด'];
+                  @endphp
+                  <tr class="{{ $isDone ? 'plan-row--checked' : ($item->type === 'หวย' ? 'plan-row--lottery' : '') }} plan-item-row plan-row--status-{{ $displayStatus }}"
+                      data-month="{{ $monthName }}"
+                      data-status="{{ $itemStatus }}"
+                      data-type="{{ $item->type }}">
+                    <td>{{ $monthName }}</td>
+                    <td style="font-weight:700;">
+                      @if($isDone) <span class="check-icon">✅</span>
+                      @elseif($isOverdue) <span style="color:#b91c1c;margin-right:4px;">⚠️</span>
+                      @elseif($item->type === 'หวย') <span style="color:#EAB308;margin-right:4px;font-weight:900;">!</span>
+                      @endif
+                      {{ \Carbon\Carbon::parse($item->publish_date)->format('j') }} | {{ $item->publish_time }}
+                    </td>
+                    <td><span class="type-pill type-pill--{{ strtolower($item->type) }}">{{ $item->type }}</span></td>
+                    <td>{{ $item->topic }}</td>
+                    <td>
+                      <span class="plan-status-cell plan-status-cell--{{ $displayStatus }}">
+                        {{ $statusLabels[$displayStatus] ?? $displayStatus }}
+                      </span>
+                    </td>
+                    @if($isManager)
+                      <td>
+                        <div style="display:flex;gap:8px;">
+                          <button type="button" class="plan-action-btn" onclick="openEditPlanModal({{ $item->toJson() }})" title="แก้ไข">
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                          </button>
+                          <form action="{{ route('admin.article-plans.destroy', $item) }}" method="POST" onsubmit="return confirm('ยืนยันการลบแผนงานนี้?')">
+                            @csrf
+                            @method('DELETE')
+                            <button type="submit" class="plan-action-btn plan-action-btn--delete" title="ลบ">
+                              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:16px;height:16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5a3.375 3.375 0 00-3.375 3.375V6.75m7.5 0H9" /></svg>
+                            </button>
+                          </form>
+                        </div>
+                      </td>
+                    @endif
+                  </tr>
+                @endforeach
+              @endforeach
+            </tbody>
+          </table>
         </div>
       </div>
 
-      <div class="plan-table-wrap">
-        <table class="plan-table">
-          <thead>
-            <tr>
-              <th style="width: 140px;">เดือน</th>
-              <th style="width: 140px;">วันที่ / เวลา</th>
-              <th style="width: 110px;">ประเภท</th>
-              <th>หัวข้อ</th>
-              @if($isManager)
-                <th style="width: 80px;">จัดการ</th>
-              @endif
-            </tr>
-          </thead>
-          <tbody>
-            @foreach($groupedPlans as $monthName => $items)
-              <tr class="month-divider" data-month-divider="{{ $monthName }}">
-                <td colspan="{{ $isManager ? 5 : 4 }}">{{ $monthName }}</td>
-              </tr>
-              @foreach($items as $item)
-                @php $isDone = $checkItemDone($item); @endphp
-                <tr class="{{ $isDone ? 'plan-row--checked' : ($item->type === 'หวย' ? 'plan-row--lottery' : '') }} plan-item-row" data-month="{{ $monthName }}">
-                  <td>{{ $monthName }}</td>
-                  <td style="font-weight: 700;">
-                    @if($isDone) 
-                      <span class="check-icon">✅</span> 
-                    @elseif($item->type === 'หวย')
-                      <span style="color: #EAB308; margin-right: 4px; font-weight: 900;">!</span>
-                    @endif
-                    {{ \Carbon\Carbon::parse($item->publish_date)->format('j') }} | {{ $item->publish_time }}
-                  </td>
-                  <td><span class="type-pill type-pill--{{ strtolower($item->type) }}">{{ $item->type }}</span></td>
-                  <td>{{ $item->topic }}</td>
-                  @if($isManager)
-                    <td>
-                      <div style="display: flex; gap: 8px;">
-                        <button type="button" class="plan-action-btn" onclick="openEditPlanModal({{ $item->toJson() }})" title="แก้ไข">
-                          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
-                        </button>
-                        <form action="{{ route('admin.article-plans.destroy', $item) }}" method="POST" onsubmit="return confirm('ยืนยันการลบแผนงานนี้?')">
-                          @csrf
-                          @method('DELETE')
-                          <button type="submit" class="plan-action-btn plan-action-btn--delete" title="ลบ">
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width: 16px; height: 16px;"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5a3.375 3.375 0 00-3.375 3.375V6.75m7.5 0H9" /></svg>
-                          </button>
-                        </form>
-                      </div>
-                    </td>
-                  @endif
-                </tr>
-              @endforeach
-            @endforeach
-          </tbody>
-        </table>
-      </div>
     </section>
+    </div>
+
+    {{-- ═══════════════════════════════════════════════════════════════════════
+         Plan Detail Modal (AJAX — populated by JS)
+         ═══════════════════════════════════════════════════════════════════════ --}}
+    <div id="planning-detail-overlay" class="plan-detail-overlay">
+      <div class="plan-detail-modal">
+        <div class="plan-detail-header">
+          <h3 id="planning-modal-title" class="plan-detail-title">รายละเอียดแผน</h3>
+          <button id="planning-modal-close" class="plan-detail-close" title="ปิด (Esc)">&times;</button>
+        </div>
+        <div class="plan-detail-body">
+          <div id="planning-modal-plans"></div>
+        </div>
+        <div class="plan-detail-footer">
+          @if($isManager)
+            <button type="button" class="admin-button admin-button--muted" style="border-radius:12px;" onclick="openAddPlanModal()">+ เพิ่มแผนใหม่</button>
+          @endif
+          <button type="button" class="admin-button admin-button--muted" style="border-radius:12px;" id="planning-modal-close-btn">ปิด</button>
+        </div>
+      </div>
     </div>
 
     <script>
@@ -1781,5 +1933,11 @@
         document.getElementById('plan-modal').style.display = 'none';
         document.body.style.overflow = 'auto';
     }
+  </script>
+  <script src="{{ asset('js/planning-calendar.js') }}?v={{ filemtime(public_path('js/planning-calendar.js')) }}"></script>
+  <script>
+    document.getElementById('planning-modal-close-btn')?.addEventListener('click', function() {
+      if (window.planningInterface) window.planningInterface.closeModal();
+    });
   </script>
 @endpush

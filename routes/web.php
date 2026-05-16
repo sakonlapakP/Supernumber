@@ -2989,6 +2989,12 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     Route::put('/article-plans/{articlePlan}', [\App\Http\Controllers\Admin\ArticlePlanController::class, 'update'])->name('article-plans.update');
     Route::delete('/article-plans/{articlePlan}', [\App\Http\Controllers\Admin\ArticlePlanController::class, 'destroy'])->name('article-plans.destroy');
 
+    // Plan API endpoints (AJAX / calendar interface)
+    Route::get('/articles/api/plans/month/{year}/{month}', [\App\Http\Controllers\Admin\PlanApiController::class, 'forMonth'])->name('api.plans.month');
+    Route::get('/articles/api/plans/week/{year}/{week}', [\App\Http\Controllers\Admin\PlanApiController::class, 'forWeek'])->name('api.plans.week');
+    Route::get('/articles/api/plans/upcoming', [\App\Http\Controllers\Admin\PlanApiController::class, 'upcoming'])->name('api.plans.upcoming');
+    Route::patch('/articles/api/plans/{plan}/status', [\App\Http\Controllers\Admin\PlanApiController::class, 'updateStatus'])->name('api.plans.update-status');
+
     Route::post('/articles/check-slug', function (Request $request) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;

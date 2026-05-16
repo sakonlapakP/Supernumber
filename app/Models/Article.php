@@ -3,14 +3,17 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use App\Traits\UnixTimestampSerializable;
 use App\Services\ArticleContentSanitizer;
 
 class Article extends Model
 {
+    use HasFactory;
     use UnixTimestampSerializable;
 
     protected $fillable = [
@@ -72,6 +75,26 @@ class Article extends Model
     public function approvedComments(): HasMany
     {
         return $this->comments()->where('status', ArticleComment::STATUS_APPROVED);
+    }
+
+    public function plan(): HasOne
+    {
+        return $this->hasOne(ArticlePlan::class);
+    }
+
+    /**
+     * Resolve the public URL for the article's cover image.
+     * When the article was created via content refresh, uses the plan's publish_date
+     * for the storage path year; otherwise falls back to published_at.
+     */
+    public function getCoverImageUrl(): ?string
+    {
+        $path = (string) ($this->cover_image_path ?? '');
+        if ($path === '') {
+            return null;
+        }
+
+        return asset('storage/' . ltrim($path, '/'));
     }
 
     public function sanitizedContent(): string
