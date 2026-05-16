@@ -58,6 +58,7 @@
         <thead>
           <tr>
             <th>#</th>
+            <th>สถานะ</th>
             <th>รูป</th>
             <th>Facebook Post ID</th>
             <th>เวลาโพสต์</th>
@@ -93,8 +94,31 @@
                 }
               }
             @endphp
+            @php
+              $statusStyles = [
+                'pending'   => 'color:#dc2626;background:#fef2f2',
+                'refreshed' => 'color:#d97706;background:#fffbeb',
+                'approved'  => 'color:#059669;background:#ecfdf5',
+                'published' => 'color:#1d4ed8;background:#eff6ff',
+              ];
+              $statusLabels = [
+                'pending'   => 'รอ',
+                'refreshed' => 'เขียนแล้ว',
+                'approved'  => 'อนุมัติ',
+                'published' => 'เผยแพร่',
+              ];
+              $postStatus = $post->status ?? 'pending';
+            @endphp
             <tr>
               <td>{{ $post->id }}</td>
+              <td>
+                <a href="{{ route('admin.facebook-imports.review', $post->id) }}"
+                   style="display:inline-flex;align-items:center;gap:6px;text-decoration:none;">
+                  <span style="padding:3px 8px;border-radius:999px;font-size:11px;font-weight:700;{{ $statusStyles[$postStatus] ?? $statusStyles['pending'] }}">
+                    {{ $statusLabels[$postStatus] ?? $postStatus }}
+                  </span>
+                </a>
+              </td>
               <td>
                 @if ($imageUrl !== '')
                   <a href="{{ $imageUrl }}" target="_blank" rel="noopener">

@@ -2669,6 +2669,70 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ));
     })->name('facebook-imports.rebuild-run-get');
 
+    Route::get('/facebook-imports/{id}/review', function (Request $request, int $id) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        $post = \App\Models\FacebookImportedPost::findOrFail($id);
+        $article = $post->article_id ? \App\Models\Article::find($post->article_id) : null;
+
+        return view('admin.facebook-imports-review', compact('post', 'article'));
+    })->name('facebook-imports.review');
+
+    Route::post('/facebook-imports/{id}/approve', function (Request $request, int $id) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        $post = \App\Models\FacebookImportedPost::findOrFail($id);
+
+        $validated = $request->validate([
+            'title'            => ['required', 'string', 'max:255'],
+            'slug'             => ['required', 'string', 'max:255'],
+            'excerpt'          => ['nullable', 'string'],
+            'content'          => ['nullable', 'string'],
+            'meta_description' => ['nullable', 'string', 'max:500'],
+            'keywords'         => ['nullable', 'string', 'max:500'],
+            'lsi_keywords'     => ['nullable', 'string', 'max:1000'],
+            'published_at'     => ['nullable', 'date'],
+            'is_published'     => ['nullable'],
+        ]);
+
+        $isPublished = $request->boolean('is_published');
+        $publishedAt = $validated['published_at']
+            ? \Illuminate\Support\Carbon::parse($validated['published_at'])->setTimezone('Asia/Bangkok')
+            : null;
+
+        $articleData = [
+            'title'            => $validated['title'],
+            'slug'             => $validated['slug'],
+            'excerpt'          => $validated['excerpt'] ?? null,
+            'content'          => $validated['content'] ?? null,
+            'meta_description' => $validated['meta_description'] ?? null,
+            'keywords'         => $validated['keywords'] ?? null,
+            'lsi_keywords'     => $validated['lsi_keywords'] ?? null,
+            'is_published'     => $isPublished,
+            'published_at'     => $publishedAt,
+            'author_user_id'   => session('admin_user_id'),
+        ];
+
+        if ($post->article_id && ($article = \App\Models\Article::find($post->article_id))) {
+            $article->update($articleData);
+        } else {
+            $article = \App\Models\Article::create($articleData);
+        }
+
+        $post->update([
+            'status'     => \App\Models\FacebookImportedPost::STATUS_APPROVED,
+            'article_id' => $article->id,
+        ]);
+
+        return redirect()
+            ->route('admin.facebook-imports.review', $post->id)
+            ->with('status_message', 'บันทึกบทความเรียบร้อยแล้ว' . ($isPublished ? ' (เผยแพร่แล้ว)' : ' (Draft)'));
+    })->name('facebook-imports.approve');
+
     Route::get('/articles/move-local-images-to-public', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
             return $redirect;
