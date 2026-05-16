@@ -82,15 +82,22 @@
                 @if ($user->is_active)
                   <span class="admin-badge admin-badge--success">เปิดใช้งาน</span>
                 @else
-                  <form action="{{ route('admin.users.approve', $user) }}" method="post" style="display: flex; gap: 8px; align-items: center;">
-                    @csrf
-                    <select name="role" class="admin-select admin-select--compact" style="margin: 0; width: auto;">
-                      @foreach ($roleOptions as $role)
-                        <option value="{{ $role }}" @selected($user->role === $role)>{{ $role }}</option>
-                      @endforeach
-                    </select>
-                    <button type="submit" class="admin-button admin-button--compact">อนุมัติ</button>
-                  </form>
+                  <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <form action="{{ route('admin.users.approve', $user) }}" method="post" style="display: flex; gap: 8px; align-items: center; margin: 0;">
+                      @csrf
+                      <select name="role" class="admin-select admin-select--compact" style="margin: 0; width: auto;">
+                        @foreach ($roleOptions as $role)
+                          <option value="{{ $role }}" @selected($user->role === $role)>{{ $role }}</option>
+                        @endforeach
+                      </select>
+                      <button type="submit" class="admin-button admin-button--compact">อนุมัติ</button>
+                    </form>
+                    <form action="{{ route('admin.users.reject', $user) }}" method="post" style="margin: 0;"
+                      onsubmit="return confirm('ปฏิเสธและลบบัญชีของ {{ addslashes($user->name) }} ใช่หรือไม่?')">
+                      @csrf
+                      <button type="submit" class="admin-button admin-button--compact" style="background: var(--admin-red, #dc2626); border-color: var(--admin-red, #dc2626);">ปฏิเสธ</button>
+                    </form>
+                  </div>
                 @endif
               </td>
             </tr>

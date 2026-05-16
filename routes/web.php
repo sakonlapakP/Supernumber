@@ -1363,15 +1363,17 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->where('username', $username)
             ->first();
 
-        if (! $user) {
+        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             return $rejectAdminLogin($request);
+        }
+
+        if (! $user->is_active) {
+            return back()
+                ->withInput($request->except('password'))
+                ->withErrors(['username' => 'บัญชีของคุณยังรอการอนุมัติจาก Manager กรุณารอสักครู่']);
         }
 
         if (! $user->canAccessAdminPanel()) {
-            return $rejectAdminLogin($request);
-        }
-
-        if (! Hash::check($credentials['password'], $user->password)) {
             return $rejectAdminLogin($request);
         }
 
@@ -1401,6 +1403,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
     Route::get('/register', [\App\Http\Controllers\Admin\RegisterController::class, 'showRegistrationForm'])->name('register');
     Route::post('/register', [\App\Http\Controllers\Admin\RegisterController::class, 'register'])->name('register.store');
+
+    Route::get('/pending', function () {
+        return view('admin.pending');
+    })->name('pending');
 
     Route::get('/import-numbers', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin('manager')) return $redirect;
@@ -4473,6 +4479,23 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->route('admin.users')
             ->with('status_message', "อนุมัติผู้ใช้ {$user->name} เรียบร้อยแล้ว");
     })->name('users.approve');
+
+    Route::post('/users/{user}/reject', function (User $user) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        if ($user->is_active) {
+            return redirect()->route('admin.users')->with('status_message', 'ไม่สามารถปฏิเสธผู้ใช้ที่เปิดใช้งานแล้วได้');
+        }
+
+        $name = $user->name;
+        $user->delete();
+
+        return redirect()
+            ->route('admin.users')
+            ->with('status_message', "ปฏิเสธและลบบัญชี {$name} เรียบร้อยแล้ว");
+    })->name('users.reject');
 
     Route::get('/activity-logs', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {

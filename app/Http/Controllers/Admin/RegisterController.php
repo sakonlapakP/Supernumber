@@ -33,10 +33,10 @@ class RegisterController extends Controller
             'username' => $request->username,
             'email' => $request->email,
             'password' => Hash::make($request->password),
-            'role' => User::ROLE_STAFF, // Default to staff, manager will change it
-            'is_active' => false, // Must be approved by manager
+            'role' => User::ROLE_STAFF,
+            'is_active' => false,
         ]);
 
-        return redirect()->route('admin.login')->with('status_message', 'สมัครสมาชิกเรียบร้อยแล้ว กรุณารอ Manager อนุมัติการเข้าใช้งาน');
+        return redirect()->route('admin.pending')->with('pending_username', $request->username);
     }
 }
