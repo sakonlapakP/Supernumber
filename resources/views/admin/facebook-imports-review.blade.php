@@ -470,6 +470,14 @@
         </div>
 
         <div class="review-actions">
+          <div style="display:flex;align-items:center;gap:0;order:-1;border:1px solid #7c3aed;border-radius:8px;overflow:hidden;">
+            <label style="display:flex;align-items:center;gap:6px;padding:10px 14px;cursor:pointer;font-size:13px;font-weight:700;background:#f5f3ff;color:#7c3aed;">
+              <input type="radio" name="prompt_length" value="short" checked style="accent-color:#7c3aed;"> สั้น <span style="font-weight:400;color:#a78bfa;">(150-300)</span>
+            </label>
+            <label style="display:flex;align-items:center;gap:6px;padding:10px 14px;cursor:pointer;font-size:13px;font-weight:700;border-left:1px solid #7c3aed;background:#f5f3ff;color:#7c3aed;">
+              <input type="radio" name="prompt_length" value="long" style="accent-color:#7c3aed;"> ยาว <span style="font-weight:400;color:#a78bfa;">(500-1000)</span>
+            </label>
+          </div>
           <button type="button" id="btn-gen-prompt" class="review-action"
             style="background:#7c3aed;color:#fff;order:-1;">
             ✨ Generate Prompt Article
@@ -630,9 +638,16 @@
       return;
     }
 
-    const publishedDate = publishedAt.slice(0, 10); // YYYY-MM-DD
+    const publishedDate = publishedAt.slice(0, 10);
+    const length = document.querySelector('input[name="prompt_length"]:checked').value;
+    const isShort = length === 'short';
+    const wordRange    = isShort ? '150-300' : '500-1000';
+    const constraint   = isShort ? 'CONTENT_150_TO_300_WORDS' : 'CONTENT_500_TO_1000_WORDS';
+    const contentHint  = isShort
+      ? 'เนื้อหา HTML กระชับ ใช้ h2 p ul li เท่านั้น ห้าม h1 ความยาว 150-300 คำ'
+      : 'เนื้อหา HTML ใช้ h2 h3 p ul li เท่านั้น ห้าม h1 ความยาว 500-1000 คำ มีหัวข้อย่อยอย่างน้อย 3 หัวข้อ';
 
-    const prompt = `ช่วยเขียนบทความใหม่จากเนื้อหาต้นฉบับด้านล่างนี้ให้สมบูรณ์และน่าสนใจ โดยอ้างอิงข้อมูลจากแหล่งที่น่าเชื่อถือเท่านั้น เขียนเป็นภาษาไทย
+    const prompt = `ช่วยเขียนบทความใหม่จากเนื้อหาต้นฉบับด้านล่างนี้ให้สมบูรณ์และน่าสนใจ โดยอ้างอิงข้อมูลจากแหล่งที่น่าเชื่อถือเท่านั้น เขียนเป็นภาษาไทย ความยาว ${wordRange} คำ
 
 ──── เนื้อหาต้นฉบับจาก Facebook (โพสต์เมื่อ ${fbDateDisplay}) ────
 ${fbMessage}
@@ -642,11 +657,11 @@ ${fbMessage}
 
 [
   {
-    "_constraints": "CONTENT_MUST_BE_1000_WORDS_MINIMUM | NO_YEAR_IN_SLUG | HTML_FORMAT_ONLY | THAI_LANGUAGE_ONLY | EVERGREEN_CONTENT_NO_DATE_REFERENCES",
+    "_constraints": "${constraint} | NO_YEAR_IN_SLUG | HTML_FORMAT_ONLY | THAI_LANGUAGE_ONLY | EVERGREEN_CONTENT_NO_DATE_REFERENCES",
     "title": "พาดหัวที่ดึงดูดใจ ใส่ปี พ.ศ. ได้ถ้าเหมาะสม",
     "slug": "url-slug-ภาษาอังกฤษ-ห้ามใส่ปี-คั่นด้วย-hyphen",
     "excerpt": "คำเกริ่นนำ 1-2 ประโยค ดึงดูดให้อ่านต่อ ไม่เกิน 160 ตัวอักษร",
-    "content": "<h2>หัวข้อหลัก</h2><p>เนื้อหา HTML ใช้ h2 h3 p ul li เท่านั้น ห้ามใช้ h1 ความยาวไม่ต่ำกว่า 1000 คำ</p>",
+    "content": "<h2>หัวข้อหลัก</h2><p>${contentHint}</p>",
     "meta_description": "สรุปเนื้อหาสำหรับ Google Search ความยาว 120-155 ตัวอักษร",
     "keywords": "keyword หลัก 1, keyword หลัก 2, keyword หลัก 3, keyword หลัก 4, keyword หลัก 5",
     "lsi_keywords": "คำค้นหาเกี่ยวข้อง 1, คำที่ 2, คำที่ 3, คำที่ 4, คำที่ 5, คำที่ 6, คำที่ 7, คำที่ 8, คำที่ 9, คำที่ 10",
