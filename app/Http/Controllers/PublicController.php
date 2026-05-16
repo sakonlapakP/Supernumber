@@ -291,7 +291,7 @@ class PublicController extends Controller
     {
         $articles = Article::query()
             ->published()
-            ->latest('published_at')
+            ->orderByRaw('COALESCE(content_updated_at, published_at) DESC')
             ->latest('id')
             ->paginate(9);
 
@@ -561,7 +561,7 @@ class PublicController extends Controller
                 'url' => route('articles.show', $article->slug),
                 'priority' => '0.7',
                 'changefreq' => 'weekly',
-                'lastmod' => $article->updated_at->toAtomString(),
+                'lastmod' => $article->getEffectiveUpdatedAt()->toAtomString(),
             ];
         }
 

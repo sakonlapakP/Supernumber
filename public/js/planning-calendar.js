@@ -125,8 +125,8 @@ class PlanningInterface {
   setCalLoading(on) {
     const spinner = this.el.querySelector('#cal-loading');
     const grid = this.el.querySelector('#cal-grid');
-    if (spinner) spinner.hidden = !on;
-    if (grid) grid.hidden = on;
+    if (spinner) spinner.style.display = on ? 'flex' : 'none';
+    if (grid) grid.style.display = on ? 'none' : '';
   }
 
   updateCalNav() {

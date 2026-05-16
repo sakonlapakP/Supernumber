@@ -485,7 +485,7 @@
             <div class="home-number-group__head" style="margin-bottom: 24px;">
               <div class="home-number-group__copy">
                 <h3 class="home-number-group__title" style="font-size: 24px; color: #1a1612;">เบอร์รายเดือนแนะนำ</h3>
-                <p class="home-number-group__hint" style="font-size: 14px; color: #7a6c62;">รวมเบอร์รายเดือนที่พร้อมเลือกแพ็กเกจ</p>
+                <p class="home-number-group__hint" style="font-size: 14px; color: #7a6c62;">รวมเบอร์รายเดือนที่พร้อมเลือกแพ็กเกจ สัญญา 12 เดือน</p>
               </div>
             </div>
             <div class="numbers-catalog-grid listing-card-grid is-default-split" data-view="{{ $selectedView }}">

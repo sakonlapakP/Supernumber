@@ -509,8 +509,8 @@
 
 /* Status dropdown popup */
 .status-dropdown {
-  position: absolute;
-  z-index: 100;
+  position: fixed;
+  z-index: 20000;
   background: #fff;
   border: 1px solid #e2e8f0;
   border-radius: 12px;

@@ -22,6 +22,7 @@ use App\Services\EnvironmentEditor;
 use App\Services\AdminLogViewer;
 use App\Services\ArticleContentSanitizer;
 use App\Services\FacebookContentRefreshService;
+use App\Services\FacebookImportsRebuildService;
 use App\Services\EstimateRecommendationService;
 use App\Services\Ga4AnalyticsService;
 use App\Services\LineEstimateLeadNotifier;
@@ -2614,6 +2615,59 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             $summary['deleted_imports']
         ));
     })->name('facebook-imports.refresh-articles');
+
+    Route::get('/facebook-imports/rebuild-preview', function (Request $request, FacebookImportsRebuildService $rebuildService) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        $maxPosts = max(1, min(1000, (int) $request->query('max_posts', 300)));
+        $summary = $rebuildService->preview($maxPosts);
+
+        return response()->json($summary);
+    })->name('facebook-imports.rebuild-preview');
+
+    Route::post('/facebook-imports/rebuild-run', function (Request $request, FacebookImportsRebuildService $rebuildService) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        $maxPosts = max(1, min(1000, (int) $request->input('max_posts', 300)));
+        $authorUserId = is_numeric(session('admin_user_id')) ? (int) session('admin_user_id') : null;
+        $summary = $rebuildService->rebuild($maxPosts, $authorUserId);
+
+        return back()->with('status_message', sprintf(
+            'Rebuild สำเร็จ: fetched=%d eligible=%d imported=%d created=%d deleted_articles=%d deleted_images=%d',
+            $summary['fetched_posts'],
+            $summary['eligible_posts'],
+            $summary['imported_posts'],
+            $summary['created_articles'],
+            $summary['deleted_articles'],
+            $summary['deleted_article_images']
+        ));
+    })->name('facebook-imports.rebuild-run');
+
+    Route::get('/facebook-imports/rebuild-run', function (Request $request, FacebookImportsRebuildService $rebuildService) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        $maxPosts = max(1, min(1000, (int) $request->query('max_posts', 300)));
+        $authorUserId = is_numeric(session('admin_user_id')) ? (int) session('admin_user_id') : null;
+        $summary = $rebuildService->rebuild($maxPosts, $authorUserId);
+
+        return redirect()
+            ->route('admin.facebook-imports')
+            ->with('status_message', sprintf(
+                'Rebuild สำเร็จ: fetched=%d eligible=%d imported=%d created=%d deleted_articles=%d deleted_images=%d',
+                $summary['fetched_posts'],
+                $summary['eligible_posts'],
+                $summary['imported_posts'],
+                $summary['created_articles'],
+                $summary['deleted_articles'],
+                $summary['deleted_article_images']
+            ));
+    })->name('facebook-imports.rebuild-run-get');
 
     Route::get('/articles/move-local-images-to-public', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {

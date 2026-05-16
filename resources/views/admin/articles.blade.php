@@ -8,8 +8,7 @@
            9 => 'กันยายน', 10 => 'ตุลาคม', 11 => 'พฤศจิกายน', 12 => 'ธันวาคม'
        ];
        
-       $totalPlanned = $articlePlans->count();
-       $totalDone = 0;
+       $selectedMonth = request('month_plan');
        
        $checkItemDone = function($item) use ($existingArticlesInfo) {
            if (\Carbon\Carbon::parse($item->publish_date)->isPast()) {
@@ -31,13 +30,21 @@
            return false;
        };
 
-       foreach($articlePlans as $item) {
-           if (($item->status ?? null) === 'done' || $checkItemDone($item)) $totalDone++;
-       }
-
        $groupedPlans = $articlePlans->groupBy(function($plan) use ($thaiMonths) {
            return $thaiMonths[\Carbon\Carbon::parse($plan->publish_date)->month];
        });
+
+       $summaryPlans = $selectedMonth
+           ? ($groupedPlans->get($selectedMonth, collect()))
+           : $articlePlans;
+
+       $totalPlanned = $summaryPlans->count();
+       $totalDone = 0;
+       foreach($summaryPlans as $item) {
+           if ($item->type === 'หวย' || ($item->status ?? null) === 'done' || $checkItemDone($item)) {
+               $totalDone++;
+           }
+       }
 
        $thaiYear = $planYear + 543 - 2500; // e.g. 2026 → 69
        $currentThaiYear = now()->year + 543 - 2500;
@@ -53,7 +60,27 @@
     @endphp
     <div class="admin-page-head">
       <div>
-        <h1>บทความ</h1>
+        <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+          <h1 style="margin:0;">บทความ</h1>
+          <span class="admin-muted" style="font-size:14px; font-weight:700;">(1 ม.ค. - 31 ธ.ค. {{ $planYear + 543 }})</span>
+          <select id="unified-year-filter" class="admin-input" style="width: 95px; font-size: 13px; font-weight: 700; color: #7c3aed; cursor: pointer; padding: 6px 10px; border-color: #ddd6fe;">
+            @foreach($planYearOptions as $yr => $label)
+              <option value="{{ $yr }}" {{ $planYear === $yr ? 'selected' : '' }}>{{ $label }}</option>
+            @endforeach
+          </select>
+          <select id="unified-month-filter" class="admin-input" style="width: 130px; font-size: 13px; font-weight: 600; cursor: pointer; padding: 6px 10px;">
+            <option value="">ทุกเดือน</option>
+            @foreach($thaiMonths as $monthName)
+              <option value="{{ $monthName }}" {{ request('month_plan') === $monthName ? 'selected' : '' }}>{{ $monthName }}</option>
+            @endforeach
+          </select>
+          <a href="{{ route('admin.articles', ['plan_year' => now()->year, 'month_plan' => $currentMonthName]) }}"
+             style="white-space: nowrap; padding: 7px 12px; border-radius: 10px; font-size: 13px; font-weight: 700; text-decoration: none; border: 1px solid #e2e8f0; transition: all 0.15s;
+                    background: {{ ($planYear === now()->year && request('month_plan') === $currentMonthName) ? '#7c3aed' : '#f1f5f9' }};
+                    color: {{ ($planYear === now()->year && request('month_plan') === $currentMonthName) ? '#fff' : '#475569' }};">
+            เดือนนี้
+          </a>
+        </div>
       </div>
       <div class="admin-page-actions article-admin-actions">
         @if(in_array(session('admin_user_role'), [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_MANAGER]))
@@ -887,244 +914,8 @@
   }
 </style>
 
-    <div class="admin-card article-admin-card">
-      <div class="article-admin-toolbar" style="padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
-        <form action="{{ route('admin.articles') }}" method="GET" style="display: flex; gap: 8px; align-items: center; flex: 1; flex-wrap: wrap;">
-          <input type="hidden" name="plan_year" value="{{ $planYear }}">
-          <input type="text" id="article-search" placeholder="ค้นหาหัวข้อบทความ..." class="admin-input" style="flex: 1; min-width: 160px;">
-        </form>
-        <div class="admin-muted article-admin-toolbar__count" style="font-size: 13px; font-weight: 600;">ทั้งหมด {{ number_format($articles->total()) }} รายการ</div>
-      </div>
-      <div class="admin-table-wrap">
-        <table class="admin-table">
-        <thead>
-          <tr>
-            <th>รูปหน้าปก</th>
-            <th>หัวข้อ</th>
-            <th>สถานะ</th>
-            <th>จัดการ</th>
-          </tr>
-        </thead>
-        <tbody>
-          @forelse ($articles as $article)
-            @php
-              $isLotteryArticle = preg_match('/^thai-goverment-lottery-(\d{4})(\d{2})(first|second)$/', (string)$article->slug, $matches) === 1;
-              $lotteryIsComplete = true;
-              $publishStatusLabel = 'Draft';
-              $publishStatusClass = 'admin-status-pill--hold';
-              $publishStatusStyle = '';
-              if ($article->is_published) {
-                  $isScheduled = $article->published_at && $article->published_at->gt(now('Asia/Bangkok'));
-                  $publishStatusLabel = $isScheduled ? 'ตั้งเวลาเผยแพร่' : 'Published';
-                  $publishStatusClass = $isScheduled ? 'admin-status-pill--hold' : 'admin-status-pill--active';
-                  $publishStatusStyle = $isScheduled ? 'background: #eef6ff; color: #2563eb; border-color: #bfdbfe;' : '';
-              }
-              if ($isLotteryArticle) {
-                  $year = $matches[1]; $month = $matches[2]; $round = $matches[3];
-                  $lotteryResult = \App\Models\LotteryResult::whereYear('draw_date', $year)->whereMonth('draw_date', $month)->get()->first(function($r) use ($round) {
-                      $d = $r->source_draw_date ?? $r->draw_date;
-                      return $round === 'first' ? (int)$d->format('j') <= 15 : (int)$d->format('j') > 15;
-                  });
-                  $lotteryIsComplete = $lotteryResult ? $lotteryResult->is_complete : false;
-              }
-            @endphp
-            @php
-              $thaiMonthsFull = [
-                  1 => 'มกราคม', 2 => 'กุมภาพันธ์', 3 => 'มีนาคม', 4 => 'เมษายน',
-                  5 => 'พฤษภาคม', 6 => 'มิถุนายน', 7 => 'กรกฎาคม', 8 => 'สิงหาคม',
-                  9 => 'กันยายน', 10 => 'ตุลาคม', 11 => 'พฤศจิกายน', 12 => 'ธันวาคม'
-              ];
-              $rowMonthYear = '';
-              if ($article->published_at) {
-                  $dt = $article->published_at->timezone('Asia/Bangkok');
-                  $rowMonthYear = $thaiMonthsFull[(int)$dt->format('n')] . ' ' . (($dt->format('Y') + 543) % 100);
-              }
-            @endphp
-            <tr class="article-row" data-title="{{ strtolower($article->title) }}" data-slug="{{ strtolower($article->slug) }}" data-month-year="{{ $rowMonthYear }}">
-              <td data-label="รูปหน้าปก">
-                <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
-                  @php
-                    $thumbPath = $article->cover_image_path ?: ($article->cover_image_square_path ?: $article->cover_image_landscape_path);
-                  @endphp
-                  @if($thumbPath)
-                    <img src="{{ Storage::disk('public')->url($thumbPath) }}" style="width: 100%; height: 100%; object-fit: cover;">
-                  @else
-                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #94a3b8;">🖼️</div>
-                  @endif
-                </div>
-              </td>
-              <td data-label="หัวข้อ">
-                <div style="font-weight: 600; color: #1e293b; margin-bottom: 4px;">{{ $article->title }}</div>
-                <div class="admin-muted" style="font-size: 12px;">{{ $article->slug }}</div>
-                <div class="article-mobile-excerpt" style="display: none;">{{ $article->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($article->sanitizedContent()), 120) }}</div>
-              </td>
-              <td data-label="สถานะ">
-                <span class="admin-status-pill {{ $publishStatusClass }}" @if($publishStatusStyle) style="{{ $publishStatusStyle }}" @endif>{{ $publishStatusLabel }}</span>
-                
-                @if($isLotteryArticle && !$lotteryIsComplete)
-                  <div style="margin-top: 4px;">
-                    <span class="admin-status-pill admin-status-pill--hold" style="font-size: 10px; background: #fff7ed; color: #c2410c; border-color: #fdba74;">⏳ รอผลครบ 100%</span>
-                  </div>
-                @endif
-
-                <div class="admin-muted" style="font-size: 12px; margin-top: 6px;">
-                  {{ $article->published_at ? $article->published_at->timezone('Asia/Bangkok')->format('d/m/Y H:i') : '-' }}
-                </div>
-              </td>
-              <td data-label="จัดการ" class="admin-action-cell">
-                <div class="article-mobile-meta" style="display: none;">
-                  <span class="admin-status-pill {{ $publishStatusClass }}" aria-label="{{ $publishStatusLabel }}" title="{{ $publishStatusLabel }}" @if($publishStatusStyle) style="{{ $publishStatusStyle }}" @endif>{{ $publishStatusLabel }}</span>
-                  @if($isLotteryArticle && !$lotteryIsComplete)
-                    <span class="admin-status-pill admin-status-pill--hold" style="font-size: 10px; background: #fff7ed; color: #c2410c; border-color: #fdba74;">รอผลครบ</span>
-                  @endif
-                  <span class="article-mobile-meta__date">{{ $article->published_at ? $article->published_at->timezone('Asia/Bangkok')->format('d M Y | H:i') : '-' }}</span>
-                </div>
-                <div class="admin-action-group">
-                  @php
-                    $isPreview = !$article->is_published || ($article->published_at && $article->published_at->gt(now('Asia/Bangkok')));
-                    $viewUrl = $isPreview 
-                        ? URL::temporarySignedRoute('articles.signed-preview', now()->addHours(24), ['article' => $article])
-                        : route('articles.show', $article->slug);
-                  @endphp
-                  <a href="{{ $viewUrl }}" target="_blank" class="admin-button admin-button--muted admin-button--compact article-action-preview" title="{{ $isPreview ? 'ดูตัวอย่าง' : 'ดูบนเว็บไซต์' }}" aria-label="ดูตัวอย่าง">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.644C3.399 8.049 7.31 5 12 5s8.601 3.049 9.964 6.678c.07.234.07.468 0 .702-1.364 3.629-5.275 6.678-9.964 6.678s-8.601-3.049-9.964-6.678z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                    ดู
-                  </a>
-                  <a href="{{ route('admin.articles.edit', $article) }}" class="admin-button admin-button--muted admin-button--compact article-action-edit" title="แก้ไข" aria-label="แก้ไข">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
-                    แก้ไข
-                  </a>
-                  @if($article->is_published && $isLotteryArticle)
-                    <form id="share-social-form-{{ $article->id }}" action="{{ route('admin.articles.share-social', $article) }}" method="POST" style="display: inline;">
-                      @csrf
-                      <input type="hidden" name="manual_image_url" id="share-social-image-{{ $article->id }}">
-                      <button type="button" 
-                              id="btn-share-social-{{ $article->id }}"
-                              onclick="renderAndShareSocial(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-rendered-image', $article) }}', '{{ route('admin.articles.report-render-error', $article) }}', {{ $lotteryIsComplete ? 1 : 0 }})"
-                              class="admin-button admin-button--compact article-action-share" 
-                              style="background: #1877F2; color: #fff; border-color: #1877F2; {{ !$lotteryIsComplete ? 'opacity: 0.6; cursor: not-allowed;' : '' }}" 
-                              title="{{ !$lotteryIsComplete ? 'รอให้หวยออกครบ 100% ก่อนถึงจะแชร์ได้' : 'แปลงรูปเป็น PNG แล้วแชร์ไป Facebook Page' }}"
-                              aria-label="แชร์">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185zm3.933 12.814a2.25 2.25 0 10-3.933-2.185 2.25 2.25 0 003.933 2.185z" /></svg>
-                        แชร์
-                      </button>
-                    </form>
-                  @elseif($article->is_published)
-                    <form action="{{ route('admin.articles.share-social', $article) }}" method="POST" style="display: inline;" onsubmit="return confirm('ยืนยันแชร์บทความนี้ไปที่ Facebook Page?')">
-                      @csrf
-                      <input type="hidden" name="manual_image_url" value="{{ $article->cover_image_landscape_path ?: ($article->cover_image_path ?: $article->cover_image_square_path) }}">
-                      <button type="submit"
-                              class="admin-button admin-button--compact article-action-share"
-                              style="background: #1877F2; color: #fff; border-color: #1877F2;"
-                              title="แชร์ไป Facebook Page"
-                              aria-label="แชร์">
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185zm3.933 12.814a2.25 2.25 0 10-3.933-2.185 2.25 2.25 0 003.933 2.185z" /></svg>
-                        แชร์
-                      </button>
-                    </form>
-                  @else
-                    <button type="button"
-                            class="admin-button admin-button--compact article-action-share is-disabled"
-                            style="background: #f1f5f9; color: #94a3b8; border-color: #e2e8f0; cursor: not-allowed;"
-                            title="กรุณาเผยแพร่บทความก่อนจึงจะแชร์ได้"
-                            disabled>
-                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185zm3.933 12.814a2.25 2.25 0 10-3.933-2.185 2.25 2.25 0 003.933 2.185z" /></svg>
-                      แชร์
-                    </button>
-                  @endif
-                  @if($article->is_published && $article->slug)
-                    <form action="{{ route('admin.articles.share-line', $article) }}" method="POST" style="display: inline;" onsubmit="return confirm('ส่งบทความนี้เข้า LINE Group?')">
-                      @csrf
-                      <input type="hidden" name="manual_image_url" value="{{ $article->cover_image_square_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($article->cover_image_square_path) : ($article->cover_image_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($article->cover_image_path) : '') }}">
-                      <button type="submit"
-                              class="admin-button admin-button--compact"
-                              style="background: #06C755; color: #fff; border-color: #06C755;"
-                              title="ส่งเข้า LINE Group"
-                              aria-label="ส่งเข้า LINE">
-                        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" style="width:14px;height:14px;"><path d="M19.365 9.863c.349 0 .63.285.63.631 0 .345-.281.63-.63.63H17.61v1.125h1.755c.349 0 .63.283.63.630 0 .344-.281.629-.63.629h-2.386c-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63h2.386c.349 0 .63.285.63.63 0 .349-.281.63-.63.63H17.61v1.125h1.755zm-3.855 3.016c0 .27-.174.51-.432.596-.064.021-.133.031-.199.031-.211 0-.391-.09-.51-.25l-2.443-3.317v2.94c0 .344-.279.629-.631.629-.346 0-.626-.285-.626-.629V8.108c0-.27.173-.51.43-.595.06-.023.136-.033.194-.033.195 0 .375.104.495.254l2.462 3.33V8.108c0-.345.282-.63.63-.63.345 0 .63.285.63.63v4.771zm-5.741 0c0 .344-.282.629-.631.629-.345 0-.627-.285-.627-.629V8.108c0-.345.282-.63.63-.63.346 0 .628.285.628.63v4.771zm-2.466.629H4.917c-.345 0-.63-.285-.63-.629V8.108c0-.345.285-.63.63-.63.348 0 .63.285.63.63v4.141h1.756c.348 0 .629.283.629.63 0 .344-.282.629-.629.629M24 10.314C24 4.943 18.615.572 12 .572S0 4.943 0 10.314c0 4.811 4.27 8.842 10.035 9.608.391.082.923.258 1.058.59.12.301.079.766.038 1.08l-.164 1.02c-.045.301-.24 1.186 1.049.645 1.291-.539 6.916-4.078 9.436-6.975C23.176 14.393 24 12.458 24 10.314"/></svg>
-                        LINE
-                      </button>
-                    </form>
-                  @endif
-                  @if(in_array(session('admin_user_role'), [\App\Models\User::ROLE_MANAGER, \App\Models\User::ROLE_ADMIN], true))
-                    <form action="{{ route('admin.articles.delete', $article) }}" method="POST" style="display: inline;" onsubmit="return confirm('ยืนยันลบบทความนี้? การลบจะลบไฟล์รูปและคอมเมนต์ที่เกี่ยวข้องด้วย')">
-                      @csrf
-                      @method('DELETE')
-                      <button
-                        type="submit"
-                        class="admin-button admin-button--compact article-action-delete"
-                        style="background: #dc2626; color: #fff; border-color: #dc2626;"
-                        title="ลบบทความ"
-                        aria-label="ลบบทความ"
-                      >
-                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
-                        ลบ
-                      </button>
-                    </form>
-                  @endif
-                </div>
-              </td>
-            </tr>
-          @empty
-            <tr>
-              <td colspan="4" class="admin-muted" style="text-align: center; padding: 40px;">ไม่พบรายการบทความ</td>
-            </tr>
-          @endforelse
-          <tr id="articles-empty-row" style="display: none;">
-            <td colspan="4" class="admin-muted" style="text-align: center; padding: 40px;">ไม่พบผลลัพธ์การค้นหา</td>
-          </tr>
-        </tbody>
-        </table>
-      </div>
-    </div>
-
-    @if ($articles->hasPages())
-      <nav class="admin-pagination">
-        @if ($articles->onFirstPage())
-          <span>ก่อนหน้า</span>
-        @else
-          <a href="{{ $articles->previousPageUrl() }}">ก่อนหน้า</a>
-        @endif
-
-        @php
-          $startPage = max(1, $articles->currentPage() - 2);
-          $endPage = min($articles->lastPage(), $articles->currentPage() + 2);
-        @endphp
-
-        @for ($page = $startPage; $page <= $endPage; $page++)
-          @if ($page === $articles->currentPage())
-            <span class="is-active">{{ $page }}</span>
-          @else
-            <a href="{{ $articles->url($page) }}">{{ $page }}</a>
-          @endif
-        @endfor
-
-        @if ($articles->hasMorePages())
-          <a href="{{ $articles->nextPageUrl() }}">ถัดไป</a>
-        @else
-          <span>ถัดไป</span>
-        @endif
-      </nav>
-    @endif
-
-    <div class="article-bottom-actions">
-      @if(in_array(session('admin_user_role'), [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_MANAGER]))
-        <button type="button" class="article-ai-fab" onclick="openAiPromptModal()" title="AI Prompt" style="width: 56px; height: 56px; border-radius: 20px; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: #ffffff; border: none; box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3); cursor: pointer; transition: transform 0.2s; margin-right: 8px;">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 28px; height: 28px;">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.456-2.455l.259-1.036.259 1.036a3.375 3.375 0 002.455 2.456l1.036.259-1.036.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
-          </svg>
-        </button>
-        <button type="button" class="article-import-fab" onclick="openImportModal()" title="นำเข้า JSON">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
-          </svg>
-        </button>
-      @endif
-      <a href="{{ route('admin.articles.create') }}" class="article-mobile-fab">เขียนบทความ</a>
-    </div>
-
     <style>
-      .content-plan-card { margin-top: 40px; border-top: 2px solid #7c3aed; padding: 30px; }
+      .content-plan-card { margin-bottom: 40px; border-bottom: 2px solid #7c3aed; padding: 30px; }
       .plan-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px; flex-wrap: wrap; gap: 16px; }
       .plan-title { margin: 0; font-size: 20px; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 10px; }
       .plan-status-summary { font-size: 14px; font-weight: 700; background: #f1f5f9; padding: 6px 14px; border-radius: 99px; color: #475569; }
@@ -1383,7 +1174,6 @@
       </div>
 
     </section>
-    </div>
 
     {{-- ═══════════════════════════════════════════════════════════════════════
          Plan Detail Modal (AJAX — populated by JS)
@@ -1405,10 +1195,224 @@
         </div>
       </div>
     </div>
+    <div class="admin-card article-admin-card">
+      <div class="article-admin-toolbar" style="padding: 20px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;">
+        <form action="{{ route('admin.articles') }}" method="GET" style="display: flex; gap: 8px; align-items: center; flex: 1; flex-wrap: wrap;">
+          <input type="hidden" name="plan_year" value="{{ $planYear }}">
+          <input type="text" id="article-search" placeholder="ค้นหาหัวข้อบทความ..." class="admin-input" style="flex: 1; min-width: 160px;">
+        </form>
+        <div class="admin-muted article-admin-toolbar__count" style="font-size: 13px; font-weight: 600;">ทั้งหมด {{ number_format($articles->total()) }} รายการ</div>
+      </div>
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+        <thead>
+          <tr>
+            <th>รูปหน้าปก</th>
+            <th>หัวข้อ</th>
+            <th>สถานะ</th>
+            <th>จัดการ</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse ($articles as $article)
+            @php
+              $isLotteryArticle = preg_match('/^thai-goverment-lottery-(\d{4})(\d{2})(first|second)$/', (string)$article->slug, $matches) === 1;
+              $lotteryIsComplete = true;
+              $publishStatusLabel = 'Draft';
+              $publishStatusClass = 'admin-status-pill--hold';
+              $publishStatusStyle = '';
+              if ($article->is_published) {
+                  $isScheduled = $article->published_at && $article->published_at->gt(now('Asia/Bangkok'));
+                  $publishStatusLabel = $isScheduled ? 'ตั้งเวลาเผยแพร่' : 'Published';
+                  $publishStatusClass = $isScheduled ? 'admin-status-pill--hold' : 'admin-status-pill--active';
+                  $publishStatusStyle = $isScheduled ? 'background: #eef6ff; color: #2563eb; border-color: #bfdbfe;' : '';
+              }
+              if ($isLotteryArticle) {
+                  $year = $matches[1]; $month = $matches[2]; $round = $matches[3];
+                  $lotteryResult = \App\Models\LotteryResult::whereYear('draw_date', $year)->whereMonth('draw_date', $month)->get()->first(function($r) use ($round) {
+                      $d = $r->source_draw_date ?? $r->draw_date;
+                      return $round === 'first' ? (int)$d->format('j') <= 15 : (int)$d->format('j') > 15;
+                  });
+                  $lotteryIsComplete = $lotteryResult ? $lotteryResult->is_complete : false;
+              }
+            @endphp
+            @php
+              $thaiMonthsFull = [
+                  1 => 'มกราคม', 2 => 'กุมภาพันธ์', 3 => 'มีนาคม', 4 => 'เมษายน',
+                  5 => 'พฤษภาคม', 6 => 'มิถุนายน', 7 => 'กรกฎาคม', 8 => 'สิงหาคม',
+                  9 => 'กันยายน', 10 => 'ตุลาคม', 11 => 'พฤศจิกายน', 12 => 'ธันวาคม'
+              ];
+              $rowMonthYear = '';
+              if ($article->published_at) {
+                  $dt = $article->published_at->timezone('Asia/Bangkok');
+                  $rowMonthYear = $thaiMonthsFull[(int)$dt->format('n')] . ' ' . (($dt->format('Y') + 543) % 100);
+              }
+            @endphp
+            <tr class="article-row" data-title="{{ strtolower($article->title) }}" data-slug="{{ strtolower($article->slug) }}" data-month="{{ $article->published_at ? $thaiMonthsFull[(int)$article->published_at->timezone('Asia/Bangkok')->format('n')] : '' }}" data-year="{{ $article->published_at ? $article->published_at->timezone('Asia/Bangkok')->format('Y') : '' }}">
+              <td data-label="รูปหน้าปก">
+                <div style="width: 60px; height: 60px; background: #f1f5f9; border-radius: 8px; overflow: hidden; border: 1px solid #e2e8f0;">
+                  @php
+                    $thumbPath = $article->cover_image_path ?: ($article->cover_image_square_path ?: $article->cover_image_landscape_path);
+                  @endphp
+                  @if($thumbPath)
+                    <img src="{{ Storage::disk('public')->url($thumbPath) }}" style="width: 100%; height: 100%; object-fit: cover;">
+                  @else
+                    <div style="width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: #94a3b8;">🖼️</div>
+                  @endif
+                </div>
+              </td>
+              <td data-label="หัวข้อ">
+                <div style="font-weight: 600; color: #1e293b; margin-bottom: 4px;">{{ $article->title }}</div>
+                <div class="admin-muted" style="font-size: 12px;">{{ $article->slug }}</div>
+                <div class="article-mobile-excerpt" style="display: none;">{{ $article->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($article->sanitizedContent()), 120) }}</div>
+              </td>
+              <td data-label="สถานะ">
+                <span class="admin-status-pill {{ $publishStatusClass }}" @if($publishStatusStyle) style="{{ $publishStatusStyle }}" @endif>{{ $publishStatusLabel }}</span>
+                
+                @if($isLotteryArticle && !$lotteryIsComplete)
+                  <div style="margin-top: 4px;">
+                    <span class="admin-status-pill admin-status-pill--hold" style="font-size: 10px; background: #fff7ed; color: #c2410c; border-color: #fdba74;">⏳ รอผลครบ 100%</span>
+                  </div>
+                @endif
+
+                <div class="admin-muted" style="font-size: 12px; margin-top: 6px;">
+                  {{ $article->published_at ? $article->published_at->timezone('Asia/Bangkok')->format('d/m/Y H:i') : '-' }}
+                </div>
+              </td>
+              <td data-label="จัดการ" class="admin-action-cell">
+                <div class="article-mobile-meta" style="display: none;">
+                  <span class="admin-status-pill {{ $publishStatusClass }}" aria-label="{{ $publishStatusLabel }}" title="{{ $publishStatusLabel }}" @if($publishStatusStyle) style="{{ $publishStatusStyle }}" @endif>{{ $publishStatusLabel }}</span>
+                  @if($isLotteryArticle && !$lotteryIsComplete)
+                    <span class="admin-status-pill admin-status-pill--hold" style="font-size: 10px; background: #fff7ed; color: #c2410c; border-color: #fdba74;">รอผลครบ</span>
+                  @endif
+                  <span class="article-mobile-meta__date">{{ $article->published_at ? $article->published_at->timezone('Asia/Bangkok')->format('d M Y | H:i') : '-' }}</span>
+                </div>
+                <div class="admin-action-group">
+                  @php
+                    $isPreview = !$article->is_published || ($article->published_at && $article->published_at->gt(now('Asia/Bangkok')));
+                    $viewUrl = $isPreview 
+                        ? URL::temporarySignedRoute('articles.signed-preview', now()->addHours(24), ['article' => $article])
+                        : route('articles.show', $article->slug);
+                  @endphp
+                  <a href="{{ $viewUrl }}" target="_blank" class="admin-button admin-button--muted admin-button--compact article-action-preview" title="{{ $isPreview ? 'ดูตัวอย่าง' : 'ดูบนเว็บไซต์' }}" aria-label="ดูตัวอย่าง">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.644C3.399 8.049 7.31 5 12 5s8.601 3.049 9.964 6.678c.07.234.07.468 0 .702-1.364 3.629-5.275 6.678-9.964 6.678s-8.601-3.049-9.964-6.678z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                    ดู
+                  </a>
+                  <a href="{{ route('admin.articles.edit', $article) }}" class="admin-button admin-button--muted admin-button--compact article-action-edit" title="แก้ไข" aria-label="แก้ไข">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0115.75 21H5.25A2.25 2.25 0 013 18.75V8.25A2.25 2.25 0 015.25 6H10" /></svg>
+                    แก้ไข
+                  </a>
+                  @if(in_array(session('admin_user_role'), [\App\Models\User::ROLE_MANAGER, \App\Models\User::ROLE_ADMIN], true))
+                    <form action="{{ route('admin.articles.delete', $article) }}" method="POST" style="display: inline;" onsubmit="return confirm('ยืนยันลบบทความนี้? การลบจะลบไฟล์รูปและคอมเมนต์ที่เกี่ยวข้องด้วย')">
+                      @csrf
+                      @method('DELETE')
+                      <button
+                        type="submit"
+                        class="admin-button admin-button--compact article-action-delete"
+                        style="background: #dc2626; color: #fff; border-color: #dc2626;"
+                        title="ลบบทความ"
+                        aria-label="ลบบทความ"
+                      >
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0" /></svg>
+                        ลบ
+                      </button>
+                    </form>
+                  @endif
+                  @if($article->is_published)
+                    <details class="article-share-dropdown" style="position: relative;">
+                      <summary class="admin-button admin-button--compact article-action-share" style="background: #1877F2; color: #fff; border-color: #1877F2; list-style: none; cursor: pointer;">
+                        แชร์
+                      </summary>
+                      <div style="position: absolute; right: 0; top: calc(100% + 6px); background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; min-width: 180px; z-index: 30; box-shadow: 0 10px 24px rgba(15,23,42,.15); padding: 6px;">
+                        @if($isLotteryArticle)
+                          <form id="share-social-form-{{ $article->id }}" action="{{ route('admin.articles.share-social', $article) }}" method="POST" style="margin:0;">
+                            @csrf
+                            <input type="hidden" name="manual_image_url" id="share-social-image-{{ $article->id }}">
+                            <button type="button" id="btn-share-social-{{ $article->id }}" onclick="renderAndShareSocial(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-rendered-image', $article) }}', '{{ route('admin.articles.report-render-error', $article) }}', {{ $lotteryIsComplete ? 1 : 0 }})" style="width:100%; border:none; background:#fff; text-align:left; padding:8px 10px; border-radius:8px; cursor:pointer;">Facebook Page</button>
+                          </form>
+                        @else
+                          <form action="{{ route('admin.articles.share-social', $article) }}" method="POST" style="margin:0;" onsubmit="return confirm('ยืนยันแชร์บทความนี้ไปที่ Facebook Page?')">
+                            @csrf
+                            <input type="hidden" name="manual_image_url" value="{{ $article->cover_image_landscape_path ?: ($article->cover_image_path ?: $article->cover_image_square_path) }}">
+                            <button type="submit" style="width:100%; border:none; background:#fff; text-align:left; padding:8px 10px; border-radius:8px; cursor:pointer;">Facebook Page</button>
+                          </form>
+                        @endif
+                        <form action="{{ route('admin.articles.share-line', $article) }}" method="POST" style="margin:0;" onsubmit="return confirm('ส่งบทความนี้เข้า LINE Group?')">
+                          @csrf
+                          <input type="hidden" name="manual_image_url" value="{{ $article->cover_image_square_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($article->cover_image_square_path) : ($article->cover_image_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($article->cover_image_path) : '') }}">
+                          <button type="submit" style="width:100%; border:none; background:#fff; text-align:left; padding:8px 10px; border-radius:8px; cursor:pointer;">Line (group)</button>
+                        </form>
+                      </div>
+                    </details>
+                  @else
+                    <button type="button" class="admin-button admin-button--compact article-action-share is-disabled" style="background: #f1f5f9; color: #94a3b8; border-color: #e2e8f0; cursor: not-allowed;" title="กรุณาเผยแพร่บทความก่อนจึงจะแชร์ได้" disabled>แชร์</button>
+                  @endif
+                </div>
+              </td>
+            </tr>
+          @empty
+            <tr>
+              <td colspan="4" class="admin-muted" style="text-align: center; padding: 40px;">ไม่พบรายการบทความ</td>
+            </tr>
+          @endforelse
+          <tr id="articles-empty-row" style="display: none;">
+            <td colspan="4" class="admin-muted" style="text-align: center; padding: 40px;">ไม่พบผลลัพธ์การค้นหา</td>
+          </tr>
+        </tbody>
+        </table>
+      </div>
+    </div>
+
+    @if ($articles->hasPages())
+      <nav class="admin-pagination">
+        @if ($articles->onFirstPage())
+          <span>ก่อนหน้า</span>
+        @else
+          <a href="{{ $articles->previousPageUrl() }}">ก่อนหน้า</a>
+        @endif
+
+        @php
+          $startPage = max(1, $articles->currentPage() - 2);
+          $endPage = min($articles->lastPage(), $articles->currentPage() + 2);
+        @endphp
+
+        @for ($page = $startPage; $page <= $endPage; $page++)
+          @if ($page === $articles->currentPage())
+            <span class="is-active">{{ $page }}</span>
+          @else
+            <a href="{{ $articles->url($page) }}">{{ $page }}</a>
+          @endif
+        @endfor
+
+        @if ($articles->hasMorePages())
+          <a href="{{ $articles->nextPageUrl() }}">ถัดไป</a>
+        @else
+          <span>ถัดไป</span>
+        @endif
+      </nav>
+    @endif
+
+    <div class="article-bottom-actions">
+      @if(in_array(session('admin_user_role'), [\App\Models\User::ROLE_ADMIN, \App\Models\User::ROLE_MANAGER]))
+        <button type="button" class="article-ai-fab" onclick="openAiPromptModal()" title="AI Prompt" style="width: 56px; height: 56px; border-radius: 20px; display: inline-flex; align-items: center; justify-content: center; background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: #ffffff; border: none; box-shadow: 0 10px 25px rgba(124, 58, 237, 0.3); cursor: pointer; transition: transform 0.2s; margin-right: 8px;">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" style="width: 28px; height: 28px;">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09zM18.259 8.715L18 9.75l-.259-1.035a3.375 3.375 0 00-2.455-2.456L14.25 6l1.036-.259a3.375 3.375 0 002.456-2.455l.259-1.036.259 1.036a3.375 3.375 0 002.455 2.456l1.036.259-1.036.259a3.375 3.375 0 00-2.456 2.456zM16.894 20.567L16.5 21.75l-.394-1.183a2.25 2.25 0 00-1.423-1.423L13.5 18.75l1.183-.394a2.25 2.25 0 001.423-1.423l.394-1.183.394 1.183a2.25 2.25 0 001.423 1.423l1.183.394-1.183.394a2.25 2.25 0 00-1.423 1.423z" />
+          </svg>
+        </button>
+        <button type="button" class="article-import-fab" onclick="openImportModal()" title="นำเข้า JSON">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.2" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
+          </svg>
+        </button>
+      @endif
+      <a href="{{ route('admin.articles.create') }}" class="article-mobile-fab">เขียนบทความ</a>
+    </div>
+
 
     <script>
       document.addEventListener('DOMContentLoaded', function() {
-        const monthFilter = document.getElementById('plan-month-filter');
+        const monthFilter = document.getElementById('unified-month-filter');
+        const yearFilter = document.getElementById('unified-year-filter');
         const searchInput = document.getElementById('article-search');
         const articleRows = document.querySelectorAll('.article-row');
         const planRows = document.querySelectorAll('.plan-item-row');
@@ -1418,6 +1422,7 @@
 
         function applyFilters() {
           const selectedMonth = monthFilter ? monthFilter.value : '';
+          const selectedYear = yearFilter ? yearFilter.value : '';
           const searchQuery = searchInput ? searchInput.value.toLowerCase().trim() : '';
           
           // 1. Filter Main Articles Table
@@ -1425,12 +1430,14 @@
           articleRows.forEach(row => {
             const title = row.getAttribute('data-title') || '';
             const slug = row.getAttribute('data-slug') || '';
-            const rowMonthYear = row.getAttribute('data-month-year') || '';
+            const rowMonth = row.getAttribute('data-month') || '';
+            const rowYear = row.getAttribute('data-year') || '';
 
             const searchMatch = !searchQuery || title.includes(searchQuery) || slug.includes(searchQuery);
-            const monthMatch = !selectedMonth || rowMonthYear === selectedMonth;
+            const monthMatch = !selectedMonth || rowMonth === selectedMonth;
+            const yearMatch = !selectedYear || !rowYear || rowYear === selectedYear;
 
-            if (searchMatch && monthMatch) {
+            if (searchMatch && monthMatch && yearMatch) {
               row.style.display = '';
               visibleArticleCount++;
             } else {
@@ -1460,7 +1467,24 @@
           }
         }
 
-        if (monthFilter) monthFilter.addEventListener('change', applyFilters);
+        if (yearFilter) {
+          yearFilter.addEventListener('change', function() {
+            const url = new URL(window.location.href);
+            url.searchParams.set('plan_year', yearFilter.value);
+            url.searchParams.set('month_plan', monthFilter ? monthFilter.value : '');
+            window.location.href = url.toString();
+          });
+        }
+        if (monthFilter) {
+          monthFilter.addEventListener('change', function() {
+            const url = new URL(window.location.href);
+            if (yearFilter) {
+              url.searchParams.set('plan_year', yearFilter.value);
+            }
+            url.searchParams.set('month_plan', monthFilter.value);
+            window.location.href = url.toString();
+          });
+        }
         if (searchInput) searchInput.addEventListener('input', applyFilters);
         
         // Initial filter on load

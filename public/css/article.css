@@ -186,6 +186,12 @@
   letter-spacing: 0.02em;
 }
 
+.article-detail__meta-pill--updated {
+  border-color: rgba(16, 185, 129, 0.3);
+  background: #ecfdf5;
+  color: #065f46;
+}
+
 .article-detail__meta-pill--soft {
   border-color: rgba(44, 37, 33, 0.14);
   background: rgba(255, 255, 255, 0.88);
@@ -198,6 +204,97 @@
   font-size: clamp(18px, 2vw, 22px);
   line-height: 1.55;
   max-width: 900px;
+}
+
+.article-detail__share {
+  margin-top: 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.article-detail__share--bottom {
+  margin-top: 28px;
+  margin-bottom: 36px;
+  padding-top: 24px;
+  border-top: 1px solid rgba(95, 74, 56, 0.12);
+}
+
+.article-detail__share-label {
+  color: #6d5f52;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.article-detail__share-buttons {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.article-detail__share-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: 6px;
+  border: none;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  color: #fff;
+}
+
+.article-detail__share-btn svg {
+  width: 13px;
+  height: 13px;
+}
+
+.article-detail__share-btn--facebook {
+  background: #1877f2;
+}
+
+.article-detail__share-btn--facebook:hover {
+  background: #166fe5;
+  box-shadow: 0 4px 12px rgba(24, 119, 242, 0.3);
+}
+
+.article-detail__share-btn--twitter {
+  background: #000;
+}
+
+.article-detail__share-btn--twitter:hover {
+  background: #1a1a1a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+}
+
+.article-detail__share-btn--line {
+  background: #00c300;
+}
+
+.article-detail__share-btn--line:hover {
+  background: #00a800;
+  box-shadow: 0 4px 12px rgba(0, 195, 0, 0.3);
+}
+
+.article-detail__share-btn--whatsapp {
+  background: #25d366;
+}
+
+.article-detail__share-btn--whatsapp:hover {
+  background: #20ba5a;
+  box-shadow: 0 4px 12px rgba(37, 211, 102, 0.3);
+}
+
+.article-detail__share-btn--copy {
+  background: #8b5a1f;
+}
+
+.article-detail__share-btn--copy:hover {
+  background: #6f4815;
+  box-shadow: 0 4px 12px rgba(139, 90, 31, 0.3);
 }
 
 .article-detail__cover-wrap {

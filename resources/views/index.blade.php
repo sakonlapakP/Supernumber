@@ -640,7 +640,7 @@
               <div class="home-number-group__head">
                 <div class="home-number-group__copy">
                   <h3 class="home-number-group__title">เบอร์รายเดือนแนะนำ</h3>
-                  <p class="home-number-group__hint">รวมเบอร์รายเดือนที่พร้อมเลือกแพ็กเกจ</p>
+                  <p class="home-number-group__hint">รวมเบอร์รายเดือนที่พร้อมเลือกแพ็กเกจ สัญญา 12 เดือน</p>
                 </div>
               </div>
               <div class="card-grid home-card-grid listing-card-grid" id="home-postpaid-grid" data-view="grid">

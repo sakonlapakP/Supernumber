@@ -33,6 +33,7 @@ class Article extends Model
         'is_line_broadcasted',
         'published_at',
         'notified_at',
+        'content_updated_at',
         'view_count',
         'author_user_id',
     ];
@@ -46,9 +47,21 @@ class Article extends Model
             'image_guidelines' => 'array',
             'published_at' => 'datetime',
             'notified_at' => 'datetime',
+            'content_updated_at' => 'datetime',
             'created_at' => 'datetime',
             'updated_at' => 'datetime',
         ];
+    }
+
+    protected static function booted(): void
+    {
+        static::updating(function (Article $article): void {
+            $contentFields = ['title', 'content', 'excerpt', 'meta_description', 'keywords', 'lsi_keywords', 'cover_image_path', 'cover_image_landscape_path', 'cover_image_square_path'];
+            if ($article->isDirty($contentFields)) {
+                // Store directly as a Unix int in the bigInteger column, bypassing the datetime cast
+                $article->attributes['content_updated_at'] = now()->timestamp;
+            }
+        });
     }
 
     public function scopePublished(Builder $query): Builder
@@ -100,5 +113,10 @@ class Article extends Model
     public function sanitizedContent(): string
     {
         return app(ArticleContentSanitizer::class)->sanitize((string) $this->content);
+    }
+
+    public function getEffectiveUpdatedAt(): \Carbon\Carbon
+    {
+        return $this->content_updated_at ?? $this->published_at ?? $this->created_at;
     }
 }
