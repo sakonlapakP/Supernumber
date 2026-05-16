@@ -180,6 +180,8 @@
               src="{{ asset('storage/' . $detailCoverPath) }}"
               alt="{{ $article->title }}"
               class="article-detail__cover"
+              loading="lazy"
+              decoding="async"
               onerror="const media=this.closest('[data-lottery-cover-media]'); if(media){ media.classList.add('is-fallback'); }"
             />
           </figure>
@@ -189,7 +191,7 @@
         </div>
       @elseif ($detailCoverPath)
         <figure class="article-detail__cover-wrap">
-          <img src="{{ asset('storage/' . $detailCoverPath) }}" alt="{{ $article->title }}" class="article-detail__cover" />
+          <img src="{{ asset('storage/' . $detailCoverPath) }}" alt="{{ $article->title }}" class="article-detail__cover" loading="lazy" decoding="async" />
         </figure>
       @elseif (! empty($lotteryResult))
         @include('articles.partials.lottery-cover-fallback', ['lotteryResult' => $lotteryResult])

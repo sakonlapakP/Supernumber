@@ -388,6 +388,8 @@
         class="hero-media__image"
         src="{{ $homeBannerUrl }}"
         alt="เบอร์มงคล Supernumber - เปลี่ยนเบอร์เปลี่ยนชีวิต"
+        width="1920"
+        height="450"
         fetchpriority="high"
         decoding="async"
       />
