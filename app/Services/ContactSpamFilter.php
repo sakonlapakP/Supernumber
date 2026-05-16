@@ -213,9 +213,8 @@ class ContactSpamFilter
             return true;
         }
 
-        // Check for names that look like concatenated words/gibberish (many capital letters in middle)
-        $capitals = mb_strlen(preg_replace('/[^A-Z]/', '', $trimmed));
-        if ($capitals >= 3 && mb_strlen($trimmed) <= 20) {
+        // Single-word name that is all uppercase (e.g. NAYUYUTY, NATREGTEGH)
+        if (! preg_match('/\s/u', $trimmed) && preg_match('/^[A-Z]{6,}$/u', $trimmed)) {
             return true;
         }
 
