@@ -3994,6 +3994,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             // Only reset notified_at when:
             // 1. Article transitions from unpublished → published (new publish)
             // 2. The published_at date changes (re-scheduled)
+            // 3. Article transitions from published → unpublished (so scheduler can re-run when re-published)
             $shouldResetNotification = false;
             if ($isPublished && !$isCurrentlyPublished) {
                 // Transition from draft → published
@@ -4001,6 +4002,9 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             } elseif ($isPublished && $publishedAt && $article->published_at
                 && !$publishedAt->eq($article->published_at)) {
                 // Published date was changed (re-scheduled)
+                $shouldResetNotification = true;
+            } elseif (!$isPublished && $isCurrentlyPublished) {
+                // Transition from published → draft (reset so scheduler can re-run if re-published)
                 $shouldResetNotification = true;
             }
 
