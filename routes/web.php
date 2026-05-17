@@ -729,11 +729,7 @@ $logPhoneNumberStatusChange = function (PhoneNumber $phoneNumber, ?string $fromS
     ]);
 };
 
-$syncPhoneNumberStatusFromOrder = function (CustomerOrder $order, ?int $userId = null) use ($normalizeServiceType, $logPhoneNumberStatusChange) {
-    if ($normalizeServiceType($order->service_type) !== PhoneNumber::SERVICE_TYPE_PREPAID) {
-        return;
-    }
-
+$syncPhoneNumberStatusFromOrder = function (CustomerOrder $order, ?int $userId = null) use ($logPhoneNumberStatusChange) {
     $phoneNumber = $order->phone_number_id !== null
         ? $order->phoneNumber()->first()
         : null;
