@@ -2264,9 +2264,32 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->with('status_message', 'อัปเดตคำสั่งซื้อเรียบร้อยแล้ว');
     })->name('orders.update');
 
-    Route::delete('/orders/{order}', function (CustomerOrder $order) use ($ensureAdmin) {
+    Route::delete('/orders/{order}', function (CustomerOrder $order) use ($ensureAdmin, $normalizeServiceType, $logPhoneNumberStatusChange, $currentAdmin) {
         if ($redirect = $ensureAdmin('manager')) {
             return $redirect;
+        }
+
+        if ($normalizeServiceType($order->service_type) === PhoneNumber::SERVICE_TYPE_PREPAID) {
+            $phoneNumber = $order->phone_number_id !== null
+                ? $order->phoneNumber()->first()
+                : null;
+
+            if (! $phoneNumber) {
+                $orderedNumber = preg_replace('/\D+/', '', (string) $order->ordered_number) ?? '';
+                if ($orderedNumber !== '') {
+                    $phoneNumber = PhoneNumber::query()
+                        ->where('phone_number', $orderedNumber)
+                        ->first();
+                }
+            }
+
+            if ($phoneNumber && $phoneNumber->status !== PhoneNumber::STATUS_ACTIVE) {
+                $fromStatus = $phoneNumber->status;
+                $phoneNumber->update([
+                    'status' => PhoneNumber::STATUS_ACTIVE,
+                ]);
+                $logPhoneNumberStatusChange($phoneNumber, $fromStatus, $currentAdmin()?->id);
+            }
         }
 
         $order->delete();
