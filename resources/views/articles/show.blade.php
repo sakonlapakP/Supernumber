@@ -11,6 +11,7 @@
   $detailCoverPath = $article->cover_image_square_path ?: ($article->cover_image_path ?: $article->cover_image_landscape_path);
   $detailCoverCandidate = $article->cover_image_square_path ?: $article->cover_image_path;
   $ogImagePath = asset('images/home_banner.jpg');
+  $ogIsSquare = (bool) $article->cover_image_square_path;
 
   if ($detailCoverCandidate) {
       $ogImagePath = asset('storage/' . ltrim((string) $detailCoverCandidate, '/'));
@@ -18,6 +19,9 @@
 @endphp
 @section('og_image', $ogImagePath)
 @section('og_image_secure_url', $ogImagePath)
+@section('og_image_width', '1200')
+@section('og_image_height', $ogIsSquare ? '1200' : '630')
+@section('twitter_card', $ogIsSquare ? 'summary' : 'summary_large_image')
 @section('seo_schema')
 <script type="application/ld+json">
 {

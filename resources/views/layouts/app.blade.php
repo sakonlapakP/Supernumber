@@ -23,7 +23,10 @@
     @hasSection('og_image_secure_url')
     <meta property="og:image:secure_url" content="@yield('og_image_secure_url')" />
     @endif
-    <meta name="twitter:card" content="summary_large_image" />
+    <meta property="og:image:width" content="@yield('og_image_width', '1200')" />
+    <meta property="og:image:height" content="@yield('og_image_height', '630')" />
+    <meta property="og:image:type" content="image/jpeg" />
+    <meta name="twitter:card" content="@yield('twitter_card', 'summary_large_image')" />
     <meta name="theme-color" content="@yield('theme_color', '#2a2321')" />
     <link rel="shortcut icon" type="image/x-icon" href="{{ $versionedStaticPath('favicon-v2.ico') }}" />
     <link rel="icon" type="image/svg+xml" sizes="any" href="{{ $versionedStaticPath('favicon.svg') }}" />
