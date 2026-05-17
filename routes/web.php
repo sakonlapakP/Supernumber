@@ -773,8 +773,24 @@ $syncPhoneNumberStatusFromOrder = function (CustomerOrder $order, ?int $userId =
 
 Route::get('/', [PublicController::class, 'index'])->name('home');
 Route::get('/robots.txt', function () {
-    return response(File::get(public_path('robots.txt')), 200)
-        ->header('Content-Type', 'text/plain; charset=UTF-8');
+    $robots = implode("\n", [
+        'User-agent: facebookexternalhit',
+        'Disallow:',
+        '',
+        'User-agent: Facebot',
+        'Disallow:',
+        '',
+        'User-agent: *',
+        'Disallow:',
+        '',
+        'Sitemap: https://supernumber.co.th/sitemap.xml',
+        '',
+    ]);
+
+    return response($robots, 200)
+        ->header('Content-Type', 'text/plain; charset=UTF-8')
+        ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        ->header('Pragma', 'no-cache');
 })->name('robots');
 Route::get('/sitemap.xml', [PublicController::class, 'sitemap'])->name('sitemap');
 Route::view('/under-construction', 'under-construction')->name('under-construction');

@@ -12,8 +12,12 @@ class RobotsTxtTest extends TestCase
 
         $response->assertOk();
         $response->assertHeader('Content-Type', 'text/plain; charset=UTF-8');
-        $response->assertSee("User-agent: facebookexternalhit\nAllow: /", false);
-        $response->assertSee("User-agent: Facebot\nAllow: /", false);
+        $cacheControl = $response->headers->get('Cache-Control');
+        $this->assertStringContainsString('no-store', $cacheControl);
+        $this->assertStringContainsString('no-cache', $cacheControl);
+        $this->assertStringContainsString('max-age=0', $cacheControl);
+        $response->assertSee("User-agent: facebookexternalhit\nDisallow:", false);
+        $response->assertSee("User-agent: Facebot\nDisallow:", false);
         $response->assertSee('Sitemap: https://supernumber.co.th/sitemap.xml', false);
     }
 }
