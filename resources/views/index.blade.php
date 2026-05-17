@@ -465,7 +465,7 @@
               </div>
             </div>
 
-            <div class="home-filter__orb" aria-hidden="true"><span>หรือ</span></div>
+            <div class="home-filter__orb" role="separator" aria-label="หรือ"><span aria-hidden="true">หรือ</span></div>
 
             <div class="home-filter__group">
               <label class="home-filter__label" for="home-pos-prefix">ค้นหาตามตำแหน่ง</label>

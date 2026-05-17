@@ -340,7 +340,7 @@
                 </div>
               </div>
 
-              <div class="home-filter__orb" aria-hidden="true"><span>หรือ</span></div>
+              <div class="home-filter__orb" role="separator" aria-label="หรือ"><span aria-hidden="true">หรือ</span></div>
 
               <!-- Position Search -->
               <div class="home-filter__group">
