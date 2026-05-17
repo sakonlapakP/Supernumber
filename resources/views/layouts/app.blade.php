@@ -42,6 +42,7 @@
     {{-- Preload critical WOFF2 fonts to eliminate font blocking in critical path --}}
     <link rel="preload" as="font" type="font/woff2" href="/fonts/Kanit-400.woff2" crossorigin>
     <link rel="preload" as="font" type="font/woff2" href="/fonts/Kanit-600.woff2" crossorigin>
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/Kanit-700.woff2" crossorigin>
     {{-- Playfair Display (brand logo only): preconnect + non-blocking load --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

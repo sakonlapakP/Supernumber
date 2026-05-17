@@ -15,9 +15,7 @@
 @section('canonical', url('/'))
 @section('og_url', url('/'))
 @section('og_image', $homeBannerUrl)
-@section('preload_image', $homeBannerWebp)
-@section('preload_imagesrcset', $homeBannerMobWebp . ' 800w, ' . $homeBannerWebp . ' 1920w')
-@section('preload_imagesizes', '100vw')
+@section('preload_image', $homeBannerUrl)
 @section('body_class', 'home-scale-soft')
 
 @section('seo_schema')
@@ -389,24 +387,15 @@
   <!-- Hero Section -->
   <section class="hero" aria-labelledby="hero-title">
     <div class="hero-media" aria-hidden="true">
-      <picture>
-        {{-- Mobile WebP (≤800px) --}}
-        <source media="(max-width: 800px)" type="image/webp" srcset="{{ $homeBannerMobWebp }}">
-        {{-- Mobile JPG fallback --}}
-        <source media="(max-width: 800px)" type="image/jpeg" srcset="{{ $homeBannerMobJpg }}">
-        {{-- Desktop WebP --}}
-        <source type="image/webp" srcset="{{ $homeBannerWebp }}">
-        {{-- Desktop JPG fallback --}}
-        <img
-          class="hero-media__image"
-          src="{{ $homeBannerUrl }}"
-          alt="เบอร์มงคล Supernumber - เปลี่ยนเบอร์เปลี่ยนชีวิต"
-          width="1920"
-          height="450"
-          fetchpriority="high"
-          decoding="async"
-        />
-      </picture>
+      <img
+        class="hero-media__image"
+        src="{{ $homeBannerUrl }}"
+        alt="เบอร์มงคล Supernumber - เปลี่ยนเบอร์เปลี่ยนชีวิต"
+        width="1920"
+        height="450"
+        fetchpriority="high"
+        decoding="async"
+      />
     </div>
     <div class="hero-overlay"></div>
     <div class="container hero-content">
