@@ -57,50 +57,47 @@ class PublishScheduledArticles extends Command
 
         foreach ($articles as $article) {
             try {
-                \Illuminate\Support\Facades\DB::transaction(function () use ($article) {
-                    // To prevent duplicate sends from parallel executions, we check again and update atomically
-                    $updateData = [
-                        'notified_at' => now('Asia/Bangkok'),
-                        'updated_at' => now('Asia/Bangkok'),
-                    ];
+                // Step 1: Atomically claim this article — commit DB change before any external calls
+                $updateData = [
+                    'notified_at' => now('Asia/Bangkok'),
+                    'updated_at' => now('Asia/Bangkok'),
+                ];
 
-                    // If it was a Draft, flip it to Published
-                    if (!$article->is_published) {
-                        $updateData['is_published'] = true;
-                    }
+                if (!$article->is_published) {
+                    $updateData['is_published'] = true;
+                }
 
-                    $updated = \Illuminate\Support\Facades\DB::table('articles')
-                        ->where('id', $article->id)
-                        ->whereNull('notified_at')
-                        ->update($updateData);
+                $updated = \Illuminate\Support\Facades\DB::table('articles')
+                    ->where('id', $article->id)
+                    ->whereNull('notified_at')
+                    ->update($updateData);
 
-                    if (!$updated) {
-                        return; // Another process already handled this article
-                    }
+                if (!$updated) {
+                    continue; // Another process already handled this article
+                }
 
-                    $this->info("Publishing article: {$article->title}");
+                $article->refresh();
 
-                    // Post to Facebook
-                    $fbRes = app(FacebookPagePoster::class)->postArticle($article);
-                    
-                    // Prepare Line message
-                    $lineMessage = "📢 เผยแพร่บทความใหม่แล้ว!\n\n";
-                    $lineMessage .= "หัวข้อ: {$article->title}\n";
-                    $lineMessage .= "แชร์ไปที่ Facebook Page: " . ($fbRes['success'] ? "สำเร็จ ✅" : "ไม่สำเร็จ ❌") . "\n";
-                    if (!$fbRes['success']) {
-                        $lineMessage .= "สาเหตุ: " . ($fbRes['error'] ?? 'Unknown Error') . "\n";
-                    }
-                    $lineMessage .= "\n" . route('articles.show', ['slug' => $article->slug]);
+                $this->info("Publishing article: {$article->title}");
 
-                    // Send Line notification
-                    app(LineNotifier::class)->queueText(
-                        'article_published',
-                        $lineMessage,
-                        $article
-                    );
+                // Step 2: External API calls after DB is committed — failures here won't un-publish the article
+                $fbRes = app(FacebookPagePoster::class)->postArticle($article);
 
-                    $this->info("Successfully processed: {$article->title}");
-                });
+                $lineMessage = "📢 เผยแพร่บทความใหม่แล้ว!\n\n";
+                $lineMessage .= "หัวข้อ: {$article->title}\n";
+                $lineMessage .= "แชร์ไปที่ Facebook Page: " . ($fbRes['success'] ? "สำเร็จ ✅" : "ไม่สำเร็จ ❌") . "\n";
+                if (!$fbRes['success']) {
+                    $lineMessage .= "สาเหตุ: " . ($fbRes['error'] ?? 'Unknown Error') . "\n";
+                }
+                $lineMessage .= "\n" . route('articles.show', ['slug' => $article->slug]);
+
+                app(LineNotifier::class)->queueText(
+                    'article_published',
+                    $lineMessage,
+                    $article
+                );
+
+                $this->info("Successfully processed: {$article->title}");
             } catch (\Throwable $e) {
                 $this->error("Error publishing article {$article->id}: " . $e->getMessage());
                 Log::error("Scheduled publish error for article {$article->id}: " . $e->getMessage());
