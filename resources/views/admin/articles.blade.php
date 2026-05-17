@@ -1331,24 +1331,24 @@
                         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100-3.182 2.25 2.25 0 000 3.182zM16.783 6.182a2.25 2.25 0 100-3.182 2.25 2.25 0 000 3.182zM7.217 17.818a2.25 2.25 0 100-3.182 2.25 2.25 0 000 3.182zM8.59 9.59l6.82-3.18M8.59 14.41l6.82 3.18" /></svg>
                         <span>แชร์</span>
                       </summary>
-                      <div style="position: absolute; right: 0; top: calc(100% + 6px); background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; min-width: 180px; z-index: 30; box-shadow: 0 10px 24px rgba(15,23,42,.15); padding: 6px;">
+                      <div style="position: absolute; right: 0; top: calc(100% + 6px); background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; min-width: 180px; z-index: 30; box-shadow: 0 10px 24px rgba(15,23,42,.15); padding: 6px; color: #1e293b; font-size: 14px;">
                         @if($isLotteryArticle)
                           <form id="share-social-form-{{ $article->id }}" action="{{ route('admin.articles.share-social', $article) }}" method="POST" style="margin:0;">
                             @csrf
                             <input type="hidden" name="manual_image_url" id="share-social-image-{{ $article->id }}">
-                            <button type="button" id="btn-share-social-{{ $article->id }}" onclick="renderAndShareSocial(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-rendered-image', $article) }}', '{{ route('admin.articles.report-render-error', $article) }}', {{ $lotteryIsComplete ? 1 : 0 }})" style="width:100%; border:none; background:#fff; text-align:left; padding:8px 10px; border-radius:8px; cursor:pointer;">Facebook Page</button>
+                            <button type="button" id="btn-share-social-{{ $article->id }}" onclick="renderAndShareSocial(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-rendered-image', $article) }}', '{{ route('admin.articles.report-render-error', $article) }}', {{ $lotteryIsComplete ? 1 : 0 }})" style="width:100%; border:none; background:#fff; color:#1e293b; font-size:14px; font-weight:600; text-align:left; padding:8px 10px; border-radius:8px; cursor:pointer;">Facebook Page</button>
                           </form>
                         @else
                           <form action="{{ route('admin.articles.share-social', $article) }}" method="POST" style="margin:0;" onsubmit="return confirm('ยืนยันแชร์บทความนี้ไปที่ Facebook Page?')">
                             @csrf
                             <input type="hidden" name="manual_image_url" value="{{ $article->cover_image_landscape_path ?: ($article->cover_image_path ?: $article->cover_image_square_path) }}">
-                            <button type="submit" style="width:100%; border:none; background:#fff; text-align:left; padding:8px 10px; border-radius:8px; cursor:pointer;">Facebook Page</button>
+                            <button type="submit" style="width:100%; border:none; background:#fff; color:#1e293b; font-size:14px; font-weight:600; text-align:left; padding:8px 10px; border-radius:8px; cursor:pointer;">Facebook Page</button>
                           </form>
                         @endif
                         <form action="{{ route('admin.articles.share-line', $article) }}" method="POST" style="margin:0;" onsubmit="return confirm('ส่งบทความนี้เข้า LINE Group?')">
                           @csrf
                           <input type="hidden" name="manual_image_url" value="{{ $article->cover_image_square_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($article->cover_image_square_path) : ($article->cover_image_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($article->cover_image_path) : '') }}">
-                          <button type="submit" style="width:100%; border:none; background:#fff; text-align:left; padding:8px 10px; border-radius:8px; cursor:pointer;">Line (group)</button>
+                          <button type="submit" style="width:100%; border:none; background:#fff; color:#1e293b; font-size:14px; font-weight:600; text-align:left; padding:8px 10px; border-radius:8px; cursor:pointer;">Line (group)</button>
                         </form>
                         @if($article->is_line_broadcasted)
                           <button type="button" disabled style="width:100%; border:none; background:#f1f5f9; color:#94a3b8; text-align:left; padding:8px 10px; border-radius:8px; cursor:not-allowed;" title="บทความนี้ถูก Broadcast ไปแล้ว">📢 Broadcast แล้ว</button>
