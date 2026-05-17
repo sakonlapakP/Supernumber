@@ -1,8 +1,11 @@
 @extends('layouts.app')
 
 @php
-  $homeBannerVersion = @filemtime(public_path('images/home_banner.jpg')) ?: time();
-  $homeBannerUrl = asset('images/home_banner.jpg') . '?v=' . $homeBannerVersion;
+  $homeBannerVersion  = @filemtime(public_path('images/home_banner.jpg')) ?: time();
+  $homeBannerUrl      = asset('images/home_banner.jpg') . '?v=' . $homeBannerVersion;
+  $homeBannerWebp     = asset('images/home_banner.webp') . '?v=' . $homeBannerVersion;
+  $homeBannerMobWebp  = asset('images/home_banner_mobile.webp') . '?v=' . $homeBannerVersion;
+  $homeBannerMobJpg   = asset('images/home_banner_mobile.jpg') . '?v=' . $homeBannerVersion;
 @endphp
 
 @section('title', 'Supernumber ศูนย์รวมเบอร์มงคลอันดับ 1')
@@ -12,7 +15,7 @@
 @section('canonical', url('/'))
 @section('og_url', url('/'))
 @section('og_image', $homeBannerUrl)
-@section('preload_image', $homeBannerUrl)
+@section('preload_image', $homeBannerWebp)
 @section('body_class', 'home-scale-soft')
 
 @section('seo_schema')
@@ -384,15 +387,24 @@
   <!-- Hero Section -->
   <section class="hero" aria-labelledby="hero-title">
     <div class="hero-media" aria-hidden="true">
-      <img
-        class="hero-media__image"
-        src="{{ $homeBannerUrl }}"
-        alt="เบอร์มงคล Supernumber - เปลี่ยนเบอร์เปลี่ยนชีวิต"
-        width="1920"
-        height="450"
-        fetchpriority="high"
-        decoding="async"
-      />
+      <picture>
+        {{-- Mobile WebP (≤800px) --}}
+        <source media="(max-width: 800px)" type="image/webp" srcset="{{ $homeBannerMobWebp }}">
+        {{-- Mobile JPG fallback --}}
+        <source media="(max-width: 800px)" type="image/jpeg" srcset="{{ $homeBannerMobJpg }}">
+        {{-- Desktop WebP --}}
+        <source type="image/webp" srcset="{{ $homeBannerWebp }}">
+        {{-- Desktop JPG fallback --}}
+        <img
+          class="hero-media__image"
+          src="{{ $homeBannerUrl }}"
+          alt="เบอร์มงคล Supernumber - เปลี่ยนเบอร์เปลี่ยนชีวิต"
+          width="1920"
+          height="450"
+          fetchpriority="high"
+          decoding="async"
+        />
+      </picture>
     </div>
     <div class="hero-overlay"></div>
     <div class="container hero-content">
