@@ -30,9 +30,19 @@
     .admin-drop-zone__button { border: 1px solid #cbd5e1; background: #fff; color: #1e293b; font: inherit; font-weight: 700; padding: 8px 14px; border-radius: 8px; cursor: pointer; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
     .drop-text { color: #64748b; font-weight: 700; text-align: left; }
     .admin-preview-img { width: 100%; max-width: 220px; border-radius: 8px; border: 1px solid #d8e0ec; display: block; background: #fff; }
-    .admin-preview-box { margin-top: 14px; }
-    .admin-preview-info { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: #64748b; margin: 10px 0 0; font-weight: 600; }
+    .admin-preview-box { margin-top: 14px; max-width: 100%; min-width: 0; overflow: hidden; }
+    .admin-preview-info {
+      max-width: 100%;
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      font-size: 12px;
+      color: #64748b;
+      margin: 10px 0 0;
+      font-weight: 600;
+    }
     .admin-image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; }
+    .admin-image-grid > .admin-field { min-width: 0; }
     .article-edit-highlight {
       margin-top: 20px;
       border-left: 4px solid #3b82f6;
@@ -167,7 +177,7 @@
     @media (max-width: 768px) {
       .admin-image-grid { grid-template-columns: 1fr; }
       .admin-drop-zone { display: grid; justify-items: center; text-align: center; }
-      .drop-text { text-align: center; }
+      .drop-text { text-align: center; overflow-wrap: anywhere; }
       .article-edit-highlight,
       .article-edit-highlight--landscape,
       .article-edit-highlight--square {
@@ -178,9 +188,9 @@
       }
       .article-edit-highlight--landscape { border-top-color: #2563eb; }
       .article-edit-highlight--square { border-top-color: #10b981; }
-      .admin-preview-img { max-width: 100%; }
-      .article-edit-actions { display: grid; grid-template-columns: 1fr; }
-      .article-edit-action { width: 100%; }
+      .admin-preview-img { width: 100%; max-width: 100%; height: auto; }
+      .article-edit-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .article-edit-action { width: 100%; min-width: 0; padding: 11px 10px; font-size: 13px; }
     }
     @media (max-width: 640px) {
       .article-edit-comments-table {
