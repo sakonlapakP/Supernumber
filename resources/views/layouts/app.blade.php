@@ -30,14 +30,23 @@
     <link rel="icon" type="image/png" sizes="32x32" href="{{ $versionedStaticPath('favicon-32x32.png') }}" />
     <link rel="icon" type="image/png" sizes="16x16" href="{{ $versionedStaticPath('favicon-16x16.png') }}" />
     <link rel="apple-touch-icon" sizes="180x180" href="{{ $versionedStaticPath('apple-touch-icon.png') }}" />
+    {{-- LCP image preload: imagesrcset lets browser pick correct size early --}}
     @hasSection('preload_image')
-      <link rel="preload" as="image" href="@yield('preload_image')" />
+      <link rel="preload" as="image"
+        href="@yield('preload_image')"
+        @hasSection('preload_imagesrcset') imagesrcset="@yield('preload_imagesrcset')" @endif
+        @hasSection('preload_imagesizes') imagesizes="@yield('preload_imagesizes')" @endif
+        fetchpriority="high"
+      />
     @endif
-    {{-- Fonts: preconnect early, load non-blocking (font-display:swap prevents CLS) --}}
+    {{-- Preload critical WOFF2 fonts to eliminate font blocking in critical path --}}
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/Kanit-400.woff2" crossorigin>
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/Kanit-600.woff2" crossorigin>
+    {{-- Playfair Display (brand logo only): preconnect + non-blocking load --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"></noscript>
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"></noscript>
 
     {{-- Critical CSS: must be synchronous to prevent FOUC/CLS --}}
     <link rel="stylesheet" href="{{ $versionedStaticPath('css/supernumber.css') }}" />
