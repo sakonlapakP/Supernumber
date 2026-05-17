@@ -129,6 +129,42 @@ config key: `services.lottery.fb_template_regular` (env: `LOTTERY_MSG_FB_REGULAR
 
 ---
 
+## Open Graph (og:image) Meta Tags
+
+หน้า article detail (`/articles/{slug}`) ใช้ OG meta tags เพื่อให้ Facebook และ LINE แสดง preview รูปภาพเมื่อแชร์ลิงก์
+
+### Layout หลัก: `resources/views/layouts/app.blade.php`
+
+| Meta Tag | Default | หมายเหตุ |
+|----------|---------|----------|
+| `og:image` | `images/home_banner.jpg` | override ได้จาก child view |
+| `og:image:width` | `1200` | override ได้ |
+| `og:image:height` | `630` (landscape) | override ได้ |
+| `og:image:type` | `image/jpeg` | fixed |
+| `twitter:card` | `summary_large_image` | override ได้ |
+
+### Article Detail: `resources/views/articles/show.blade.php`
+
+ตรวจสอบว่า cover เป็น square หรือ landscape แล้วตั้ง height และ twitter:card ให้ตรง:
+
+```php
+$ogIsSquare = (bool) $article->cover_image_square_path;
+// Square   → og:image:height=1200, twitter:card=summary
+// Landscape → og:image:height=630,  twitter:card=summary_large_image
+```
+
+**ลำดับความสำคัญรูป OG:** `cover_image_square_path` → `cover_image_path` → `home_banner.jpg`
+
+### ทำไมต้องระบุ width/height
+
+Facebook ต้องดาวน์โหลดและวิเคราะห์รูปเพื่อหาขนาด ถ้าไม่ระบุ dimensions:
+- รูป square (1200×1200) อาจไม่โหลดขึ้น preview เลย
+- Preview แสดงผิดขนาดหรือ crop ผิด
+
+การระบุ `og:image:width` + `og:image:height` ช่วยให้ Facebook รู้ขนาดล่วงหน้าโดยไม่ต้องดาวน์โหลดก่อน
+
+---
+
 ## LINE Group Share Flow
 
 Route: `POST /admin/articles/{article}/share-line` (admin.articles.share-line)
