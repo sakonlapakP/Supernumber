@@ -792,6 +792,11 @@ Route::get('/robots.txt', function () {
         ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
         ->header('Pragma', 'no-cache');
 })->name('robots');
+Route::get('/fb-crawler-test', function () {
+    return response()->view('fb-crawler-test')
+        ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
+        ->header('Pragma', 'no-cache');
+})->name('fb-crawler-test');
 Route::get('/sitemap.xml', [PublicController::class, 'sitemap'])->name('sitemap');
 Route::view('/under-construction', 'under-construction')->name('under-construction');
 Route::redirect('/underconsturter', '/under-construction');
