@@ -4866,14 +4866,19 @@ Route::get('/cron/deploy/{secret}', function ($secret) {
     $results = [];
 
     // git pull origin main — command is fully hardcoded, no injection surface
-    $descriptor = [1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
-    $process = proc_open('git pull origin main 2>&1', $descriptor, $pipes, $basePath);
-    $gitOutput = is_resource($process) ? trim(stream_get_contents($pipes[1])) : 'proc_open unavailable';
-    if (is_resource($process)) {
-        fclose($pipes[1]);
-        $gitCode = proc_close($process);
+    if (function_exists('proc_open')) {
+        $descriptor = [1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
+        $process = proc_open('git pull origin main 2>&1', $descriptor, $pipes, $basePath);
+        $gitOutput = is_resource($process) ? trim(stream_get_contents($pipes[1])) : 'proc_open unavailable';
+        if (is_resource($process)) {
+            fclose($pipes[1]);
+            $gitCode = proc_close($process);
+        } else {
+            $gitCode = -1;
+        }
     } else {
         $gitCode = -1;
+        $gitOutput = 'proc_open is disabled on this hosting account; deploy via GitHub FTP or SSH instead.';
     }
     $results['git_pull'] = ['exit' => $gitCode, 'output' => $gitOutput];
 
