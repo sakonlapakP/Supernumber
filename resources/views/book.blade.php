@@ -96,14 +96,14 @@
       </div>
 
       @if (session('status_message'))
-        <div class="book-card" style="border-color: rgba(35, 165, 138, 0.35); background: #effcf7; color: #1c584a;">
-          {{ session('status_message') }}
+        <div class="book-card" role="alert" aria-live="polite" style="border-color: rgba(35, 165, 138, 0.35); background: #effcf7; color: #1c584a;">
+          <span aria-hidden="true">✓ </span>{{ session('status_message') }}
         </div>
       @endif
 
       @if ($errors->any())
-        <div class="book-card" style="border-color: rgba(196, 56, 56, 0.32); background: #fff5f5; color: #8f2a2a;">
-          {{ $errors->first() }}
+        <div class="book-card" role="alert" aria-live="assertive" style="border-color: rgba(196, 56, 56, 0.32); background: #fff5f5; color: #8f2a2a;">
+          <span aria-hidden="true">✕ </span>{{ $errors->first() }}
         </div>
       @endif
 
