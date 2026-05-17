@@ -3862,6 +3862,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $article->update([
             'is_published' => true,
             'published_at' => $article->published_at ?: now(),
+            'notified_at' => null,
         ]);
 
         return back()->with('status_message', 'เผยแพร่บทความเรียบร้อย');
