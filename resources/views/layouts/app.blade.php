@@ -33,17 +33,16 @@
     @hasSection('preload_image')
       <link rel="preload" as="image" href="@yield('preload_image')" />
     @endif
-    {{-- Fonts: preconnect early, load non-blocking --}}
+    {{-- Fonts: preconnect early, load non-blocking (font-display:swap prevents CLS) --}}
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet"></noscript>
 
-    {{-- Critical CSS: inline or load synchronously --}}
-    <link rel="preload" as="style" href="{{ $versionedStaticPath('css/supernumber.css') }}" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link rel="stylesheet" href="{{ $versionedStaticPath('css/supernumber.css') }}"></noscript>
+    {{-- Critical CSS: must be synchronous to prevent FOUC/CLS --}}
+    <link rel="stylesheet" href="{{ $versionedStaticPath('css/supernumber.css') }}" />
 
-    {{-- Non-critical CSS: load asynchronously --}}
+    {{-- Non-critical CSS: load asynchronously (below-fold card styles) --}}
     <link rel="preload" as="style" href="{{ $versionedStaticPath('css/cardNumber.css') }}" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link rel="stylesheet" href="{{ $versionedStaticPath('css/cardNumber.css') }}"></noscript>
 
