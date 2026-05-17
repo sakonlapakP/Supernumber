@@ -11,6 +11,9 @@
     <div class="admin-page-actions">
       <a href="{{ route('admin.orders.show', $order) }}" class="admin-button admin-button--secondary admin-button--compact">ดูรายละเอียด</a>
       <a href="{{ route('admin.orders') }}" class="admin-button admin-button--secondary admin-button--compact">กลับหน้าคำสั่งซื้อ</a>
+      @if (session('admin_user_role') === 'manager')
+        <button type="button" class="admin-button admin-button--danger admin-button--compact" onclick="openDeleteModal()">ลบคำสั่งซื้อ</button>
+      @endif
     </div>
   </div>
 
@@ -189,4 +192,54 @@
       <button type="submit" class="admin-button">บันทึกการแก้ไข</button>
     </form>
   </section>
+
+  @if (session('admin_user_role') === 'manager')
+    <div id="deleteModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">
+      <div class="admin-card" style="width: 90%; max-width: 500px;">
+        <h2 style="margin-top: 0; color: #d32f2f;">ยืนยันการลบคำสั่งซื้อ</h2>
+        <p style="color: var(--admin-text);">คำสั่งซื้อ <strong>{{ $order->ordered_number }}</strong> จะถูกลบออกจากระบบ</p>
+        <p style="color: var(--admin-muted); font-size: 0.9rem;">กรุณาพิมพ์คำว่า <strong>DELETE</strong> เพื่อยืนยันการลบ:</p>
+        <input id="deleteConfirmInput" type="text" class="admin-input" placeholder="พิมพ์ DELETE" style="margin-bottom: 16px;" />
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+          <button type="button" class="admin-button admin-button--secondary" onclick="closeDeleteModal()">ยกเลิก</button>
+          <button id="confirmDeleteBtn" type="button" class="admin-button admin-button--danger" onclick="confirmDelete()" disabled>ลบ</button>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function openDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'flex';
+        document.getElementById('deleteConfirmInput').value = '';
+        document.getElementById('confirmDeleteBtn').disabled = true;
+        document.getElementById('deleteConfirmInput').focus();
+      }
+
+      function closeDeleteModal() {
+        document.getElementById('deleteModal').style.display = 'none';
+      }
+
+      document.getElementById('deleteConfirmInput').addEventListener('input', function() {
+        document.getElementById('confirmDeleteBtn').disabled = this.value !== 'DELETE';
+      });
+
+      function confirmDelete() {
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ route('admin.orders.destroy', $order) }}';
+        form.innerHTML = `
+          @csrf
+          @method('DELETE')
+        `;
+        document.body.appendChild(form);
+        form.submit();
+      }
+
+      document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape' && document.getElementById('deleteModal').style.display === 'flex') {
+          closeDeleteModal();
+        }
+      });
+    </script>
+  @endif
 @endsection

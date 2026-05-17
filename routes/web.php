@@ -2264,6 +2264,18 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->with('status_message', 'อัปเดตคำสั่งซื้อเรียบร้อยแล้ว');
     })->name('orders.update');
 
+    Route::delete('/orders/{order}', function (CustomerOrder $order) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin('manager')) {
+            return $redirect;
+        }
+
+        $order->delete();
+
+        return redirect()
+            ->route('admin.orders')
+            ->with('status_message', 'ลบคำสั่งซื้อเรียบร้อยแล้ว');
+    })->name('orders.destroy');
+
     Route::post('/orders/{order}/line-test', function (CustomerOrder $order) use ($ensureAdmin, $safelyRunLineNotification, $currentAdmin) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
