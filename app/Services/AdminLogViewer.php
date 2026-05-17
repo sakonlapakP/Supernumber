@@ -224,8 +224,7 @@ class AdminLogViewer
         }
 
         try {
-            $dateTime = Carbon::parse($timestamp, 'UTC')
-                ->setTimezone(self::DISPLAY_TIMEZONE);
+            $dateTime = Carbon::parse($timestamp, self::DISPLAY_TIMEZONE);
 
             return [
                 'timestamp' => $dateTime->format('Y-m-d H:i:s') . ' ICT',
