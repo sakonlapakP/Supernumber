@@ -2269,6 +2269,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             return $redirect;
         }
 
+        $adminUserId = $currentAdmin()?->id;
+
         if ($normalizeServiceType($order->service_type) === PhoneNumber::SERVICE_TYPE_PREPAID) {
             $phoneNumber = $order->phone_number_id !== null
                 ? $order->phoneNumber()->first()
@@ -2288,9 +2290,19 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 $phoneNumber->update([
                     'status' => PhoneNumber::STATUS_ACTIVE,
                 ]);
-                $logPhoneNumberStatusChange($phoneNumber, $fromStatus, $currentAdmin()?->id);
+                $logPhoneNumberStatusChange($phoneNumber, $fromStatus, $adminUserId);
             }
         }
+
+        CustomerOrderActivityLog::query()->create([
+            'customer_order_id' => $order->id,
+            'user_id' => $adminUserId,
+            'action' => 'delete',
+            'changes' => [
+                'ordered_number' => ['old' => $order->ordered_number, 'new' => null],
+                'status' => ['old' => $order->status, 'new' => null],
+            ],
+        ]);
 
         $order->delete();
 
