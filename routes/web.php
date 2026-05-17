@@ -4830,6 +4830,46 @@ Route::get('/cron/clear-all-caches/{secret}', function ($secret) {
 
 // NOTE: /cron/git-sync was removed — writing arbitrary remote content to server files is a Remote Code Execution risk.
 
+// Safe deploy: hardcoded commands only — no user-supplied input reaches the shell.
+Route::get('/cron/deploy/{secret}', function ($secret) {
+    $expectedSecret = config('app.cron_secret', env('CRON_SECRET', ''));
+    if ($expectedSecret === '' || !hash_equals($expectedSecret, $secret)) {
+        return response('Unauthorized', 403);
+    }
+
+    $basePath = base_path();
+    $results = [];
+
+    // git pull origin main — command is fully hardcoded, no injection surface
+    $descriptor = [1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
+    $process = proc_open('git pull origin main 2>&1', $descriptor, $pipes, $basePath);
+    $gitOutput = is_resource($process) ? trim(stream_get_contents($pipes[1])) : 'proc_open unavailable';
+    if (is_resource($process)) {
+        fclose($pipes[1]);
+        $gitCode = proc_close($process);
+    } else {
+        $gitCode = -1;
+    }
+    $results['git_pull'] = ['exit' => $gitCode, 'output' => $gitOutput];
+
+    // Clear all Laravel caches
+    foreach (['cache:clear', 'config:clear', 'view:clear', 'route:clear'] as $cmd) {
+        \Illuminate\Support\Facades\Artisan::call($cmd);
+        $results[$cmd] = trim(\Illuminate\Support\Facades\Artisan::output()) ?: 'OK';
+    }
+
+    $success = $gitCode === 0;
+    $lines = [
+        '<h3>' . ($success ? '✅ Deploy สำเร็จ' : '❌ Deploy มีปัญหา') . '</h3>',
+        '<b>git pull:</b><pre>' . htmlspecialchars($gitOutput) . '</pre>',
+        '<b>Cache cleared:</b> cache, config, view, route',
+        '<b>Time:</b> ' . now()->timezone('Asia/Bangkok')->format('Y-m-d H:i:s'),
+        '<br><a href="/admin/articles">กลับหน้า Admin</a>',
+    ];
+
+    return implode("\n", $lines);
+})->name('cron.deploy');
+
 Route::get('/cron/fix-storage-link/{secret}', function ($secret) {
     $expectedSecret = config('app.cron_secret', env('CRON_SECRET', ''));
     if ($expectedSecret === '' || $secret !== $expectedSecret) return "Invalid Secret";
