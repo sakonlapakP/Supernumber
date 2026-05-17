@@ -1328,7 +1328,8 @@
                   @if($article->is_published)
                     <details class="article-share-dropdown" style="position: relative;">
                       <summary class="admin-button admin-button--compact article-action-share" style="background: #1877F2; color: #fff; border-color: #1877F2; list-style: none; cursor: pointer;">
-                        แชร์
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100-3.182 2.25 2.25 0 000 3.182zM16.783 6.182a2.25 2.25 0 100-3.182 2.25 2.25 0 000 3.182zM7.217 17.818a2.25 2.25 0 100-3.182 2.25 2.25 0 000 3.182zM8.59 9.59l6.82-3.18M8.59 14.41l6.82 3.18" /></svg>
+                        <span>แชร์</span>
                       </summary>
                       <div style="position: absolute; right: 0; top: calc(100% + 6px); background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; min-width: 180px; z-index: 30; box-shadow: 0 10px 24px rgba(15,23,42,.15); padding: 6px;">
                         @if($isLotteryArticle)
@@ -1361,7 +1362,10 @@
                       </div>
                     </details>
                   @else
-                    <button type="button" class="admin-button admin-button--compact article-action-share is-disabled" style="background: #f1f5f9; color: #94a3b8; border-color: #e2e8f0; cursor: not-allowed;" title="กรุณาเผยแพร่บทความก่อนจึงจะแชร์ได้" disabled>แชร์</button>
+                    <button type="button" class="admin-button admin-button--compact article-action-share is-disabled" style="background: #f1f5f9; color: #94a3b8; border-color: #e2e8f0; cursor: not-allowed;" title="กรุณาเผยแพร่บทความก่อนจึงจะแชร์ได้" disabled>
+                      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100-3.182 2.25 2.25 0 000 3.182zM16.783 6.182a2.25 2.25 0 100-3.182 2.25 2.25 0 000 3.182zM7.217 17.818a2.25 2.25 0 100-3.182 2.25 2.25 0 000 3.182zM8.59 9.59l6.82-3.18M8.59 14.41l6.82 3.18" /></svg>
+                      <span>แชร์</span>
+                    </button>
                   @endif
                 </div>
               </td>
