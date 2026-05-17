@@ -16,6 +16,8 @@
 @section('og_url', url('/'))
 @section('og_image', $homeBannerUrl)
 @section('preload_image', $homeBannerWebp)
+@section('preload_imagesrcset', $homeBannerMobWebp . ' 800w, ' . $homeBannerWebp . ' 1920w')
+@section('preload_imagesizes', '100vw')
 @section('body_class', 'home-scale-soft')
 
 @section('seo_schema')
