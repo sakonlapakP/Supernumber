@@ -21,6 +21,27 @@
     .admin-preview-box { margin-top: 14px; }
     .admin-preview-info { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; color: #64748b; margin: 10px 0 0; font-weight: 600; }
     .admin-image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; }
+    .article-edit-highlight {
+      margin-top: 20px;
+      border-left: 4px solid #3b82f6;
+      padding-left: 15px;
+    }
+    .article-edit-highlight--landscape {
+      margin-top: 30px;
+      border-left-color: #2563eb;
+    }
+    .article-edit-highlight--square {
+      margin-top: 30px;
+      border-left-color: #10b981;
+    }
+    .article-edit-preview-note,
+    .article-edit-comment-content {
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+    .article-edit-comments-table td {
+      vertical-align: top;
+    }
     .article-image-card {
       margin-top: 28px;
       padding: 18px;
@@ -122,8 +143,64 @@
       .admin-image-grid { grid-template-columns: 1fr; }
       .admin-drop-zone { display: grid; justify-items: center; text-align: center; }
       .drop-text { text-align: center; }
+      .article-edit-highlight,
+      .article-edit-highlight--landscape,
+      .article-edit-highlight--square {
+        padding-left: 0;
+        border-left: 0;
+        border-top: 4px solid #3b82f6;
+        padding-top: 12px;
+      }
+      .article-edit-highlight--landscape { border-top-color: #2563eb; }
+      .article-edit-highlight--square { border-top-color: #10b981; }
+      .admin-preview-img { max-width: 100%; }
       .article-edit-actions { display: grid; grid-template-columns: 1fr; }
       .article-edit-action { width: 100%; }
+    }
+    @media (max-width: 640px) {
+      .article-edit-comments-table {
+        width: 100%;
+        min-width: 0;
+      }
+      .article-edit-comments-table thead {
+        display: none;
+      }
+      .article-edit-comments-table,
+      .article-edit-comments-table tbody,
+      .article-edit-comments-table tr,
+      .article-edit-comments-table td {
+        display: block;
+        width: 100%;
+      }
+      .article-edit-comments-table tr {
+        margin-bottom: 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        overflow: hidden;
+        background: #fff;
+      }
+      .article-edit-comments-table td {
+        margin: 0;
+        padding: 10px 12px;
+        border-bottom: 1px dashed #e2e8f0;
+        font-size: 13px;
+      }
+      .article-edit-comments-table td:last-child {
+        border-bottom: 0;
+      }
+      .article-edit-comments-table td::before {
+        content: attr(data-label);
+        display: block;
+        margin-bottom: 4px;
+        color: #64748b;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.01em;
+      }
+      .article-edit-comments-table td form,
+      .article-edit-comments-table td .admin-button {
+        width: 100%;
+      }
     }
   </style>
 
@@ -168,7 +245,7 @@
         <textarea name="excerpt" class="admin-input" style="min-height: 60px; padding-top: 12px;" placeholder="พิมพ์คำโปรยสั้นๆ... (ไม่บังคับ)">{{ old('excerpt', $article->excerpt) }}</textarea>
       </div>
 
-      <div class="admin-field" style="margin-top:20px; border-left: 4px solid #3b82f6; padding-left: 15px;">
+      <div class="admin-field article-edit-highlight">
         <label style="font-size: 16px; color: #1e293b; font-weight: bold;">เนื้อหาบทความ (สำหรับแสดงบนหน้าเว็บหลัก)</label>
         <div class="admin-rte">
           <div class="admin-rte__toolbar">
@@ -203,7 +280,7 @@
 
 
       <div class="admin-image-grid">
-        <div class="admin-field" style="margin-top:30px; border-left: 4px solid #2563eb; padding-left: 15px;">
+        <div class="admin-field article-edit-highlight article-edit-highlight--landscape">
           <label style="font-size: 16px; color: #1e293b; font-weight: bold;">รูปหน้ารวมบทความ (แนวนอน 16:9 / 4:3)</label>
           <div class="admin-drop-zone" data-drop-zone data-path-target="land_path">
             <input type="file" id="upload_media_land" class="admin-drop-zone__input" accept="image/jpeg,image/png,image/webp" data-drop-zone-input />
@@ -217,7 +294,7 @@
               data-preview-img
               style="aspect-ratio:16/9; object-fit:cover; border: 2px solid #2563eb;"
             />
-            <p class="admin-preview-info" data-preview-info style="color: #2563eb; font-weight: bold;">
+            <p class="admin-preview-info article-edit-preview-note" data-preview-info style="color: #2563eb; font-weight: bold;">
               {{ $article->cover_image_landscape_path ?: ($article->cover_image_path ? 'รูปปัจจุบัน: ' . $article->cover_image_path : '') }}
             </p>
           </div>
@@ -227,7 +304,7 @@
           </div>
         </div>
 
-        <div class="admin-field" style="margin-top:30px; border-left: 4px solid #10b981; padding-left: 15px;">
+        <div class="admin-field article-edit-highlight article-edit-highlight--square">
           <label style="font-size: 16px; color: #1e293b; font-weight: bold;">รูปภาพบทความ (จัตุรัส 1:1)</label>
           <div class="admin-drop-zone" data-drop-zone data-path-target="sq_path">
             <input type="file" id="upload_media_sq" class="admin-drop-zone__input" accept="image/jpeg,image/png,image/webp" data-drop-zone-input />
@@ -241,7 +318,7 @@
               data-preview-img
               style="aspect-ratio:1/1; object-fit:cover; border: 2px solid #10b981;"
             />
-            <p class="admin-preview-info" data-preview-info style="color: #059669; font-weight: bold;">
+            <p class="admin-preview-info article-edit-preview-note" data-preview-info style="color: #059669; font-weight: bold;">
               {{ $article->cover_image_square_path ?: ($article->cover_image_path ? 'รูปปัจจุบัน: ' . $article->cover_image_path : '') }}
             </p>
           </div>
@@ -330,18 +407,18 @@
       <h2 class="admin-feature-card__title">คอมเมนต์</h2>
     </div>
     <div class="admin-table-wrap">
-      <table class="admin-table">
+      <table class="admin-table article-edit-comments-table">
         <thead>
           <tr><th>เวลา</th><th>ผู้คอมเมนต์</th><th>เนื้อหา</th><th>สถานะ</th><th>จัดการ</th></tr>
         </thead>
         <tbody>
           @foreach ($comments as $comment)
             <tr>
-              <td>{{ $comment->created_at->format('Y-m-d H:i') }}</td>
-              <td>{{ $comment->commenter_name }}</td>
-              <td style="max-width: 400px; white-space: normal;">{{ $comment->content }}</td>
-              <td><span class="admin-status-pill {{ $comment->status === 'approved' ? 'admin-status-pill--active' : '' }}">{{ $comment->status === 'approved' ? 'อนุมัติแล้ว' : 'ซ่อน' }}</span></td>
-              <td>
+              <td data-label="เวลา">{{ $comment->created_at->format('Y-m-d H:i') }}</td>
+              <td data-label="ผู้คอมเมนต์">{{ $comment->commenter_name }}</td>
+              <td data-label="เนื้อหา" class="article-edit-comment-content" style="max-width: 400px; white-space: normal;">{{ $comment->content }}</td>
+              <td data-label="สถานะ"><span class="admin-status-pill {{ $comment->status === 'approved' ? 'admin-status-pill--active' : '' }}">{{ $comment->status === 'approved' ? 'อนุมัติแล้ว' : 'ซ่อน' }}</span></td>
+              <td data-label="จัดการ">
                 <form action="{{ route('admin.articles.comments.' . ($comment->status === 'approved' ? 'archive' : 'unarchive'), [$article, $comment]) }}" method="POST">
                   @csrf <button type="submit" class="admin-button admin-button--compact" style="background: {{ $comment->status === 'approved' ? '#f59e0b' : '#3b82f6' }}">{{ $comment->status === 'approved' ? 'ซ่อน' : 'โชว์' }}</button>
                 </form>
