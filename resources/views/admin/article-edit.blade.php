@@ -14,7 +14,19 @@
   <style>
     .admin-drop-zone { border: 1px dashed #cbd5e1; border-radius: 8px; padding: 16px; text-align: center; background: #f8fafc; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 72px; position: relative; transition: all 0.3s; }
     .admin-drop-zone.is-dragover { border-color: #1d4f9f; background: #f0f7ff; }
-    .admin-drop-zone__input { position: absolute; left: -9999px; width: 1px; height: 1px; opacity: 0; }
+    .admin-drop-zone__input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      margin: -1px;
+      padding: 0;
+      border: 0;
+      overflow: hidden;
+      clip: rect(0 0 0 0);
+      clip-path: inset(50%);
+      white-space: nowrap;
+      opacity: 0;
+    }
     .admin-drop-zone__button { border: 1px solid #cbd5e1; background: #fff; color: #1e293b; font: inherit; font-weight: 700; padding: 8px 14px; border-radius: 8px; cursor: pointer; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04); }
     .drop-text { color: #64748b; font-weight: 700; text-align: left; }
     .admin-preview-img { width: 100%; max-width: 220px; border-radius: 8px; border: 1px solid #d8e0ec; display: block; background: #fff; }
@@ -41,6 +53,19 @@
     }
     .article-edit-comments-table td {
       vertical-align: top;
+    }
+    .admin-form,
+    .admin-field,
+    .admin-rte,
+    .admin-rte__editor,
+    .admin-input {
+      min-width: 0;
+      max-width: 100%;
+    }
+    textarea.admin-input,
+    .admin-rte__editor {
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
     .article-image-card {
       margin-top: 28px;
@@ -200,6 +225,11 @@
       .article-edit-comments-table td form,
       .article-edit-comments-table td .admin-button {
         width: 100%;
+      }
+    }
+    @media (max-width: 760px) {
+      .article-edit-comments-table {
+        min-width: 0;
       }
     }
   </style>
