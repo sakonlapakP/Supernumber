@@ -1349,6 +1349,15 @@
                           <input type="hidden" name="manual_image_url" value="{{ $article->cover_image_square_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($article->cover_image_square_path) : ($article->cover_image_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($article->cover_image_path) : '') }}">
                           <button type="submit" style="width:100%; border:none; background:#fff; text-align:left; padding:8px 10px; border-radius:8px; cursor:pointer;">Line (group)</button>
                         </form>
+                        @if($article->is_line_broadcasted)
+                          <button type="button" disabled style="width:100%; border:none; background:#f1f5f9; color:#94a3b8; text-align:left; padding:8px 10px; border-radius:8px; cursor:not-allowed;" title="บทความนี้ถูก Broadcast ไปแล้ว">📢 Broadcast แล้ว</button>
+                        @else
+                          <form action="{{ route('admin.articles.broadcast-line', $article) }}" method="POST" style="margin:0;" onsubmit="return confirm('ยืนยันการ Broadcast ส่งหาผู้ติดตามทุกคน?\n\nหากส่งแล้วจะไม่สามารถดึงข้อความกลับได้')">
+                            @csrf
+                            <input type="hidden" name="manual_image_url" value="{{ $article->cover_image_square_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($article->cover_image_square_path) : ($article->cover_image_path ? \Illuminate\Support\Facades\Storage::disk('public')->url($article->cover_image_path) : '') }}">
+                            <button type="submit" style="width:100%; border:none; background:#065f46; color:#fff; text-align:left; padding:8px 10px; border-radius:8px; cursor:pointer; font-weight:600;">📢 Broadcast (ผู้ติดตามทั้งหมด)</button>
+                          </form>
+                        @endif
                       </div>
                     </details>
                   @else
