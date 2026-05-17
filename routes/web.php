@@ -772,6 +772,10 @@ $syncPhoneNumberStatusFromOrder = function (CustomerOrder $order, ?int $userId =
 };
 
 Route::get('/', [PublicController::class, 'index'])->name('home');
+Route::get('/robots.txt', function () {
+    return response(File::get(public_path('robots.txt')), 200)
+        ->header('Content-Type', 'text/plain; charset=UTF-8');
+})->name('robots');
 Route::get('/sitemap.xml', [PublicController::class, 'sitemap'])->name('sitemap');
 Route::view('/under-construction', 'under-construction')->name('under-construction');
 Route::redirect('/underconsturter', '/under-construction');
