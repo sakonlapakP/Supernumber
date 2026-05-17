@@ -39,6 +39,21 @@
 </IfModule>
 # ─────────────────────────────────────────────────────────────────────────────
 
+# ─── WebP Content Negotiation ────────────────────────────────────────────────
+# Serve .webp automatically when browser supports it and .webp file exists.
+# This lets <img src="image.jpg"> transparently receive .webp — no <picture> needed.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{HTTP_ACCEPT} image/webp
+    RewriteCond %{REQUEST_FILENAME} \.(jpe?g|png)$
+    RewriteCond %{REQUEST_FILENAME}.webp -f
+    RewriteRule ^ %{REQUEST_URI}.webp [T=image/webp,L]
+</IfModule>
+<IfModule mod_headers.c>
+    Header append Vary Accept env=REDIRECT_accept
+</IfModule>
+# ─────────────────────────────────────────────────────────────────────────────
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes
