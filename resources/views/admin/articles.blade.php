@@ -938,6 +938,7 @@
       .type-pill--วันสำคัญ { background: #eff6ff; color: #3b82f6; }
       .type-pill--วันมู { background: #faf5ff; color: #9333ea; }
       .type-pill--evergreen { background: #f0fdf4; color: #16a34a; }
+      .type-pill--กระแสวันนี้ { background: #fff7ed; color: #ea580c; }
       @media (max-width: 768px) {
         .plan-table th:nth-child(1), .plan-table td:nth-child(1) { display: none; }
       }
@@ -1082,6 +1083,7 @@
             <option value="Evergreen">Evergreen</option>
             <option value="วันมู">วันมู</option>
             <option value="บทวิเคราะห์">บทวิเคราะห์</option>
+            <option value="กระแสวันนี้">กระแสวันนี้</option>
           </select>
 
           {{-- Table-view year/month form (fallback for full list) --}}
@@ -1565,6 +1567,7 @@
                             <option value="Evergreen">Evergreen</option>
                             <option value="วันมู">วันมู</option>
                             <option value="บทวิเคราะห์">บทวิเคราะห์</option>
+                            <option value="กระแสวันนี้">กระแสวันนี้</option>
                         </select>
                     </div>
                     <div style="margin-bottom: 15px;">
