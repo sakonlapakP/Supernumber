@@ -1,0 +1,11 @@
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Facebot
+Allow: /
+
+User-agent: *
+Allow: /
+Disallow:
+
+Sitemap: https://supernumber.co.th/sitemap.xml
