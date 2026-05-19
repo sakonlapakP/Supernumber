@@ -5,6 +5,7 @@ class ArticlePlan {
   final String? type;
   final String topic;
   final bool isLottery;
+  final String? status; // todo | in_progress | done | blocked | cancelled
 
   ArticlePlan({
     required this.id,
@@ -13,6 +14,7 @@ class ArticlePlan {
     this.type,
     required this.topic,
     required this.isLottery,
+    this.status,
   });
 
   factory ArticlePlan.fromJson(Map<String, dynamic> json) {
@@ -23,6 +25,7 @@ class ArticlePlan {
       type: json['type']?.toString(),
       topic: (json['topic'] ?? '').toString(),
       isLottery: json['is_lottery'] == true || json['is_lottery'] == 1,
+      status: json['status']?.toString(),
     );
   }
 
@@ -34,6 +37,7 @@ class ArticlePlan {
       'type': type,
       'topic': topic,
       'is_lottery': isLottery,
+      'status': status ?? 'todo',
     };
   }
 }
