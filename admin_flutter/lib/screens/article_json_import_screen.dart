@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
 import '../providers/article_provider.dart';
@@ -12,7 +11,8 @@ class ArticleJsonImportScreen extends StatefulWidget {
   const ArticleJsonImportScreen({super.key});
 
   @override
-  State<ArticleJsonImportScreen> createState() => _ArticleJsonImportScreenState();
+  State<ArticleJsonImportScreen> createState() =>
+      _ArticleJsonImportScreenState();
 }
 
 class _ArticleJsonImportScreenState extends State<ArticleJsonImportScreen> {
@@ -98,13 +98,18 @@ class _ArticleJsonImportScreenState extends State<ArticleJsonImportScreen> {
       return;
     }
 
-    _showSnack(provider.lastErrorMessage ?? 'นำเข้า JSON ไม่สำเร็จ', isError: true);
+    _showSnack(
+      provider.lastErrorMessage ?? 'นำเข้า JSON ไม่สำเร็จ',
+      isError: true,
+    );
   }
 
   void _showSnack(String message, {bool isError = false}) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        backgroundColor: isError ? const Color(0xFFC54B3D) : const Color(0xFF1B8B6F),
+        backgroundColor: isError
+            ? const Color(0xFFC54B3D)
+            : const Color(0xFF1B8B6F),
         content: Text(message),
       ),
     );
@@ -124,7 +129,10 @@ class _ArticleJsonImportScreenState extends State<ArticleJsonImportScreen> {
         actions: [
           TextButton(
             onPressed: _importJson,
-            child: const Text('นำเข้า', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text(
+              'นำเข้า',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
           const SizedBox(width: 8),
         ],
@@ -135,7 +143,9 @@ class _ArticleJsonImportScreenState extends State<ArticleJsonImportScreen> {
             children: [
               Center(
                 child: Container(
-                  constraints: BoxConstraints(maxWidth: isTablet ? 820 : double.infinity),
+                  constraints: BoxConstraints(
+                    maxWidth: isTablet ? 820 : double.infinity,
+                  ),
                   child: ListView(
                     padding: const EdgeInsets.all(20),
                     children: [
@@ -195,7 +205,9 @@ class _ArticleJsonImportScreenState extends State<ArticleJsonImportScreen> {
                           fillColor: Colors.white,
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(16),
-                            borderSide: const BorderSide(color: Color(0xFFD7E1F0)),
+                            borderSide: const BorderSide(
+                              color: Color(0xFFD7E1F0),
+                            ),
                           ),
                         ),
                       ),
@@ -225,4 +237,3 @@ class _ArticleJsonImportScreenState extends State<ArticleJsonImportScreen> {
     );
   }
 }
-

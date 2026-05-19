@@ -17,7 +17,7 @@ class _AdminRegisterScreenState extends State<AdminRegisterScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
+
   String _selectedRole = 'admin';
   bool _isActive = true;
 
@@ -54,7 +54,9 @@ class _AdminRegisterScreenState extends State<AdminRegisterScreen> {
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(provider.lastErrorMessage ?? 'เกิดข้อผิดพลาดในการสร้างบัญชี'),
+          content: Text(
+            provider.lastErrorMessage ?? 'เกิดข้อผิดพลาดในการสร้างบัญชี',
+          ),
           backgroundColor: const Color(0xFFC54B3D),
         ),
       );
@@ -98,7 +100,8 @@ class _AdminRegisterScreenState extends State<AdminRegisterScreen> {
                           labelText: 'ชื่อ-นามสกุล',
                           prefixIcon: Icon(Icons.badge_outlined),
                         ),
-                        validator: (v) => v!.isEmpty ? 'กรุณากรอกชื่อ-นามสกุล' : null,
+                        validator: (v) =>
+                            v!.isEmpty ? 'กรุณากรอกชื่อ-นามสกุล' : null,
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
@@ -121,7 +124,8 @@ class _AdminRegisterScreenState extends State<AdminRegisterScreen> {
                           labelText: 'ชื่อผู้ใช้งาน (Username)',
                           prefixIcon: Icon(Icons.person_outline),
                         ),
-                        validator: (v) => v!.isEmpty ? 'กรุณากรอกชื่อผู้ใช้งาน' : null,
+                        validator: (v) =>
+                            v!.isEmpty ? 'กรุณากรอกชื่อผู้ใช้งาน' : null,
                       ),
                       const SizedBox(height: 32),
                       Text(
@@ -140,7 +144,9 @@ class _AdminRegisterScreenState extends State<AdminRegisterScreen> {
                           labelText: 'รหัสผ่าน',
                           prefixIcon: Icon(Icons.lock_outline),
                         ),
-                        validator: (v) => v!.length < 8 ? 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร' : null,
+                        validator: (v) => v!.length < 8
+                            ? 'รหัสผ่านต้องมีความยาวอย่างน้อย 8 ตัวอักษร'
+                            : null,
                       ),
                       const SizedBox(height: 16),
                       TextFormField(
@@ -151,7 +157,9 @@ class _AdminRegisterScreenState extends State<AdminRegisterScreen> {
                           prefixIcon: Icon(Icons.lock_reset_outlined),
                         ),
                         validator: (v) {
-                          if (v != _passwordController.text) return 'รหัสผ่านไม่ตรงกัน';
+                          if (v != _passwordController.text) {
+                            return 'รหัสผ่านไม่ตรงกัน';
+                          }
                           return null;
                         },
                       ),
@@ -166,7 +174,7 @@ class _AdminRegisterScreenState extends State<AdminRegisterScreen> {
                       ),
                       const SizedBox(height: 16),
                       DropdownButtonFormField<String>(
-                        value: _selectedRole,
+                        initialValue: _selectedRole,
                         decoration: const InputDecoration(
                           labelText: 'ตำแหน่ง/บทบาท',
                           prefixIcon: Icon(Icons.admin_panel_settings_outlined),
@@ -174,7 +182,10 @@ class _AdminRegisterScreenState extends State<AdminRegisterScreen> {
                         items: _roles.map((role) {
                           return DropdownMenuItem(
                             value: role['value'],
-                            child: Text(role['label']!, style: GoogleFonts.kanit()),
+                            child: Text(
+                              role['label']!,
+                              style: GoogleFonts.kanit(),
+                            ),
                           );
                         }).toList(),
                         onChanged: (v) => setState(() => _selectedRole = v!),
@@ -186,23 +197,30 @@ class _AdminRegisterScreenState extends State<AdminRegisterScreen> {
                           style: GoogleFonts.kanit(fontWeight: FontWeight.w500),
                         ),
                         subtitle: Text(
-                          _isActive ? 'บัญชีพร้อมใช้งาน' : 'ระงับการใช้งานชั่วคราว',
+                          _isActive
+                              ? 'บัญชีพร้อมใช้งาน'
+                              : 'ระงับการใช้งานชั่วคราว',
                           style: GoogleFonts.kanit(fontSize: 12),
                         ),
                         value: _isActive,
-                        activeColor: const Color(0xFF1B8B6F),
+                        activeThumbColor: const Color(0xFF1B8B6F),
                         onChanged: (v) => setState(() => _isActive = v),
                       ),
                       const SizedBox(height: 40),
                       Consumer<UserProvider>(
                         builder: (context, provider, _) {
                           return ElevatedButton(
-                            onPressed: provider.isLoading ? null : _handleSubmit,
+                            onPressed: provider.isLoading
+                                ? null
+                                : _handleSubmit,
                             child: provider.isLoading
                                 ? const SizedBox(
                                     height: 20,
                                     width: 20,
-                                    child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                                    child: CircularProgressIndicator(
+                                      color: Colors.white,
+                                      strokeWidth: 2,
+                                    ),
                                   )
                                 : const Text('บันทึกข้อมูล'),
                           );

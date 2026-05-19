@@ -9,6 +9,7 @@ import '../providers/auth_provider.dart';
 import '../providers/article_plan_provider.dart';
 import '../models/article.model.dart';
 import '../models/article_plan.model.dart';
+import '../services/api_service.dart';
 import '../utils/date_formatter.dart';
 import 'article_edit_screen.dart';
 import 'article_json_import_screen.dart';
@@ -134,8 +135,14 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.chat_bubble_outline_rounded),
-              title: const Text('LINE'),
-              onTap: () => Navigator.pop(context, 'line'),
+              title: const Text('LINE Broadcast'),
+              subtitle: article.isLineBroadcasted
+                  ? const Text('บทความนี้ Broadcast แล้ว')
+                  : null,
+              enabled: !article.isLineBroadcasted,
+              onTap: article.isLineBroadcasted
+                  ? null
+                  : () => Navigator.pop(context, 'line'),
             ),
           ],
         ),
@@ -148,7 +155,11 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
     final shared = await provider.shareArticle(article, platform);
     if (!mounted) return;
 
-    final label = platform == 'facebook' ? 'Facebook Page' : 'LINE';
+    final label = platform == 'facebook' ? 'Facebook Page' : 'LINE Broadcast';
+    if (shared) {
+      await provider.fetchArticles(monthPlan: _selectedMonthPlan);
+      if (!mounted) return;
+    }
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
@@ -629,98 +640,17 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
             return const Center(child: CircularProgressIndicator());
           }
 
-          if (provider.articles.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.article_outlined,
-                    size: 64,
-                    color: Colors.grey[400],
-                  ),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'ยังไม่มีบทความในระบบสำหรับเดือนนี้',
-                    style: TextStyle(
-                      color: Color(0xFF64748B),
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'คุณสามารถเริ่มเขียนบทความใหม่หรือนำเข้าข้อมูลได้',
-                    style: TextStyle(color: Colors.grey[500], fontSize: 13),
-                  ),
-                  const SizedBox(height: 24),
-                  OutlinedButton.icon(
-                    onPressed: () =>
-                        provider.fetchArticles(monthPlan: _selectedMonthPlan),
-                    icon: const Icon(Icons.refresh_rounded, size: 20),
-                    label: const Text('ลองโหลดใหม่อีกครั้ง'),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 24,
-                        vertical: 12,
-                      ),
-                      side: const BorderSide(color: Color(0xFFE2E8F0)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      foregroundColor: const Color(0xFF475569),
-                    ),
-                  ),
-                ],
-              ),
-            );
-          }
-
           return RefreshIndicator(
             onRefresh: () =>
                 provider.fetchArticles(monthPlan: _selectedMonthPlan),
             child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
+              padding: EdgeInsets.all(
+                MediaQuery.of(context).size.width < 420 ? 12 : 16,
+              ),
               physics: const AlwaysScrollableScrollPhysics(),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  LayoutBuilder(
-                    builder: (context, constraints) {
-                      final isWide = constraints.maxWidth > 900;
-                      final isNarrowTablet =
-                          constraints.maxWidth > 600 &&
-                          constraints.maxWidth <= 900;
-
-                      return GridView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: isWide ? 2 : (isNarrowTablet ? 2 : 1),
-                          childAspectRatio: isWide
-                              ? 2.5
-                              : (isNarrowTablet ? 2.0 : 2.8),
-                          crossAxisSpacing: 12,
-                          mainAxisSpacing: 12,
-                        ),
-                        itemCount: provider.articles.length,
-                        itemBuilder: (context, index) => _ArticleItem(
-                          article: provider.articles[index],
-                          onTap: () =>
-                              _openArticleEditor(provider.articles[index]),
-                          onView: () =>
-                              _openArticlePreview(provider.articles[index]),
-                          onEdit: () =>
-                              _openArticleEditor(provider.articles[index]),
-                          onShare: () =>
-                              _shareArticle(provider.articles[index]),
-                          onDelete: () =>
-                              _confirmDeleteArticle(provider.articles[index]),
-                        ),
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 32),
                   _ContentPlanSection(
                     selectedMonth: _selectedMonthPlan,
                     selectedYear: _selectedPlanYear,
@@ -741,7 +671,54 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                       );
                     },
                   ),
-                  const SizedBox(height: 80), // Space for FAB
+                  const SizedBox(height: 24),
+                  if (provider.articles.isEmpty)
+                    Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 32),
+                      child: Center(
+                        child: Column(
+                          children: [
+                            Icon(Icons.article_outlined,
+                                size: 48, color: Colors.grey[350]),
+                            const SizedBox(height: 10),
+                            Text(
+                              'ยังไม่มีบทความที่เผยแพร่ในเดือนนี้',
+                              style: TextStyle(
+                                color: Colors.grey[500],
+                                fontSize: 14,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    )
+                  else
+                    GridView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      gridDelegate:
+                          const SliverGridDelegateWithMaxCrossAxisExtent(
+                        maxCrossAxisExtent: 520,
+                        childAspectRatio: 2.7,
+                        crossAxisSpacing: 10,
+                        mainAxisSpacing: 10,
+                      ),
+                      itemCount: provider.articles.length,
+                      itemBuilder: (context, index) => _ArticleItem(
+                        article: provider.articles[index],
+                        onTap: () =>
+                            _openArticleEditor(provider.articles[index]),
+                        onView: () =>
+                            _openArticlePreview(provider.articles[index]),
+                        onEdit: () =>
+                            _openArticleEditor(provider.articles[index]),
+                        onShare: () =>
+                            _shareArticle(provider.articles[index]),
+                        onDelete: () =>
+                            _confirmDeleteArticle(provider.articles[index]),
+                      ),
+                    ),
+                  const SizedBox(height: 80),
                 ],
               ),
             ),
@@ -796,42 +773,59 @@ class _ArticleItem extends StatelessWidget {
       child: InkWell(
         onTap: onTap,
         child: Padding(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(12),
           child: LayoutBuilder(
             builder: (context, cardConstraints) {
+              final showThumb = cardConstraints.maxWidth >= 300;
+              final thumbSize = cardConstraints.maxWidth >= 460 ? 72.0 : 56.0;
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          article.title,
-                          style: GoogleFonts.kanit(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 16,
-                            color: const Color(0xFF1E2D45),
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        if (cardConstraints.maxHeight > 80 &&
-                            cardConstraints.maxWidth > 200) ...[
-                          const SizedBox(height: 4),
-                          Text(
-                            article.excerpt ?? 'ไม่มีคำโปรย...',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: Color(0xFF7488A8),
-                              fontSize: 11,
-                            ),
-                          ),
-                        ],
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      if (showThumb) ...[
+                        _ArticleThumb(article: article, size: thumbSize),
+                        const SizedBox(width: 10),
                       ],
-                    ),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              article.title,
+                              style: GoogleFonts.kanit(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: const Color(0xFF1E2D45),
+                                height: 1.3,
+                              ),
+                              maxLines: showThumb ? 2 : 3,
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                            if (cardConstraints.maxHeight > 100 &&
+                                cardConstraints.maxWidth > 200) ...[
+                              const SizedBox(height: 3),
+                              Text(
+                                article.excerpt ?? 'ไม่มีคำโปรย...',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Color(0xFF7488A8),
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                            if (cardConstraints.maxHeight > 115) ...[
+                              const SizedBox(height: 5),
+                              _ArticleFeatureBadges(article: article),
+                            ],
+                          ],
+                        ),
+                      ),
+                    ],
                   ),
+                  const Spacer(),
                   const SizedBox(height: 4),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -865,23 +859,19 @@ class _ArticleItem extends StatelessWidget {
                         alignment: WrapAlignment.end,
                         children: [
                           _ArticleActionButton(
-                            icon: Icons.visibility_outlined,
-                            tooltip: 'ดูบทความ',
+                            label: 'ดู',
                             onPressed: onView,
                           ),
                           _ArticleActionButton(
-                            icon: Icons.edit_outlined,
-                            tooltip: 'แก้ไข',
+                            label: 'แก้ไข',
                             onPressed: onEdit,
                           ),
                           _ArticleActionButton(
-                            icon: Icons.ios_share_outlined,
-                            tooltip: 'แชร์',
+                            label: 'แชร์',
                             onPressed: onShare,
                           ),
                           _ArticleActionButton(
-                            icon: Icons.delete_rounded,
-                            tooltip: 'ลบ',
+                            label: 'ลบ',
                             color: const Color(0xFFC54B3D),
                             onPressed: onDelete,
                           ),
@@ -911,34 +901,119 @@ String _formatArticleDate(Article article) {
   return created != null ? DateFormatter.formatArticleList(created) : '-';
 }
 
+class _ArticleThumb extends StatelessWidget {
+  final Article article;
+  final double size;
+
+  const _ArticleThumb({required this.article, required this.size});
+
+  @override
+  Widget build(BuildContext context) {
+    final path = article.preferredThumbnailPath;
+    final imageUrl = path == null
+        ? null
+        : '${ApiService.dio.options.baseUrl.replaceAll('/api', '')}/storage/$path';
+
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(
+        color: const Color(0xFFF1F5F9),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: imageUrl == null
+          ? const Icon(Icons.image_outlined, color: Color(0xFF94A3B8))
+          : Image.network(
+              imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => const Icon(
+                Icons.broken_image_outlined,
+                color: Color(0xFF94A3B8),
+              ),
+            ),
+    );
+  }
+}
+
+class _ArticleFeatureBadges extends StatelessWidget {
+  final Article article;
+
+  const _ArticleFeatureBadges({required this.article});
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 4,
+      runSpacing: 4,
+      children: [
+        if (article.hasLandscapeCover)
+          const _MiniBadge(label: '16:9', color: Color(0xFF2563EB)),
+        if (article.hasSquareCover)
+          const _MiniBadge(label: '1:1', color: Color(0xFF7C3AED)),
+        if (article.isAutoPost)
+          const _MiniBadge(label: 'Auto', color: Color(0xFF1B8B6F)),
+        if (article.isLineBroadcasted)
+          const _MiniBadge(label: 'LINE sent', color: Color(0xFF065F46)),
+      ],
+    );
+  }
+}
+
+class _MiniBadge extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _MiniBadge({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(99),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          fontSize: 9,
+          color: color,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+}
+
 class _ArticleActionButton extends StatelessWidget {
-  final IconData icon;
-  final String tooltip;
+  final String label;
   final Color color;
   final VoidCallback onPressed;
 
   const _ArticleActionButton({
-    required this.icon,
-    required this.tooltip,
+    required this.label,
     required this.onPressed,
     this.color = const Color(0xFF223A63),
   });
 
   @override
   Widget build(BuildContext context) {
-    return Tooltip(
-      message: tooltip,
-      child: Material(
-        color: color.withValues(alpha: 0.1),
-        shape: const CircleBorder(),
-        child: InkWell(
-          onTap: onPressed,
-          customBorder: const CircleBorder(),
-          child: Container(
-            width: 32,
-            height: 32,
-            alignment: Alignment.center,
-            child: Icon(icon, size: 18, color: color),
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 4),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(8),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 11,
+            color: color,
+            fontWeight: FontWeight.w600,
           ),
         ),
       ),
@@ -1006,95 +1081,132 @@ class _ContentPlanSection extends StatelessWidget {
   Widget build(BuildContext context) {
     return Consumer2<ArticlePlanProvider, AuthProvider>(
       builder: (context, planProvider, auth, _) {
+        const thaiMonthOrder = [
+          'มกราคม', 'กุมภาพันธ์', 'มีนาคม', 'เมษายน', 'พฤษภาคม', 'มิถุนายน',
+          'กรกฎาคม', 'สิงหาคม', 'กันยายน', 'ตุลาคม', 'พฤศจิกายน', 'ธันวาคม',
+        ];
         final grouped = <String, List<ArticlePlan>>{};
         for (final p in planProvider.plans) {
           final label = DateFormat('MMMM', 'th').format(p.publishDate);
           grouped.putIfAbsent(label, () => []).add(p);
         }
+        final sortedGrouped = Map.fromEntries(
+          grouped.entries.toList()
+            ..sort((a, b) =>
+                thaiMonthOrder.indexOf(a.key)
+                    .compareTo(thaiMonthOrder.indexOf(b.key))),
+        );
 
-        final selectedGroup = selectedMonth == null
+        final selectedMonthKey = selectedMonth?.split(' ').first;
+        final selectedGroup = selectedMonthKey == null
             ? planProvider.plans
-            : (grouped[selectedMonth!.split(' ').first] ?? <ArticlePlan>[]);
+            : (sortedGrouped[selectedMonthKey] ?? <ArticlePlan>[]);
         final totalPlanned = selectedGroup.length;
         final totalDone = selectedGroup
             .where((p) => p.type == 'หวย' || _isDoneByRule(p))
             .length;
+
+        final displayGrouped = selectedMonthKey == null
+            ? sortedGrouped
+            : (sortedGrouped.containsKey(selectedMonthKey)
+                ? {selectedMonthKey: sortedGrouped[selectedMonthKey]!}
+                : <String, List<ArticlePlan>>{});
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Container(
-                  padding: const EdgeInsets.all(8),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFF223A63).withValues(alpha: 0.1),
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: const Icon(
-                    Icons.assignment_outlined,
-                    color: Color(0xFF223A63),
-                    size: 20,
-                  ),
-                ),
-                const SizedBox(width: 12),
+                const Icon(Icons.assignment_outlined,
+                    color: Color(0xFF223A63), size: 18),
+                const SizedBox(width: 8),
                 Text(
                   'CONTENT ROADMAP',
                   style: GoogleFonts.kanit(
-                    fontSize: 18,
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
+                    color: const Color(0xFF1E2D45),
                   ),
+                ),
+                const SizedBox(width: 10),
+                Text(
+                  'แผน $totalPlanned',
+                  style: GoogleFonts.kanit(
+                      fontSize: 12, color: const Color(0xFF64748B)),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  'เสร็จ $totalDone',
+                  style: GoogleFonts.kanit(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: const Color(0xFF1B8B6F)),
                 ),
                 const Spacer(),
                 DropdownButton<int>(
                   value: selectedYear,
+                  underline: const SizedBox.shrink(),
+                  style: GoogleFonts.kanit(
+                      fontSize: 13, color: const Color(0xFF223A63)),
                   items: List.generate(12, (i) => 2026 + i)
-                      .map(
-                        (y) => DropdownMenuItem(
-                          value: y,
-                          child: Text('ปี ${y + 543 - 2500}'),
-                        ),
-                      )
+                      .map((y) => DropdownMenuItem(
+                            value: y,
+                            child: Text('ปี ${y + 543 - 2500}'),
+                          ))
                       .toList(),
                   onChanged: (v) {
-                    if (v == null) return;
-                    onYearChanged(v);
+                    if (v != null) onYearChanged(v);
                   },
                 ),
                 if (auth.user?['role'] == 'manager')
                   IconButton(
                     onPressed: () => _openPlanDialog(context, selectedYear),
-                    icon: const Icon(Icons.add_circle_outline),
+                    icon: const Icon(Icons.add_circle_outline, size: 20),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Text(
-                  'แผนทั้งหมด $totalPlanned',
-                  style: GoogleFonts.kanit(fontWeight: FontWeight.w600),
-                ),
-                const SizedBox(width: 12),
-                Text(
-                  'ทำแล้ว $totalDone',
-                  style: GoogleFonts.kanit(
-                    fontWeight: FontWeight.w600,
-                    color: const Color(0xFF1B8B6F),
-                  ),
-                ),
               ],
             ),
             const SizedBox(height: 10),
             if (planProvider.isLoading)
               const Center(child: CircularProgressIndicator()),
-            ...grouped.entries.map(
-              (e) => _MonthPlanCard(
-                monthName: e.key,
-                items: e.value,
-                articles: articles,
-                year: selectedYear,
-              ),
+            LayoutBuilder(
+              builder: (context, constraints) {
+                final entries = displayGrouped.entries.toList();
+                if (constraints.maxWidth > 700 && entries.length > 1) {
+                  final half = (entries.length / 2).ceil();
+                  final left = entries.sublist(0, half);
+                  final right = entries.sublist(half);
+                  return Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Column(
+                          children: left.map((e) => _MonthPlanCard(
+                            monthName: e.key, items: e.value,
+                            articles: articles, year: selectedYear,
+                          )).toList(),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          children: right.map((e) => _MonthPlanCard(
+                            monthName: e.key, items: e.value,
+                            articles: articles, year: selectedYear,
+                          )).toList(),
+                        ),
+                      ),
+                    ],
+                  );
+                }
+                return Column(
+                  children: entries.map((e) => _MonthPlanCard(
+                    monthName: e.key, items: e.value,
+                    articles: articles, year: selectedYear,
+                  )).toList(),
+                );
+              },
             ),
           ],
         );
@@ -1255,52 +1367,133 @@ class _MonthPlanCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final role = context.read<AuthProvider>().user?['role'];
+    final isManager = role == 'manager';
+    final doneCount = items.where(_isDone).length;
+
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 12),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xFFE5EAF2)),
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(
-            monthName,
-            style: GoogleFonts.kanit(fontWeight: FontWeight.bold),
+          Padding(
+            padding: const EdgeInsets.fromLTRB(14, 10, 14, 8),
+            child: Row(
+              children: [
+                Text(
+                  monthName,
+                  style: GoogleFonts.kanit(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: const Color(0xFF1E2D45),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF1B8B6F).withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(99),
+                  ),
+                  child: Text(
+                    '$doneCount/${items.length}',
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                      color: Color(0xFF1B8B6F),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
+          const Divider(height: 1, color: Color(0xFFEEF4FB)),
           ...items.map((item) {
             final isDone = _isDone(item);
-            final role = context.read<AuthProvider>().user?['role'];
-            final isManager = role == 'manager';
-            return ListTile(
-              title: Text(item.topic),
-              subtitle: Text(
-                '${DateFormat('yyyy-MM-dd').format(item.publishDate)} ${item.publishTime} • ${item.type ?? '-'}',
-              ),
-              trailing: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    isDone ? Icons.check_circle : Icons.radio_button_unchecked,
-                    color: isDone ? Colors.green : Colors.grey,
-                  ),
-                  if (isManager)
-                    IconButton(
-                      onPressed: () =>
-                          (context
-                                  .findAncestorWidgetOfExactType<
-                                    _ContentPlanSection
-                                  >())
-                              ?._openPlanDialog(context, year, plan: item),
-                      icon: const Icon(Icons.edit_outlined),
+            final dateStr = DateFormat('d MMM', 'th').format(item.publishDate);
+            final yearShort = (item.publishDate.year + 543) % 100;
+            final timeStr = item.publishTime.length >= 5
+                ? item.publishTime.substring(0, 5)
+                : item.publishTime;
+            return InkWell(
+              onLongPress: isManager
+                  ? () => (context
+                          .findAncestorWidgetOfExactType<_ContentPlanSection>())
+                      ?._openPlanDialog(context, year, plan: item)
+                  : null,
+              borderRadius: BorderRadius.circular(0),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 9),
+                child: Row(
+                  children: [
+                    Icon(
+                      isDone ? Icons.check_circle : Icons.radio_button_unchecked,
+                      size: 18,
+                      color: isDone
+                          ? const Color(0xFF1B8B6F)
+                          : const Color(0xFFCBD5E1),
                     ),
-                  if (isManager)
-                    IconButton(
-                      onPressed: () async {
-                        await context.read<ArticlePlanProvider>().deletePlan(
-                          item.id,
-                          year,
-                        );
-                      },
-                      icon: const Icon(Icons.delete_outline),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.topic,
+                            style: GoogleFonts.kanit(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: isDone
+                                  ? const Color(0xFF94A3B8)
+                                  : const Color(0xFF1E2D45),
+                              decoration: isDone
+                                  ? TextDecoration.lineThrough
+                                  : null,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          Text(
+                            '$dateStr $yearShort  $timeStr${item.type != null ? ' • ${item.type}' : ''}',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF94A3B8),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                ],
+                    if (isManager) ...[
+                      GestureDetector(
+                        onTap: () => (context
+                                .findAncestorWidgetOfExactType<_ContentPlanSection>())
+                            ?._openPlanDialog(context, year, plan: item),
+                        child: const Padding(
+                          padding: EdgeInsets.all(4),
+                          child: Icon(Icons.edit_outlined,
+                              size: 15, color: Color(0xFF94A3B8)),
+                        ),
+                      ),
+                      GestureDetector(
+                        onTap: () async {
+                          await context
+                              .read<ArticlePlanProvider>()
+                              .deletePlan(item.id, year);
+                        },
+                        child: const Padding(
+                          padding: EdgeInsets.all(4),
+                          child: Icon(Icons.delete_outline,
+                              size: 15, color: Color(0xFFE57373)),
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
               ),
             );
           }),

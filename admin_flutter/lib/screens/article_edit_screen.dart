@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
-import 'package:intl/intl.dart';
 import 'package:html_editor_enhanced/html_editor.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
@@ -252,7 +251,8 @@ class _ArticleEditScreenState extends State<ArticleEditScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final isTablet = MediaQuery.of(context).size.width > 600;
+    final isTablet = MediaQuery.of(context).size.width >= 760;
+    final pagePadding = isTablet ? 24.0 : 16.0;
 
     return Scaffold(
       appBar: AppBar(
@@ -275,161 +275,37 @@ class _ArticleEditScreenState extends State<ArticleEditScreen> {
       body: Center(
         child: Container(
           constraints: BoxConstraints(
-            maxWidth: isTablet ? 800 : double.infinity,
+            maxWidth: isTablet ? 1180 : double.infinity,
           ),
           child: Form(
             key: _formKey,
             child: ListView(
-              padding: const EdgeInsets.all(20),
+              padding: EdgeInsets.all(pagePadding),
               children: [
                 if (_isFetchingDetail) ...[
                   const LinearProgressIndicator(minHeight: 3),
                   const SizedBox(height: 16),
                 ],
-                _buildSectionTitle('เนื้อหาหลัก'),
-                _buildTextField('หัวข้อบทความ', _titleController, isBold: true),
-                _buildTextField(
-                  'คำโปรย (Excerpt)',
-                  _excerptController,
-                  maxLines: 2,
-                ),
-
-                const Text(
-                  'เนื้อหาบทความ',
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF7488A8),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFFD7E1F0)),
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  clipBehavior: Clip.antiAlias,
-                  child: HtmlEditor(
-                    key: _editorKey,
-                    controller: _htmlController,
-                    htmlEditorOptions: HtmlEditorOptions(
-                      hint: 'เขียนเนื้อหาบทความที่นี่...',
-                      initialText: _initialHtml,
-                      shouldEnsureVisible: true,
-                    ),
-                    htmlToolbarOptions: const HtmlToolbarOptions(
-                      toolbarPosition: ToolbarPosition.aboveEditor,
-                      toolbarType: ToolbarType.nativeExpandable,
-                      defaultToolbarButtons: [
-                        StyleButtons(),
-                        FontSettingButtons(
-                          fontSizeUnit: false,
-                          fontSize: false,
-                        ),
-                        ListButtons(listStyles: false),
-                        ParagraphButtons(
-                          textDirection: false,
-                          lineHeight: false,
-                          caseConverter: false,
-                        ),
-                        InsertButtons(
-                          video: false,
-                          audio: false,
-                          table: true,
-                          hr: true,
-                          otherFile: false,
-                        ),
-                        OtherButtons(
-                          fullscreen: false,
-                          codeview: false,
-                          help: false,
-                        ),
-                      ],
-                    ),
-                    otherOptions: const OtherOptions(height: 400),
-                  ),
-                ),
-
-                const Divider(height: 40),
-                _buildSectionTitle('SEO Meta Description'),
-                _buildTextField(
-                  'Meta Description (สำหรับ Google)',
-                  _metaDescController,
-                  maxLines: 2,
-                ),
-                _buildTextField(
-                  'Keywords (คั่นด้วยจุลภาค)',
-                  _keywordsController,
-                ),
-                _buildTextField('LSI Keywords', _lsiKeywordsController),
-
-                const Divider(height: 40),
-                Row(
-                  children: [
-                    _buildSectionTitle('รูปหน้าแรก (Landscape 16:9)'),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.copy_rounded,
-                        size: 20,
-                        color: Color(0xFF223A63),
+                if (isTablet)
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        flex: 7,
+                        child: Column(children: _buildPrimaryFields()),
                       ),
-                      onPressed: () => _copyToClipboard(
-                        _promptLandscapeController.text,
-                        'Landscape Prompt',
+                      const SizedBox(width: 24),
+                      Expanded(
+                        flex: 4,
+                        child: Column(children: _buildArticleSettings()),
                       ),
-                      tooltip: 'คัดลอก Prompt',
-                    ),
-                  ],
-                ),
-                _buildImagePicker(
-                  label: 'รูปหน้าแรก (Landscape)',
-                  imagePath: _newLandscapePath,
-                  serverPath: widget.article?.coverImageLandscapePath,
-                  isLandscape: true,
-                ),
-                _buildTextField(
-                  'Prompt สำหรับรูป 16:9',
-                  _promptLandscapeController,
-                  maxLines: 2,
-                ),
-
-                const SizedBox(height: 20),
-                Row(
-                  children: [
-                    _buildSectionTitle('รูปบทความ (Square 1:1)'),
-                    const SizedBox(width: 8),
-                    IconButton(
-                      icon: const Icon(
-                        Icons.copy_rounded,
-                        size: 20,
-                        color: Color(0xFF223A63),
-                      ),
-                      onPressed: () => _copyToClipboard(
-                        _promptSquareController.text,
-                        'Square Prompt',
-                      ),
-                      tooltip: 'คัดลอก Prompt',
-                    ),
-                  ],
-                ),
-                _buildImagePicker(
-                  label: 'รูปบทความ (Square)',
-                  imagePath: _newSquarePath,
-                  serverPath: widget.article?.coverImageSquarePath,
-                  isLandscape: false,
-                ),
-                _buildTextField(
-                  'Prompt สำหรับรูป 1:1',
-                  _promptSquareController,
-                  maxLines: 2,
-                ),
-
-                const Divider(height: 40),
-                _buildSectionTitle('การเผยแพร่'),
-                _buildPublishToggle(),
-                _buildAutoPostToggle(),
-                _buildDateTimePicker(),
+                    ],
+                  )
+                else ...[
+                  ..._buildPrimaryFields(),
+                  const Divider(height: 40),
+                  ..._buildArticleSettings(),
+                ],
 
                 const SizedBox(height: 40),
                 ElevatedButton(
@@ -454,6 +330,167 @@ class _ArticleEditScreenState extends State<ArticleEditScreen> {
     );
   }
 
+  List<Widget> _buildPrimaryFields() {
+    return [
+      _buildSectionTitle('เนื้อหาหลัก'),
+      _buildTextField('หัวข้อบทความ', _titleController, isBold: true),
+      if (widget.article?.slug != null) _buildArticleIdentity(),
+      _buildTextField('คำโปรย (Excerpt)', _excerptController, maxLines: 2),
+      const Text(
+        'เนื้อหาบทความ',
+        style: TextStyle(
+          fontSize: 13,
+          fontWeight: FontWeight.w600,
+          color: Color(0xFF7488A8),
+        ),
+      ),
+      const SizedBox(height: 8),
+      Container(
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xFFD7E1F0)),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: HtmlEditor(
+          key: _editorKey,
+          controller: _htmlController,
+          htmlEditorOptions: HtmlEditorOptions(
+            hint: 'เขียนเนื้อหาบทความที่นี่...',
+            initialText: _initialHtml,
+            shouldEnsureVisible: true,
+          ),
+          htmlToolbarOptions: const HtmlToolbarOptions(
+            toolbarPosition: ToolbarPosition.aboveEditor,
+            toolbarType: ToolbarType.nativeExpandable,
+            defaultToolbarButtons: [
+              StyleButtons(),
+              FontSettingButtons(fontSizeUnit: false, fontSize: false),
+              ListButtons(listStyles: false),
+              ParagraphButtons(
+                textDirection: false,
+                lineHeight: false,
+                caseConverter: false,
+              ),
+              InsertButtons(
+                video: false,
+                audio: false,
+                table: true,
+                hr: true,
+                otherFile: false,
+              ),
+              OtherButtons(fullscreen: false, codeview: false, help: false),
+            ],
+          ),
+          otherOptions: const OtherOptions(height: 440),
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _buildArticleSettings() {
+    return [
+      _buildSectionTitle('SEO Meta Description'),
+      _buildTextField(
+        'Meta Description (สำหรับ Google)',
+        _metaDescController,
+        maxLines: 2,
+      ),
+      _buildTextField('Keywords (คั่นด้วยจุลภาค)', _keywordsController),
+      _buildTextField('LSI Keywords', _lsiKeywordsController),
+      const Divider(height: 36),
+      _buildPromptHeader('รูปหน้าแรก (Landscape 16:9)', () {
+        _copyToClipboard(_promptLandscapeController.text, 'Landscape Prompt');
+      }),
+      _buildImagePicker(
+        label: 'รูปหน้าแรก (Landscape)',
+        imagePath: _newLandscapePath,
+        serverPath:
+            widget.article?.coverImageLandscapePath ??
+            widget.article?.coverImagePath,
+        isLandscape: true,
+      ),
+      _buildTextField(
+        'Prompt สำหรับรูป 16:9',
+        _promptLandscapeController,
+        maxLines: 2,
+      ),
+      const SizedBox(height: 16),
+      _buildPromptHeader('รูปบทความ (Square 1:1)', () {
+        _copyToClipboard(_promptSquareController.text, 'Square Prompt');
+      }),
+      _buildImagePicker(
+        label: 'รูปบทความ (Square)',
+        imagePath: _newSquarePath,
+        serverPath:
+            widget.article?.coverImageSquarePath ??
+            widget.article?.coverImagePath,
+        isLandscape: false,
+      ),
+      _buildTextField(
+        'Prompt สำหรับรูป 1:1',
+        _promptSquareController,
+        maxLines: 2,
+      ),
+      const Divider(height: 36),
+      _buildSectionTitle('การเผยแพร่'),
+      _buildPublishToggle(),
+      _buildAutoPostToggle(),
+      _buildDateTimePicker(),
+    ];
+  }
+
+  Widget _buildPromptHeader(String title, VoidCallback onCopy) {
+    return Row(
+      children: [
+        Expanded(child: _buildSectionTitle(title)),
+        IconButton(
+          icon: const Icon(
+            Icons.copy_rounded,
+            size: 20,
+            color: Color(0xFF223A63),
+          ),
+          onPressed: onCopy,
+          tooltip: 'คัดลอก Prompt',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildArticleIdentity() {
+    final article = widget.article!;
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.only(bottom: 16),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF8FAFC),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: const Color(0xFFE2E8F0)),
+      ),
+      child: Wrap(
+        runSpacing: 8,
+        spacing: 8,
+        crossAxisAlignment: WrapCrossAlignment.center,
+        children: [
+          const Icon(Icons.link_rounded, size: 18, color: Color(0xFF64748B)),
+          SelectableText(
+            article.slug ?? '',
+            style: const TextStyle(
+              fontSize: 12,
+              color: Color(0xFF475569),
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+          if (article.isLineBroadcasted)
+            const _SmallInfoPill(
+              label: 'LINE Broadcast แล้ว',
+              color: Color(0xFF065F46),
+            ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildImagePicker({
     required String label,
     String? imagePath,
@@ -470,8 +507,8 @@ class _ArticleEditScreenState extends State<ArticleEditScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          height: isLandscape ? 180 : 180,
-          width: isLandscape ? double.infinity : 180,
+          height: isLandscape ? 180 : 160,
+          width: isLandscape ? double.infinity : 160,
           margin: const EdgeInsets.only(bottom: 12),
           decoration: BoxDecoration(
             color: const Color(0xFFF7FAFF),
@@ -659,6 +696,33 @@ class _ArticleEditScreenState extends State<ArticleEditScreen> {
             const Spacer(),
             const Icon(Icons.chevron_right, color: Color(0xFF7488A8)),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SmallInfoPill extends StatelessWidget {
+  final String label;
+  final Color color;
+
+  const _SmallInfoPill({required this.label, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(99),
+        border: Border.all(color: color.withValues(alpha: 0.25)),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: color,
+          fontSize: 10,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );

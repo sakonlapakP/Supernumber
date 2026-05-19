@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class Article {
   final int? id;
   final String title;
@@ -13,7 +15,10 @@ class Article {
   final Map<String, dynamic>? imageGuidelines;
   final bool isPublished;
   final bool isAutoPost;
+  final bool isLineBroadcasted;
   final DateTime? publishedAt;
+  final DateTime? notifiedAt;
+  final DateTime? contentUpdatedAt;
   final DateTime? createdAt;
 
   Article({
@@ -31,7 +36,10 @@ class Article {
     this.imageGuidelines,
     this.isPublished = false,
     this.isAutoPost = true,
+    this.isLineBroadcasted = false,
     this.publishedAt,
+    this.notifiedAt,
+    this.contentUpdatedAt,
     this.createdAt,
   });
 
@@ -48,14 +56,47 @@ class Article {
       metaDescription: json['meta_description'],
       keywords: json['keywords'],
       lsiKeywords: json['lsi_keywords'],
-      imageGuidelines: json['image_guidelines'] is Map
-          ? json['image_guidelines']
-          : null,
-      isPublished: json['is_published'] == 1 || json['is_published'] == true,
-      isAutoPost: json['is_auto_post'] == 1 || json['is_auto_post'] == true,
+      imageGuidelines: _parseMap(json['image_guidelines']),
+      isPublished: _parseBool(json['is_published']),
+      isAutoPost: _parseBool(json['is_auto_post'], defaultValue: true),
+      isLineBroadcasted: _parseBool(json['is_line_broadcasted']),
       publishedAt: _parseDateTime(json['published_at']),
+      notifiedAt: _parseDateTime(json['notified_at']),
+      contentUpdatedAt: _parseDateTime(json['content_updated_at']),
       createdAt: _parseDateTime(json['created_at']),
     );
+  }
+
+  static bool _parseBool(dynamic value, {bool defaultValue = false}) {
+    if (value == null) return defaultValue;
+    if (value is bool) return value;
+    if (value is num) return value != 0;
+    if (value is String) {
+      final normalized = value.trim().toLowerCase();
+      if (normalized.isEmpty) return defaultValue;
+      return normalized == '1' ||
+          normalized == 'true' ||
+          normalized == 'yes' ||
+          normalized == 'on';
+    }
+    return defaultValue;
+  }
+
+  static Map<String, dynamic>? _parseMap(dynamic value) {
+    if (value == null) return null;
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) {
+      return value.map((key, mapValue) => MapEntry(key.toString(), mapValue));
+    }
+    if (value is String && value.trim().isNotEmpty) {
+      try {
+        final decoded = jsonDecode(value);
+        return decoded is Map ? _parseMap(decoded) : null;
+      } catch (_) {
+        return null;
+      }
+    }
+    return null;
   }
 
   static DateTime? _parseDateTime(dynamic value) {
@@ -99,6 +140,25 @@ class Article {
     return 'https://www.supernumber.co.th/admin/articles/$id/preview';
   }
 
+  bool get hasLandscapeCover =>
+      (coverImageLandscapePath ?? coverImagePath)?.trim().isNotEmpty == true;
+
+  bool get hasSquareCover => coverImageSquarePath?.trim().isNotEmpty == true;
+
+  String? get preferredThumbnailPath {
+    final candidates = [
+      coverImagePath,
+      coverImageSquarePath,
+      coverImageLandscapePath,
+    ];
+    for (final candidate in candidates) {
+      if (candidate != null && candidate.trim().isNotEmpty) {
+        return candidate;
+      }
+    }
+    return null;
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -115,8 +175,16 @@ class Article {
       'image_guidelines': imageGuidelines,
       'is_published': isPublished,
       'is_auto_post': isAutoPost,
-      'published_at': publishedAt != null ? (publishedAt!.millisecondsSinceEpoch ~/ 1000) : null,
+      'is_line_broadcasted': isLineBroadcasted,
+      'published_at': publishedAt != null
+          ? (publishedAt!.millisecondsSinceEpoch ~/ 1000)
+          : null,
+      'notified_at': notifiedAt != null
+          ? (notifiedAt!.millisecondsSinceEpoch ~/ 1000)
+          : null,
+      'content_updated_at': contentUpdatedAt != null
+          ? (contentUpdatedAt!.millisecondsSinceEpoch ~/ 1000)
+          : null,
     };
   }
 }
-
