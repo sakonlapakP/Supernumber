@@ -1392,6 +1392,12 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             return $rejectAdminLogin($request);
         }
 
+        if (! $user->is_active) {
+            return back()
+                ->withInput($request->except('password'))
+                ->withErrors(['username' => 'บัญชีของคุณยังรอการอนุมัติ หรือถูกปิดการใช้งาน กรุณาติดต่อ Manager']);
+        }
+
         if (! $user->canAccessAdminPanel()) {
             return $rejectAdminLogin($request);
         }
@@ -4635,6 +4641,39 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->route('admin.users')
             ->with('status_message', "อนุมัติผู้ใช้ {$user->name} เรียบร้อยแล้ว");
     })->name('users.approve');
+
+    Route::post('/users/{user}/reject', function (Request $request, User $user) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        if ($user->is_active) {
+            return back()->withErrors(['error' => 'ไม่สามารถลบผู้ใช้ที่เปิดใช้งานอยู่ได้']);
+        }
+
+        $userName = $user->name;
+        $user->delete();
+
+        return redirect()
+            ->route('admin.users')
+            ->with('status_message', "ปฏิเสธและลบผู้ใช้ {$userName} เรียบร้อยแล้ว");
+    })->name('users.reject');
+
+    Route::post('/users/{user}/toggle-active', function (Request $request, User $user) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        if (! $user->is_active) {
+            return back()->withErrors(['error' => 'ใช้ปุ่ม "อนุมัติ" สำหรับผู้ใช้ที่รอดำเนินการ']);
+        }
+
+        $user->update(['is_active' => false]);
+
+        return redirect()
+            ->route('admin.users')
+            ->with('status_message', "ปิดใช้งานผู้ใช้ {$user->name} เรียบร้อยแล้ว");
+    })->name('users.toggle-active');
 
     Route::get('/activity-logs', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {

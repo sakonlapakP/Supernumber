@@ -47,7 +47,7 @@
         <label for="user-role">สิทธิ์</label>
         <select id="user-role" class="admin-select" name="role" required>
           @foreach ($roleOptions as $role)
-            <option value="{{ $role }}" @selected(old('role', 'manager') === $role)>{{ $role }}</option>
+            <option value="{{ $role }}" @selected(old('role', 'staff') === $role)>{{ $role }}</option>
           @endforeach
         </select>
       </div>
@@ -80,9 +80,16 @@
               <td>{{ $user->role }}</td>
               <td>
                 @if ($user->is_active)
-                  <span class="admin-badge admin-badge--success">เปิดใช้งาน</span>
+                  <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                    <span class="admin-badge admin-badge--success">เปิดใช้งาน</span>
+                    <form action="{{ route('admin.users.toggle-active', $user) }}" method="post">
+                      @csrf
+                      <button type="submit" class="admin-button admin-button--compact admin-button--muted" onclick="return confirm('ปิดการใช้งานผู้ใช้ {{ $user->name }}?')">ปิดใช้งาน</button>
+                    </form>
+                  </div>
                 @else
-                  <form action="{{ route('admin.users.approve', $user) }}" method="post" style="display: flex; gap: 8px; align-items: center;">
+                  <span class="admin-badge admin-badge--warning" style="margin-bottom: 6px; display: inline-flex;">รอการอนุมัติ</span>
+                  <form action="{{ route('admin.users.approve', $user) }}" method="post" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 6px;">
                     @csrf
                     <select name="role" class="admin-select admin-select--compact" style="margin: 0; width: auto;">
                       @foreach ($roleOptions as $role)
@@ -90,6 +97,10 @@
                       @endforeach
                     </select>
                     <button type="submit" class="admin-button admin-button--compact">อนุมัติ</button>
+                  </form>
+                  <form action="{{ route('admin.users.reject', $user) }}" method="post">
+                    @csrf
+                    <button type="submit" class="admin-button admin-button--compact admin-button--danger" onclick="return confirm('ปฏิเสธและลบผู้ใช้ {{ $user->name }}?\nการดำเนินการนี้ไม่สามารถยกเลิกได้')">ปฏิเสธ / ลบ</button>
                   </form>
                 @endif
               </td>

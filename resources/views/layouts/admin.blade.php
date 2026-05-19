@@ -319,8 +319,10 @@
         padding: 8px 12px;
         border: 1px solid transparent;
         border-radius: 0;
-        display: inline-flex;
+        display: flex;
         align-items: center;
+        justify-content: space-between;
+        gap: 6px;
         text-decoration: none;
         color: #7488a8;
         font-size: 13px;
@@ -734,6 +736,51 @@
         background: #4fa8ff;
       }
 
+      .admin-badge {
+        min-height: 24px;
+        padding: 3px 10px;
+        border-radius: 999px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        border: 1px solid transparent;
+      }
+
+      .admin-badge--success {
+        color: #1b8b6f;
+        background: #edf9f5;
+        border-color: #cbe9de;
+      }
+
+      .admin-badge--warning {
+        color: #a66a14;
+        background: #fff8e8;
+        border-color: #f0dbad;
+      }
+
+      .admin-button--danger {
+        background: var(--admin-danger);
+        color: #ffffff;
+      }
+
+      .admin-nav__link-badge {
+        margin-left: auto;
+        min-width: 20px;
+        height: 20px;
+        padding: 0 6px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 999px;
+        background: var(--admin-danger);
+        color: #fff;
+        font-size: 10px;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+
       .admin-mobile-nav {
         display: none;
       }
@@ -986,6 +1033,10 @@
         ],
       ];
 
+      $pendingUsersCount = session('admin_user_role') === 'manager'
+        ? \App\Models\User::query()->where('is_active', false)->count()
+        : 0;
+
       if (session('admin_user_role') === 'manager') {
         // เพิ่ม Submission ลูกค้า เข้าไปในหมวดลูกค้าและการติดต่อ สำหรับ Manager
         $adminNavGroups[2]['items'][] = [
@@ -1026,6 +1077,7 @@
               'label' => 'ผู้ใช้งาน',
               'url' => route('admin.users'),
               'active' => request()->routeIs('admin.users'),
+              'badge' => $pendingUsersCount > 0 ? $pendingUsersCount : null,
             ],
             [
               'label' => 'อัพเดทเบอร์ (CSV)',
@@ -1097,7 +1149,12 @@
                     </div>
                     <div class="admin-nav__section-links">
                       @foreach ($group['items'] as $item)
-                        <a href="{{ $item['url'] }}" class="admin-nav__link @if ($item['active']) is-active @endif">{{ $item['label'] }}</a>
+                        <a href="{{ $item['url'] }}" class="admin-nav__link @if ($item['active']) is-active @endif">
+                          <span>{{ $item['label'] }}</span>
+                          @if (!empty($item['badge']))
+                            <span class="admin-nav__link-badge">{{ $item['badge'] }}</span>
+                          @endif
+                        </a>
                       @endforeach
                     </div>
                   </div>
@@ -1136,7 +1193,12 @@
                         </div>
                         <div class="admin-nav__section-links">
                           @foreach ($group['items'] as $item)
-                            <a href="{{ $item['url'] }}" class="admin-nav__link @if ($item['active']) is-active @endif">{{ $item['label'] }}</a>
+                            <a href="{{ $item['url'] }}" class="admin-nav__link @if ($item['active']) is-active @endif">
+                          <span>{{ $item['label'] }}</span>
+                          @if (!empty($item['badge']))
+                            <span class="admin-nav__link-badge">{{ $item['badge'] }}</span>
+                          @endif
+                        </a>
                           @endforeach
                         </div>
                       </div>
