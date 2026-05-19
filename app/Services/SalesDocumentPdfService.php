@@ -63,7 +63,7 @@ class SalesDocumentPdfService
 
     protected function buildRelativePdfPath(string $documentType, string $year, string $fileName): string
     {
-        $directory = $documentType === 'invoice' ? 'invoice' : 'qoutation';
+        $directory = $documentType === 'invoice' ? 'invoice' : 'quotation';
 
         return $directory . '/' . $year . '/' . $fileName . '.pdf';
     }

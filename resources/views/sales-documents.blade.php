@@ -415,16 +415,20 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
     <div class="document-studio__settings">
       <div class="document-calculator">
         <div class="document-calculator__groups">
-          <div class="document-calculator__modes" role="group" aria-label="วิธีคิดภาษีหัก ณ ที่จ่าย">
-            <span class="document-calculator__label">ภาษีหัก ณ ที่จ่าย</span>
-            <button type="button" class="is-active" data-withholding-calc-mode="customer">ลูกค้ารับผิดชอบภาษีหัก ณ ที่จ่าย</button>
-            <button type="button" data-withholding-calc-mode="company">เรารับผิดชอบภาษีหัก ณ ที่จ่าย</button>
+          <div class="document-calculator__modes" role="group" aria-label="วิธีคิดภาษีหัก ณ ที่จ่าย" style="padding: 12px !important; background-color: #f5f5f5 !important; border-radius: 6px !important; border-left: 4px solid #3b82f6 !important;">
+            <span class="document-calculator__label" style="font-weight: 700 !important; display: block !important; margin-bottom: 8px !important; color: #1f2937;">ภาษีหัก ณ ที่จ่าย</span>
+            <div style="display: flex !important; gap: 8px !important;">
+              <button type="button" class="is-active" data-withholding-calc-mode="customer" title="ลูกค้ารับผิดชอบภาษีหัก ณ ที่จ่าย" style="flex: 1 !important;">ลูกค้าจ่าย</button>
+              <button type="button" data-withholding-calc-mode="company" title="เรารับผิดชอบภาษีหัก ณ ที่จ่าย" style="flex: 1 !important;">เรจ่าย</button>
+            </div>
           </div>
 
-          <div class="document-calculator__modes" role="group" aria-label="วิธีคิดภาษีมูลค่าเพิ่ม">
-            <span class="document-calculator__label">ภาษีมูลค่าเพิ่ม</span>
-            <button type="button" data-vat-calc-mode="customer">ลูกค้ารับผิดชอบภาษีมูลค่าเพิ่ม</button>
-            <button type="button" class="is-active" data-vat-calc-mode="company">เรารับผิดชอบภาษีมูลค่าเพิ่ม</button>
+          <div class="document-calculator__modes" role="group" aria-label="วิธีคิดภาษีมูลค่าเพิ่ม" style="padding: 12px !important; background-color: #f5f5f5 !important; border-radius: 6px !important; border-left: 4px solid #8b5cf6 !important; margin-top: 12px !important;">
+            <span class="document-calculator__label" style="font-weight: 700 !important; display: block !important; margin-bottom: 8px !important; color: #1f2937;">ภาษีมูลค่าเพิ่ม</span>
+            <div style="display: flex !important; gap: 8px !important;">
+              <button type="button" data-vat-calc-mode="customer" title="ลูกค้ารับผิดชอบภาษีมูลค่าเพิ่ม" style="flex: 1 !important;">ลูกค้าจ่าย</button>
+              <button type="button" class="is-active" data-vat-calc-mode="company" title="เรารับผิดชอบภาษีมูลค่าเพิ่ม" style="flex: 1 !important;">เรจ่าย</button>
+            </div>
           </div>
         </div>
       </div>
