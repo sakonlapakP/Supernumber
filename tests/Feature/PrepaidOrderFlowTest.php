@@ -34,7 +34,7 @@ class PrepaidOrderFlowTest extends TestCase
         $response->assertSee('สรุปรายการคำสั่งซื้อ');
     }
 
-    public function test_prepaid_step_two_save_creates_pending_review_order_and_holds_the_number(): void
+    public function test_prepaid_step_two_save_creates_processing_order_and_holds_the_number(): void
     {
         Storage::fake('public');
 
@@ -76,7 +76,7 @@ class PrepaidOrderFlowTest extends TestCase
             'ordered_number' => '0891234567',
             'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
             'selected_package' => 5000,
-            'status' => 'pending_review',
+            'status' => CustomerOrder::STATUS_PROCESSING,
         ]);
 
         $this->assertDatabaseHas('phone_numbers', [
@@ -187,7 +187,7 @@ class PrepaidOrderFlowTest extends TestCase
             'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
             'selected_package' => 5000,
             'payment_slip_path' => '202603/1.png',
-            'status' => 'pending_review',
+            'status' => CustomerOrder::STATUS_PROCESSING,
         ]);
 
         $manager = User::factory()->create([
@@ -199,8 +199,8 @@ class PrepaidOrderFlowTest extends TestCase
         $this->withSession($this->adminSession($manager))
             ->put(route('admin.orders.update', $order), [
                 'ordered_number' => '0891234567',
-                'selected_package' => 5000,
-                'status' => 'sold',
+                'initial_payment_price' => 5000,
+                'status' => CustomerOrder::STATUS_COMPLETED,
             ])
             ->assertRedirect(route('admin.orders.show', $order));
 
@@ -225,7 +225,7 @@ class PrepaidOrderFlowTest extends TestCase
             'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
             'selected_package' => 5000,
             'payment_slip_path' => '202603/1.png',
-            'status' => 'pending_review',
+            'status' => CustomerOrder::STATUS_PROCESSING,
         ]);
 
         $manager = User::factory()->create([
@@ -237,8 +237,8 @@ class PrepaidOrderFlowTest extends TestCase
         $this->withSession($this->adminSession($manager))
             ->put(route('admin.orders.update', $order), [
                 'ordered_number' => '0891234567',
-                'selected_package' => 5000,
-                'status' => 'rejected',
+                'initial_payment_price' => 5000,
+                'status' => CustomerOrder::STATUS_CANCELLED,
             ])
             ->assertRedirect(route('admin.orders.show', $order));
 
