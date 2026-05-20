@@ -28,6 +28,7 @@
     ])->values();
     $prefillPayload = $prefillPayload ?? null;
     $currentDraftId = $currentDraftId ?? null;
+    $initialDocumentType = request('document_type') === 'invoice' ? 'invoice' : 'quotation';
   @endphp
 
   {{-- Customer add/edit modal --}}
@@ -675,6 +676,7 @@
       const customers = @json($customerRecords);
       const prefillPayload = @json($prefillPayload);
       const initialDraftId = @json($currentDraftId);
+      const initialDocumentType = @json($initialDocumentType);
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content || @json(csrf_token());
 
       const routes = {
@@ -1297,6 +1299,7 @@
         applyPayload(prefillPayload);
         showStatus(currentDraftId ? 'โหลดร่างเอกสารเรียบร้อยแล้ว' : 'โหลดข้อมูลเอกสารเรียบร้อยแล้ว', 'info');
       } else {
+        setDocType(initialDocumentType);
         syncTotals();
       }
     })();

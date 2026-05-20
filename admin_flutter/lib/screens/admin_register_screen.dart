@@ -24,6 +24,10 @@ class _AdminRegisterScreenState extends State<AdminRegisterScreen> {
   final List<Map<String, String>> _roles = [
     {'value': 'manager', 'label': 'Manager (สิทธิ์สูงสุด)'},
     {'value': 'admin', 'label': 'Admin (จัดการทั่วไป)'},
+    {
+      'value': 'document_officer',
+      'label': 'Document Officer (ใบเสนอราคา/ใบแจ้งหนี้)',
+    },
     {'value': 'staff', 'label': 'Staff (อ่านอย่างเดียว)'},
   ];
 

@@ -37,6 +37,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Hash;
@@ -1354,6 +1355,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
     $currentAdmin,
     $ensureAdmin,
+    $ensureDocumentOfficer,
     $buildArticleSlug,
     $resolveLotteryResultForArticle,
     $resolvePlannedArticlePublishedAt,
@@ -1375,6 +1377,42 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     $moveTmpImagesToPermanent,
     $resolveTestDiscovery
 ) {
+    Route::get('/mobile-handoff/{token}', function (Request $request, string $token) {
+        $payload = Cache::pull('mobile_admin_handoff:' . $token);
+
+        if (! is_array($payload)) {
+            abort(403);
+        }
+
+        $userId = $payload['user_id'] ?? null;
+        $user = is_numeric($userId) ? User::find((int) $userId) : null;
+
+        if (! $user || ! $user->canAccessAdminPanel()) {
+            abort(403);
+        }
+
+        $request->session()->regenerate();
+        $request->session()->put([
+            'admin_authenticated' => true,
+            'admin_user_id' => $user->id,
+            'admin_user_name' => $user->name,
+            'admin_user_role' => $user->role,
+        ]);
+
+        $target = (string) ($payload['target'] ?? 'saved-sales-documents');
+        $documentType = ($payload['document_type'] ?? null) === 'invoice' ? 'invoice' : 'quotation';
+
+        return match ($target) {
+            'sales-documents-quick' => redirect()->route('admin.sales-documents-quick', [
+                'document_type' => $documentType,
+            ]),
+            'sales-documents' => redirect()->route('admin.sales-documents', [
+                'document_type' => $documentType,
+            ]),
+            default => redirect()->route('admin.saved-sales-documents.index'),
+        };
+    })->name('mobile-handoff');
+
     Route::get('/login', function (Request $request) use ($currentAdmin) {
         if ($currentAdmin()) {
             return redirect()->route('admin.numbers');
@@ -1426,6 +1464,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'admin_user_name' => $user->name,
             'admin_user_role' => $user->role,
         ]);
+
+        if ($user->isDocumentOfficer()) {
+            return redirect()->route('admin.saved-sales-documents.index');
+        }
 
         return redirect()->route('admin.numbers');
     })->name('login.attempt');

@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\ArticlePlanController;
 use App\Http\Controllers\Api\FacebookImportedPostController;
+use App\Http\Controllers\Api\MobileAdminSessionLinkController;
 use App\Http\Middleware\ApiTokenAuth;
 use Illuminate\Support\Facades\Route;
 
@@ -13,6 +14,8 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware(ApiTokenAuth::class)->group(function () {
     Route::get('/me', [AuthController::class, 'me']);
     Route::post('/logout', [AuthController::class, 'logout']);
+    Route::post('/mobile-admin/session-link', [MobileAdminSessionLinkController::class, 'store'])
+        ->name('api.mobile-admin.session-link');
 
     // --- Articles Management ---
     // Read-only access for all authenticated users (Staff, Admin, Manager)

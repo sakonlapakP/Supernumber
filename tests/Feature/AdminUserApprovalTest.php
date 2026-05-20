@@ -89,6 +89,42 @@ class AdminUserApprovalTest extends TestCase
         $this->assertSame(User::ROLE_ADMIN, $pending->role);
     }
 
+    public function test_manager_can_approve_document_officer_user(): void
+    {
+        $manager = User::factory()->create([
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        $pending = User::factory()->create([
+            'is_active' => false,
+            'role' => User::ROLE_STAFF,
+        ]);
+
+        $this->withSession($this->managerSession($manager))
+            ->post(route('admin.users.approve', $pending), ['role' => User::ROLE_DOCUMENT_OFFICER])
+            ->assertRedirect(route('admin.users'));
+
+        $pending->refresh();
+        $this->assertTrue($pending->is_active);
+        $this->assertSame(User::ROLE_DOCUMENT_OFFICER, $pending->role);
+    }
+
+    public function test_document_officer_login_redirects_to_sales_documents(): void
+    {
+        User::factory()->create([
+            'username' => 'document-login',
+            'role' => User::ROLE_DOCUMENT_OFFICER,
+            'is_active' => true,
+            'password' => Hash::make('Password123!'),
+        ]);
+
+        $this->post(route('admin.login.attempt'), [
+            'username' => 'document-login',
+            'password' => 'Password123!',
+        ])->assertRedirect(route('admin.saved-sales-documents.index'));
+    }
+
     public function test_non_manager_cannot_approve_users(): void
     {
         $admin = User::factory()->create([

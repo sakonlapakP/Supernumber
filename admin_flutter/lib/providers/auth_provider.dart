@@ -24,6 +24,21 @@ class AuthProvider extends ChangeNotifier {
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString('auth_token');
     _isAuthenticated = _token != null;
+
+    if (_token != null) {
+      try {
+        final response = await ApiService.dio.get('/me');
+        if (response.data is Map<String, dynamic>) {
+          _user = response.data;
+        }
+      } catch (e) {
+        _token = null;
+        _isAuthenticated = false;
+        _user = null;
+        await prefs.remove('auth_token');
+      }
+    }
+
     notifyListeners();
   }
 
@@ -33,27 +48,32 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
 
     try {
-      final response = await ApiService.dio.post('/login', data: {
-        'login': login.trim(),
-        'password': password,
-        'device_name': 'AdminApp', // สามารถเปลี่ยนตาม Device จริงได้
-      });
+      final response = await ApiService.dio.post(
+        '/login',
+        data: {
+          'login': login.trim(),
+          'password': password,
+          'device_name': 'AdminApp', // สามารถเปลี่ยนตาม Device จริงได้
+        },
+      );
 
       if (response.statusCode == 200) {
         _token = response.data['token'];
         _user = response.data['user'];
         _isAuthenticated = true;
-        
+
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('auth_token', _token!);
-        
+
         _isLoading = false;
         notifyListeners();
         return true;
       }
     } on DioException catch (e) {
       _lastErrorMessage = _extractErrorMessage(e);
-      debugPrint('Login Error: ${e.response?.statusCode} ${e.response?.data ?? e.message}');
+      debugPrint(
+        'Login Error: ${e.response?.statusCode} ${e.response?.data ?? e.message}',
+      );
     } catch (e) {
       _lastErrorMessage = 'ไม่สามารถเชื่อมต่อระบบได้ กรุณาลองใหม่อีกครั้ง';
       debugPrint('Login Error: $e');
@@ -101,7 +121,7 @@ class AuthProvider extends ChangeNotifier {
     } catch (e) {
       debugPrint('Logout Error: $e');
     }
-    
+
     _token = null;
     _isAuthenticated = false;
     _user = null;

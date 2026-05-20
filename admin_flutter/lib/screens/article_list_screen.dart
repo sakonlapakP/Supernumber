@@ -14,12 +14,32 @@ import 'article_edit_screen.dart';
 import 'article_json_import_screen.dart';
 import 'admin_register_screen.dart';
 import 'facebook_imports_screen.dart';
+import 'sales_documents_screen.dart';
 
 class ArticleListScreen extends StatefulWidget {
   const ArticleListScreen({super.key});
 
   @override
   State<ArticleListScreen> createState() => _ArticleListScreenState();
+}
+
+String _roleLabel(String? role) {
+  switch (role) {
+    case 'manager':
+      return 'MANAGER';
+    case 'admin':
+      return 'ADMIN';
+    case 'document_officer':
+      return 'DOCUMENT OFFICER';
+    case 'staff':
+      return 'STAFF';
+    default:
+      return 'ADMIN';
+  }
+}
+
+bool _canAccessSalesDocuments(String? role) {
+  return role == 'manager' || role == 'admin' || role == 'document_officer';
 }
 
 class _ArticleListScreenState extends State<ArticleListScreen> {
@@ -397,7 +417,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                       ],
                     ),
                     Text(
-                      (auth.user?['role']?.toString().toUpperCase() ?? 'ADMIN'),
+                      _roleLabel(auth.user?['role']?.toString()),
                       style: GoogleFonts.kanit(
                         color: const Color(0xFFD8A34A),
                         fontSize: 12,
@@ -413,6 +433,20 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                 title: Text('จัดการบทความ', style: GoogleFonts.kanit()),
                 onTap: () => Navigator.pop(context),
               ),
+              if (_canAccessSalesDocuments(auth.user?['role']?.toString()))
+                ListTile(
+                  leading: const Icon(Icons.receipt_long_outlined),
+                  title: Text('เอกสารขาย', style: GoogleFonts.kanit()),
+                  onTap: () {
+                    Navigator.pop(context);
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SalesDocumentsScreen(),
+                      ),
+                    );
+                  },
+                ),
               if (auth.user?['role'] == 'manager')
                 ListTile(
                   leading: const Icon(Icons.facebook_rounded),
@@ -677,8 +711,11 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                       child: Center(
                         child: Column(
                           children: [
-                            Icon(Icons.article_outlined,
-                                size: 48, color: Colors.grey[350]),
+                            Icon(
+                              Icons.article_outlined,
+                              size: 48,
+                              color: Colors.grey[350],
+                            ),
                             const SizedBox(height: 10),
                             Text(
                               'ยังไม่มีบทความที่เผยแพร่ในเดือนนี้',
@@ -697,11 +734,11 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                       physics: const NeverScrollableScrollPhysics(),
                       gridDelegate:
                           const SliverGridDelegateWithMaxCrossAxisExtent(
-                        maxCrossAxisExtent: 520,
-                        childAspectRatio: 2.7,
-                        crossAxisSpacing: 10,
-                        mainAxisSpacing: 10,
-                      ),
+                            maxCrossAxisExtent: 520,
+                            childAspectRatio: 2.7,
+                            crossAxisSpacing: 10,
+                            mainAxisSpacing: 10,
+                          ),
                       itemCount: provider.articles.length,
                       itemBuilder: (context, index) => _ArticleItem(
                         article: provider.articles[index],
@@ -711,8 +748,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                             _openArticlePreview(provider.articles[index]),
                         onEdit: () =>
                             _openArticleEditor(provider.articles[index]),
-                        onShare: () =>
-                            _shareArticle(provider.articles[index]),
+                        onShare: () => _shareArticle(provider.articles[index]),
                         onDelete: () =>
                             _confirmDeleteArticle(provider.articles[index]),
                       ),
@@ -857,10 +893,7 @@ class _ArticleItem extends StatelessWidget {
                         runSpacing: 4,
                         alignment: WrapAlignment.end,
                         children: [
-                          _ArticleActionButton(
-                            label: 'ดู',
-                            onPressed: onView,
-                          ),
+                          _ArticleActionButton(label: 'ดู', onPressed: onView),
                           _ArticleActionButton(
                             label: 'แก้ไข',
                             onPressed: onEdit,

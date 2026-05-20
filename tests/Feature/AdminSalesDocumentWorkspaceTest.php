@@ -2,7 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Models\Customer;
+use App\Models\BillingCustomer;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -13,7 +13,7 @@ class AdminSalesDocumentWorkspaceTest extends TestCase
 
     public function test_admin_can_view_sales_document_workspace(): void
     {
-        Customer::query()->create([
+        BillingCustomer::query()->create([
             'company_name' => 'บริษัท เลือกจากรายการ จำกัด',
             'tax_id' => '0105559999999',
             'address' => 'กรุงเทพมหานคร',
@@ -54,6 +54,24 @@ class AdminSalesDocumentWorkspaceTest extends TestCase
 
         $response = $this
             ->withSession($this->adminSession($manager))
+            ->get(route('admin.sales-documents'));
+
+        $response->assertOk();
+        $response->assertSee('ใบแจ้งหนี้');
+        $response->assertSee('บันทึกและเปิด PDF');
+        $response->assertSee('บันทึกร่าง');
+    }
+
+    public function test_document_officer_can_view_sales_document_workspace(): void
+    {
+        $documentOfficer = User::factory()->create([
+            'username' => 'document-officer-sales-docs',
+            'role' => User::ROLE_DOCUMENT_OFFICER,
+            'is_active' => true,
+        ]);
+
+        $response = $this
+            ->withSession($this->adminSession($documentOfficer))
             ->get(route('admin.sales-documents'));
 
         $response->assertOk();

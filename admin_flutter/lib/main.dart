@@ -4,6 +4,7 @@ import 'package:intl/date_symbol_data_local.dart';
 import 'package:provider/provider.dart';
 import 'screens/login_screen.dart';
 import 'screens/article_list_screen.dart';
+import 'screens/sales_documents_screen.dart';
 import 'providers/auth_provider.dart';
 import 'providers/article_provider.dart';
 import 'providers/user_provider.dart';
@@ -102,9 +103,13 @@ class SupernumberAdminApp extends StatelessWidget {
       ),
       home: Consumer<AuthProvider>(
         builder: (context, auth, _) {
-          return auth.isAuthenticated
-              ? const ArticleListScreen()
-              : const LoginScreen();
+          if (!auth.isAuthenticated) {
+            return const LoginScreen();
+          }
+
+          return auth.user?['role'] == 'document_officer'
+              ? const SalesDocumentsScreen()
+              : const ArticleListScreen();
         },
       ),
     );

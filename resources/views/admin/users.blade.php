@@ -93,7 +93,7 @@
                     @csrf
                     <select name="role" class="admin-select admin-select--compact" style="margin: 0; width: auto;">
                       @foreach ($roleOptions as $role)
-                        <option value="{{ $role }}" @selected($user->role === $role)>{{ $role }}</option>
+                        <option value="{{ $role }}" @selected($user->role === $role)>{{ \App\Models\User::roleLabelMap()[$role] ?? $role }}</option>
                       @endforeach
                     </select>
                     <button type="submit" class="admin-button admin-button--compact">อนุมัติ</button>
