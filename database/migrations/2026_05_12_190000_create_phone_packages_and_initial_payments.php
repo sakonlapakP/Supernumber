@@ -18,14 +18,10 @@ return new class extends Migration
         ['price' => 899, 'label' => 'ยอดนิยม', 'data' => '90GB', 'speed' => '1 Mbps (หลังหมดสปีดเต็ม)', 'voice' => '300 นาที', 'benefits' => 'NOW ENT 12 เดือน'],
         ['price' => 999, 'label' => 'คุ้มค่า+', 'data' => '100GB', 'speed' => '1 Mbps (หลังหมดสปีดเต็ม)', 'voice' => '400 นาที', 'benefits' => 'NOW ENT 12 เดือน'],
         ['price' => 1199, 'label' => 'โปรสปีดสูง', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '600 นาที', 'benefits' => 'NOW ENT + CyberSafe PRO'],
-        ['price' => 1499, 'label' => 'พรีเมียม', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '900 นาที', 'benefits' => 'NOW ENT + CyberSafe PRO'],
-        ['price' => 1699, 'label' => 'พรีเมียม+', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '1,100 นาที', 'benefits' => 'NOW ENT + CyberSafe PRO'],
-        ['price' => 1999, 'label' => 'โปรธุรกิจ', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '1,500 นาที', 'benefits' => 'NOW ENT + CyberSafe PRO'],
-        ['price' => 2199, 'label' => 'โปรธุรกิจ+', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '1,800 นาที', 'benefits' => 'NOW ENT + CyberSafe PRO'],
-        ['price' => 2499, 'label' => 'Max', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '2,300 นาที', 'benefits' => 'NOW ENT + CyberSafe PRO'],
-        ['price' => 2699, 'label' => 'Max+', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '2,700 นาที', 'benefits' => 'NOW ENT + CyberSafe PRO'],
-        ['price' => 2999, 'label' => 'Ultra', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '3,000 นาที', 'benefits' => 'NOW ENT + CyberSafe PRO'],
-        ['price' => 3499, 'label' => 'Ultra Max', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '3,400 นาที', 'benefits' => 'NOW ENT + CyberSafe PRO'],
+        ['price' => 1499, 'label' => 'พรีเมียม', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '1,000 นาที', 'benefits' => 'NOW ENT + CyberSafe PRO'],
+        ['price' => 1699, 'label' => 'พรีเมียม+', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '1,200 นาที', 'benefits' => 'NOW ENT + CyberSafe PRO'],
+        ['price' => 1999, 'label' => 'โปรธุรกิจ', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '1,600 นาที', 'benefits' => 'NOW ENT + CyberSafe PRO'],
+        ['price' => 2199, 'label' => 'โปรธุรกิจ+', 'data' => 'Unlimited', 'speed' => 'ไม่จำกัด', 'voice' => '1,900 นาที', 'benefits' => 'NOW ENT + CyberSafe PRO'],
     ];
 
     public function up(): void
