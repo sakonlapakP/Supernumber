@@ -16,6 +16,7 @@ class AdminHoldNumbersTest extends TestCase
     public function test_postpaid_order_holds_number_and_admin_hold_page_lists_it(): void
     {
         Storage::fake('public');
+        $this->travelTo('2026-05-20 13:45:00');
 
         $phoneNumber = PhoneNumber::query()->create([
             'phone_number' => '0644514194',
@@ -56,7 +57,44 @@ class AdminHoldNumbersTest extends TestCase
         $this->withSession($this->adminSession($admin))
             ->get(route('admin.hold-numbers'))
             ->assertOk()
-            ->assertSee('064-451-4194');
+            ->assertSee('064-451-4194')
+            ->assertSee('คุณ สมชาย ทดสอบ')
+            ->assertSee('0811112222')
+            ->assertSee('2026-05-20 13:45');
+    }
+
+    public function test_admin_hold_number_shows_admin_name_when_no_order_reserved_it(): void
+    {
+        $this->travelTo('2026-05-20 14:10:00');
+
+        PhoneNumber::query()->create([
+            'phone_number' => '0649998888',
+            'service_type' => PhoneNumber::SERVICE_TYPE_POSTPAID,
+            'network_code' => PhoneNumber::NETWORK_TRUE_DTAC,
+            'plan_name' => PhoneNumber::PACKAGE_NAME,
+            'sale_price' => 1199,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
+        $admin = User::factory()->create([
+            'name' => 'Admin Hold Tester',
+            'username' => 'hold-admin-direct',
+            'role' => User::ROLE_ADMIN,
+            'is_active' => true,
+        ]);
+
+        $this->withSession($this->adminSession($admin))
+            ->post(route('admin.hold-numbers.add'), [
+                'phone_number' => '0649998888',
+            ])
+            ->assertRedirect(route('admin.hold-numbers'));
+
+        $this->withSession($this->adminSession($admin))
+            ->get(route('admin.hold-numbers'))
+            ->assertOk()
+            ->assertSee('064-999-8888')
+            ->assertSee('Admin Hold Tester')
+            ->assertSee('2026-05-20 14:10');
     }
 
     /**

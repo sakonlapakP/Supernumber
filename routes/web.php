@@ -4622,6 +4622,55 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->orderByDesc('id')
             ->get();
 
+        $holdOrderStatuses = [
+            CustomerOrder::STATUS_PROCESSING,
+            CustomerOrder::STATUS_SUBMITTED,
+            CustomerOrder::STATUS_PENDING_REVIEW,
+            CustomerOrder::STATUS_REVIEWING,
+            CustomerOrder::STATUS_PAID,
+        ];
+        $numberIds = $numbers->pluck('id')->all();
+        $phoneNumbers = $numbers->pluck('phone_number')
+            ->map(fn ($phoneNumber) => preg_replace('/\D+/', '', (string) $phoneNumber) ?? '')
+            ->filter()
+            ->values()
+            ->all();
+        $holdOrders = CustomerOrder::query()
+            ->whereIn('status', $holdOrderStatuses)
+            ->where(function ($query) use ($numberIds, $phoneNumbers): void {
+                $query->whereIn('phone_number_id', $numberIds);
+
+                if ($phoneNumbers !== []) {
+                    $query->orWhereIn('ordered_number', $phoneNumbers);
+                }
+            })
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get();
+        $holdLogs = PhoneNumberStatusLog::query()
+            ->with('user')
+            ->whereIn('phone_number_id', $numberIds)
+            ->where('to_status', PhoneNumber::STATUS_HOLD)
+            ->orderByDesc('created_at')
+            ->orderByDesc('id')
+            ->get();
+
+        $numbers->each(function (PhoneNumber $number) use ($holdOrders, $holdLogs): void {
+            $digits = preg_replace('/\D+/', '', (string) $number->phone_number) ?? '';
+            $order = $holdOrders->first(function (CustomerOrder $order) use ($number, $digits): bool {
+                $orderedNumber = preg_replace('/\D+/', '', (string) $order->ordered_number) ?? '';
+
+                return (int) $order->phone_number_id === (int) $number->id
+                    || ($digits !== '' && $orderedNumber === $digits);
+            });
+            $holdLog = $holdLogs->first(
+                fn (PhoneNumberStatusLog $log): bool => (int) $log->phone_number_id === (int) $number->id
+            );
+
+            $number->setRelation('holdOrder', $order);
+            $number->setRelation('holdLog', $holdLog);
+        });
+
         return view('admin.hold-numbers', compact('numbers'));
     })->name('hold-numbers');
 

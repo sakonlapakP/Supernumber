@@ -102,6 +102,8 @@
             <th>ประเภท</th>
             <th>เครือข่าย</th>
             <th>แพ็กเกจ / ราคาเบอร์</th>
+            <th>ผู้จอง Number</th>
+            <th>วันเวลาจอง</th>
             <th>สถานะ</th>
             <th>จัดการ</th>
           </tr>
@@ -109,6 +111,15 @@
         <tbody>
           @if ($numbers->isNotEmpty())
             @foreach ($numbers as $number)
+              @php
+                $holdOrder = $number->getRelation('holdOrder');
+                $holdLog = $number->getRelation('holdLog');
+                $adminUser = $holdLog?->user;
+                $adminName = trim((string) ($adminUser?->name ?: $adminUser?->username ?: ''));
+                $reservedBy = trim((string) ($holdOrder?->full_name ?: $adminName));
+                $reservedContact = trim((string) ($holdOrder?->current_phone ?: $holdOrder?->email ?: ''));
+                $reservedAt = $holdOrder?->created_at ?: $holdLog?->created_at;
+              @endphp
               <tr class="hold-number-row" data-phone-number="{{ preg_replace('/\D/', '', $number->phone_number) }}">
                 <td>
                   <div class="admin-number">{{ $number->formatted_number }}</div>
@@ -123,6 +134,13 @@
 
                   </div>
                 </td>
+                <td>
+                  <div>{{ $reservedBy !== '' ? $reservedBy : '-' }}</div>
+                  @if ($reservedContact !== '')
+                    <div class="admin-muted" style="font-size: 0.86rem;">{{ $reservedContact }}</div>
+                  @endif
+                </td>
+                <td>{{ $reservedAt?->timezone('Asia/Bangkok')->format('Y-m-d H:i') ?: '-' }}</td>
                 <td><span class="admin-status-pill admin-status-pill--hold">{{ $number->status_label ?: '-' }}</span></td>
                 <td class="admin-action-cell">
                   <div class="admin-action-group">
@@ -136,11 +154,11 @@
               </tr>
             @endforeach
             <tr id="hold-numbers-empty-row" hidden>
-              <td colspan="7" class="admin-muted">ไม่พบเบอร์ที่ตรงกับคำค้นหา</td>
+              <td colspan="9" class="admin-muted">ไม่พบเบอร์ที่ตรงกับคำค้นหา</td>
             </tr>
           @else
             <tr>
-              <td colspan="7" class="admin-muted">ยังไม่มีเบอร์ที่อยู่ในสถานะ hold</td>
+              <td colspan="9" class="admin-muted">ยังไม่มีเบอร์ที่อยู่ในสถานะ hold</td>
             </tr>
           @endif
         </tbody>
