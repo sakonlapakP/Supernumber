@@ -402,7 +402,7 @@ class PhoneNumberImportController extends Controller
                 'plan_name' => $record['plan_name'] ?: $defaultPlanName,
                 'initial_payment_price' => $record['initial_payment_price'],
                 'sale_price' => $record['sale_price'],
-                'status' => $record['status'],
+                'status' => $this->resolvePersistedStatus($phoneNumber, $record['status']),
             ]);
 
             if (! $phoneNumber->exists) {
@@ -421,5 +421,18 @@ class PhoneNumberImportController extends Controller
         }
 
         return $stats;
+    }
+
+    private function resolvePersistedStatus(PhoneNumber $phoneNumber, string $importedStatus): string
+    {
+        $currentStatus = strtolower(trim((string) $phoneNumber->status));
+
+        if ($phoneNumber->exists
+            && $importedStatus === PhoneNumber::STATUS_ACTIVE
+            && in_array($currentStatus, [PhoneNumber::STATUS_HOLD, PhoneNumber::STATUS_SOLD], true)) {
+            return $currentStatus;
+        }
+
+        return $importedStatus;
     }
 }

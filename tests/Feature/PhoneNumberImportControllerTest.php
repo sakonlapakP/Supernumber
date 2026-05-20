@@ -77,4 +77,31 @@ class PhoneNumberImportControllerTest extends TestCase
         $this->assertSame(PhoneNumber::STATUS_UNACTIVE, $method->invoke($controller, 'inactive'));
         $this->assertSame(PhoneNumber::STATUS_UNACTIVE, $method->invoke($controller, 'ปิดใช้งาน'));
     }
+
+    public function test_import_preserves_existing_hold_when_uploaded_status_is_active(): void
+    {
+        $phoneNumber = PhoneNumber::query()->create([
+            'phone_number' => '0833333333',
+            'service_type' => PhoneNumber::SERVICE_TYPE_PREPAID,
+            'network_code' => PhoneNumber::NETWORK_AIS,
+            'status' => PhoneNumber::STATUS_HOLD,
+        ]);
+
+        $controller = new PhoneNumberImportController();
+        $method = new ReflectionMethod($controller, 'upsertRecords');
+        $method->setAccessible(true);
+
+        $method->invoke($controller, [[
+            'phone_number' => $phoneNumber->phone_number,
+            'number_sum' => 32,
+            'network_code' => PhoneNumber::NETWORK_TRUE_DTAC,
+            'package_id' => null,
+            'plan_name' => 'เติมเงิน',
+            'initial_payment_price' => 999,
+            'sale_price' => 999,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]], PhoneNumber::SERVICE_TYPE_PREPAID);
+
+        $this->assertSame(PhoneNumber::STATUS_HOLD, $phoneNumber->fresh()->status);
+    }
 }
