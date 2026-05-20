@@ -1843,6 +1843,127 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->with('status_message', 'ลบเอกสารออกจากระบบถาวรเรียบร้อยแล้ว');
     })->name('saved-sales-documents.delete');
 
+    Route::get('/sales-documents-quick', function (Request $request) use ($ensureAdmin, $currentAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+
+        $customers = BillingCustomer::query()
+            ->where('is_active', true)
+            ->orderByRaw('LOWER(COALESCE(company_name, first_name, last_name, ""))')
+            ->get();
+
+        $drafts = SalesDocument::query()
+            ->where('is_draft', true)
+            ->where('is_active', true)
+            ->latest('updated_at')
+            ->limit(20)
+            ->get();
+
+        $prefillPayload = null;
+        $currentDraftId = null;
+        $draftId = (int) $request->integer('draft');
+
+        if ($draftId > 0) {
+            $draft = SalesDocument::query()->where('id', $draftId)->where('is_draft', true)->first();
+            $prefillPayload = $draft?->payload;
+            $currentDraftId = $draft?->id;
+        }
+
+        return view('sales-documents-quick', compact('customers', 'drafts', 'prefillPayload', 'currentDraftId'));
+    })->name('sales-documents-quick');
+
+    Route::post('/sales-documents-quick/draft', function (Request $request) use ($ensureAdmin, $currentAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $data = $request->validate([
+            'draft_id' => ['nullable', 'integer'],
+            'document_date' => ['nullable', 'date'],
+            'due_date' => ['nullable', 'date'],
+            'customer_id' => ['nullable', 'integer'],
+            'customer_name' => ['nullable', 'string', 'max:255'],
+            'payload' => ['required', 'array'],
+        ]);
+
+        $currentAdminUser = $currentAdmin();
+        $payload = $data['payload'];
+        $draftId = (int) ($data['draft_id'] ?? 0);
+
+        $document = $draftId > 0
+            ? SalesDocument::query()->where('id', $draftId)->where('is_draft', true)->first()
+            : null;
+
+        if (! $document) {
+            $document = new SalesDocument();
+            $document->document_type = $payload['document_type'] ?? 'quotation';
+            $document->document_number = 'DRAFT-' . now('Asia/Bangkok')->format('YmdHis');
+            $document->file_name = 'draft-' . now('Asia/Bangkok')->format('YmdHis');
+            $document->pdf_disk = 'local';
+            $document->pdf_path = '';
+        }
+
+        $document->fill([
+            'document_date' => $data['document_date'] ?? null,
+            'due_date' => $data['due_date'] ?? null,
+            'customer_id' => $data['customer_id'] ?? null,
+            'customer_name' => trim((string) ($data['customer_name'] ?? '')) ?: null,
+            'saved_by_user_id' => $currentAdminUser?->id,
+            'payload' => $payload,
+            'is_draft' => true,
+            'is_active' => true,
+        ]);
+        $document->save();
+
+        return response()->json([
+            'message' => 'บันทึกร่างเรียบร้อยแล้ว',
+            'draft_id' => $document->id,
+            'saved_at' => $document->updated_at?->toIso8601String(),
+        ]);
+    })->name('sales-documents-quick.draft');
+
+    Route::delete('/sales-documents-quick/draft/{salesDocument}', function (SalesDocument $salesDocument) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        if (! $salesDocument->is_draft) {
+            return response()->json(['message' => 'ไม่สามารถลบเอกสารที่ finalized แล้วได้'], 422);
+        }
+
+        $salesDocument->delete();
+
+        return response()->json(['message' => 'ลบร่างเรียบร้อยแล้ว']);
+    })->name('sales-documents-quick.draft.delete');
+
+    Route::post('/sales-documents-quick/preview-html', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return response()->json(['message' => 'Unauthorized'], 401);
+        }
+
+        $data = $request->validate([
+            'payload' => ['required', 'array'],
+        ]);
+
+        $payload = $data['payload'];
+        $document = new SalesDocument();
+        $document->document_type = $payload['document_type'] ?? 'quotation';
+        $document->document_number = $payload['document_number'] ?? 'PREVIEW';
+        $document->document_date = isset($payload['document_date']) && $payload['document_date'] !== ''
+            ? \Illuminate\Support\Carbon::parse($payload['document_date'])
+            : now('Asia/Bangkok');
+        $document->payload = $payload;
+
+        $service = app(\App\Services\SalesDocumentPdfService::class);
+        $html = $service->renderDocumentHtml($document, [
+            'showPrintToolbar' => true,
+            'printButtonLabel' => 'พิมพ์ / บันทึก PDF',
+        ]);
+
+        return response($html)->header('Content-Type', 'text/html; charset=UTF-8');
+    })->name('sales-documents-quick.preview-html');
+
     Route::get('/customers', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
