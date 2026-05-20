@@ -1415,7 +1415,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
     Route::get('/login', function (Request $request) use ($currentAdmin) {
         if ($currentAdmin()) {
-            return redirect()->route('admin.numbers');
+            return redirect()->route('admin.dashboard');
         }
 
         $request->session()->invalidate();
@@ -1469,7 +1469,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             return redirect()->route('admin.saved-sales-documents.index');
         }
 
-        return redirect()->route('admin.numbers');
+        return redirect()->route('admin.dashboard');
     })->name('login.attempt');
 
     Route::match(['get', 'post'], '/logout', function (Request $request) {
@@ -1484,6 +1484,60 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         return redirect()->route('admin.login');
     })->name('logout');
+
+    Route::get('/', function () {
+        return redirect()->route('admin.dashboard');
+    })->name('home');
+
+    Route::get('/dashboard', function () use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+
+        if (session('admin_user_role') === User::ROLE_DOCUMENT_OFFICER) {
+            return redirect()->route('admin.saved-sales-documents.index');
+        }
+
+        $stats = [
+            'numbers_total' => PhoneNumber::query()->count(),
+            'numbers_active' => PhoneNumber::query()->where('status', PhoneNumber::STATUS_ACTIVE)->count(),
+            'numbers_hold' => PhoneNumber::query()->where('status', PhoneNumber::STATUS_HOLD)->count(),
+            'orders_processing' => CustomerOrder::query()->where('status', CustomerOrder::STATUS_PROCESSING)->count(),
+            'comments_pending' => ArticleComment::query()->where('status', ArticleComment::STATUS_PENDING)->count(),
+            'estimate_leads_total' => EstimateLead::query()->count(),
+            'contact_messages_total' => ContactMessage::query()->count(),
+        ];
+
+        $recentOrders = CustomerOrder::query()
+            ->latest('id')
+            ->limit(5)
+            ->get();
+
+        $recentEstimateLeads = EstimateLead::query()
+            ->latest('id')
+            ->limit(5)
+            ->get();
+
+        $pendingComments = ArticleComment::query()
+            ->with('article:id,title,slug')
+            ->where('status', ArticleComment::STATUS_PENDING)
+            ->latest('id')
+            ->limit(5)
+            ->get();
+
+        $recentContactMessages = ContactMessage::query()
+            ->latest('id')
+            ->limit(5)
+            ->get();
+
+        return view('admin.dashboard', compact(
+            'stats',
+            'recentOrders',
+            'recentEstimateLeads',
+            'pendingComments',
+            'recentContactMessages'
+        ));
+    })->name('dashboard');
 
     Route::get('/register', [\App\Http\Controllers\Admin\RegisterController::class, 'showRegistrationForm'])->name('register');
     Route::post('/register', [\App\Http\Controllers\Admin\RegisterController::class, 'register'])->name('register.store');

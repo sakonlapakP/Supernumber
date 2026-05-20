@@ -967,6 +967,16 @@
       };
       $adminNavGroups = [
         [
+          'label' => 'ภาพรวม',
+          'items' => [
+            [
+              'label' => 'Dashboard',
+              'url' => route('admin.dashboard'),
+              'active' => request()->routeIs('admin.dashboard') || request()->routeIs('admin.home'),
+            ],
+          ],
+        ],
+        [
           'label' => 'เบอร์',
           'items' => [
             [
@@ -1081,7 +1091,7 @@
 
       if (session('admin_user_role') === 'manager') {
         // เพิ่ม Submission ลูกค้า เข้าไปในหมวดลูกค้าและการติดต่อ สำหรับ Manager
-        $adminNavGroups[2]['items'][] = [
+        $adminNavGroups[3]['items'][] = [
           'label' => 'ประวัติวิเคราะห์เบอร์ / ส่งฟอร์ม',
           'url' => route('admin.customer-submissions'),
           'active' => request()->routeIs('admin.customer-submissions'),
@@ -1148,7 +1158,7 @@
 
     <header class="admin-topbar">
       <div class="admin-shell admin-topbar__inner">
-        <a href="{{ route('admin.numbers') }}" class="admin-brand" aria-label="Supernumber Admin">
+        <a href="{{ route('admin.dashboard') }}" class="admin-brand" aria-label="Supernumber Admin">
           <span class="admin-brand__mark" aria-hidden="true">S</span>
           <span class="admin-brand__text">
             <span class="admin-brand__title">NUMBER</span>
