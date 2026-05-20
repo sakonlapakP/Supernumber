@@ -25,6 +25,7 @@ class SalesDocument extends Model
         'saved_by_user_id',
         'payload',
         'is_active',
+        'is_draft',
     ];
 
     protected function casts(): array
@@ -34,6 +35,7 @@ class SalesDocument extends Model
             'due_date' => 'date',
             'payload' => 'array',
             'is_active' => 'boolean',
+            'is_draft' => 'boolean',
         ];
     }
 
