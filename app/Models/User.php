@@ -19,6 +19,7 @@ class User extends Authenticatable
     public const ROLE_MANAGER = 'manager';
     public const ROLE_ADMIN = 'admin';
     public const ROLE_STAFF = 'staff';
+    public const ROLE_DOCUMENT_OFFICER = 'document_officer';
 
     /**
      * The attributes that are mass assignable.
@@ -72,6 +73,7 @@ class User extends Authenticatable
             self::ROLE_MANAGER,
             self::ROLE_ADMIN,
             self::ROLE_STAFF,
+            self::ROLE_DOCUMENT_OFFICER,
         ];
     }
 
@@ -106,10 +108,36 @@ class User extends Authenticatable
     }
 
     /**
+     * Document Officer role (Invoice & Quotation only)
+     */
+    public function isDocumentOfficer(): bool
+    {
+        return $this->role === self::ROLE_DOCUMENT_OFFICER;
+    }
+
+    /**
      * Check if user is at least Admin level (Admin or Manager)
      */
     public function isAtLeastAdmin(): bool
     {
         return in_array($this->role, [self::ROLE_ADMIN, self::ROLE_MANAGER], true);
+    }
+
+    /**
+     * Get role display label in Thai
+     */
+    public static function roleLabelMap(): array
+    {
+        return [
+            self::ROLE_MANAGER => 'ผู้จัดการ (Manager)',
+            self::ROLE_ADMIN => 'แอดมิน (Admin)',
+            self::ROLE_STAFF => 'พนักงาน (Staff)',
+            self::ROLE_DOCUMENT_OFFICER => 'เจ้าหน้าที่เอกสาร (Document Officer)',
+        ];
+    }
+
+    public function getRoleLabelAttribute(): string
+    {
+        return self::roleLabelMap()[$this->role] ?? $this->role;
     }
 }

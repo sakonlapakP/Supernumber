@@ -943,6 +943,8 @@
       $adminRoleLabel = match ($adminDisplayRole) {
         'manager' => 'ผู้จัดการ',
         'admin' => 'แอดมิน',
+        'staff' => 'พนักงาน',
+        'document_officer' => 'เจ้าหน้าที่เอกสาร',
         default => 'ผู้ใช้',
       };
       $adminNavGroups = [
@@ -1032,6 +1034,28 @@
           ],
         ],
       ];
+
+      // Filter menu for Document Officer (ห้องเอกสาร)
+      if ($adminDisplayRole === 'document_officer') {
+        // Document Officer สามารถเห็นเฉพาะเอกสาร (ใบเสนอราคา/ใบแจ้งหนี้)
+        $adminNavGroups = [
+          [
+            'label' => 'ใบเสนอราคา / ใบแจ้งหนี้',
+            'items' => [
+              [
+                'label' => 'รายการเอกสารทั้งหมด',
+                'url' => route('admin.saved-sales-documents.index'),
+                'active' => request()->routeIs('admin.saved-sales-documents.*') || request()->routeIs('admin.sales-documents'),
+              ],
+              [
+                'label' => 'ลูกค้าที่ขอใบกำกับภาษี/ใบแจ้งหนี้',
+                'url' => route('admin.customers'),
+                'active' => request()->routeIs('admin.customers*'),
+              ],
+            ],
+          ],
+        ];
+      }
 
       $pendingUsersCount = session('admin_user_role') === 'manager'
         ? \App\Models\User::query()->where('is_active', false)->count()

@@ -47,7 +47,7 @@
         <label for="user-role">สิทธิ์</label>
         <select id="user-role" class="admin-select" name="role" required>
           @foreach ($roleOptions as $role)
-            <option value="{{ $role }}" @selected(old('role', 'staff') === $role)>{{ $role }}</option>
+            <option value="{{ $role }}" @selected(old('role', 'staff') === $role)>{{ \App\Models\User::roleLabelMap()[$role] ?? $role }}</option>
           @endforeach
         </select>
       </div>
@@ -77,7 +77,7 @@
               <td>{{ $user->name }}</td>
               <td>{{ $user->username ?: '-' }}</td>
               <td>{{ $user->email }}</td>
-              <td>{{ $user->role }}</td>
+              <td>{{ $user->role_label }}</td>
               <td>
                 @if ($user->is_active)
                   <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">

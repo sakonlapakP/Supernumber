@@ -128,6 +128,22 @@ $ensureAdmin = function (?string $requiredRole = null) use ($currentAdmin) {
     return null;
 };
 
+$ensureDocumentOfficer = function () use ($currentAdmin) {
+    $user = $currentAdmin();
+
+    if (! $user || !session('admin_authenticated')) {
+        return redirect()->route('admin.login');
+    }
+
+    // Allow Manager, Admin, and Document Officer
+    $allowedRoles = [User::ROLE_MANAGER, User::ROLE_ADMIN, User::ROLE_DOCUMENT_OFFICER];
+    if (! in_array($user->role, $allowedRoles, true)) {
+        abort(403);
+    }
+
+    return null;
+};
+
 $sanitizeArticleContent = function (string $content): string {
     return app(ArticleContentSanitizer::class)->sanitize($content);
 };
@@ -1690,8 +1706,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.orders', compact('orders'));
     })->name('orders');
 
-    Route::get('/sales-documents', function (Request $request) use ($ensureAdmin) {
-        if ($redirect = $ensureAdmin()) {
+    Route::get('/sales-documents', function (Request $request) use ($ensureDocumentOfficer) {
+        if ($redirect = $ensureDocumentOfficer()) {
             return $redirect;
         }
 
@@ -1711,8 +1727,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('sales-documents', compact('customers', 'prefillPayload'));
     })->name('sales-documents');
 
-    Route::post('/sales-documents/save-download', function (Request $request) use ($ensureAdmin, $currentAdmin) {
-        if ($redirect = $ensureAdmin()) {
+    Route::post('/sales-documents/save-download', function (Request $request) use ($ensureDocumentOfficer, $currentAdmin) {
+        if ($redirect = $ensureDocumentOfficer()) {
             return response()->json([
                 'message' => 'Unauthorized',
             ], 401);
@@ -1750,8 +1766,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         ]);
     })->name('sales-documents.save-download');
 
-    Route::get('/saved-sales-documents', function () use ($ensureAdmin) {
-        if ($redirect = $ensureAdmin()) {
+    Route::get('/saved-sales-documents', function () use ($ensureDocumentOfficer) {
+        if ($redirect = $ensureDocumentOfficer()) {
             return $redirect;
         }
 
@@ -1763,8 +1779,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return view('admin.sales-documents-index', compact('documents'));
     })->name('saved-sales-documents.index');
 
-    Route::get('/saved-sales-documents/{salesDocument}', function (SalesDocument $salesDocument) use ($ensureAdmin) {
-        if ($redirect = $ensureAdmin()) {
+    Route::get('/saved-sales-documents/{salesDocument}', function (SalesDocument $salesDocument) use ($ensureDocumentOfficer) {
+        if ($redirect = $ensureDocumentOfficer()) {
             return $redirect;
         }
 
@@ -1773,8 +1789,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         ]);
     })->name('saved-sales-documents.show');
 
-    Route::get('/saved-sales-documents/{salesDocument}/preview', function (SalesDocument $salesDocument) use ($ensureAdmin) {
-        if ($redirect = $ensureAdmin()) {
+    Route::get('/saved-sales-documents/{salesDocument}/preview', function (SalesDocument $salesDocument) use ($ensureDocumentOfficer) {
+        if ($redirect = $ensureDocumentOfficer()) {
             return $redirect;
         }
 
@@ -1784,8 +1800,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->header('Content-Type', 'text/html; charset=UTF-8');
     })->name('saved-sales-documents.preview');
 
-    Route::get('/saved-sales-documents/{salesDocument}/download', function (SalesDocument $salesDocument) use ($ensureAdmin) {
-        if ($redirect = $ensureAdmin()) {
+    Route::get('/saved-sales-documents/{salesDocument}/download', function (SalesDocument $salesDocument) use ($ensureDocumentOfficer) {
+        if ($redirect = $ensureDocumentOfficer()) {
             return $redirect;
         }
 
