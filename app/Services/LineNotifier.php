@@ -12,6 +12,12 @@ use RuntimeException;
 
 class LineNotifier
 {
+    private const ALLOWED_EVENT_TYPES = [
+        'lottery_completed',
+        'admin_article_ready',
+        'lottery_unavailable_after_retry',
+    ];
+
     public function isConfigured(?string $destinationKey = null): bool
     {
         return $this->resolveToken() !== ''
@@ -24,6 +30,14 @@ class LineNotifier
         ?Model $notifiable = null,
         ?string $destinationKey = null,
     ): ?LineNotificationLog {
+        if (! in_array($eventType, self::ALLOWED_EVENT_TYPES, true)) {
+            Log::warning('LINE notification skipped - not in allowed event types (articles and lottery only)', [
+                'event_type' => $eventType,
+                'message_preview' => mb_substr($message, 0, 100),
+            ]);
+            return null;
+        }
+
         return $this->queueMessages(
             eventType: $eventType,
             messages: [
@@ -43,6 +57,14 @@ class LineNotifier
         ?Model $notifiable = null,
         ?string $destinationKey = null,
     ): ?LineNotificationLog {
+        if (! in_array($eventType, self::ALLOWED_EVENT_TYPES, true)) {
+            Log::warning('LINE notification skipped - not in allowed event types (articles and lottery only)', [
+                'event_type' => $eventType,
+                'message_count' => count($messages),
+            ]);
+            return null;
+        }
+
         if (! Schema::hasTable('line_notification_logs')) {
             return null;
         }

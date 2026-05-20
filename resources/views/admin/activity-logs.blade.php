@@ -21,7 +21,7 @@
         <thead>
           <tr>
             <th>เวลา</th>
-            <th>ผู้ใช้</th>
+            <th>ผู้จัดการ / ลูกค้า</th>
             <th>เบอร์</th>
             <th>การกระทำ</th>
             <th>เปลี่ยนสถานะ</th>
@@ -30,11 +30,24 @@
         <tbody>
           @forelse ($logs as $log)
             <tr>
-              <td>{{ $log->created_at?->format('Y-m-d H:i:s') ?: '-' }}</td>
-              <td>{{ $log->user?->name ?: 'ไม่ทราบชื่อ' }}</td>
+              <td>
+                <strong>{{ $log->created_at?->format('Y-m-d') }}</strong>
+                <br><small style="color: #666;">{{ $log->created_at?->format('H:i:s') }}</small>
+              </td>
+              <td>
+                @if ($log->user)
+                  {{ $log->user->name }}
+                  <br><small style="color: #666; font-size: 0.85em;">{{ $log->user->email }}</small>
+                @elseif ($log->order)
+                  ลูกค้า: {{ $log->order->first_name }} {{ $log->order->last_name }}
+                  <br><small style="color: #666; font-size: 0.85em;">Order #{{ $log->order->id }} ({{ $log->order->email }})</small>
+                @else
+                  <em style="color: #999;">ระบบอัตโนมัติ</em>
+                @endif
+              </td>
               <td>{{ $log->phoneNumber?->formatted_number ?: '-' }}</td>
               <td>{{ $log->action }}</td>
-              <td>{{ ($log->from_status ?: '-') . ' -> ' . ($log->to_status ?: '-') }}</td>
+              <td>{{ ($log->from_status ?: '-') . ' → ' . ($log->to_status ?: '-') }}</td>
             </tr>
           @empty
             <tr>

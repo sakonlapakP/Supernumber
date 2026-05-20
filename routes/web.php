@@ -705,7 +705,7 @@ $defaultOrderStatus = function (string $serviceType): string {
     return CustomerOrder::defaultStatusForServiceType($serviceType);
 };
 
-$logPhoneNumberStatusChange = function (PhoneNumber $phoneNumber, ?string $fromStatus, ?int $userId = null) {
+$logPhoneNumberStatusChange = function (PhoneNumber $phoneNumber, ?string $fromStatus, ?int $userId = null, ?int $orderId = null) {
     $toStatus = (string) $phoneNumber->status;
     $fromStatus = $fromStatus !== null ? (string) $fromStatus : null;
 
@@ -723,6 +723,7 @@ $logPhoneNumberStatusChange = function (PhoneNumber $phoneNumber, ?string $fromS
     PhoneNumberStatusLog::query()->create([
         'phone_number_id' => $phoneNumber->id,
         'user_id' => $userId,
+        'order_id' => $orderId,
         'action' => $action,
         'from_status' => $fromStatus,
         'to_status' => $toStatus,
@@ -768,7 +769,7 @@ $syncPhoneNumberStatusFromOrder = function (CustomerOrder $order, ?int $userId =
         'status' => $targetStatus,
     ]);
 
-    $logPhoneNumberStatusChange($phoneNumber, $fromStatus, $userId);
+    $logPhoneNumberStatusChange($phoneNumber, $fromStatus, $userId, $order->id);
 };
 
 Route::get('/', [PublicController::class, 'index'])->name('home');
@@ -4802,7 +4803,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
 
         $logs = PhoneNumberStatusLog::query()
-            ->with(['phoneNumber', 'user'])
+            ->with(['phoneNumber', 'user', 'order'])
             ->latest()
             ->paginate(50);
 

@@ -23,7 +23,7 @@ class LineNotificationTest extends TestCase
 {
     use RefreshDatabase;
 
-    public function test_it_logs_and_sends_estimate_lead_notifications_to_the_configured_group(): void
+    public function test_it_does_not_send_estimate_lead_notifications_to_line(): void
     {
         config()->set('services.line.channel_access_token', 'line-token');
         config()->set('services.line.group_id', 'group-default');
@@ -49,30 +49,14 @@ class LineNotificationTest extends TestCase
         $response->assertRedirect();
         $this->assertStringContainsString('/estimate/processing/', (string) $response->headers->get('Location'));
 
-        Http::assertSent(function (HttpRequest $request): bool {
-            $payload = $request->data();
-            $message = (string) ($payload['messages'][0]['text'] ?? '');
+        Http::assertNothingSent();
 
-            return $request->url() === 'https://api.line.me/v2/bot/message/push'
-                && $request->hasHeader('Authorization', 'Bearer line-token')
-                && ($payload['to'] ?? null) === 'group-estimate'
-                && ($payload['messages'][0]['type'] ?? null) === 'text'
-                && str_contains($message, 'มีลูกค้าใหม่กรอกแบบฟอร์มเลือกเบอร์')
-                && str_contains($message, 'เบอร์หลัก: 0899998888')
-                && str_contains($message, 'เป้าหมาย: การเงิน');
-        });
-
-        Http::assertSentCount(1);
-
-        $this->assertDatabaseHas('line_notification_logs', [
+        $this->assertDatabaseMissing('line_notification_logs', [
             'event_type' => 'estimate_submitted',
-            'destination_key' => 'estimate',
-            'destination_id' => 'group-estimate',
-            'status' => LineNotificationLog::STATUS_SENT,
         ]);
     }
 
-    public function test_it_sends_order_submissions_with_a_slip_link_and_image_message_when_the_asset_url_is_public(): void
+    public function test_it_does_not_send_order_submission_notifications_to_line(): void
     {
         config()->set('services.line.channel_access_token', 'line-token');
         config()->set('services.line.group_id', 'group-default');
@@ -123,42 +107,17 @@ class LineNotificationTest extends TestCase
             'ordered_number' => '0891234567',
             'selected_package' => 399,
             'current_phone' => '0812345678',
-            'status' => 'submitted',
+            'status' => 'processing',
         ]);
 
-        Http::assertSent(function (HttpRequest $request): bool {
-            $payload = $request->data();
-            $message = (string) ($payload['messages'][0]['text'] ?? '');
-            $imageMessage = $payload['messages'][1] ?? [];
+        Http::assertNothingSent();
 
-            return $request->url() === 'https://api.line.me/v2/bot/message/push'
-                && $request->hasHeader('Authorization', 'Bearer line-token')
-                && ($payload['to'] ?? null) === 'group-order'
-                && ($payload['messages'][0]['type'] ?? null) === 'text'
-                && ($imageMessage['type'] ?? null) === 'image'
-                && str_contains((string) ($imageMessage['originalContentUrl'] ?? ''), '/line/payment-slips/')
-                && str_contains((string) ($imageMessage['originalContentUrl'] ?? ''), 'signature=')
-                && str_contains($message, 'มีคำสั่งซื้อเบอร์ใหม่')
-                && str_contains($message, 'เบอร์: 0891234567')
-                && str_contains($message, 'ประเภท: รายเดือน')
-                && str_contains($message, 'ยอดชำระแรก: 399 บาท')
-                && str_contains($message, 'แพ็กเกจ: True Super Value 399')
-                && str_contains($message, 'ค่าบริการรายเดือน: 399 บาท / เดือน')
-                && str_contains($message, 'ชื่อ: คุณ สุดา ดีพร้อม')
-                && ! str_contains($message, 'หลักฐานการโอน:');
-        });
-
-        Http::assertSentCount(1);
-
-        $this->assertDatabaseHas('line_notification_logs', [
+        $this->assertDatabaseMissing('line_notification_logs', [
             'event_type' => 'order_submitted',
-            'destination_key' => 'order_submission',
-            'destination_id' => 'group-order',
-            'status' => LineNotificationLog::STATUS_SENT,
         ]);
     }
 
-    public function test_order_notifier_omits_slip_url_from_text_when_image_message_is_attached(): void
+    public function test_order_notifier_does_not_send_to_line_due_to_whitelist(): void
     {
         config()->set('services.line.channel_access_token', 'line-token');
         config()->set('services.line.group_id', 'group-default');
@@ -181,26 +140,16 @@ class LineNotificationTest extends TestCase
             'last_name' => 'ดีพร้อม',
             'current_phone' => '0812345678',
             'payment_slip_path' => 'payment-slips/slip.jpg',
-            'status' => 'submitted',
+            'status' => 'processing',
         ]);
 
-        app(LineOrderNotifier::class)->sendOrderSubmitted($order);
+        $result = app(LineOrderNotifier::class)->sendOrderSubmitted($order);
 
-        Http::assertSent(function (HttpRequest $request): bool {
-            $payload = $request->data();
-            $message = (string) ($payload['messages'][0]['text'] ?? '');
-            $imageMessage = $payload['messages'][1] ?? [];
-
-            return ($payload['to'] ?? null) === 'group-order'
-                && ($payload['messages'][0]['type'] ?? null) === 'text'
-                && ($imageMessage['type'] ?? null) === 'image'
-                && ! str_contains($message, 'หลักฐานการโอน:')
-                && str_contains((string) ($imageMessage['originalContentUrl'] ?? ''), '/line/payment-slips/')
-                && str_contains((string) ($imageMessage['originalContentUrl'] ?? ''), 'signature=');
-        });
+        $this->assertNull($result);
+        Http::assertNothingSent();
     }
 
-    public function test_it_retries_line_delivery_before_marking_the_notification_as_sent(): void
+    public function test_it_does_not_retry_or_log_when_estimate_is_blocked_by_whitelist(): void
     {
         config()->set('services.line.channel_access_token', 'line-token');
         config()->set('services.line.group_id', 'group-default');
@@ -208,9 +157,9 @@ class LineNotificationTest extends TestCase
         config()->set('services.line.retry_times', 3);
         config()->set('services.line.retry_sleep_ms', 0);
 
-        Http::fakeSequence()
-            ->push([], 500)
-            ->push([], 200);
+        Http::fake([
+            'https://api.line.me/v2/bot/message/push' => Http::response([], 200),
+        ]);
 
         $this->post('/estimate', [
             'first_name' => 'สมชาย',
@@ -224,17 +173,14 @@ class LineNotificationTest extends TestCase
             'goal' => 'money',
         ])->assertRedirect();
 
-        Http::assertSentCount(2);
+        Http::assertNothingSent();
 
-        $this->assertDatabaseHas('line_notification_logs', [
+        $this->assertDatabaseMissing('line_notification_logs', [
             'event_type' => 'estimate_submitted',
-            'destination_id' => 'group-estimate',
-            'status' => LineNotificationLog::STATUS_SENT,
-            'response_status' => 200,
         ]);
     }
 
-    public function test_it_sends_line_notification_when_admin_changes_order_status_to_a_configured_event(): void
+    public function test_it_does_not_send_order_status_notifications_to_line_due_to_whitelist(): void
     {
         config()->set('services.line.channel_access_token', 'line-token');
         config()->set('services.line.group_id', 'group-default');
@@ -257,7 +203,7 @@ class LineNotificationTest extends TestCase
             'email' => 'suda@example.com',
             'current_phone' => '0812345678',
             'payment_slip_path' => 'payment-slips/slip.jpg',
-            'status' => 'submitted',
+            'status' => 'processing',
         ]);
 
         $admin = User::factory()->create([
@@ -270,32 +216,21 @@ class LineNotificationTest extends TestCase
             ->withSession($this->adminSession($admin))
             ->put(route('admin.orders.update', $order), [
                 'ordered_number' => '0891234567',
-                'selected_package' => 399,
+                'initial_payment_price' => 399,
                 'title_prefix' => 'คุณ',
                 'first_name' => 'สุดา',
                 'last_name' => 'ดีพร้อม',
                 'email' => 'suda@example.com',
                 'current_phone' => '0812345678',
-                'status' => 'paid',
+                'status' => 'completed',
             ]);
 
         $response->assertRedirect(route('admin.orders.show', $order));
 
-        Http::assertSent(function (HttpRequest $request): bool {
-            $payload = $request->data();
-            $message = (string) ($payload['messages'][0]['text'] ?? '');
+        Http::assertNothingSent();
 
-            return ($payload['to'] ?? null) === 'group-status'
-                && str_contains($message, 'มีการอัปเดตสถานะคำสั่งซื้อ')
-                && str_contains($message, 'สถานะเดิม: submitted')
-                && str_contains($message, 'สถานะใหม่: paid');
-        });
-
-        $this->assertDatabaseHas('line_notification_logs', [
+        $this->assertDatabaseMissing('line_notification_logs', [
             'event_type' => 'order_status_updated',
-            'destination_key' => 'order_status',
-            'destination_id' => 'group-status',
-            'status' => LineNotificationLog::STATUS_SENT,
         ]);
     }
 
@@ -512,7 +447,7 @@ class LineNotificationTest extends TestCase
             'ordered_number' => '0891234567',
             'selected_package' => 399,
             'payment_slip_path' => 'payment-slips/slip.jpg',
-            'status' => 'submitted',
+            'status' => 'processing',
         ]);
 
         $admin = User::factory()->create([
@@ -525,8 +460,8 @@ class LineNotificationTest extends TestCase
             ->withSession($this->adminSession($admin))
             ->put(route('admin.orders.update', $order), [
                 'ordered_number' => '0891234567',
-                'selected_package' => 399,
-                'status' => 'reviewing',
+                'initial_payment_price' => 399,
+                'status' => 'cancelled',
             ])
             ->assertRedirect(route('admin.orders.show', $order));
 
@@ -536,7 +471,7 @@ class LineNotificationTest extends TestCase
         ]);
     }
 
-    public function test_manager_can_trigger_a_line_test_message_from_the_order_detail_page(): void
+    public function test_manager_line_test_message_is_blocked_by_whitelist(): void
     {
         config()->set('services.line.channel_access_token', 'line-token');
         config()->set('services.line.group_id', 'group-default');
@@ -551,7 +486,7 @@ class LineNotificationTest extends TestCase
             'ordered_number' => '0891234567',
             'selected_package' => 399,
             'payment_slip_path' => 'payment-slips/slip.jpg',
-            'status' => 'submitted',
+            'status' => 'processing',
         ]);
 
         $admin = User::factory()->create([
@@ -565,21 +500,11 @@ class LineNotificationTest extends TestCase
             ->post(route('admin.orders.line-test', $order));
 
         $response->assertRedirect();
-        $response->assertSessionHas('status_message');
 
-        Http::assertSent(function (HttpRequest $request): bool {
-            $payload = $request->data();
-            $message = (string) ($payload['messages'][0]['text'] ?? '');
+        Http::assertNothingSent();
 
-            return ($payload['to'] ?? null) === 'group-admin-test'
-                && str_contains($message, 'ทดสอบระบบแจ้งเตือน LINE จากแอดมิน');
-        });
-
-        $this->assertDatabaseHas('line_notification_logs', [
+        $this->assertDatabaseMissing('line_notification_logs', [
             'event_type' => 'order_admin_test',
-            'destination_key' => 'admin_test',
-            'destination_id' => 'group-admin-test',
-            'status' => LineNotificationLog::STATUS_SENT,
         ]);
     }
 
@@ -589,7 +514,7 @@ class LineNotificationTest extends TestCase
             'ordered_number' => '0891234567',
             'selected_package' => 399,
             'payment_slip_path' => 'payment-slips/slip.jpg',
-            'status' => 'submitted',
+            'status' => 'processing',
         ]);
 
         $admin = User::factory()->create([
@@ -615,7 +540,7 @@ class LineNotificationTest extends TestCase
             'ordered_number' => '0891234567',
             'selected_package' => 399,
             'payment_slip_path' => 'payment-slips/slip.jpg',
-            'status' => 'submitted',
+            'status' => 'processing',
         ]);
 
         $admin = User::factory()->create([
@@ -645,7 +570,7 @@ class LineNotificationTest extends TestCase
         $response->assertSessionHasErrors('line');
     }
 
-    public function test_it_redirects_notifications_to_admin_user_id_when_test_mode_is_enabled(): void
+    public function test_it_does_not_redirect_estimate_to_admin_user_id_because_whitelist_blocks_it(): void
     {
         config()->set('services.line.channel_access_token', 'line-token');
         config()->set('services.line.test_mode', true);
@@ -670,15 +595,121 @@ class LineNotificationTest extends TestCase
             'goal' => 'money',
         ]);
 
-        Http::assertSent(function (HttpRequest $request): bool {
-            return ($request->data()['to'] ?? null) === 'admin-user-id';
-        });
+        Http::assertNothingSent();
 
-        $this->assertDatabaseHas('line_notification_logs', [
-            'destination_id' => 'admin-user-id',
+        $this->assertDatabaseMissing('line_notification_logs', [
+            'event_type' => 'estimate_submitted',
         ]);
     }
 
+
+    public function test_whitelist_blocks_non_allowed_event_types_and_logs_warning(): void
+    {
+        config()->set('services.line.channel_access_token', 'line-token');
+        config()->set('services.line.group_id', 'group-default');
+        config()->set('services.line.retry_sleep_ms', 0);
+
+        Http::fake([
+            'https://api.line.me/v2/bot/message/push' => Http::response([], 200),
+        ]);
+
+        $notifier = app(\App\Services\LineNotifier::class);
+
+        $blockedTypes = ['order_submitted', 'order_status_updated', 'estimate_submitted', 'some_random_event'];
+
+        foreach ($blockedTypes as $eventType) {
+            $result = $notifier->queueText($eventType, 'test message');
+            $this->assertNull($result, "Expected null for blocked event type: {$eventType}");
+        }
+
+        Http::assertNothingSent();
+        $this->assertDatabaseCount('line_notification_logs', 0);
+    }
+
+    public function test_whitelist_allows_lottery_completed_event(): void
+    {
+        config()->set('services.line.channel_access_token', 'line-token');
+        config()->set('services.line.group_id', 'group-lottery');
+        config()->set('services.line.retry_sleep_ms', 0);
+
+        Http::fake([
+            'https://api.line.me/v2/bot/message/push' => Http::response([], 200),
+        ]);
+
+        $notifier = app(\App\Services\LineNotifier::class);
+        $result = $notifier->queueText('lottery_completed', 'ผลหวยออกแล้ว');
+
+        $this->assertNotNull($result);
+        Http::assertSentCount(1);
+
+        $this->assertDatabaseHas('line_notification_logs', [
+            'event_type' => 'lottery_completed',
+            'status' => \App\Models\LineNotificationLog::STATUS_SENT,
+        ]);
+    }
+
+    public function test_whitelist_allows_lottery_unavailable_after_retry_event(): void
+    {
+        config()->set('services.line.channel_access_token', 'line-token');
+        config()->set('services.line.group_id', 'group-lottery');
+        config()->set('services.line.retry_sleep_ms', 0);
+
+        Http::fake([
+            'https://api.line.me/v2/bot/message/push' => Http::response([], 200),
+        ]);
+
+        $notifier = app(\App\Services\LineNotifier::class);
+        $result = $notifier->queueText('lottery_unavailable_after_retry', 'ยังไม่พบผลหวย');
+
+        $this->assertNotNull($result);
+        Http::assertSentCount(1);
+
+        $this->assertDatabaseHas('line_notification_logs', [
+            'event_type' => 'lottery_unavailable_after_retry',
+            'status' => \App\Models\LineNotificationLog::STATUS_SENT,
+        ]);
+    }
+
+    public function test_whitelist_allows_admin_article_ready_event(): void
+    {
+        config()->set('services.line.channel_access_token', 'line-token');
+        config()->set('services.line.group_id', 'group-article');
+        config()->set('services.line.retry_sleep_ms', 0);
+
+        Http::fake([
+            'https://api.line.me/v2/bot/message/push' => Http::response([], 200),
+        ]);
+
+        $notifier = app(\App\Services\LineNotifier::class);
+        $result = $notifier->queueText('admin_article_ready', 'บทความใหม่พร้อมแล้ว');
+
+        $this->assertNotNull($result);
+        Http::assertSentCount(1);
+
+        $this->assertDatabaseHas('line_notification_logs', [
+            'event_type' => 'admin_article_ready',
+            'status' => \App\Models\LineNotificationLog::STATUS_SENT,
+        ]);
+    }
+
+    public function test_queueMessages_also_blocks_non_whitelisted_event_types(): void
+    {
+        config()->set('services.line.channel_access_token', 'line-token');
+        config()->set('services.line.group_id', 'group-default');
+
+        Http::fake([
+            'https://api.line.me/v2/bot/message/push' => Http::response([], 200),
+        ]);
+
+        $notifier = app(\App\Services\LineNotifier::class);
+        $result = $notifier->queueMessages('order_submitted', [
+            ['type' => 'text', 'text' => 'มีคำสั่งซื้อใหม่'],
+        ]);
+
+        $this->assertNull($result);
+        Http::assertNothingSent();
+        $this->assertDatabaseCount('line_notification_logs', 0);
+    }
 
     /**
      * @return array<string, mixed>
