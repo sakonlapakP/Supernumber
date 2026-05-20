@@ -803,6 +803,10 @@
         display: none;
       }
 
+      body.admin-menu-open {
+        overflow: hidden;
+      }
+
       .admin-rte {
         border: 1px solid var(--admin-border-strong);
         border-radius: var(--admin-radius-sm);
@@ -872,16 +876,34 @@
         }
 
         .admin-mobile-nav {
-          display: none;
-          margin: 12px 0 0;
-          padding: 12px;
-          border: 1px solid var(--admin-border);
-          background: rgba(255, 255, 255, 0.96);
-          box-shadow: var(--admin-shadow);
+          position: fixed;
+          inset: 64px 0 0;
+          z-index: 25;
+          display: grid;
+          grid-template-rows: auto minmax(0, 1fr);
+          padding: 16px;
+          background: rgba(248, 250, 252, 0.98);
+          box-shadow: 0 18px 40px rgba(15, 23, 42, .14);
+          overflow-y: auto;
+          transform: translateY(-110%);
+          opacity: 0;
+          pointer-events: none;
+          transition: transform .22s ease, opacity .18s ease;
         }
 
         .admin-mobile-nav.is-open {
-          display: block;
+          transform: translateY(0);
+          opacity: 1;
+          pointer-events: auto;
+        }
+
+        .admin-mobile-nav .admin-user-panel {
+          border-radius: var(--admin-radius-lg) var(--admin-radius-lg) 0 0;
+        }
+
+        .admin-mobile-nav .admin-nav {
+          min-height: 0;
+          border-radius: 0 0 var(--admin-radius-lg) var(--admin-radius-lg);
         }
 
         .admin-page-head,
@@ -907,7 +929,7 @@
 
       @media (max-width: 760px) {
         .admin-topbar__inner {
-          min-height: 74px;
+          min-height: 64px;
         }
 
         .admin-brand {
@@ -1295,6 +1317,14 @@
         toggle.addEventListener("click", () => {
           const isOpen = menu.classList.toggle("is-open");
           toggle.setAttribute("aria-expanded", isOpen ? "true" : "false");
+          document.body.classList.toggle("admin-menu-open", isOpen);
+        });
+
+        menu.addEventListener("click", (event) => {
+          if (!event.target.closest("a")) return;
+          menu.classList.remove("is-open");
+          toggle.setAttribute("aria-expanded", "false");
+          document.body.classList.remove("admin-menu-open");
         });
       })();
     </script>
