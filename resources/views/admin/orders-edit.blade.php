@@ -57,6 +57,148 @@
       cursor: not-allowed;
       opacity: 0.8;
     }
+
+    .order-delete-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      padding: 20px;
+      display: grid;
+      place-items: center;
+      background: rgba(15, 23, 42, 0.55);
+    }
+
+    .order-delete-modal[hidden] {
+      display: none;
+    }
+
+    .order-delete-modal__panel {
+      width: min(500px, 100%);
+      padding: 22px;
+      border-radius: 12px;
+      box-shadow: 0 24px 64px rgba(15, 23, 42, 0.22);
+    }
+
+    .order-delete-modal__head {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .order-delete-modal__icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #fef2f2;
+      color: #b91c1c;
+      font-size: 22px;
+      font-weight: 800;
+      line-height: 1;
+    }
+
+    .order-delete-modal__close {
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--admin-border);
+      border-radius: 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #fff;
+      color: #475569;
+      cursor: pointer;
+      font-size: 22px;
+      line-height: 1;
+    }
+
+    .order-delete-modal__close:hover {
+      background: #f8fafc;
+      color: var(--admin-text);
+    }
+
+    .order-delete-modal__title {
+      margin: 0;
+      color: #b91c1c;
+      font-size: clamp(20px, 5vw, 26px);
+      line-height: 1.15;
+      font-weight: 800;
+    }
+
+    .order-delete-modal__copy {
+      margin: 14px 0 0;
+      padding: 12px 14px;
+      border: 1px solid #fee2e2;
+      border-radius: 10px;
+      background: #fff7f7;
+      color: var(--admin-text);
+      font-size: 15px;
+      line-height: 1.65;
+      font-weight: 600;
+    }
+
+    .order-delete-modal__hint {
+      margin: 12px 0 10px;
+      color: var(--admin-muted);
+      font-size: 14px;
+      line-height: 1.6;
+      font-weight: 600;
+    }
+
+    .order-delete-modal__input {
+      margin-bottom: 16px;
+      height: 48px;
+      font-size: 16px;
+      font-weight: 700;
+      letter-spacing: 0;
+    }
+
+    .order-delete-modal__actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .order-delete-modal__actions .admin-button {
+      width: 100%;
+    }
+
+    .order-delete-modal__actions .admin-button:disabled {
+      opacity: .45;
+      cursor: not-allowed;
+      filter: grayscale(.2);
+    }
+
+    @media (max-width: 560px) {
+      .order-delete-modal {
+        align-items: start;
+        padding: max(18px, env(safe-area-inset-top)) 14px max(18px, env(safe-area-inset-bottom));
+      }
+
+      .order-delete-modal__panel {
+        margin-top: 72px;
+        padding: 16px;
+      }
+
+      .order-delete-modal__head {
+        grid-template-columns: auto minmax(0, 1fr) auto;
+        gap: 10px;
+      }
+
+      .order-delete-modal__icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 9px;
+        font-size: 20px;
+      }
+
+      .order-delete-modal__actions {
+        gap: 10px;
+      }
+    }
   </style>
 
   <section class="admin-card admin-feature-card">
@@ -194,13 +336,17 @@
   </section>
 
   @if (session('admin_user_role') === 'manager')
-    <div id="deleteModal" style="display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 1000; display: flex; align-items: center; justify-content: center;">
-      <div class="admin-card" style="width: 90%; max-width: 500px;">
-        <h2 style="margin-top: 0; color: #d32f2f;">ยืนยันการลบคำสั่งซื้อ</h2>
-        <p style="color: var(--admin-text);">คำสั่งซื้อ <strong>{{ $order->ordered_number }}</strong> จะถูกลบออกจากระบบ</p>
-        <p style="color: var(--admin-muted); font-size: 0.9rem;">กรุณาพิมพ์คำว่า <strong>DELETE</strong> เพื่อยืนยันการลบ:</p>
-        <input id="deleteConfirmInput" type="text" class="admin-input" placeholder="พิมพ์ DELETE" style="margin-bottom: 16px;" />
-        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+    <div id="deleteModal" class="order-delete-modal" hidden role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+      <div class="admin-card order-delete-modal__panel">
+        <div class="order-delete-modal__head">
+          <span class="order-delete-modal__icon" aria-hidden="true">!</span>
+          <h2 id="deleteModalTitle" class="order-delete-modal__title">ยืนยันการลบคำสั่งซื้อ</h2>
+          <button type="button" class="order-delete-modal__close" onclick="closeDeleteModal()" aria-label="ปิด">×</button>
+        </div>
+        <p class="order-delete-modal__copy">คำสั่งซื้อ <strong>{{ $order->ordered_number }}</strong> จะถูกลบออกจากระบบ</p>
+        <p class="order-delete-modal__hint">กรุณาพิมพ์คำว่า <strong>DELETE</strong> เพื่อยืนยันการลบ:</p>
+        <input id="deleteConfirmInput" type="text" class="admin-input order-delete-modal__input" placeholder="พิมพ์ DELETE" autocomplete="off" />
+        <div class="order-delete-modal__actions">
           <button type="button" class="admin-button admin-button--secondary" onclick="closeDeleteModal()">ยกเลิก</button>
           <button id="confirmDeleteBtn" type="button" class="admin-button admin-button--danger" onclick="confirmDelete()" disabled>ลบ</button>
         </div>
@@ -209,14 +355,16 @@
 
     <script>
       function openDeleteModal() {
-        document.getElementById('deleteModal').style.display = 'flex';
+        document.getElementById('deleteModal').hidden = false;
         document.getElementById('deleteConfirmInput').value = '';
         document.getElementById('confirmDeleteBtn').disabled = true;
+        document.body.classList.add('admin-menu-open');
         document.getElementById('deleteConfirmInput').focus();
       }
 
       function closeDeleteModal() {
-        document.getElementById('deleteModal').style.display = 'none';
+        document.getElementById('deleteModal').hidden = true;
+        document.body.classList.remove('admin-menu-open');
       }
 
       document.getElementById('deleteConfirmInput').addEventListener('input', function() {
@@ -236,7 +384,7 @@
       }
 
       document.addEventListener('keydown', function(e) {
-        if (e.key === 'Escape' && document.getElementById('deleteModal').style.display === 'flex') {
+        if (e.key === 'Escape' && !document.getElementById('deleteModal').hidden) {
           closeDeleteModal();
         }
       });
