@@ -314,8 +314,8 @@
       background: #fff;
       border-radius: 12px;
       width: min(600px, 95vw);
+      height: min(90vh, 100%);
       max-height: 90vh;
-      overflow-y: auto;
       box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
       display: flex;
       flex-direction: column;
@@ -355,8 +355,11 @@
     }
     .easy-docs-body {
       flex: 1;
+      min-height: 0;
       overflow-y: auto;
+      overflow-x: hidden;
       padding: 20px;
+      -webkit-overflow-scrolling: touch;
     }
     .easy-docs-step-content {
       display: none;
