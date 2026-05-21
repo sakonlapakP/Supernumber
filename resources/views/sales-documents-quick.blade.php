@@ -453,10 +453,9 @@
     /* ─── Form elements ─── */
     .qdoc-meta-grid {
       display: grid;
-      grid-template-columns: 1fr 1fr;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 10px;
     }
-    @media (max-width: 600px) { .qdoc-meta-grid { grid-template-columns: 1fr; } }
 
     .qdoc-form-row {
       display: grid;
