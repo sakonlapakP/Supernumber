@@ -210,7 +210,7 @@
                 <th class="qdoc-col-desc">รายการ (Description)</th>
                 <th class="qdoc-col-qty">จำนวน</th>
                 <th class="qdoc-col-unit">หน่วย</th>
-                <th class="qdoc-col-price">ราคา/หน่วย</th>
+                <th class="qdoc-col-price" data-qdoc-price-heading>ราคา/หน่วย</th>
                 <th class="qdoc-col-amount">จำนวนเงิน</th>
                 <th class="qdoc-col-del"></th>
               </tr>
@@ -310,30 +310,18 @@
 
       {{-- Tax calculator modes --}}
       <div class="admin-card qdoc-card">
-        <div class="qdoc-section-title">ตั้งค่าภาษี</div>
+        <div class="qdoc-section-title">คำนวณภาษี</div>
 
-        <div class="qdoc-tax-group" style="border-left:4px solid #3b82f6;">
-          <div class="qdoc-tax-label">ภาษีหัก ณ ที่จ่าย (WHT)</div>
-          <div class="qdoc-mode-buttons" role="group" data-qdoc-wht-modes>
-            <button type="button" class="is-active" data-qdoc-wht-mode="customer">ลูกค้าจ่าย</button>
-            <button type="button" data-qdoc-wht-mode="company">เราจ่าย</button>
+        <div class="qdoc-tax-group qdoc-tax-group--mode">
+          <div class="qdoc-mode-buttons qdoc-mode-buttons--calculation" role="group" aria-label="รูปแบบการคำนวณภาษี">
+            <button type="button" class="is-active" data-qdoc-calculation-mode="standard">Standard</button>
+            <button type="button" data-qdoc-calculation-mode="reverse">Reverse</button>
           </div>
-          <label class="qdoc-label qdoc-label--inline">
-            <span>อัตรา %</span>
-            <input type="text" class="qdoc-input qdoc-input--tiny qdoc-input--right" data-qdoc-wht-rate value="3" inputmode="decimal">
-          </label>
-        </div>
-
-        <div class="qdoc-tax-group" style="border-left:4px solid #8b5cf6; margin-top:12px;">
-          <div class="qdoc-tax-label">ภาษีมูลค่าเพิ่ม (VAT)</div>
-          <div class="qdoc-mode-buttons" role="group" data-qdoc-vat-modes>
-            <button type="button" data-qdoc-vat-mode="customer">ลูกค้าจ่าย</button>
-            <button type="button" class="is-active" data-qdoc-vat-mode="company">เราจ่าย</button>
+          <div class="qdoc-tax-mode-caption" data-qdoc-calculation-caption>กรอกราคาค่าจ้างก่อน VAT</div>
+          <div class="qdoc-tax-rates" aria-label="อัตราภาษีที่ใช้">
+            <span>VAT 7%</span>
+            <span>WHT 3%</span>
           </div>
-          <label class="qdoc-label qdoc-label--inline">
-            <span>อัตรา %</span>
-            <input type="text" class="qdoc-input qdoc-input--tiny qdoc-input--right" data-qdoc-vat-rate value="7" inputmode="decimal">
-          </label>
         </div>
 
         <div class="qdoc-tax-group" style="margin-top:12px;">
@@ -359,6 +347,10 @@
           <span>หลังหักลด</span>
           <output data-qdoc-after-discount>0.00</output>
         </div>
+        <div class="qdoc-total-row qdoc-total-row--target" data-qdoc-target-income-row hidden>
+          <span>รายได้เป้าหมาย</span>
+          <output data-qdoc-target-income>0.00</output>
+        </div>
         <div class="qdoc-total-row">
           <span>VAT (<span data-qdoc-vat-rate-label>7</span>%)</span>
           <output data-qdoc-vat-amount>0.00</output>
@@ -374,6 +366,10 @@
         <div class="qdoc-total-row qdoc-total-row--net">
           <span>ยอดที่ต้องชำระ</span>
           <output data-qdoc-net-to-pay>0.00</output>
+        </div>
+        <div class="qdoc-total-row" data-qdoc-service-income-row>
+          <span>รายได้หลัง WHT</span>
+          <output data-qdoc-service-income>0.00</output>
         </div>
         <div class="qdoc-baht-text">
           <strong data-qdoc-baht-text>ศูนย์บาทถ้วน</strong>
@@ -436,7 +432,6 @@
     }
     @media (max-width: 768px) {
       .qdoc-layout { gap: 14px; }
-      .qdoc-sidebar { display: none; }
     }
     .qdoc-main,
     .qdoc-sidebar {
@@ -522,7 +517,7 @@
       .qdoc-payment-method { max-width: 100%; }
       .qdoc-type-switch button { padding: 5px 10px; font-size: 11px; }
       .qdoc-main { gap: 8px; }
-      .qdoc-sidebar { display: none !important; }
+      .qdoc-sidebar { display: grid; }
     }
     @media (max-width: 480px) {
       .qdoc-meta-grid { grid-template-columns: 1fr; gap: 10px; }
@@ -653,8 +648,10 @@
 
     /* ─── Tax groups ─── */
     .qdoc-tax-group { padding: 10px 12px; background: #f9fafb; border-radius: 6px; }
+    .qdoc-tax-group--mode { border-left: 4px solid #2563eb; }
     .qdoc-tax-label { font-size: 12px; font-weight: 700; color: #374151; margin-bottom: 8px; }
     .qdoc-mode-buttons { display: flex; gap: 6px; margin-bottom: 8px; }
+    .qdoc-mode-buttons--calculation button { min-height: 34px; }
     .qdoc-mode-buttons button {
       flex: 1; padding: 5px 10px; border-radius: 4px; border: 1px solid #d1d5db;
       background: #fff; font-size: 12px; cursor: pointer; color: #6b7280;
@@ -662,6 +659,27 @@
     }
     .qdoc-mode-buttons button.is-active {
       background: #2563eb; color: #fff; border-color: #2563eb; font-weight: 600;
+    }
+    .qdoc-tax-mode-caption {
+      color: #374151;
+      font-size: 12px;
+      line-height: 1.35;
+      min-height: 17px;
+    }
+    .qdoc-tax-rates {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-top: 8px;
+    }
+    .qdoc-tax-rates span {
+      border: 1px solid #d1d5db;
+      border-radius: 4px;
+      background: #fff;
+      color: #374151;
+      font-size: 11px;
+      font-weight: 700;
+      padding: 3px 7px;
     }
 
     /* ─── Totals ─── */
@@ -671,12 +689,15 @@
       padding: 5px 0; border-bottom: 1px solid #f3f4f6;
       color: #374151;
     }
+    .qdoc-total-row[hidden] { display: none; }
     .qdoc-total-row span { color: #6b7280; font-size: 12px; }
     .qdoc-total-row output { font-variant-numeric: tabular-nums; }
     .qdoc-total-row--grand { font-weight: 700; font-size: 15px; border-top: 2px solid #e5e7eb; margin-top: 4px; padding-top: 8px; }
     .qdoc-total-row--grand span { color: #111827; font-size: 14px; }
     .qdoc-total-row--net { font-weight: 700; font-size: 14px; color: #2563eb; }
     .qdoc-total-row--net span { color: #2563eb; }
+    .qdoc-total-row--target { color: #166534; font-weight: 700; }
+    .qdoc-total-row--target span { color: #166534; }
     .qdoc-baht-text { margin-top: 8px; padding: 8px; background: #f0fdf4; border-radius: 4px; font-size: 12px; text-align: center; color: #166534; }
 
     /* ─── Action buttons ─── */
@@ -857,8 +878,9 @@
       };
 
       // ─── State ───
-      let whtMode = 'customer';
-      let vatMode = 'company';
+      const VAT_RATE = 7;
+      const WHT_RATE = 3;
+      let calculationMode = 'standard';
       let currentDraftId = initialDraftId;
       let rowCounter = 1;
 
@@ -879,21 +901,23 @@
       const customerPaymentTermInput = document.querySelector('[data-qdoc-customer-payment-term]');
       const itemBody = document.querySelector('[data-qdoc-item-body]');
       const addRowBtn = document.querySelector('[data-qdoc-add-row]');
-      const whtRateInput = document.querySelector('[data-qdoc-wht-rate]');
-      const vatRateInput = document.querySelector('[data-qdoc-vat-rate]');
       const discountRateInput = document.querySelector('[data-qdoc-discount-rate]');
       const subtotalOut = document.querySelector('[data-qdoc-subtotal]');
       const discountAmountOut = document.querySelector('[data-qdoc-discount-amount]');
       const afterDiscountOut = document.querySelector('[data-qdoc-after-discount]');
+      const targetIncomeRow = document.querySelector('[data-qdoc-target-income-row]');
+      const targetIncomeOut = document.querySelector('[data-qdoc-target-income]');
       const vatAmountOut = document.querySelector('[data-qdoc-vat-amount]');
       const grandTotalOut = document.querySelector('[data-qdoc-grand-total]');
       const whtAmountOut = document.querySelector('[data-qdoc-wht-amount]');
       const netToPayOut = document.querySelector('[data-qdoc-net-to-pay]');
+      const serviceIncomeOut = document.querySelector('[data-qdoc-service-income]');
       const bahtTextOut = document.querySelector('[data-qdoc-baht-text]');
       const vatRateLabel = document.querySelector('[data-qdoc-vat-rate-label]');
       const whtRateLabel = document.querySelector('[data-qdoc-wht-rate-label]');
-      const whtModeButtons = document.querySelectorAll('[data-qdoc-wht-mode]');
-      const vatModeButtons = document.querySelectorAll('[data-qdoc-vat-mode]');
+      const calculationModeButtons = document.querySelectorAll('[data-qdoc-calculation-mode]');
+      const calculationCaption = document.querySelector('[data-qdoc-calculation-caption]');
+      const priceHeading = document.querySelector('[data-qdoc-price-heading]');
       const saveDraftBtn = document.querySelector('[data-qdoc-save-draft]');
       const previewBtn = document.querySelector('[data-qdoc-preview]');
       const downloadButtons = document.querySelectorAll('[data-qdoc-download]');
@@ -1038,71 +1062,126 @@
       // Wire first row
       getItemRows().forEach(row => wireRowEvents(row));
 
-      // ─── Rate inputs ───
-      [whtRateInput, vatRateInput, discountRateInput].forEach(input => {
-        if (!input) return;
-        input.addEventListener('input', () => {
-          const sanitized = sanitizeNum(input.value);
-          if (input.value !== sanitized) input.value = sanitized;
-          if (vatRateLabel && input === vatRateInput) vatRateLabel.textContent = input.value || '0';
-          if (whtRateLabel && input === whtRateInput) whtRateLabel.textContent = input.value || '0';
-          syncTotals();
-        });
+      // ─── Calculation mode ───
+      discountRateInput?.addEventListener('input', () => {
+        const sanitized = sanitizeNum(discountRateInput.value);
+        if (discountRateInput.value !== sanitized) discountRateInput.value = sanitized;
+        syncTotals();
       });
 
-      // ─── Mode buttons ───
-      whtModeButtons.forEach(b => b.addEventListener('click', () => {
-        whtMode = b.dataset.qdocWhtMode === 'company' ? 'company' : 'customer';
-        whtModeButtons.forEach(x => x.classList.toggle('is-active', x.dataset.qdocWhtMode === whtMode));
-        syncTotals();
-        showStatus(whtMode === 'company' ? 'คำนวณแบบเรารับผิดชอบ WHT' : 'คำนวณแบบลูกค้ารับผิดชอบ WHT', 'info');
-      }));
+      const isReverseMode = () => calculationMode === 'reverse';
 
-      vatModeButtons.forEach(b => b.addEventListener('click', () => {
-        vatMode = b.dataset.qdocVatMode === 'customer' ? 'customer' : 'company';
-        vatModeButtons.forEach(x => x.classList.toggle('is-active', x.dataset.qdocVatMode === vatMode));
-        syncTotals();
-        showStatus(vatMode === 'customer' ? 'คำนวณแบบลูกค้ารับผิดชอบ VAT' : 'คำนวณแบบเรารับผิดชอบ VAT', 'info');
-      }));
-
-      // ─── Totals calculation (same logic as sales-documents.blade.php) ───
-      const syncTotals = () => {
-        let subtotal = 0;
-        getItemRows().forEach(row => {
-          const qty = parseNum(row.querySelector('[data-qdoc-item-qty]')?.value);
-          const price = parseNum(row.querySelector('[data-qdoc-item-price]')?.value);
-          const amount = roundMoney(qty * price);
-          subtotal = roundMoney(subtotal + amount);
-          const amountOut = row.querySelector('[data-qdoc-item-amount]');
-          if (amountOut) amountOut.textContent = fmtMoney(amount);
+      const syncCalculationModeUi = () => {
+        calculationModeButtons.forEach(button => {
+          button.classList.toggle('is-active', button.dataset.qdocCalculationMode === calculationMode);
         });
 
+        if (calculationCaption) {
+          calculationCaption.textContent = isReverseMode()
+            ? 'กรอกรายได้เป้าหมายหลัง WHT'
+            : 'กรอกราคาค่าจ้างก่อน VAT';
+        }
+
+        if (priceHeading) {
+          priceHeading.textContent = isReverseMode() ? 'รายได้เป้า/หน่วย' : 'ราคา/หน่วย';
+        }
+
+        if (targetIncomeRow) {
+          targetIncomeRow.hidden = !isReverseMode();
+        }
+      };
+
+      calculationModeButtons.forEach(button => button.addEventListener('click', () => {
+        calculationMode = button.dataset.qdocCalculationMode === 'reverse' ? 'reverse' : 'standard';
+        syncCalculationModeUi();
+        syncTotals();
+        showStatus(isReverseMode() ? 'คำนวณแบบ Reverse' : 'คำนวณแบบ Standard', 'info');
+      }));
+
+      const documentUnitPrice = (inputUnitPrice) => isReverseMode()
+        ? inputUnitPrice / (1 - (WHT_RATE / 100))
+        : inputUnitPrice;
+
+      const collectItems = () => {
+        let inputSubtotal = 0;
+        let subtotal = 0;
+
+        const items = getItemRows().map((row, i) => {
+          const description = row.querySelector('[data-qdoc-item-desc]')?.value || '';
+          const quantity = parseNum(row.querySelector('[data-qdoc-item-qty]')?.value);
+          const unit = row.querySelector('[data-qdoc-item-unit]')?.value || '';
+          const inputUnitPrice = parseNum(row.querySelector('[data-qdoc-item-price]')?.value);
+          const inputAmount = roundMoney(quantity * inputUnitPrice);
+          const unitPrice = documentUnitPrice(inputUnitPrice);
+          const amount = roundMoney(quantity * unitPrice);
+
+          inputSubtotal = roundMoney(inputSubtotal + inputAmount);
+          subtotal = roundMoney(subtotal + amount);
+
+          const amountOut = row.querySelector('[data-qdoc-item-amount]');
+          if (amountOut) amountOut.textContent = fmtMoney(amount);
+
+          return {
+            index: i + 1,
+            description,
+            quantity,
+            quantity_display: fmtQty(quantity),
+            unit,
+            input_unit_price: inputUnitPrice,
+            input_unit_price_display: fmtMoney(inputUnitPrice),
+            input_amount: inputAmount,
+            input_amount_display: fmtMoney(inputAmount),
+            unit_price: unitPrice,
+            unit_price_display: fmtMoney(unitPrice),
+            amount,
+            amount_display: fmtMoney(amount),
+          };
+        });
+
+        return { items, inputSubtotal, subtotal };
+      };
+
+      const calculateTotals = (inputSubtotal, subtotal) => {
         const discountRate = parseNum(discountRateInput?.value);
-        const vatRate = parseNum(vatRateInput?.value);
-        const whtRate = parseNum(whtRateInput?.value);
         const discountAmount = roundMoney(subtotal * discountRate / 100);
         const afterDiscount = roundMoney(subtotal - discountAmount);
-        const vatMultiplier = 1 + (vatRate / 100);
-        const taxableAmount = vatMode === 'customer' && vatMultiplier > 0
-          ? roundMoney(afterDiscount / vatMultiplier)
-          : afterDiscount;
-        const vatAmount = vatMode === 'customer'
-          ? roundMoney(afterDiscount - taxableAmount)
-          : roundMoney(taxableAmount * vatRate / 100);
-        const grandTotal = vatMode === 'customer'
-          ? roundMoney(afterDiscount)
-          : roundMoney(afterDiscount + vatAmount);
-        const whtAmount = roundMoney(taxableAmount * whtRate / 100);
+        const inputDiscountAmount = roundMoney(inputSubtotal * discountRate / 100);
+        const targetIncome = roundMoney(inputSubtotal - inputDiscountAmount);
+        const vatAmount = roundMoney(afterDiscount * VAT_RATE / 100);
+        const grandTotal = roundMoney(afterDiscount + vatAmount);
+        const whtAmount = roundMoney(afterDiscount * WHT_RATE / 100);
         const netToPay = roundMoney(grandTotal - whtAmount);
+        const serviceNetIncome = roundMoney(afterDiscount - whtAmount);
 
-        if (subtotalOut) subtotalOut.textContent = fmtMoney(subtotal);
-        if (discountAmountOut) discountAmountOut.textContent = fmtMoney(discountAmount);
-        if (afterDiscountOut) afterDiscountOut.textContent = fmtMoney(afterDiscount);
-        if (vatAmountOut) vatAmountOut.textContent = fmtMoney(vatAmount);
-        if (grandTotalOut) grandTotalOut.textContent = fmtMoney(grandTotal);
-        if (whtAmountOut) whtAmountOut.textContent = fmtMoney(whtAmount);
-        if (netToPayOut) netToPayOut.textContent = fmtMoney(netToPay);
-        if (bahtTextOut) bahtTextOut.textContent = convertBahtText(grandTotal);
+        return {
+          discountRate,
+          discountAmount,
+          afterDiscount,
+          inputDiscountAmount,
+          targetIncome,
+          vatAmount,
+          grandTotal,
+          whtAmount,
+          netToPay,
+          serviceNetIncome,
+        };
+      };
+
+      // ─── Totals calculation ───
+      const syncTotals = () => {
+        const itemTotals = collectItems();
+        const totals = calculateTotals(itemTotals.inputSubtotal, itemTotals.subtotal);
+
+        if (subtotalOut) subtotalOut.textContent = fmtMoney(itemTotals.subtotal);
+        if (discountAmountOut) discountAmountOut.textContent = fmtMoney(totals.discountAmount);
+        if (afterDiscountOut) afterDiscountOut.textContent = fmtMoney(totals.afterDiscount);
+        if (targetIncomeOut) targetIncomeOut.textContent = fmtMoney(totals.targetIncome);
+        if (vatAmountOut) vatAmountOut.textContent = fmtMoney(totals.vatAmount);
+        if (grandTotalOut) grandTotalOut.textContent = fmtMoney(totals.grandTotal);
+        if (whtAmountOut) whtAmountOut.textContent = fmtMoney(totals.whtAmount);
+        if (netToPayOut) netToPayOut.textContent = fmtMoney(totals.netToPay);
+        if (serviceIncomeOut) serviceIncomeOut.textContent = fmtMoney(totals.serviceNetIncome);
+        if (bahtTextOut) bahtTextOut.textContent = convertBahtText(totals.grandTotal);
       };
 
       // ─── Thai baht text (same logic) ───
@@ -1160,31 +1239,10 @@
         const cfg = typeConfig[type];
         const selectedCustomer = customers.find(c => String(c.id) === String(customerSelect?.value ?? ''));
         const paymentMethod = paymentMethodSelect?.value || 'transfer';
-        const discountRate = parseNum(discountRateInput?.value);
-        const vatRate = parseNum(vatRateInput?.value);
-        const whtRate = parseNum(whtRateInput?.value);
-        let subtotal = 0;
-        const items = getItemRows().map((row, i) => {
-          const desc = row.querySelector('[data-qdoc-item-desc]')?.value || '';
-          const qty = parseNum(row.querySelector('[data-qdoc-item-qty]')?.value);
-          const unit = row.querySelector('[data-qdoc-item-unit]')?.value || '';
-          const price = parseNum(row.querySelector('[data-qdoc-item-price]')?.value);
-          const amount = roundMoney(qty * price);
-          subtotal = roundMoney(subtotal + amount);
-          return { index: i + 1, description: desc, quantity: qty, quantity_display: fmtQty(qty), unit, unit_price: price, unit_price_display: fmtMoney(price), amount, amount_display: fmtMoney(amount) };
-        });
-
-        const discountAmount = roundMoney(subtotal * discountRate / 100);
-        const afterDiscount = roundMoney(subtotal - discountAmount);
-        const vatMultiplier = 1 + (vatRate / 100);
-        const taxableAmount = vatMode === 'customer' && vatMultiplier > 0 ? roundMoney(afterDiscount / vatMultiplier) : afterDiscount;
-        const vatAmount = vatMode === 'customer' ? roundMoney(afterDiscount - taxableAmount) : roundMoney(taxableAmount * vatRate / 100);
-        const grandTotal = vatMode === 'customer' ? roundMoney(afterDiscount) : roundMoney(afterDiscount + vatAmount);
-        const whtAmount = roundMoney(taxableAmount * whtRate / 100);
-        const netToPay = roundMoney(grandTotal - whtAmount);
+        const itemTotals = collectItems();
+        const totals = calculateTotals(itemTotals.inputSubtotal, itemTotals.subtotal);
         const docNumber = docNumberInput?.value || generateDocNumber();
-        const whtLabel = whtMode === 'company' ? 'เรารับผิดชอบภาษีหัก ณ ที่จ่าย' : 'ลูกค้ารับผิดชอบภาษีหัก ณ ที่จ่าย';
-        const vatLabel = vatMode === 'customer' ? 'ลูกค้ารับผิดชอบภาษีมูลค่าเพิ่ม' : 'เรารับผิดชอบภาษีมูลค่าเพิ่ม';
+        const calculationModeLabel = isReverseMode() ? 'Reverse Calculation' : 'Standard Calculation';
 
         return {
           document_type: type,
@@ -1193,17 +1251,19 @@
           due_date: dueDateInput?.value || '',
           customer_id: selectedCustomer?.id || null,
           customer_name: customerNameInput?.value || '',
-          withholding_calculator_mode: whtMode,
-          withholding_calculator_mode_label: whtLabel,
-          withholding_tax_responsibility: whtMode,
-          vat_calculator_mode: vatMode,
-          vat_calculator_mode_label: vatLabel,
-          vat_tax_responsibility: vatMode,
-          calculator_mode: whtMode === 'company' ? 'post-vat-net' : 'normal',
+          calculation_mode: calculationMode,
+          calculation_mode_label: calculationModeLabel,
+          calculator_mode: calculationMode,
+          withholding_calculator_mode: 'customer',
+          withholding_calculator_mode_label: 'คำนวณ WHT จากราคาก่อน VAT',
+          withholding_tax_responsibility: 'customer',
+          vat_calculator_mode: 'company',
+          vat_calculator_mode_label: 'บวก VAT จากราคาก่อน VAT',
+          vat_tax_responsibility: 'company',
           company: { name_th: 'บริษัท ซุปเปอร์นัมเบอร์ จำกัด (สำนักงานใหญ่)', name_en: 'SUPERNUMBER CO.,LTD.', address: '1418 ถนนพระรามที่ 4 แขวงคลองเตย เขตคลองเตย กรุงเทพมหานคร 10110\nTel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com', tax_id: '0105557133568' },
           document: { type, title_th: cfg.th, title_en: cfg.en, number: docNumber, date: docDateInput?.value || '', date_display: formatDate(docDateInput?.value), reference_number: refNumberInput?.value || '', due_date: dueDateInput?.value || '', due_date_display: formatDate(dueDateInput?.value) },
           customer: { customer_id: selectedCustomer?.id || null, name: customerNameInput?.value || '', tax_id: customerTaxIdInput?.value || '', address: customerAddressInput?.value || '', contact: customerContactInput?.value || '', phone: customerPhoneInput?.value || '', payment_term: customerPaymentTermInput?.value || '' },
-          items,
+          items: itemTotals.items,
           payment: {
             method: paymentMethod,
             cash: paymentMethod === 'cash',
@@ -1214,19 +1274,41 @@
             account_number: document.querySelector('[data-qdoc-payment-account]')?.value || '',
           },
           totals: {
-            subtotal, subtotal_display: fmtMoney(subtotal),
-            discount_rate: discountRate, discount_rate_display: String(discountRate),
-            discount_amount: discountAmount, discount_amount_display: fmtMoney(discountAmount),
-            after_discount: afterDiscount, after_discount_display: fmtMoney(afterDiscount),
-            vat_rate: vatRate, vat_rate_display: String(vatRate),
-            vat_amount: vatAmount, vat_amount_display: fmtMoney(vatAmount),
-            grand_total: grandTotal, grand_total_display: fmtMoney(grandTotal),
-            withholding_rate: whtRate, withholding_rate_display: String(whtRate),
-            withholding_amount: whtAmount, withholding_amount_display: fmtMoney(whtAmount),
-            net_to_pay: netToPay, net_to_pay_display: fmtMoney(netToPay),
-            baht_text: convertBahtText(grandTotal),
-            vat_calculator_mode: vatMode, vat_calculator_mode_label: vatLabel, vat_tax_responsibility: vatMode,
-            withholding_calculator_mode: whtMode, withholding_calculator_mode_label: whtLabel, withholding_tax_responsibility: whtMode,
+            calculation_mode: calculationMode,
+            calculation_mode_label: calculationModeLabel,
+            input_subtotal: itemTotals.inputSubtotal,
+            input_subtotal_display: fmtMoney(itemTotals.inputSubtotal),
+            subtotal: itemTotals.subtotal,
+            subtotal_display: fmtMoney(itemTotals.subtotal),
+            discount_rate: totals.discountRate,
+            discount_rate_display: String(totals.discountRate),
+            discount_amount: totals.discountAmount,
+            discount_amount_display: fmtMoney(totals.discountAmount),
+            after_discount: totals.afterDiscount,
+            after_discount_display: fmtMoney(totals.afterDiscount),
+            target_income: totals.targetIncome,
+            target_income_display: fmtMoney(totals.targetIncome),
+            service_net_income: totals.serviceNetIncome,
+            service_net_income_display: fmtMoney(totals.serviceNetIncome),
+            vat_rate: VAT_RATE,
+            vat_rate_display: String(VAT_RATE),
+            vat_amount: totals.vatAmount,
+            vat_amount_display: fmtMoney(totals.vatAmount),
+            grand_total: totals.grandTotal,
+            grand_total_display: fmtMoney(totals.grandTotal),
+            withholding_rate: WHT_RATE,
+            withholding_rate_display: String(WHT_RATE),
+            withholding_amount: totals.whtAmount,
+            withholding_amount_display: fmtMoney(totals.whtAmount),
+            net_to_pay: totals.netToPay,
+            net_to_pay_display: fmtMoney(totals.netToPay),
+            baht_text: convertBahtText(totals.grandTotal),
+            vat_calculator_mode: 'company',
+            vat_calculator_mode_label: 'บวก VAT จากราคาก่อน VAT',
+            vat_tax_responsibility: 'company',
+            withholding_calculator_mode: 'customer',
+            withholding_calculator_mode_label: 'คำนวณ WHT จากราคาก่อน VAT',
+            withholding_tax_responsibility: 'customer',
           },
           signatures: {
             approved_by: document.querySelector('[data-qdoc-approved-by]')?.value || '',
@@ -1419,20 +1501,20 @@
         if (customerNameInput) customerNameInput.value = c.name || '';
         if (customerTaxIdInput) customerTaxIdInput.value = c.tax_id || '';
         if (customerAddressInput) customerAddressInput.value = c.address || '';
-        if (customerContactInput) customerContactInput.value = c.contact || '';
+        if (customerContactInput) customerContactInput.value = c.contact || c.contact_name || '';
         if (customerPhoneInput) customerPhoneInput.value = c.phone || '';
         if (customerPaymentTermInput) customerPaymentTermInput.value = c.payment_term || '';
         if (customerSelect && payload.customer_id) customerSelect.value = String(payload.customer_id);
 
-        whtMode = payload.withholding_calculator_mode || payload.withholding_tax_responsibility || 'customer';
-        vatMode = payload.vat_calculator_mode || payload.vat_tax_responsibility || 'company';
-        whtModeButtons.forEach(b => b.classList.toggle('is-active', b.dataset.qdocWhtMode === whtMode));
-        vatModeButtons.forEach(b => b.classList.toggle('is-active', b.dataset.qdocVatMode === vatMode));
+        calculationMode = payload.calculation_mode === 'reverse'
+          || payload.totals?.calculation_mode === 'reverse'
+          || payload.tax_method === 'we-pay'
+            ? 'reverse'
+            : 'standard';
+        syncCalculationModeUi();
 
         const t = payload.totals || {};
         if (discountRateInput && t.discount_rate !== undefined) discountRateInput.value = String(t.discount_rate);
-        if (vatRateInput && t.vat_rate !== undefined) { vatRateInput.value = String(t.vat_rate); if (vatRateLabel) vatRateLabel.textContent = String(t.vat_rate); }
-        if (whtRateInput && t.withholding_rate !== undefined) { whtRateInput.value = String(t.withholding_rate); if (whtRateLabel) whtRateLabel.textContent = String(t.withholding_rate); }
 
         // Payment
         const p = payload.payment || {};
@@ -1453,10 +1535,14 @@
           payload.items.forEach((item, i) => {
             rowCounter = i + 1;
             const row = buildRow(rowCounter);
-            const descEl = row.querySelector('[data-qdoc-item-desc]'); if (descEl) descEl.value = item.description || '';
-            const qtyEl = row.querySelector('[data-qdoc-item-qty]'); if (qtyEl) qtyEl.value = fmtQty(item.quantity || 0);
+            const descEl = row.querySelector('[data-qdoc-item-desc]'); if (descEl) descEl.value = item.description || item.name || '';
+            const qtyEl = row.querySelector('[data-qdoc-item-qty]'); if (qtyEl) qtyEl.value = fmtQty(item.quantity || item.qty || 0);
             const unitEl = row.querySelector('[data-qdoc-item-unit]'); if (unitEl) unitEl.value = item.unit || '';
-            const priceEl = row.querySelector('[data-qdoc-item-price]'); if (priceEl) priceEl.value = fmtMoney(item.unit_price || 0);
+            const priceEl = row.querySelector('[data-qdoc-item-price]');
+            if (priceEl) {
+              const sourcePrice = item.input_unit_price ?? item.source_unit_price ?? item.originalPrice ?? item.unit_price ?? item.price ?? 0;
+              priceEl.value = fmtMoney(sourcePrice);
+            }
             itemBody?.appendChild(row);
           });
         }
@@ -1470,6 +1556,7 @@
         showStatus(currentDraftId ? 'โหลดร่างเอกสารเรียบร้อยแล้ว' : 'โหลดข้อมูลเอกสารเรียบร้อยแล้ว', 'info');
       } else {
         setDocType(initialDocumentType);
+        syncCalculationModeUi();
         syncTotals();
       }
     })();

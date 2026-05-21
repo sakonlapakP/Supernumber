@@ -2085,19 +2085,42 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'items' => ['required', 'array'],
             'items.*.name' => ['required', 'string'],
             'items.*.price' => ['required', 'numeric', 'min:0'],
+            'items.*.originalPrice' => ['nullable', 'numeric', 'min:0'],
             'items.*.qty' => ['required', 'integer', 'min:1'],
             'taxMethod' => ['required', 'in:customer-pays,we-pay'],
             'paymentMethod' => ['required', 'in:bank,qr,cash'],
             'paymentCondition' => ['required', 'in:full,installment,specific-date'],
             'paymentDetail' => ['nullable', 'string'],
+            'contactName' => ['nullable', 'string', 'max:255'],
+            'contactPhone' => ['nullable', 'string', 'max:255'],
         ]);
 
         try {
             // Get customer info
             $customer = BillingCustomer::findOrFail($data['customerId']);
 
-            // Calculate total
-            $total = collect($data['items'])->sum(fn($item) => $item['price'] * $item['qty']);
+            $calculationMode = $data['taxMethod'] === 'we-pay' ? 'reverse' : 'standard';
+            $documentItems = collect($data['items'])->values()->map(function (array $item, int $index) use ($calculationMode): array {
+                $sourcePrice = $calculationMode === 'reverse'
+                    ? (float) ($item['originalPrice'] ?? $item['price'])
+                    : (float) $item['price'];
+                $quantity = (int) $item['qty'];
+                $amount = round($sourcePrice * $quantity, 2);
+
+                return [
+                    'index' => $index + 1,
+                    'description' => $item['name'],
+                    'quantity' => $quantity,
+                    'unit' => '',
+                    'input_unit_price' => $sourcePrice,
+                    'input_amount' => $amount,
+                    'unit_price' => $sourcePrice,
+                    'amount' => $amount,
+                ];
+            })->all();
+
+            $total = collect($documentItems)->sum(fn (array $item): float => (float) $item['input_amount']);
+            $quickPaymentMethod = $data['paymentMethod'] === 'cash' ? 'cash' : 'transfer';
 
             // Build payload for sales document
             $payload = [
@@ -2105,22 +2128,36 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'document_number' => 'QT-' . now('Asia/Bangkok')->format('ymd') . '-001',
                 'document_date' => now('Asia/Bangkok')->format('Y-m-d'),
                 'due_date' => now('Asia/Bangkok')->addDays(7)->format('Y-m-d'),
+                'customer_id' => $customer->id,
+                'customer_name' => $customer->display_name,
                 'customer' => [
                     'id' => $customer->id,
+                    'customer_id' => $customer->id,
                     'name' => $customer->display_name,
                     'company_name' => $customer->company_name,
-                    'contact_name' => $customer->contact_name,
+                    'contact' => trim((string) ($data['contactName'] ?? '')) ?: $customer->contact_name,
+                    'contact_name' => trim((string) ($data['contactName'] ?? '')) ?: $customer->contact_name,
                     'tax_id' => $customer->tax_id,
                     'address' => $customer->address,
                     'email' => $customer->email,
-                    'phone' => $customer->phone,
+                    'phone' => trim((string) ($data['contactPhone'] ?? '')) ?: $customer->phone,
                     'payment_term' => $customer->payment_term,
                 ],
-                'items' => $data['items'],
+                'items' => $documentItems,
+                'calculation_mode' => $calculationMode,
                 'tax_method' => $data['taxMethod'],
                 'payment_method' => $data['paymentMethod'],
                 'payment_condition' => $data['paymentCondition'],
                 'payment_detail' => $data['paymentDetail'],
+                'payment' => [
+                    'method' => $quickPaymentMethod,
+                    'cash' => $quickPaymentMethod === 'cash',
+                    'transfer' => $quickPaymentMethod === 'transfer',
+                    'cheque' => false,
+                    'bank' => 'ธนาคารกสิกรไทย บจก. ซุปเปอร์นัมเบอร์',
+                    'branch' => 'จามจุรีสแควร์',
+                    'account_number' => '0063701726',
+                ],
                 'total' => $total,
             ];
 

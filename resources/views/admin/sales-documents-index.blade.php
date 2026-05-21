@@ -174,7 +174,7 @@
               </div>
               <div class="easy-docs-pricing-row">
                 <span>ภาษีมูลค่าเพิ่ม (7%):</span>
-                <strong id="easy-docs-vat">÷ ฿0.00</strong>
+                <strong id="easy-docs-vat">+ ฿0.00</strong>
               </div>
               <div class="easy-docs-pricing-row easy-docs-pricing-row--divider">
                 <span>ยอดรวมทั้งหมด:</span>
@@ -183,6 +183,10 @@
               <div class="easy-docs-pricing-row">
                 <span>ภาษีหัก ณ ที่จ่าย (3%):</span>
                 <strong id="easy-docs-wht">- ฿0.00</strong>
+              </div>
+              <div class="easy-docs-pricing-row easy-docs-pricing-row--highlight">
+                <span>ยอดสุทธิที่ลูกค้าต้องชำระ:</span>
+                <strong id="easy-docs-net-payment">฿0.00</strong>
               </div>
             </div>
           </div>
@@ -586,6 +590,7 @@
       const nextBtn = document.getElementById('easy-docs-next-btn');
       const prevBtn = document.getElementById('easy-docs-prev-btn');
       const customerSelect = document.getElementById('easy-docs-customer');
+      const taxMethodRadios = document.querySelectorAll('input[name="tax-method"]');
       const paymentConditionRadios = document.querySelectorAll('input[name="payment-condition"]');
       const paymentDetailDiv = document.getElementById('easy-docs-payment-detail');
       const addItemBtn = document.getElementById('easy-docs-add-item-btn');
@@ -635,7 +640,7 @@
         productQtyInput.value = '1';
         pricingBreakdown.style.display = 'none';
         calculateSection.style.display = 'none';
-        renderItems();
+        syncItemsForTaxMethod();
         showStep(1);
       });
 
@@ -711,7 +716,7 @@
         productNameInput.value = '';
         productPriceInput.value = '';
         productQtyInput.value = '1';
-        renderItems();
+        syncItemsForTaxMethod();
       });
 
       function renderItems() {
@@ -744,43 +749,36 @@
           currency: 'THB',
         }).format(total);
 
-        // Show/hide calculate section based on total >= 50,000
-        if (total >= 50000) {
-          calculateSection.style.display = 'block';
-        } else {
-          calculateSection.style.display = 'none';
+        calculateSection.style.display = 'none';
+        if (wizardData.items.length === 0) {
           pricingBreakdown.style.display = 'none';
+          return;
         }
+
+        showPricingBreakdown(total);
       }
 
-      // Calculate button - apply calculation directly without modal
-      calculateBtn?.addEventListener('click', () => {
-        // Get selected tax method from radio buttons
+      function syncItemsForTaxMethod() {
         const selectedTaxMethod = document.querySelector('input[name="tax-method"]:checked')?.value;
 
-        // Reverse mode = "เราจ่ายภาษี (VAT หัก)" - we pay tax, calculate based on target income
         const isReverseMode = selectedTaxMethod === 'we-pay';
+        wizardData.taxMethod = isReverseMode ? 'we-pay' : 'customer-pays';
 
         if (isReverseMode) {
-          // Reverse mode: convert each item price using Reverse formula
-          // Use original price for calculation to avoid compounding
           wizardData.items.forEach(item => {
-            item.price = item.originalPrice / 0.97; // Reverse calculation: originalPrice / 0.97
+            item.price = item.originalPrice / 0.97;
           });
         } else {
-          // Standard mode: restore original prices
           wizardData.items.forEach(item => {
             item.price = item.originalPrice;
           });
         }
 
-        // Re-render items and recalculate totals
         renderItems();
+      }
 
-        // Show pricing breakdown for the new total
-        const newTotal = wizardData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
-        showPricingBreakdown(newTotal);
-      });
+      calculateBtn?.addEventListener('click', syncItemsForTaxMethod);
+      taxMethodRadios.forEach(radio => radio.addEventListener('change', syncItemsForTaxMethod));
 
 
       // Calculate pricing breakdown for display
@@ -806,7 +804,7 @@
         });
 
         document.getElementById('easy-docs-subtotal').textContent = formatter.format(sellingPrice);
-        document.getElementById('easy-docs-vat').textContent = '÷ ' + formatter.format(vat);
+        document.getElementById('easy-docs-vat').textContent = '+ ' + formatter.format(vat);
         document.getElementById('easy-docs-grand-total').textContent = formatter.format(grandTotal);
         document.getElementById('easy-docs-wht').textContent = '- ' + formatter.format(wht);
         document.getElementById('easy-docs-net-payment').textContent = formatter.format(customerNetPayment);
@@ -953,6 +951,8 @@
         // Only send required fields to backend
         const payloadData = {
           customerId: wizardData.customerId,
+          contactName: wizardData.contactName,
+          contactPhone: wizardData.contactPhone,
           items: wizardData.items,
           taxMethod: wizardData.taxMethod,
           paymentMethod: wizardData.paymentMethod,
@@ -964,11 +964,31 @@
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Accept': 'application/json',
             'X-CSRF-Token': csrfToken,
           },
           body: JSON.stringify(payloadData),
         })
-          .then(response => response.json())
+          .then(async response => {
+            const responseText = await response.text();
+            let data = {};
+
+            if (responseText) {
+              try {
+                data = JSON.parse(responseText);
+              } catch (error) {
+                throw new Error(response.ok
+                  ? 'ระบบตอบกลับข้อมูลไม่ถูกต้อง'
+                  : `ไม่สามารถสร้างเอกสารได้ (HTTP ${response.status})`);
+              }
+            }
+
+            if (!response.ok) {
+              throw new Error(data.message || `ไม่สามารถสร้างเอกสารได้ (HTTP ${response.status})`);
+            }
+
+            return data;
+          })
           .then(data => {
             if (data.success && data.redirect_url) {
               window.location.href = data.redirect_url;

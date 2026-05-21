@@ -86,11 +86,15 @@ class AdminSalesDocumentWorkspaceTest extends TestCase
         $response->assertSee('data-qdoc-payment-method', false);
         $response->assertSee('data-qdoc-payment-bank value="ธนาคารกสิกรไทย บจก. ซุปเปอร์นัมเบอร์" readonly', false);
         $response->assertSee('data-qdoc-customer-name placeholder="เลือกชื่อบริษัทด้านบน" readonly', false);
+        $response->assertSee('data-qdoc-calculation-mode="standard"', false);
+        $response->assertSee('data-qdoc-calculation-mode="reverse"', false);
+        $response->assertSee('รายได้หลัง WHT');
         $response->assertSee('บันทึกร่าง');
         $response->assertSee('สร้าง Quotation');
         $response->assertSee('สร้าง Invoice');
         $response->assertDontSee('วันที่เอกสาร');
         $response->assertDontSee('data-qdoc-payment-transfer', false);
+        $response->assertDontSee('data-qdoc-wht-mode', false);
     }
 
     public function test_document_officer_can_view_sales_document_workspace(): void
