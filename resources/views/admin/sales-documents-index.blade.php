@@ -604,6 +604,7 @@
       const totalSteps = 4;
       const wizardData = {
         customerId: null,
+        customerName: '',
         contactName: '',
         contactPhone: '',
         items: [],
@@ -622,6 +623,7 @@
         currentStep = 1;
         wizardData.items = [];
         wizardData.customerId = null;
+        wizardData.customerName = '';
         wizardData.contactName = '';
         wizardData.contactPhone = '';
         customerSelect.value = '';
@@ -652,6 +654,7 @@
           contactPhoneInput.value = selectedOption.dataset.phone || '';
           // Store in wizard data
           wizardData.customerId = e.target.value;
+          wizardData.customerName = selectedOption.textContent; // Store company name from option text
           wizardData.contactName = contactNameInput.value;
           wizardData.contactPhone = contactPhoneInput.value;
         } else {
@@ -660,6 +663,7 @@
           contactNameInput.value = '';
           contactPhoneInput.value = '';
           wizardData.customerId = null;
+          wizardData.customerName = '';
           wizardData.contactName = '';
           wizardData.contactPhone = '';
         }
@@ -872,7 +876,9 @@
             alert('กรุณาเลือกลูกค้า');
             return false;
           }
+          const selectedOption = customerSelect.options[customerSelect.selectedIndex];
           wizardData.customerId = customerSelect.value;
+          wizardData.customerName = selectedOption.textContent;
           wizardData.contactName = contactNameInput.value;
           wizardData.contactPhone = contactPhoneInput.value;
         }
@@ -896,8 +902,8 @@
           currency: 'THB',
         });
 
-        const customer = customers.find(c => String(c.id) === String(wizardData.customerId));
-        let customerDisplay = customer?.display_name || '-';
+        // Build customer display with all details
+        let customerDisplay = wizardData.customerName || '-';
         if (wizardData.contactName) {
           customerDisplay += ` (${wizardData.contactName})`;
         }
