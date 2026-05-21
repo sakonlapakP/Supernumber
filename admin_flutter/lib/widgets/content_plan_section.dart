@@ -111,14 +111,17 @@ String _effectiveStatus(ArticlePlan item, List<Article> articles) {
       item.status == 'cancelled' ||
       item.status == 'blocked' ||
       item.status == 'in_progress') {
-    return item.status!;
+    return item.status;
   }
 
   final today = DateTime(
-      DateTime.now().year, DateTime.now().month, DateTime.now().day);
+    DateTime.now().year,
+    DateTime.now().month,
+    DateTime.now().day,
+  );
   if (item.publishDate.isBefore(today)) return 'overdue';
 
-  return item.status ?? 'todo';
+  return item.status;
 }
 
 DateTime _mondayOf(DateTime date) {
@@ -192,7 +195,10 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
   // ── Header ─────────────────────────────────────────────
 
   Widget _buildHeader(
-      BuildContext context, ArticlePlanProvider planProvider, AuthProvider auth) {
+    BuildContext context,
+    ArticlePlanProvider planProvider,
+    AuthProvider auth,
+  ) {
     final totalPlanned = planProvider.plans.length;
     final totalDone = planProvider.plans
         .where((p) => _effectiveStatus(p, widget.articles) == 'done')
@@ -208,15 +214,20 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
               color: const Color(0xFF7C3AED).withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.calendar_month_rounded,
-                color: Color(0xFF7C3AED), size: 20),
+            child: const Icon(
+              Icons.calendar_month_rounded,
+              color: Color(0xFF7C3AED),
+              size: 20,
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
               'CONTENT ROADMAP',
-              style:
-                  GoogleFonts.kanit(fontSize: 18, fontWeight: FontWeight.bold),
+              style: GoogleFonts.kanit(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
           Container(
@@ -228,9 +239,10 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
             child: Text(
               'เตรียมแล้ว $totalDone / $totalPlanned',
               style: GoogleFonts.kanit(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w700,
-                  color: const Color(0xFF475569)),
+                fontSize: 11,
+                fontWeight: FontWeight.w700,
+                color: const Color(0xFF475569),
+              ),
             ),
           ),
           const SizedBox(width: 6),
@@ -239,14 +251,17 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
               value: widget.selectedYear,
               isDense: true,
               style: GoogleFonts.kanit(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF7C3AED)),
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: const Color(0xFF7C3AED),
+              ),
               items: List.generate(12, (i) => 2026 + i)
-                  .map((y) => DropdownMenuItem(
-                        value: y,
-                        child: Text('ปี ${(y + 543).toString().substring(2)}'),
-                      ))
+                  .map(
+                    (y) => DropdownMenuItem(
+                      value: y,
+                      child: Text('ปี ${(y + 543).toString().substring(2)}'),
+                    ),
+                  )
                   .toList(),
               onChanged: (v) {
                 if (v == null) return;
@@ -257,8 +272,10 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
           if (auth.user?['role'] == 'manager')
             IconButton(
               onPressed: () => _openPlanDialog(context, widget.selectedYear),
-              icon: const Icon(Icons.add_circle_outline,
-                  color: Color(0xFF7C3AED)),
+              icon: const Icon(
+                Icons.add_circle_outline,
+                color: Color(0xFF7C3AED),
+              ),
               tooltip: 'เพิ่มแผนงาน',
               padding: const EdgeInsets.all(4),
               constraints: const BoxConstraints(),
@@ -295,8 +312,10 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
             IconButton(
               icon: const Icon(Icons.chevron_left),
               onPressed: () => setState(() {
-                _calendarMonth =
-                    DateTime(_calendarMonth.year, _calendarMonth.month - 1);
+                _calendarMonth = DateTime(
+                  _calendarMonth.year,
+                  _calendarMonth.month - 1,
+                );
               }),
             ),
             Expanded(
@@ -304,24 +323,32 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
                 child: Text(
                   '${_thaiMonthsFull[month]} $thaiYear',
                   style: GoogleFonts.kanit(
-                      fontWeight: FontWeight.bold, fontSize: 16),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 16,
+                  ),
                 ),
               ),
             ),
             IconButton(
               icon: const Icon(Icons.chevron_right),
               onPressed: () => setState(() {
-                _calendarMonth =
-                    DateTime(_calendarMonth.year, _calendarMonth.month + 1);
+                _calendarMonth = DateTime(
+                  _calendarMonth.year,
+                  _calendarMonth.month + 1,
+                );
               }),
             ),
             TextButton(
               onPressed: () => setState(() {
-                _calendarMonth =
-                    DateTime(DateTime.now().year, DateTime.now().month);
+                _calendarMonth = DateTime(
+                  DateTime.now().year,
+                  DateTime.now().month,
+                );
               }),
-              child: Text('วันนี้',
-                  style: GoogleFonts.kanit(color: const Color(0xFF7C3AED))),
+              child: Text(
+                'วันนี้',
+                style: GoogleFonts.kanit(color: const Color(0xFF7C3AED)),
+              ),
             ),
           ],
         ),
@@ -333,15 +360,18 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
             final color = label == 'อา'
                 ? const Color(0xFFEF4444)
                 : label == 'ส'
-                    ? const Color(0xFF3B82F6)
-                    : const Color(0xFF94A3B8);
+                ? const Color(0xFF3B82F6)
+                : const Color(0xFF94A3B8);
             return Expanded(
               child: Center(
-                child: Text(label,
-                    style: GoogleFonts.kanit(
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                        color: color)),
+                child: Text(
+                  label,
+                  style: GoogleFonts.kanit(
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                    color: color,
+                  ),
+                ),
               ),
             );
           }),
@@ -353,98 +383,110 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
             final cellWidth = constraints.maxWidth / 7;
             final aspectRatio = cellWidth / 58.0;
             return GridView.builder(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 7,
-            childAspectRatio: aspectRatio,
-          ),
-          itemCount: offset + daysInMonth,
-          itemBuilder: (context, index) {
-            if (index < offset) return const SizedBox();
-            final day = index - offset + 1;
-            final dayPlans = plansByDay[day] ?? [];
-            final isToday = today.year == year &&
-                today.month == month &&
-                today.day == day;
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                crossAxisCount: 7,
+                childAspectRatio: aspectRatio,
+              ),
+              itemCount: offset + daysInMonth,
+              itemBuilder: (context, index) {
+                if (index < offset) return const SizedBox();
+                final day = index - offset + 1;
+                final dayPlans = plansByDay[day] ?? [];
+                final isToday =
+                    today.year == year &&
+                    today.month == month &&
+                    today.day == day;
 
-            return GestureDetector(
-              onTap: dayPlans.isEmpty
-                  ? null
-                  : () => _showDayPlans(
-                      context, DateTime(year, month, day), dayPlans),
-              child: Container(
-                margin: const EdgeInsets.all(2),
-                decoration: BoxDecoration(
-                  color: isToday
-                      ? const Color(0xFF7C3AED)
-                      : dayPlans.isNotEmpty
+                return GestureDetector(
+                  onTap: dayPlans.isEmpty
+                      ? null
+                      : () => _showDayPlans(
+                          context,
+                          DateTime(year, month, day),
+                          dayPlans,
+                        ),
+                  child: Container(
+                    margin: const EdgeInsets.all(2),
+                    decoration: BoxDecoration(
+                      color: isToday
+                          ? const Color(0xFF7C3AED)
+                          : dayPlans.isNotEmpty
                           ? const Color(0xFFF3E8FF)
                           : null,
-                  borderRadius: BorderRadius.circular(8),
-                  border: isToday
-                      ? null
-                      : dayPlans.isNotEmpty
+                      borderRadius: BorderRadius.circular(8),
+                      border: isToday
+                          ? null
+                          : dayPlans.isNotEmpty
                           ? Border.all(
-                              color: const Color(0xFF7C3AED)
-                                  .withValues(alpha: 0.3))
+                              color: const Color(
+                                0xFF7C3AED,
+                              ).withValues(alpha: 0.3),
+                            )
                           : null,
-                ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      '$day',
-                      style: GoogleFonts.kanit(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w600,
-                        color: isToday
-                            ? Colors.white
-                            : dayPlans.isNotEmpty
+                    ),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          '$day',
+                          style: GoogleFonts.kanit(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w600,
+                            color: isToday
+                                ? Colors.white
+                                : dayPlans.isNotEmpty
                                 ? const Color(0xFF7C3AED)
                                 : const Color(0xFF334155),
-                      ),
+                          ),
+                        ),
+                        if (dayPlans.isNotEmpty) ...[
+                          const SizedBox(height: 2),
+                          Wrap(
+                            alignment: WrapAlignment.center,
+                            spacing: 2,
+                            children: dayPlans.take(3).map((p) {
+                              final st = _effectiveStatus(p, widget.articles);
+                              return Container(
+                                width: 6,
+                                height: 6,
+                                decoration: BoxDecoration(
+                                  color: isToday
+                                      ? Colors.white
+                                      : (_kStatusColors[st] ??
+                                            const Color(0xFF7C3AED)),
+                                  shape: BoxShape.circle,
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        ],
+                      ],
                     ),
-                    if (dayPlans.isNotEmpty) ...[
-                      const SizedBox(height: 2),
-                      Wrap(
-                        alignment: WrapAlignment.center,
-                        spacing: 2,
-                        children: dayPlans.take(3).map((p) {
-                          final st = _effectiveStatus(p, widget.articles);
-                          return Container(
-                            width: 6,
-                            height: 6,
-                            decoration: BoxDecoration(
-                              color: isToday
-                                  ? Colors.white
-                                  : (_kStatusColors[st] ??
-                                      const Color(0xFF7C3AED)),
-                              shape: BoxShape.circle,
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
+                  ),
+                );
+              },
             );
-          },
-        );
           },
         ),
         const SizedBox(height: 6),
         Text(
           '💡 แตะวันที่มีแผนเพื่อดูรายละเอียด',
-          style: GoogleFonts.kanit(fontSize: 11, color: const Color(0xFF94A3B8)),
+          style: GoogleFonts.kanit(
+            fontSize: 11,
+            color: const Color(0xFF94A3B8),
+          ),
         ),
       ],
     );
   }
 
   void _showDayPlans(
-      BuildContext context, DateTime date, List<ArticlePlan> dayPlans) {
+    BuildContext context,
+    DateTime date,
+    List<ArticlePlan> dayPlans,
+  ) {
     final auth = context.read<AuthProvider>();
     final isManager = auth.user?['role'] == 'manager';
     final thaiDate =
@@ -469,20 +511,29 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
               padding: const EdgeInsets.fromLTRB(20, 4, 12, 8),
               child: Row(
                 children: [
-                  Text(thaiDate,
-                      style: GoogleFonts.kanit(
-                          fontSize: 16, fontWeight: FontWeight.bold)),
+                  Text(
+                    thaiDate,
+                    style: GoogleFonts.kanit(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
                   const Spacer(),
                   if (isManager)
                     TextButton.icon(
                       onPressed: () {
                         Navigator.pop(ctx);
-                        _openPlanDialog(context, widget.selectedYear,
-                            presetDate: date);
+                        _openPlanDialog(
+                          context,
+                          widget.selectedYear,
+                          presetDate: date,
+                        );
                       },
                       icon: const Icon(Icons.add, size: 16),
-                      label: Text('เพิ่มแผน',
-                          style: GoogleFonts.kanit(fontSize: 13)),
+                      label: Text(
+                        'เพิ่มแผน',
+                        style: GoogleFonts.kanit(fontSize: 13),
+                      ),
                     ),
                 ],
               ),
@@ -534,8 +585,7 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
             IconButton(
               icon: const Icon(Icons.chevron_left),
               onPressed: () => setState(() {
-                _timelineWeek =
-                    _timelineWeek.subtract(const Duration(days: 7));
+                _timelineWeek = _timelineWeek.subtract(const Duration(days: 7));
               }),
             ),
             Expanded(
@@ -544,7 +594,9 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
                   '${_timelineWeek.day} ${_thaiMonthsFull[_timelineWeek.month]} — '
                   '${weekEnd.day} ${_thaiMonthsFull[weekEnd.month]} ${weekEnd.year + 543}',
                   style: GoogleFonts.kanit(
-                      fontWeight: FontWeight.bold, fontSize: 13),
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
                   textAlign: TextAlign.center,
                 ),
               ),
@@ -558,9 +610,10 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
             TextButton(
               onPressed: () =>
                   setState(() => _timelineWeek = _mondayOf(DateTime.now())),
-              child: Text('สัปดาห์นี้',
-                  style:
-                      GoogleFonts.kanit(color: const Color(0xFF7C3AED))),
+              child: Text(
+                'สัปดาห์นี้',
+                style: GoogleFonts.kanit(color: const Color(0xFF7C3AED)),
+              ),
             ),
           ],
         ),
@@ -574,9 +627,7 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
           return Container(
             margin: const EdgeInsets.only(bottom: 8),
             decoration: BoxDecoration(
-              color: isToday
-                  ? const Color(0xFFF3E8FF)
-                  : Colors.white,
+              color: isToday ? const Color(0xFFF3E8FF) : Colors.white,
               borderRadius: BorderRadius.circular(12),
               border: Border.all(
                 color: isToday
@@ -627,23 +678,33 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
                       Text(
                         _thaiMonthsFull[day.month],
                         style: GoogleFonts.kanit(
-                            fontSize: 12, color: const Color(0xFF94A3B8)),
+                          fontSize: 12,
+                          color: const Color(0xFF94A3B8),
+                        ),
                       ),
                       const Spacer(),
                       if (dayPlans.isEmpty)
-                        Text('ไม่มีแผน',
-                            style: GoogleFonts.kanit(
-                                fontSize: 11,
-                                color: const Color(0xFFCBD5E1))),
+                        Text(
+                          'ไม่มีแผน',
+                          style: GoogleFonts.kanit(
+                            fontSize: 11,
+                            color: const Color(0xFFCBD5E1),
+                          ),
+                        ),
                       if (isManager)
                         GestureDetector(
                           onTap: () => _openPlanDialog(
-                              context, widget.selectedYear,
-                              presetDate: day),
+                            context,
+                            widget.selectedYear,
+                            presetDate: day,
+                          ),
                           child: const Padding(
                             padding: EdgeInsets.only(left: 8),
-                            child: Icon(Icons.add_circle_outline,
-                                size: 18, color: Color(0xFF7C3AED)),
+                            child: Icon(
+                              Icons.add_circle_outline,
+                              size: 18,
+                              color: Color(0xFF7C3AED),
+                            ),
                           ),
                         ),
                     ],
@@ -654,16 +715,20 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
                     padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
                     child: Column(
                       children: dayPlans
-                          .map((p) => _PlanTile(
-                                plan: p,
-                                articles: widget.articles,
-                                year: widget.selectedYear,
-                                isManager: isManager,
-                                compact: true,
-                                onEdit: (plan) => _openPlanDialog(
-                                    context, widget.selectedYear,
-                                    plan: plan),
-                              ))
+                          .map(
+                            (p) => _PlanTile(
+                              plan: p,
+                              articles: widget.articles,
+                              year: widget.selectedYear,
+                              isManager: isManager,
+                              compact: true,
+                              onEdit: (plan) => _openPlanDialog(
+                                context,
+                                widget.selectedYear,
+                                plan: plan,
+                              ),
+                            ),
+                          )
                           .toList(),
                     ),
                   ),
@@ -674,7 +739,10 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
         const SizedBox(height: 4),
         Text(
           '💡 ← → เพื่อเลื่อนสัปดาห์',
-          style: GoogleFonts.kanit(fontSize: 11, color: const Color(0xFF94A3B8)),
+          style: GoogleFonts.kanit(
+            fontSize: 11,
+            color: const Color(0xFF94A3B8),
+          ),
         ),
       ],
     );
@@ -683,7 +751,10 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
   // ── Table View ─────────────────────────────────────────
 
   Widget _buildTableView(
-      BuildContext context, List<ArticlePlan> plans, bool isManager) {
+    BuildContext context,
+    List<ArticlePlan> plans,
+    bool isManager,
+  ) {
     final filtered = plans.where((p) {
       if (_statusFilter != null &&
           _effectiveStatus(p, widget.articles) != _statusFilter) {
@@ -718,16 +789,19 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
                 onTap: () => setState(() => _statusFilter = null),
               ),
               const SizedBox(width: 6),
-              ..._kStatusOptions.map((s) => Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: _PlanFilterChip(
-                      label: _kStatusLabels[s]!,
-                      selected: _statusFilter == s,
-                      color: _kStatusColors[s],
-                      onTap: () => setState(() =>
-                          _statusFilter = _statusFilter == s ? null : s),
+              ..._kStatusOptions.map(
+                (s) => Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: _PlanFilterChip(
+                    label: _kStatusLabels[s]!,
+                    selected: _statusFilter == s,
+                    color: _kStatusColors[s],
+                    onTap: () => setState(
+                      () => _statusFilter = _statusFilter == s ? null : s,
                     ),
-                  )),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -743,16 +817,19 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
                 onTap: () => setState(() => _typeFilter = null),
               ),
               const SizedBox(width: 6),
-              ..._kTypeOptions.map((t) => Padding(
-                    padding: const EdgeInsets.only(right: 6),
-                    child: _PlanFilterChip(
-                      label: t,
-                      selected: _typeFilter == t,
-                      color: _kTypeColors[t.toLowerCase()],
-                      onTap: () => setState(
-                          () => _typeFilter = _typeFilter == t ? null : t),
+              ..._kTypeOptions.map(
+                (t) => Padding(
+                  padding: const EdgeInsets.only(right: 6),
+                  child: _PlanFilterChip(
+                    label: t,
+                    selected: _typeFilter == t,
+                    color: _kTypeColors[t.toLowerCase()],
+                    onTap: () => setState(
+                      () => _typeFilter = _typeFilter == t ? null : t,
                     ),
-                  )),
+                  ),
+                ),
+              ),
             ],
           ),
         ),
@@ -761,43 +838,54 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
           Center(
             child: Padding(
               padding: const EdgeInsets.all(32),
-              child: Text('ไม่พบแผนงาน',
-                  style: GoogleFonts.kanit(color: const Color(0xFF94A3B8))),
+              child: Text(
+                'ไม่พบแผนงาน',
+                style: GoogleFonts.kanit(color: const Color(0xFF94A3B8)),
+              ),
             ),
           )
         else
-          ...grouped.entries.map((entry) => Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    padding:
-                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                    margin: const EdgeInsets.only(bottom: 4),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF1F5F9),
-                      borderRadius: BorderRadius.circular(8),
-                    ),
-                    child: Text(
-                      entry.key,
-                      style: GoogleFonts.kanit(
-                          fontSize: 13,
-                          fontWeight: FontWeight.bold,
-                          color: const Color(0xFF475569)),
+          ...grouped.entries.map(
+            (entry) => Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 8,
+                  ),
+                  margin: const EdgeInsets.only(bottom: 4),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF1F5F9),
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Text(
+                    entry.key,
+                    style: GoogleFonts.kanit(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF475569),
                     ),
                   ),
-                  ...entry.value.map((p) => _PlanTile(
-                        plan: p,
-                        articles: widget.articles,
-                        year: widget.selectedYear,
-                        isManager: isManager,
-                        onEdit: (plan) => _openPlanDialog(
-                            context, widget.selectedYear,
-                            plan: plan),
-                      )),
-                  const SizedBox(height: 8),
-                ],
-              )),
+                ),
+                ...entry.value.map(
+                  (p) => _PlanTile(
+                    plan: p,
+                    articles: widget.articles,
+                    year: widget.selectedYear,
+                    isManager: isManager,
+                    onEdit: (plan) => _openPlanDialog(
+                      context,
+                      widget.selectedYear,
+                      plan: plan,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
       ],
     );
   }
@@ -842,7 +930,9 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
                   labelColor: Colors.white,
                   unselectedLabelColor: const Color(0xFF64748B),
                   labelStyle: GoogleFonts.kanit(
-                      fontSize: 12, fontWeight: FontWeight.w600),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
                   tabs: isWide
                       ? const [
                           Tab(
@@ -915,12 +1005,12 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
     ArticlePlan? plan,
     DateTime? presetDate,
   }) async {
-    DateTime selectedDate =
-        plan?.publishDate ?? presetDate ?? DateTime.now();
+    DateTime selectedDate = plan?.publishDate ?? presetDate ?? DateTime.now();
     TimeOfDay selectedTime =
         _parseTime(plan?.publishTime) ?? const TimeOfDay(hour: 9, minute: 0);
     final dateCtrl = TextEditingController(
-        text: DateFormat('yyyy-MM-dd').format(selectedDate));
+      text: DateFormat('yyyy-MM-dd').format(selectedDate),
+    );
     final timeCtrl = TextEditingController(text: _fmtTime(selectedTime));
     String? selectedType = plan?.type;
     final topicCtrl = TextEditingController(text: plan?.topic ?? '');
@@ -931,11 +1021,13 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setS) => AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
           title: Text(
-              plan == null ? 'เพิ่มแผนการเผยแพร่' : 'แก้ไขแผนการเผยแพร่',
-              style: GoogleFonts.kanit(fontWeight: FontWeight.bold)),
+            plan == null ? 'เพิ่มแผนการเผยแพร่' : 'แก้ไขแผนการเผยแพร่',
+            style: GoogleFonts.kanit(fontWeight: FontWeight.bold),
+          ),
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
@@ -944,10 +1036,13 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
                   controller: dateCtrl,
                   readOnly: true,
                   decoration: InputDecoration(
-                      labelText: 'วันที่',
-                      labelStyle: GoogleFonts.kanit(),
-                      prefixIcon:
-                          const Icon(Icons.calendar_today_rounded, size: 18)),
+                    labelText: 'วันที่',
+                    labelStyle: GoogleFonts.kanit(),
+                    prefixIcon: const Icon(
+                      Icons.calendar_today_rounded,
+                      size: 18,
+                    ),
+                  ),
                   onTap: () async {
                     final picked = await showDatePicker(
                       context: ctx,
@@ -965,13 +1060,15 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
                   controller: timeCtrl,
                   readOnly: true,
                   decoration: InputDecoration(
-                      labelText: 'เวลา',
-                      labelStyle: GoogleFonts.kanit(),
-                      prefixIcon:
-                          const Icon(Icons.access_time_rounded, size: 18)),
+                    labelText: 'เวลา',
+                    labelStyle: GoogleFonts.kanit(),
+                    prefixIcon: const Icon(Icons.access_time_rounded, size: 18),
+                  ),
                   onTap: () async {
                     final picked = await showTimePicker(
-                        context: ctx, initialTime: selectedTime);
+                      context: ctx,
+                      initialTime: selectedTime,
+                    );
                     if (picked == null) return;
                     selectedTime = picked;
                     timeCtrl.text = _fmtTime(picked);
@@ -979,40 +1076,57 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: _kTypeOptions.contains(selectedType) // ignore: deprecated_member_use
+                  initialValue: _kTypeOptions.contains(selectedType)
                       ? selectedType
                       : null,
                   decoration: InputDecoration(
-                      labelText: 'ประเภท',
-                      labelStyle: GoogleFonts.kanit(),
-                      prefixIcon:
-                          const Icon(Icons.label_outline_rounded, size: 18)),
+                    labelText: 'ประเภท',
+                    labelStyle: GoogleFonts.kanit(),
+                    prefixIcon: const Icon(
+                      Icons.label_outline_rounded,
+                      size: 18,
+                    ),
+                  ),
                   style: GoogleFonts.kanit(
-                      color: const Color(0xFF1E293B), fontSize: 14),
+                    color: const Color(0xFF1E293B),
+                    fontSize: 14,
+                  ),
                   items: [
                     DropdownMenuItem(
-                        value: null,
-                        child: Text('— ไม่ระบุ —', style: GoogleFonts.kanit())),
-                    ..._kTypeOptions.map((t) => DropdownMenuItem(
+                      value: null,
+                      child: Text('— ไม่ระบุ —', style: GoogleFonts.kanit()),
+                    ),
+                    ..._kTypeOptions.map(
+                      (t) => DropdownMenuItem(
                         value: t,
-                        child: Text(t, style: GoogleFonts.kanit()))),
+                        child: Text(t, style: GoogleFonts.kanit()),
+                      ),
+                    ),
                   ],
                   onChanged: (v) => setS(() => selectedType = v),
                 ),
                 const SizedBox(height: 12),
                 DropdownButtonFormField<String>(
-                  value: selectedStatus, // ignore: deprecated_member_use
+                  initialValue: selectedStatus,
                   decoration: InputDecoration(
-                      labelText: 'สถานะ',
-                      labelStyle: GoogleFonts.kanit(),
-                      prefixIcon: const Icon(Icons.flag_outlined, size: 18)),
+                    labelText: 'สถานะ',
+                    labelStyle: GoogleFonts.kanit(),
+                    prefixIcon: const Icon(Icons.flag_outlined, size: 18),
+                  ),
                   style: GoogleFonts.kanit(
-                      color: const Color(0xFF1E293B), fontSize: 14),
+                    color: const Color(0xFF1E293B),
+                    fontSize: 14,
+                  ),
                   items: _kStatusOptions
-                      .map((s) => DropdownMenuItem(
+                      .map(
+                        (s) => DropdownMenuItem(
                           value: s,
-                          child: Text(_kStatusLabels[s]!,
-                              style: GoogleFonts.kanit())))
+                          child: Text(
+                            _kStatusLabels[s]!,
+                            style: GoogleFonts.kanit(),
+                          ),
+                        ),
+                      )
                       .toList(),
                   onChanged: (v) => setS(() => selectedStatus = v ?? 'todo'),
                 ),
@@ -1021,9 +1135,10 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
                   controller: topicCtrl,
                   maxLines: 2,
                   decoration: InputDecoration(
-                      labelText: 'หัวข้อ',
-                      labelStyle: GoogleFonts.kanit(),
-                      prefixIcon: const Icon(Icons.title_rounded, size: 18)),
+                    labelText: 'หัวข้อ',
+                    labelStyle: GoogleFonts.kanit(),
+                    prefixIcon: const Icon(Icons.title_rounded, size: 18),
+                  ),
                 ),
                 const SizedBox(height: 4),
                 SwitchListTile(
@@ -1043,10 +1158,13 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
             ),
             FilledButton(
               style: FilledButton.styleFrom(
-                  backgroundColor: const Color(0xFF7C3AED)),
+                backgroundColor: const Color(0xFF7C3AED),
+              ),
               onPressed: () => Navigator.pop(ctx, true),
-              child: Text('บันทึก',
-                  style: GoogleFonts.kanit(fontWeight: FontWeight.bold)),
+              child: Text(
+                'บันทึก',
+                style: GoogleFonts.kanit(fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),
@@ -1055,8 +1173,9 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
 
     if (ok != true || !context.mounted) return;
     if (topicCtrl.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('กรุณากรอกหัวข้อ')));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('กรุณากรอกหัวข้อ')));
       return;
     }
 
@@ -1073,9 +1192,13 @@ class _ContentPlanSectionState extends State<ContentPlanSection>
         ? await p.createPlan(payload, year)
         : await p.updatePlan(plan.id, payload, year);
     if (context.mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
           content: Text(
-              success ? 'บันทึกสำเร็จ' : (p.lastErrorMessage ?? 'ไม่สำเร็จ'))));
+            success ? 'บันทึกสำเร็จ' : (p.lastErrorMessage ?? 'ไม่สำเร็จ'),
+          ),
+        ),
+      );
     }
   }
 }
@@ -1115,13 +1238,13 @@ class _PlanTile extends StatelessWidget {
     final rowBg = status == 'done'
         ? const Color(0xFFF0FDF4)
         : status == 'overdue' || status == 'blocked'
-            ? const Color(0xFFFEF2F2)
-            : Colors.white;
+        ? const Color(0xFFFEF2F2)
+        : Colors.white;
     final rowBorder = status == 'done'
         ? const Color(0xFFBBF7D0)
         : status == 'overdue' || status == 'blocked'
-            ? const Color(0xFFFECACA)
-            : const Color(0xFFE2E8F0);
+        ? const Color(0xFFFECACA)
+        : const Color(0xFFE2E8F0);
 
     return Container(
       margin: EdgeInsets.only(bottom: compact ? 4 : 6),
@@ -1156,12 +1279,16 @@ class _PlanTile extends StatelessWidget {
                     Text(
                       dateStr,
                       style: GoogleFonts.kanit(
-                          fontSize: 11, color: const Color(0xFF64748B)),
+                        fontSize: 11,
+                        color: const Color(0xFF64748B),
+                      ),
                     ),
                     if (plan.type != null && plan.type!.isNotEmpty)
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 6, vertical: 1),
+                          horizontal: 6,
+                          vertical: 1,
+                        ),
                         decoration: BoxDecoration(
                           color: typeBg ?? const Color(0xFFF1F5F9),
                           borderRadius: BorderRadius.circular(4),
@@ -1169,15 +1296,17 @@ class _PlanTile extends StatelessWidget {
                         child: Text(
                           plan.type!,
                           style: TextStyle(
-                              fontSize: 10,
-                              fontWeight: FontWeight.bold,
-                              color:
-                                  typeColor ?? const Color(0xFF64748B)),
+                            fontSize: 10,
+                            fontWeight: FontWeight.bold,
+                            color: typeColor ?? const Color(0xFF64748B),
+                          ),
                         ),
                       ),
                     Container(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 6, vertical: 1),
+                        horizontal: 6,
+                        vertical: 1,
+                      ),
                       decoration: BoxDecoration(
                         color: statusBg,
                         borderRadius: BorderRadius.circular(4),
@@ -1185,9 +1314,10 @@ class _PlanTile extends StatelessWidget {
                       child: Text(
                         _kStatusLabels[status] ?? status,
                         style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
-                            color: statusColor),
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          color: statusColor,
+                        ),
                       ),
                     ),
                   ],
@@ -1202,18 +1332,25 @@ class _PlanTile extends StatelessWidget {
               children: [
                 GestureDetector(
                   onTap: () => onEdit?.call(plan),
-                  child: const Icon(Icons.edit_outlined,
-                      size: 18, color: Color(0xFF7C3AED)),
+                  child: const Icon(
+                    Icons.edit_outlined,
+                    size: 18,
+                    color: Color(0xFF7C3AED),
+                  ),
                 ),
                 const SizedBox(height: 10),
                 GestureDetector(
                   onTap: () async {
-                    await context
-                        .read<ArticlePlanProvider>()
-                        .deletePlan(plan.id, year);
+                    await context.read<ArticlePlanProvider>().deletePlan(
+                      plan.id,
+                      year,
+                    );
                   },
-                  child: const Icon(Icons.delete_outline,
-                      size: 18, color: Color(0xFFC54B3D)),
+                  child: const Icon(
+                    Icons.delete_outline,
+                    size: 18,
+                    color: Color(0xFFC54B3D),
+                  ),
                 ),
               ],
             ),

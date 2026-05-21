@@ -753,7 +753,21 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                     selectedMonth: _selectedMonthPlan,
                     selectedYear: _selectedPlanYear,
                     articles: provider.articles,
-                    onYearChanged: onYearChanged,
+                    onYearChanged: (year) {
+                      setState(() => _selectedPlanYear = year);
+                      if (_selectedMonthPlan != null &&
+                          !_monthPlansForSelectedYear().contains(
+                            _selectedMonthPlan,
+                          )) {
+                        _selectedMonthPlan = null;
+                      }
+                      context.read<ArticleProvider>().fetchArticles(
+                        monthPlan: _selectedMonthPlan,
+                      );
+                      context.read<ArticlePlanProvider>().fetchPlans(
+                        year: year,
+                      );
+                    },
                   ),
                   const SizedBox(height: 24),
                   if (provider.articles.isEmpty)

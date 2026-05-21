@@ -34,18 +34,34 @@ class ArticlePlanProvider with ChangeNotifier {
   }
 
   Future<bool> createPlan(Map<String, dynamic> payload, int year) async {
-    return _mutate(() => ApiService.dio.post('/article-plans', data: payload), year);
+    return _mutate(
+      () => ApiService.dio.post('/article-plans', data: payload),
+      year,
+    );
   }
 
-  Future<bool> updatePlan(int id, Map<String, dynamic> payload, int year) async {
-    return _mutate(() => ApiService.dio.put('/article-plans/$id', data: payload), year);
+  Future<bool> updatePlan(
+    int id,
+    Map<String, dynamic> payload,
+    int year,
+  ) async {
+    return _mutate(
+      () => ApiService.dio.put('/article-plans/$id', data: payload),
+      year,
+    );
   }
 
   Future<bool> deletePlan(int id, int year) async {
     return _mutate(() => ApiService.dio.delete('/article-plans/$id'), year);
   }
 
-  Future<bool> updateStatus(int id, String status, int year, {String? notes, String? blockedReason}) async {
+  Future<bool> updateStatus(
+    int id,
+    String status,
+    int year, {
+    String? notes,
+    String? blockedReason,
+  }) async {
     final payload = <String, dynamic>{'status': status};
     if (notes != null) payload['notes'] = notes;
     if (blockedReason != null) payload['blocked_reason'] = blockedReason;
@@ -60,13 +76,16 @@ class ArticlePlanProvider with ChangeNotifier {
     _lastErrorMessage = null;
     try {
       final res = await action();
-      if (res.statusCode == 200 || res.statusCode == 201 || res.statusCode == 204) {
+      if (res.statusCode == 200 ||
+          res.statusCode == 201 ||
+          res.statusCode == 204) {
         await fetchPlans(year: year);
         return true;
       }
     } catch (e) {
       if (e is DioException) {
-        _lastErrorMessage = e.response?.data?['message']?.toString() ?? 'ดำเนินการไม่สำเร็จ';
+        _lastErrorMessage =
+            e.response?.data?['message']?.toString() ?? 'ดำเนินการไม่สำเร็จ';
       } else {
         _lastErrorMessage = 'ดำเนินการไม่สำเร็จ';
       }
@@ -74,4 +93,3 @@ class ArticlePlanProvider with ChangeNotifier {
     return false;
   }
 }
-

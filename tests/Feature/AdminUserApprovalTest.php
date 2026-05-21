@@ -24,7 +24,7 @@ class AdminUserApprovalTest extends TestCase
             'email' => 'newuser@example.com',
             'password' => 'Password123!',
             'password_confirmation' => 'Password123!',
-        ])->assertRedirect(route('admin.login'));
+        ])->assertRedirect(route('admin.pending'));
 
         $user = User::where('username', 'newuser')->first();
         $this->assertNotNull($user);
