@@ -2078,7 +2078,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $customers = BillingCustomer::query()
             ->orderByDesc('is_active')
             ->orderByRaw('LOWER(COALESCE(company_name, first_name, last_name, ""))')
-            ->get();
+            ->paginate(50);
 
         return view('admin.customers', compact('customers'));
     })->name('customers');

@@ -9,7 +9,7 @@
       <p class="admin-subtitle">ตั้งค่าข้อมูลลูกค้าแยกไว้ก่อน เพื่อให้หน้าออกเอกสารเลือกชื่อแล้วเติมข้อมูลอัตโนมัติได้ทันที</p>
     </div>
     <div class="admin-page-actions">
-      <div class="admin-summary">ทั้งหมด {{ number_format($customers->count()) }} ราย</div>
+      <div class="admin-summary">ทั้งหมด {{ number_format($customers->total()) }} ราย</div>
       <button type="button" id="customers-add-toggle" class="admin-button admin-button--compact">เพิ่มลูกค้า</button>
     </div>
   </div>
@@ -165,6 +165,11 @@
         </tbody>
       </table>
     </div>
+    @if ($customers->hasPages())
+      <div style="margin-top: 16px;">
+        {{ $customers->links() }}
+      </div>
+    @endif
   </section>
 
   <script>

@@ -35,6 +35,31 @@ class AdminCustomersTest extends TestCase
         $response->assertSee('บริษัท ลูกค้าทดสอบ จำกัด');
     }
 
+    public function test_customers_page_is_paginated(): void
+    {
+        for ($i = 1; $i <= 55; $i++) {
+            BillingCustomer::query()->create([
+                'company_name' => sprintf('บริษัท ลูกค้า %02d จำกัด', $i),
+                'is_active' => true,
+            ]);
+        }
+
+        $admin = User::factory()->create([
+            'username' => 'admin-customers-paginated',
+            'role' => User::ROLE_ADMIN,
+            'is_active' => true,
+        ]);
+
+        $response = $this
+            ->withSession($this->adminSession($admin))
+            ->get(route('admin.customers'));
+
+        $response->assertOk();
+        $response->assertSee('ทั้งหมด 55 ราย');
+        $response->assertSee('บริษัท ลูกค้า 01 จำกัด');
+        $response->assertDontSee('บริษัท ลูกค้า 55 จำกัด');
+    }
+
     public function test_admin_can_create_customer(): void
     {
         $admin = User::factory()->create([
