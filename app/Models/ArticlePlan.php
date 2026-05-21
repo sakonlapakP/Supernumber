@@ -39,8 +39,10 @@ class ArticlePlan extends Model
     ];
 
     protected $casts = [
-        'publish_date' => 'date',
-        'due_date' => 'date',
+        // These are date-only planning fields. Keep API JSON out of UTC datetime
+        // serialization so clients do not shift the Thai calendar day.
+        'publish_date' => 'date:Y-m-d',
+        'due_date' => 'date:Y-m-d',
         'is_lottery' => 'boolean',
         'last_refreshed_at' => 'datetime',
     ];

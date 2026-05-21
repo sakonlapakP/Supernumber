@@ -120,6 +120,19 @@ class ArticlePlanScopesTest extends TestCase
         $this->assertFalse($results->contains($after->id));
     }
 
+    public function test_plan_date_fields_serialize_as_thai_calendar_dates(): void
+    {
+        $plan = $this->plan([
+            'publish_date' => '2026-05-11',
+            'due_date' => '2026-05-10',
+        ]);
+
+        $payload = $plan->toArray();
+
+        $this->assertSame('2026-05-11', $payload['publish_date']);
+        $this->assertSame('2026-05-10', $payload['due_date']);
+    }
+
     // ─── Relationships ────────────────────────────────────────────────────────
 
     public function test_article_plan_belongs_to_article(): void
