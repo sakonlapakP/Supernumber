@@ -1558,7 +1558,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     })->name('import-numbers.store');
 
     Route::get('/phone-packages', function (Request $request) use ($ensureAdmin) {
-        if ($redirect = $ensureAdmin('manager')) {
+        if ($redirect = $ensureAdmin(User::ROLE_ADMIN)) {
             return $redirect;
         }
 
@@ -1581,7 +1581,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     })->name('phone-packages');
 
     Route::get('/phone-packages/create', function () use ($ensureAdmin) {
-        if ($redirect = $ensureAdmin('manager')) {
+        if ($redirect = $ensureAdmin(User::ROLE_ADMIN)) {
             return $redirect;
         }
 
@@ -1593,7 +1593,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     })->name('phone-packages.create');
 
     Route::post('/phone-packages', function (Request $request) use ($ensureAdmin) {
-        if ($redirect = $ensureAdmin('manager')) {
+        if ($redirect = $ensureAdmin(User::ROLE_ADMIN)) {
             return $redirect;
         }
 
@@ -1619,7 +1619,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     })->name('phone-packages.store');
 
     Route::get('/phone-packages/{phonePackage}/edit', function (PhonePackage $phonePackage) use ($ensureAdmin) {
-        if ($redirect = $ensureAdmin('manager')) {
+        if ($redirect = $ensureAdmin(User::ROLE_ADMIN)) {
             return $redirect;
         }
 
@@ -1631,7 +1631,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     })->name('phone-packages.edit');
 
     Route::put('/phone-packages/{phonePackage}', function (Request $request, PhonePackage $phonePackage) use ($ensureAdmin) {
-        if ($redirect = $ensureAdmin('manager')) {
+        if ($redirect = $ensureAdmin(User::ROLE_ADMIN)) {
             return $redirect;
         }
 
