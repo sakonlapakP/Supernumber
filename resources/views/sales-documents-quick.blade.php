@@ -461,6 +461,15 @@
       min-width: 0;
       min-inline-size: 0;
     }
+    .qdoc-meta-grid .qdoc-input {
+      display: block;
+      max-width: 100%;
+      inline-size: 100%;
+    }
+    .qdoc-meta-grid input[type="date"].qdoc-input {
+      -webkit-appearance: none;
+      appearance: none;
+    }
     @media (max-width: 480px) {
       .qdoc-meta-grid { gap: 8px; }
       .qdoc-meta-grid .qdoc-input { padding-left: 6px; padding-right: 6px; }
