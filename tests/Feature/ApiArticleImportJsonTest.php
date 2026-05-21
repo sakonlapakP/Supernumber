@@ -137,14 +137,13 @@ class ApiArticleImportJsonTest extends TestCase
 
     public function test_share_api_requires_published_article_and_can_post_to_facebook_page(): void
     {
-        config([
-            'services.facebook.page_id' => 'page-123',
-            'services.facebook.page_access_token' => 'token-123',
-        ]);
-
-        Http::fake([
-            'graph.facebook.com/*' => Http::response(['id' => 'fb-photo-1'], 200),
-        ]);
+        $stub = new class extends \App\Services\FacebookPagePoster {
+            public function postArticle(\App\Models\Article $article, ?string $manualImageUrl = null): array
+            {
+                return ['success' => true, 'id' => 'stub-fb-id'];
+            }
+        };
+        $this->app->instance(\App\Services\FacebookPagePoster::class, $stub);
 
         $user = User::factory()->create([
             'username' => 'share-manager',

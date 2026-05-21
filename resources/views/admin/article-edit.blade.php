@@ -4,7 +4,7 @@
 
 @section('content')
   @php
-    $canToggleArticleVisibility = in_array(session('admin_user_role'), [\App\Models\User::ROLE_MANAGER, \App\Models\User::ROLE_ADMIN], true);
+    $canToggleArticleVisibility = session('admin_user_role') === \App\Models\User::ROLE_MANAGER;
     $canDeleteArticle = session('admin_user_role') === \App\Models\User::ROLE_MANAGER;
     $imageGuidelines = old('image_guidelines', $article->image_guidelines ?? []);
     $landscapePrompt = is_array($imageGuidelines) ? ($imageGuidelines['landscape_prompt'] ?? '') : '';
