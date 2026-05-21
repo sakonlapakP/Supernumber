@@ -74,34 +74,6 @@
     {{ $documents->links() }}
   </div>
 
-  {{-- Calculation Mode Modal --}}
-  <div id="easy-docs-calc-modal" class="easy-docs-calc-modal" hidden>
-    <div class="easy-docs-calc-panel">
-      <h3>เลือกวิธีการคำนวนราคา</h3>
-
-      <div class="easy-docs-calc-modes">
-        <button type="button" class="easy-docs-calc-mode-btn active" data-calc-mode="standard">
-          <div class="easy-docs-calc-mode-label">📌 Standard (กำหนดราคาค่าจ้าง)</div>
-          <div class="easy-docs-calc-mode-desc">คุณกำหนดราคาค่าจ้าง ระบบคำนวนภาษี</div>
-        </button>
-        <button type="button" class="easy-docs-calc-mode-btn" data-calc-mode="reverse">
-          <div class="easy-docs-calc-mode-label">📈 Reverse (กำหนดรายได้สุทธิ)</div>
-          <div class="easy-docs-calc-mode-desc">คุณกำหนดรายได้สุทธิที่ต้องการ ระบบคำนวนราคา</div>
-        </button>
-      </div>
-
-      <div id="easy-docs-calc-input-section" class="easy-docs-calc-input-group">
-        <label class="easy-docs-calc-input-label" id="easy-docs-calc-input-label">ราคาค่าจ้าง (Base Price)</label>
-        <input type="number" id="easy-docs-calc-input" class="easy-docs-input" placeholder="0.00" step="0.01" min="0">
-      </div>
-
-      <div class="easy-docs-calc-buttons">
-        <button type="button" class="admin-button admin-button--ghost" data-calc-close>ยกเลิก</button>
-        <button type="button" class="admin-button admin-button--primary" id="easy-docs-calc-calculate-btn">คำนวน</button>
-      </div>
-    </div>
-  </div>
-
   {{-- Easy Documents Wizard Modal --}}
   <div id="easy-docs-modal" class="easy-docs-modal" hidden>
     <div class="easy-docs-backdrop" data-easy-docs-close></div>
@@ -563,82 +535,6 @@
       font-weight: 600;
       color: #15803d;
     }
-    .easy-docs-calc-modal {
-      position: fixed;
-      inset: 0;
-      z-index: 3000;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: rgba(0, 0, 0, 0.5);
-    }
-    .easy-docs-calc-modal[hidden] {
-      display: none;
-    }
-    .easy-docs-calc-panel {
-      position: relative;
-      background: #fff;
-      border-radius: 8px;
-      padding: 20px;
-      width: min(400px, 90vw);
-      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
-    }
-    .easy-docs-calc-panel h3 {
-      margin: 0 0 16px;
-      font-size: 16px;
-      font-weight: 600;
-      color: #111827;
-    }
-    .easy-docs-calc-modes {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-      margin-bottom: 16px;
-    }
-    .easy-docs-calc-mode-btn {
-      padding: 12px 16px;
-      border: 2px solid #d1d5db;
-      border-radius: 6px;
-      background: #fff;
-      font-size: 13px;
-      cursor: pointer;
-      text-align: left;
-      transition: all 0.15s;
-    }
-    .easy-docs-calc-mode-btn:hover {
-      border-color: #9ca3af;
-      background: #f9fafb;
-    }
-    .easy-docs-calc-mode-btn.active {
-      border-color: #2563eb;
-      background: #dbeafe;
-    }
-    .easy-docs-calc-mode-label {
-      font-weight: 600;
-      color: #111827;
-      margin-bottom: 4px;
-    }
-    .easy-docs-calc-mode-desc {
-      font-size: 12px;
-      color: #6b7280;
-    }
-    .easy-docs-calc-input-group {
-      margin-bottom: 16px;
-    }
-    .easy-docs-calc-input-label {
-      display: block;
-      font-size: 12px;
-      font-weight: 600;
-      color: #6b7280;
-      margin-bottom: 6px;
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-    }
-    .easy-docs-calc-buttons {
-      display: flex;
-      gap: 8px;
-      justify-content: flex-end;
-    }
     .easy-docs-footer {
       display: flex;
       justify-content: flex-end;
@@ -667,20 +563,13 @@
       const itemsList = document.getElementById('easy-docs-items-list');
       const totalDisplay = document.getElementById('easy-docs-total');
 
-      // Calculation modal elements
-      const calcModal = document.getElementById('easy-docs-calc-modal');
-      const calcCloseBtns = document.querySelectorAll('[data-calc-close]');
-      const calcModeBtns = document.querySelectorAll('[data-calc-mode]');
-      const calcInputLabel = document.getElementById('easy-docs-calc-input-label');
-      const calcInput = document.getElementById('easy-docs-calc-input');
-      const calcCalculateBtn = document.getElementById('easy-docs-calc-calculate-btn');
+      // Calculation elements
       const calculateBtn = document.getElementById('easy-docs-calculate-btn');
       const calculateSection = document.getElementById('easy-docs-calculate-section');
       const pricingBreakdown = document.getElementById('easy-docs-pricing-breakdown');
 
       let currentStep = 1;
       const totalSteps = 4;
-      let currentCalcMode = 'standard';
       const wizardData = {
         customerId: null,
         items: [],
@@ -697,17 +586,12 @@
       openBtn?.addEventListener('click', () => {
         modal.removeAttribute('hidden');
         currentStep = 1;
-        currentCalcMode = 'standard';
         wizardData.items = [];
         productNameInput.value = '';
         productPriceInput.value = '';
         productQtyInput.value = '1';
-        calcInput.value = '';
         pricingBreakdown.style.display = 'none';
         calculateSection.style.display = 'none';
-        // Reset calculation mode buttons
-        calcModeBtns.forEach(btn => btn.classList.remove('active'));
-        calcModeBtns[0]?.classList.add('active');
         renderItems();
         showStep(1);
       });
@@ -771,112 +655,60 @@
 
       function updateTotal() {
         const total = wizardData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        totalDisplay.textContent = new Intl.NumberFormat('th-TH', {
+          style: 'currency',
+          currency: 'THB',
+        }).format(total);
 
         // Show/hide calculate section based on total >= 50,000
         if (total >= 50000) {
           calculateSection.style.display = 'block';
-          // Auto-calculate with Standard mode using the current subtotal
-          calculatePricing(total, true);
         } else {
           calculateSection.style.display = 'none';
           pricingBreakdown.style.display = 'none';
         }
       }
 
-      // Calculation modal handlers
+      // Calculate button - apply calculation directly without modal
       calculateBtn?.addEventListener('click', () => {
-        calcModal.removeAttribute('hidden');
-        const total = wizardData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        // Get selected tax method from radio buttons
+        const selectedTaxMethod = document.querySelector('input[name="tax-method"]:checked')?.value;
 
-        // Reset modal to Standard mode
-        currentCalcMode = 'standard';
-        calcModeBtns.forEach(b => b.classList.remove('active'));
-        calcModeBtns[0]?.classList.add('active');
+        // Reverse mode = "เราจ่ายภาษี (VAT หัก)" - we pay tax, calculate based on target income
+        const isReverseMode = selectedTaxMethod === 'we-pay';
 
-        // Pre-fill with current subtotal
-        calcInputLabel.textContent = 'ราคาค่าจ้าง (Base Price)';
-        calcInput.value = total.toFixed(2);
-        calcInput.focus();
-      });
-
-      calcCloseBtns?.forEach(btn => {
-        btn.addEventListener('click', () => {
-          calcModal.setAttribute('hidden', '');
-        });
-      });
-
-      // Calculate mode selection
-      calcModeBtns?.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-          calcModeBtns.forEach(b => b.classList.remove('active'));
-          btn.classList.add('active');
-          currentCalcMode = btn.dataset.calcMode;
-          const total = wizardData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
-
-          // Update input label and value based on mode
-          if (currentCalcMode === 'standard') {
-            calcInputLabel.textContent = 'ราคาค่าจ้าง (Base Price)';
-            calcInput.placeholder = '0.00';
-            calcInput.value = total.toFixed(2);
-          } else {
-            calcInputLabel.textContent = 'รายได้สุทธิที่ต้องการ (Target Income)';
-            calcInput.placeholder = '0.00';
-            calcInput.value = '';
-          }
-          calcInput.focus();
-        });
-      });
-
-      // Calculate pricing
-      function calculatePricing(baseOrTargetAmount, isAutoCalc = false) {
-        const amount = parseFloat(baseOrTargetAmount) || 0;
-        let sellingPrice, vat, grandTotal, wht, customerNetPayment, serviceNetIncome;
-
-        if (currentCalcMode === 'standard') {
-          // Standard Calculation
-          // Input: Base Price
-          // VAT = Base Price × 0.07
-          // Grand Total = Base Price + VAT
-          // WHT = Base Price × 0.03
-          // Customer Net Payment = Grand Total - WHT
-          // Service Net Income = Base Price - WHT
-          sellingPrice = amount;
-          vat = sellingPrice * 0.07;
-          grandTotal = sellingPrice + vat;
-          wht = sellingPrice * 0.03;
-          customerNetPayment = grandTotal - wht;
-          serviceNetIncome = sellingPrice - wht;
-        } else {
-          // Reverse Calculation
-          // Input: Target Income
-          // Selling Price = Target Income / 0.97
-          // VAT = Selling Price × 0.07
-          // Grand Total = Selling Price + VAT
-          // WHT = Selling Price × 0.03
-          // Customer Net Payment = Grand Total - WHT
-          // Service Net Income = Selling Price - WHT
-          sellingPrice = amount / 0.97;
-          vat = sellingPrice * 0.07;
-          grandTotal = sellingPrice + vat;
-          wht = sellingPrice * 0.03;
-          customerNetPayment = grandTotal - wht;
-          serviceNetIncome = sellingPrice - wht;
+        if (isReverseMode) {
+          // Reverse mode: convert each item price using Reverse formula
+          // Each item price is treated as target income, convert to selling price
+          wizardData.items.forEach(item => {
+            item.price = item.price / 0.97; // Reverse calculation: price / 0.97
+          });
         }
+        // Standard mode: prices stay as is, no change needed
+
+        // Re-render items and recalculate totals
+        renderItems();
+
+        // Show pricing breakdown for the new total
+        const newTotal = wizardData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        showPricingBreakdown(newTotal);
+      });
+
+
+      // Calculate pricing breakdown for display
+      function showPricingBreakdown(basePrice) {
+        const amount = parseFloat(basePrice) || 0;
+
+        // Standard calculation: base price as is
+        const sellingPrice = amount;
+        const vat = sellingPrice * 0.07;
+        const grandTotal = sellingPrice + vat;
+        const wht = sellingPrice * 0.03;
+        const customerNetPayment = grandTotal - wht;
 
         // Update pricing breakdown display
         updatePricingBreakdown(sellingPrice, vat, grandTotal, wht, customerNetPayment);
         pricingBreakdown.style.display = 'block';
-
-        // Update the total display to show final customer payment
-        totalDisplay.textContent = new Intl.NumberFormat('th-TH', {
-          style: 'currency',
-          currency: 'THB',
-        }).format(customerNetPayment);
-
-        // Close calculation modal (only if not auto-calculating)
-        if (!isAutoCalc) {
-          calcModal.setAttribute('hidden', '');
-        }
       }
 
       function updatePricingBreakdown(sellingPrice, vat, grandTotal, wht, customerNetPayment) {
@@ -891,22 +723,6 @@
         document.getElementById('easy-docs-wht').textContent = '- ' + formatter.format(wht);
         document.getElementById('easy-docs-net-payment').textContent = formatter.format(customerNetPayment);
       }
-
-      calcCalculateBtn?.addEventListener('click', () => {
-        const amount = parseFloat(calcInput.value);
-        if (!amount || amount <= 0) {
-          alert('กรุณากรอกจำนวนเงินที่ถูกต้อง');
-          return;
-        }
-        calculatePricing(amount);
-      });
-
-      // Allow enter key to submit calculation
-      calcInput?.addEventListener('keypress', (e) => {
-        if (e.key === 'Enter') {
-          calcCalculateBtn.click();
-        }
-      });
 
       // Step navigation
       nextBtn?.addEventListener('click', () => {
