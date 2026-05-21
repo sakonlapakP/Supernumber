@@ -125,6 +125,14 @@ class AdminUserApprovalTest extends TestCase
         ])->assertRedirect(route('admin.saved-sales-documents.index'));
     }
 
+    public function test_viewing_login_page_does_not_destroy_existing_guest_session(): void
+    {
+        $this->withSession(['login_probe' => 'kept'])
+            ->get(route('admin.login'))
+            ->assertOk()
+            ->assertSessionHas('login_probe', 'kept');
+    }
+
     public function test_non_manager_cannot_approve_users(): void
     {
         $admin = User::factory()->create([

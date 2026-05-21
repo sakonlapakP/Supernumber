@@ -1418,9 +1418,6 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             return redirect()->route('admin.dashboard');
         }
 
-        $request->session()->invalidate();
-        $request->session()->regenerateToken();
-
         return response()
             ->view('admin.login')
             ->header('Cache-Control', 'no-store, no-cache, must-revalidate, max-age=0')
