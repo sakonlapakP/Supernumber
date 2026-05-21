@@ -4238,7 +4238,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         ])->get();
 
         return view('admin.articles-shares', compact('articles'));
-    })->name('admin.articles.shares');
+    })->name('articles.shares');
 
     Route::get('/articles/{article}/edit', function (Article $article) use ($ensureAdmin, $resolvePlannedArticlePublishedAt) {
         if ($redirect = $ensureAdmin()) {
