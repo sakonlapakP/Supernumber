@@ -95,27 +95,28 @@
     </div>
   </div>
 
-  {{-- Status banner --}}
-  <div id="qdoc-status" class="qdoc-status" hidden></div>
-
-  {{-- Page header --}}
-  <div style="margin-bottom: 16px; margin-left: -20px; margin-right: -20px; padding-left: 20px; padding-right: 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; background: #fff;">
-    <div>
-      <h1 style="margin: 0 0 8px 0;">สร้างเอกสารด่วน</h1>
-      <p class="admin-subtitle" style="margin: 0;">สร้างใบเสนอราคาหรือใบแจ้งหนี้ได้อย่างรวดเร็ว บันทึกร่าง หรือดาวน์โหลด PDF ได้ทันที</p>
+  <section class="qdoc-page">
+    {{-- Page header --}}
+    <div class="admin-page-head qdoc-page-head">
+      <div>
+        <h1>สร้างเอกสารด่วน</h1>
+        <p class="admin-subtitle">สร้างใบเสนอราคาหรือใบแจ้งหนี้ได้อย่างรวดเร็ว บันทึกร่าง หรือดาวน์โหลด PDF ได้ทันที</p>
+      </div>
+      <div class="admin-page-actions">
+        <a href="{{ route('admin.sales-documents') }}" class="admin-button admin-button--ghost admin-button--compact">เปิดหน้า Studio เต็ม</a>
+        <a href="{{ route('admin.saved-sales-documents.index') }}" class="admin-button admin-button--ghost admin-button--compact">เอกสารที่บันทึกแล้ว</a>
+      </div>
     </div>
-    <div style="display: flex; gap: 8px;">
-      <a href="{{ route('admin.sales-documents') }}" class="admin-button admin-button--ghost admin-button--compact">เปิดหน้า Studio เต็ม</a>
-      <a href="{{ route('admin.saved-sales-documents.index') }}" class="admin-button admin-button--ghost admin-button--compact">เอกสารที่บันทึกแล้ว</a>
-    </div>
-  </div>
 
-  <div class="qdoc-layout">
+    {{-- Status banner --}}
+    <div id="qdoc-status" class="qdoc-status" hidden></div>
+
+    <div class="qdoc-layout">
     {{-- LEFT / MAIN COLUMN --}}
-    <div class="qdoc-main">
+    <section class="qdoc-main" aria-label="ข้อมูลเอกสาร">
 
       {{-- Document type + number + dates --}}
-      <div class="admin-card qdoc-card" style="margin-bottom: 12px;">
+      <div class="admin-card qdoc-card">
         <div class="qdoc-card-header">
           <div class="qdoc-type-switch" role="group" aria-label="ประเภทเอกสาร" data-qdoc-type-switch>
             <button type="button" class="is-active" data-qdoc-doc-type="quotation">ใบเสนอราคา</button>
@@ -144,7 +145,7 @@
       </div>
 
       {{-- Customer selector --}}
-      <div class="admin-card qdoc-card" style="margin-bottom: 12px;">
+      <div class="admin-card qdoc-card">
         <div class="qdoc-section-title">ข้อมูลลูกค้า</div>
         <div class="qdoc-customer-row">
           <select class="qdoc-input qdoc-customer-select" data-qdoc-customer-select>
@@ -190,10 +191,19 @@
       </div>
 
       {{-- Line items --}}
-      <div class="admin-card qdoc-card" style="margin-bottom: 12px;">
+      <div class="admin-card qdoc-card">
         <div class="qdoc-section-title">รายการสินค้า/บริการ</div>
         <div class="qdoc-items-table-wrap">
           <table class="qdoc-items-table" data-qdoc-items>
+            <colgroup>
+              <col class="qdoc-col-index">
+              <col class="qdoc-col-desc">
+              <col class="qdoc-col-qty">
+              <col class="qdoc-col-unit">
+              <col class="qdoc-col-price">
+              <col class="qdoc-col-amount">
+              <col class="qdoc-col-del">
+            </colgroup>
             <thead>
               <tr>
                 <th class="qdoc-col-index">#</th>
@@ -224,7 +234,7 @@
       </div>
 
       {{-- Payment method + bank --}}
-      <div class="admin-card qdoc-card" style="margin-bottom: 12px;">
+      <div class="admin-card qdoc-card">
         <div class="qdoc-section-title">วิธีการชำระเงิน</div>
         <div class="qdoc-form-row" style="margin-top:8px;">
           <label class="qdoc-label">
@@ -276,13 +286,13 @@
           </label>
         </div>
       </div>
-    </div>{{-- end .qdoc-main --}}
+    </section>{{-- end .qdoc-main --}}
 
     {{-- RIGHT SIDEBAR --}}
-    <div class="qdoc-sidebar">
+    <aside class="qdoc-sidebar" aria-label="การคำนวณและการจัดการเอกสาร">
 
       {{-- Tax calculator modes --}}
-      <div class="admin-card qdoc-card" style="margin-bottom: 12px;">
+      <div class="admin-card qdoc-card">
         <div class="qdoc-section-title">ตั้งค่าภาษี</div>
 
         <div class="qdoc-tax-group" style="border-left:4px solid #3b82f6;">
@@ -318,7 +328,7 @@
       </div>
 
       {{-- Totals --}}
-      <div class="admin-card qdoc-card qdoc-totals" style="margin-bottom: 12px;">
+      <div class="admin-card qdoc-card qdoc-totals">
         <div class="qdoc-section-title">สรุปยอด</div>
         <div class="qdoc-total-row">
           <span>รวมก่อนหักลด</span>
@@ -354,7 +364,7 @@
       </div>
 
       {{-- Action buttons --}}
-      <div class="admin-card qdoc-card qdoc-actions" style="margin-bottom: 12px;">
+      <div class="admin-card qdoc-card qdoc-actions">
         <button type="button" class="admin-button admin-button--ghost qdoc-action-btn" data-qdoc-save-draft>
           💾 บันทึกร่าง
         </button>
@@ -399,19 +409,36 @@
         </div>
       </div>
 
-    </div>{{-- end .qdoc-sidebar --}}
-  </div>{{-- end .qdoc-layout --}}
+    </aside>{{-- end .qdoc-sidebar --}}
+    </div>{{-- end .qdoc-layout --}}
+  </section>{{-- end .qdoc-page --}}
 
   <style>
     /* ─── Layout ─── */
+    .qdoc-page {
+      display: grid;
+      gap: 0;
+      min-width: 0;
+    }
+    .qdoc-page-head {
+      margin-bottom: 16px;
+    }
     .qdoc-layout {
       display: grid;
-      grid-template-columns: 1fr 320px;
-      gap: 16px;
+      grid-template-columns: minmax(0, 1fr) minmax(300px, 320px);
+      gap: 18px;
       align-items: start;
+      min-width: 0;
     }
     @media (max-width: 900px) {
       .qdoc-layout { grid-template-columns: 1fr; }
+    }
+    .qdoc-main,
+    .qdoc-sidebar {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+      min-width: 0;
     }
 
     /* ─── Card & sections ─── */
@@ -551,9 +578,10 @@
     .qdoc-items-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .qdoc-items-table {
       width: 100%;
+      min-width: 720px;
       border-collapse: collapse;
       font-size: 13px;
-      table-layout: auto;
+      table-layout: fixed;
     }
     .qdoc-items-table th {
       font-size: 11px;
@@ -566,13 +594,15 @@
       text-align: left;
     }
     .qdoc-items-table td { padding: 6px 6px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
-    .qdoc-col-index { width: 36px; text-align: center; color: #9ca3af; font-size: 12px; flex-shrink: 0; }
-    .qdoc-col-desc { min-width: 200px; flex-grow: 1; }
-    .qdoc-col-qty { width: 80px; flex-shrink: 0; }
-    .qdoc-col-unit { width: 72px; flex-shrink: 0; }
-    .qdoc-col-price { width: 110px; flex-shrink: 0; }
-    .qdoc-col-amount { width: 110px; text-align: right; font-variant-numeric: tabular-nums; flex-shrink: 0; }
-    .qdoc-col-del { width: 30px; text-align: center; flex-shrink: 0; }
+    col.qdoc-col-index { width: 36px; }
+    col.qdoc-col-qty { width: 80px; }
+    col.qdoc-col-unit { width: 72px; }
+    col.qdoc-col-price,
+    col.qdoc-col-amount { width: 110px; }
+    col.qdoc-col-del { width: 30px; }
+    .qdoc-col-index { text-align: center; color: #9ca3af; font-size: 12px; }
+    .qdoc-col-amount { text-align: right; font-variant-numeric: tabular-nums; }
+    .qdoc-col-del { text-align: center; }
     .qdoc-items-table output { font-size: 13px; }
     .qdoc-del-row-btn {
       background: none; border: none; cursor: pointer;
