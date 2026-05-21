@@ -139,6 +139,65 @@ class AdminUserApprovalTest extends TestCase
             ->assertForbidden();
     }
 
+    // ── Email updates ────────────────────────────────────────────────────────
+
+    public function test_manager_can_update_any_user_email(): void
+    {
+        $manager = User::factory()->create([
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        $user = User::factory()->create([
+            'email' => 'old@example.com',
+        ]);
+
+        $this->withSession($this->managerSession($manager))
+            ->post(route('admin.users.email.update', $user), ['email' => 'new@example.com'])
+            ->assertRedirect(route('admin.users'));
+
+        $this->assertSame('new@example.com', $user->refresh()->email);
+    }
+
+    public function test_manager_cannot_update_user_email_to_existing_email(): void
+    {
+        $manager = User::factory()->create([
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        $existing = User::factory()->create([
+            'email' => 'existing@example.com',
+        ]);
+        $user = User::factory()->create([
+            'email' => 'old@example.com',
+        ]);
+
+        $this->withSession($this->managerSession($manager))
+            ->post(route('admin.users.email.update', $user), ['email' => $existing->email])
+            ->assertSessionHasErrors(['email']);
+
+        $this->assertSame('old@example.com', $user->refresh()->email);
+    }
+
+    public function test_non_manager_cannot_update_user_email(): void
+    {
+        $admin = User::factory()->create([
+            'role' => User::ROLE_ADMIN,
+            'is_active' => true,
+        ]);
+
+        $user = User::factory()->create([
+            'email' => 'old@example.com',
+        ]);
+
+        $this->withSession($this->managerSession($admin))
+            ->post(route('admin.users.email.update', $user), ['email' => 'new@example.com'])
+            ->assertForbidden();
+
+        $this->assertSame('old@example.com', $user->refresh()->email);
+    }
+
     // ── Reject ────────────────────────────────────────────────────────────────
 
     public function test_manager_can_reject_pending_user(): void

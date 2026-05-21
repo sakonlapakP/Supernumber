@@ -76,7 +76,21 @@
             <tr>
               <td>{{ $user->name }}</td>
               <td>{{ $user->username ?: '-' }}</td>
-              <td>{{ $user->email }}</td>
+              <td>
+                <form action="{{ route('admin.users.email.update', $user) }}" method="post" style="display: flex; gap: 8px; align-items: center; min-width: 280px;">
+                  @csrf
+                  <input
+                    class="admin-input"
+                    type="email"
+                    name="email"
+                    value="{{ $user->email }}"
+                    required
+                    style="margin: 0; min-width: 190px;"
+                    aria-label="อีเมลของ {{ $user->name }}"
+                  />
+                  <button type="submit" class="admin-button admin-button--compact admin-button--muted">บันทึก</button>
+                </form>
+              </td>
               <td>{{ $user->role_label }}</td>
               <td>
                 @if ($user->is_active)

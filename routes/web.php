@@ -4921,6 +4921,28 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->with('status_message', "อนุมัติผู้ใช้ {$user->name} เรียบร้อยแล้ว");
     })->name('users.approve');
 
+    Route::post('/users/{user}/email', function (Request $request, User $user) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        $data = $request->validate([
+            'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+        ], [
+            'email.required' => 'กรุณากรอกอีเมล',
+            'email.email' => 'รูปแบบอีเมลไม่ถูกต้อง',
+            'email.unique' => 'อีเมลนี้ถูกใช้งานไปแล้ว',
+        ]);
+
+        $user->update([
+            'email' => trim($data['email']),
+        ]);
+
+        return redirect()
+            ->route('admin.users')
+            ->with('status_message', "แก้ไขอีเมลของ {$user->name} เรียบร้อยแล้ว");
+    })->name('users.email.update');
+
     Route::post('/users/{user}/reject', function (Request $request, User $user) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
             return $redirect;
