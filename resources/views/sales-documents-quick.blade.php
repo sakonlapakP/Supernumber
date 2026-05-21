@@ -173,7 +173,7 @@
           <div class="qdoc-form-row">
             <label class="qdoc-label">
               <span>ผู้ติดต่อ</span>
-              <input type="text" class="qdoc-input" data-qdoc-customer-contact placeholder="เติมอัตโนมัติจากข้อมูลลูกค้า" readonly>
+              <input type="text" class="qdoc-input" data-qdoc-customer-contact placeholder="กรอกชื่อผู้ติดต่อ">
             </label>
             <label class="qdoc-label">
               <span>เบอร์โทร</span>
@@ -226,16 +226,6 @@
       {{-- Payment method + bank --}}
       <div class="admin-card qdoc-card" style="margin-bottom: 12px;">
         <div class="qdoc-section-title">วิธีการชำระเงิน</div>
-        <div class="qdoc-form-row">
-          <label class="qdoc-label qdoc-payment-method">
-            <span>เลือกวิธีชำระเงิน</span>
-            <select class="qdoc-input" data-qdoc-payment-method>
-              <option value="cash">เงินสด</option>
-              <option value="transfer" selected>เงินโอน</option>
-              <option value="cheque">เช็คธนาคาร</option>
-            </select>
-          </label>
-        </div>
         <div class="qdoc-form-row" style="margin-top:8px;">
           <label class="qdoc-label">
             <span>ธนาคาร</span>
@@ -251,12 +241,14 @@
             <span>เลขบัญชี</span>
             <input type="text" class="qdoc-input" data-qdoc-payment-account value="0063701726" readonly>
           </label>
-          <div style="display: flex; flex-direction: column; gap: 4px; padding-top: 20px;">
-            <small style="color: #6b7280; font-weight: 600;">วิธีการชำระเงินแนะนำ:</small>
-            <small style="color: #9ca3af;">• เงินโอน: ใช้เลขบัญชีด้านบน</small>
-            <small style="color: #9ca3af;">• เช็คธนาคาร: ชื่อสั่งจ่าย ซุปเปอร์นัมเบอร์</small>
-            <small style="color: #9ca3af;">• เงินสด: ตกลงกับทางเรา</small>
-          </div>
+          <label class="qdoc-label qdoc-payment-method">
+            <span>เลือกวิธีชำระเงิน</span>
+            <select class="qdoc-input" data-qdoc-payment-method>
+              <option value="cash">เงินสด</option>
+              <option value="transfer" selected>เงินโอน</option>
+              <option value="cheque">เช็คธนาคาร</option>
+            </select>
+          </label>
         </div>
       </div>
 
@@ -417,9 +409,15 @@
       grid-template-columns: 1fr 320px;
       gap: 16px;
       align-items: start;
+      margin-right: -16px;
+      padding-right: 16px;
     }
     @media (max-width: 900px) {
-      .qdoc-layout { grid-template-columns: 1fr; }
+      .qdoc-layout {
+        grid-template-columns: 1fr;
+        margin-right: -16px;
+        padding-right: 16px;
+      }
     }
 
     /* ─── Card & sections ─── */
