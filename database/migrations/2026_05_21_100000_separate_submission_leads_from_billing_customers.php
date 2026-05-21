@@ -13,32 +13,39 @@ return new class extends Migration
             return;
         }
 
-        Schema::create('archived_lead_billing_customers', function (Blueprint $table): void {
-            $table->id();
-            $table->unsignedBigInteger('original_customer_id')->unique();
-            $table->string('company_name')->nullable();
-            $table->string('first_name')->nullable();
-            $table->string('last_name')->nullable();
-            $table->string('tax_id', 32)->nullable();
-            $table->text('address')->nullable();
-            $table->string('email')->nullable();
-            $table->string('phone', 32)->nullable();
-            $table->string('payment_term')->nullable();
-            $table->text('notes')->nullable();
-            $table->boolean('is_active')->default(true);
-            $table->timestamp('original_created_at')->nullable();
-            $table->timestamp('original_updated_at')->nullable();
-            $table->timestamp('archived_at')->nullable();
-        });
+        if (! Schema::hasTable('archived_lead_billing_customers')) {
+            Schema::create('archived_lead_billing_customers', function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('original_customer_id');
+                $table->string('company_name')->nullable();
+                $table->string('first_name')->nullable();
+                $table->string('last_name')->nullable();
+                $table->string('tax_id', 32)->nullable();
+                $table->text('address')->nullable();
+                $table->string('email')->nullable();
+                $table->string('phone', 32)->nullable();
+                $table->string('payment_term')->nullable();
+                $table->text('notes')->nullable();
+                $table->boolean('is_active')->default(true);
+                $table->timestamp('original_created_at')->nullable();
+                $table->timestamp('original_updated_at')->nullable();
+                $table->timestamp('archived_at')->nullable();
 
-        Schema::create('archived_lead_billing_customer_submission_links', function (Blueprint $table): void {
-            $table->id();
-            $table->unsignedBigInteger('original_customer_id');
-            $table->unsignedBigInteger('customer_submission_id')->unique();
-            $table->timestamp('archived_at')->nullable();
+                $table->unique('original_customer_id', 'arch_lead_customer_orig_uid');
+            });
+        }
 
-            $table->index('original_customer_id', 'archived_lead_customer_id_index');
-        });
+        if (! Schema::hasTable('archived_lead_billing_customer_submission_links')) {
+            Schema::create('archived_lead_billing_customer_submission_links', function (Blueprint $table): void {
+                $table->id();
+                $table->unsignedBigInteger('original_customer_id');
+                $table->unsignedBigInteger('customer_submission_id');
+                $table->timestamp('archived_at')->nullable();
+
+                $table->unique('customer_submission_id', 'arch_lead_sub_uid');
+                $table->index('original_customer_id', 'arch_lead_orig_customer_idx');
+            });
+        }
 
         $now = now();
         $lastId = 0;
