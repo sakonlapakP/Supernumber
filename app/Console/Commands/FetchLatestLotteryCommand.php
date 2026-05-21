@@ -62,7 +62,7 @@ class FetchLatestLotteryCommand extends Command
         $this->info('Fetching latest lottery results...');
 
         try {
-            $response = Http::timeout(12)->post(self::API_URL);
+            $response = Http::retry(3, 2000)->timeout(12)->post(self::API_URL);
             $payload = $response->json();
 
             [$sourceDateText, $sourceDate] = $this->extractDrawDate($payload);
@@ -82,8 +82,8 @@ class FetchLatestLotteryCommand extends Command
 
             if ($sourceDate === null || $sourceDate->toDateString() !== $targetDate->toDateString()) {
                 if (!$this->option('force')) {
-                    // Handle Retry Day End Case (2nd or 17th at 16:20)
-                    if ($this->isRetryDay($now) && $now->format('H:i') === '16:20') {
+                    // Handle Retry Day End Case (2nd or 17th at or after 16:20)
+                    if ($this->isRetryDay($now) && $now->format('H:i') >= '16:20') {
                         $result->save(); // Ensure it exists in DB for logging
                         $this->handleRetryDayEnd($result, $targetDate, $now);
                     }
@@ -129,14 +129,10 @@ class FetchLatestLotteryCommand extends Command
 
             if ($result->is_complete && !$wasAlreadyComplete) {
                 try {
-                    // ORDER MATTERS FOR TESTS: 
-                    // notifyAdminArticleReady is expected by some tests, while sendCompleted might not be mocked.
-                    // By calling the expected one first, we satisfy the test even if the second one throws a Mockery exception.
-                    
                     if ($article) {
                         app(LineLotteryNotifier::class)->notifyAdminArticleReady($article, $targetDate);
                     }
-                    
+
                     app(LineLotteryNotifier::class)->sendCompleted($result);
                 } catch (\Throwable $e) {
                     Log::error("Failed to send lottery completion notifications: " . $e->getMessage());
@@ -249,7 +245,7 @@ class FetchLatestLotteryCommand extends Command
         }
 
         // 2. Generate PNG as additional asset if possible
-        $canRenderPng = (getenv('PATH') ?: '') !== '';
+        $canRenderPng = extension_loaded('gd');
         $pngBinary = $canRenderPng ? $service->renderFallbackPng($result) : null;
 
         if ($pngBinary) {

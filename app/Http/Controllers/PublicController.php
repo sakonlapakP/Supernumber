@@ -330,8 +330,8 @@ class PublicController extends Controller
 
         $lotteryResult = $this->resolveLotteryResultForArticle($article);
         
-        // Simulation mode for admin preview
-        if (request()->query('simulate_lottery') == '1') {
+        // Simulation mode for admin preview only
+        if (request()->query('simulate_lottery') == '1' && auth()->check() && auth()->user()->isAtLeastAdmin()) {
             $lotteryResult = \App\Models\LotteryResult::query()
                 ->with('prizes')
                 ->orderByRaw('COALESCE(source_draw_date, draw_date) DESC')
