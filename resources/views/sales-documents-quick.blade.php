@@ -431,7 +431,11 @@
       min-width: 0;
     }
     @media (max-width: 900px) {
-      .qdoc-layout { grid-template-columns: 1fr; }
+      .qdoc-layout { grid-template-columns: 1fr; gap: 16px; }
+    }
+    @media (max-width: 768px) {
+      .qdoc-layout { gap: 14px; }
+      .qdoc-sidebar { display: none; }
     }
     .qdoc-main,
     .qdoc-sidebar {
@@ -510,12 +514,14 @@
     @media (max-width: 768px) {
       .qdoc-meta-grid { gap: 12px; }
       .qdoc-meta-grid .qdoc-input { padding-left: 8px; padding-right: 8px; padding-top: 10px; padding-bottom: 10px; }
-      .qdoc-card { padding: 20px 16px; }
+      .qdoc-card { padding: 16px 14px; }
       .qdoc-form-row { grid-template-columns: 1fr; gap: 12px; }
       .qdoc-label span { font-size: 12px; }
       .qdoc-input { padding: 10px 12px; font-size: 14px; min-height: 40px; }
       .qdoc-payment-method { max-width: 100%; }
       .qdoc-type-switch button { padding: 8px 16px; font-size: 12px; }
+      .qdoc-main { gap: 10px; }
+      .qdoc-sidebar { display: none !important; }
     }
     @media (max-width: 480px) {
       .qdoc-meta-grid { grid-template-columns: 1fr; gap: 10px; }
@@ -767,10 +773,16 @@
 
     /* ─── Mobile optimizations ─── */
     @media (max-width: 768px) {
-      .qdoc-page { gap: 12px; }
+      .qdoc-page { gap: 12px; padding: 12px 0; }
       .qdoc-main,
       .qdoc-sidebar { gap: 10px; }
       .qdoc-items-table-wrap { margin: 0 -4px; padding: 0 4px; }
+      .qdoc-card { padding: 14px; }
+      .qdoc-main { gap: 10px; }
+    }
+    @media (max-width: 600px) {
+      div[style*="justify-content: space-between"] > div:last-child { display: flex; flex-direction: column; width: 100%; gap: 8px; }
+      div[style*="justify-content: space-between"] > div:last-child a { width: 100%; }
     }
     @media (max-width: 480px) {
       .qdoc-customer-row { flex-wrap: wrap; }
@@ -781,6 +793,9 @@
       .qdoc-section-title { font-size: 12px; margin-bottom: 8px; }
       .admin-button--compact { padding: 6px 12px; font-size: 12px; }
       [style*="display: flex; gap: 8px;"] { gap: 6px; flex-wrap: wrap; }
+      .qdoc-card { padding: 12px 10px; }
+      .qdoc-main { gap: 8px; }
+      .qdoc-card-header { margin-bottom: 8px; }
     }
   </style>
 
