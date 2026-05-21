@@ -52,7 +52,7 @@ class RegisterController extends Controller
                     'กรุณาเข้าระบบที่ /admin/users เพื่ออนุมัติ',
                 ]),
                 notifiable: $user,
-                destinationKey: 'admin',
+                destinationKey: null,
             );
         } catch (\Throwable $e) {
             Log::warning('Admin registration LINE notification failed.', [

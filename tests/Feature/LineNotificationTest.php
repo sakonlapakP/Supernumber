@@ -23,6 +23,45 @@ class LineNotificationTest extends TestCase
 {
     use RefreshDatabase;
 
+    public function test_admin_registration_notification_goes_to_line_group(): void
+    {
+        config()->set('services.line.channel_access_token', 'line-token');
+        config()->set('services.line.group_id', 'group-default');
+        config()->set('services.line.retry_sleep_ms', 0);
+
+        Http::fake([
+            'https://api.line.me/v2/bot/message/push' => Http::response([], 200),
+        ]);
+
+        $response = $this->post(route('admin.register'), [
+            'name' => 'ทดสอบ ระบบ',
+            'username' => 'testregister01',
+            'email' => 'testregister01@example.com',
+            'password' => 'Password123!',
+            'password_confirmation' => 'Password123!',
+        ]);
+
+        $response->assertRedirect(route('admin.login'));
+
+        Http::assertSent(function (HttpRequest $request): bool {
+            $payload = $request->data();
+            $message = (string) ($payload['messages'][0]['text'] ?? '');
+
+            return $request->url() === 'https://api.line.me/v2/bot/message/push'
+                && $request->hasHeader('Authorization', 'Bearer line-token')
+                && ($payload['to'] ?? null) === 'group-default'
+                && str_contains($message, 'มีผู้ใช้ใหม่รอการอนุมัติ')
+                && str_contains($message, 'testregister01');
+        });
+
+        $this->assertDatabaseHas('line_notification_logs', [
+            'event_type' => 'admin_registration',
+            'destination_key' => null,
+            'destination_id' => 'group-default',
+            'status' => LineNotificationLog::STATUS_SENT,
+        ]);
+    }
+
     public function test_it_logs_and_sends_estimate_lead_notifications_to_the_configured_group(): void
     {
         config()->set('services.line.channel_access_token', 'line-token');
