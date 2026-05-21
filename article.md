@@ -232,6 +232,62 @@ Route: `POST /admin/articles/{article}/broadcast-line` (admin.articles.broadcast
 
 ---
 
+## ตารางแผนการเผยแพร่บทความ (`article_plans`)
+
+ตาราง DB ที่เก็บแผนงาน — แสดงใน `/admin/articles` ส่วนล่าง
+
+### Migration
+
+สร้างตารางด้วย:
+
+```
+php artisan migrate
+```
+
+Migration file: `database/migrations/2026_05_11_090708_create_article_plans_table.php`
+
+### Seeder
+
+ข้อมูลแผนปี **69–80 (Gregorian 2026–2037)** ครบ 12 เดือนต่อปี อยู่ใน `ArticlePlanSeeder`:
+
+```
+php artisan db:seed --class=ArticlePlanSeeder
+```
+
+> ⚠️ Seeder จะ **truncate** `article_plans` ก่อน insert ทุกครั้ง — ข้อมูลที่ admin แก้ไขไว้จะหายหมด ใช้เฉพาะตอน setup ครั้งแรก
+
+### โครงสร้าง Template ต่อเดือน
+
+แต่ละปี (2026–2037) ใช้ template เดียวกัน ≈ 5–6 items/เดือน × 12 เดือน ≈ **66 items/ปี** รวม ~792 items ทั้งหมด
+
+| เดือน | Items หลัก |
+|-------|-----------|
+| มกราคม | 1 (หวย/ปีใหม่), 9 (วันเด็ก), 16 (หวย), 23 (Evergreen) |
+| กุมภาพันธ์ | 1 (หวย), 6 (ตรุษจีน*), 14 (วาเลนไทน์), 16 (หวย), 21 (มาฆบูชา*), 26 (Evergreen) |
+| มีนาคม | 1, 16 (หวย), 8, 24, 30 (Evergreen) |
+| เมษายน | 1, 16 (หวย), 6 (วันจักรี), 13 (สงกรานต์), 24 (Evergreen) |
+| พฤษภาคม | 11 (พืชมงคล*), 16 (หวย), 22, 27, 31 (วิสาขบูชา*) |
+| มิถุนายน | 1, 16 (หวย), 8, 21 (Evergreen), 26 (วันสุนทรภู่) |
+| กรกฎาคม | 1, 16 (หวย), 8, 23 (Evergreen), 28 (ร.10), 29 (อาสาฬห*) |
+| สิงหาคม | 1, 16 (หวย), 8, 25 (Evergreen), 12 (วันแม่), 15 (คเณศ*) |
+| กันยายน | 1, 16 (หวย), 8, 21, 30 (Evergreen), 25 (ไหว้พระจันทร์*) |
+| ตุลาคม | 1, 16 (หวย), 8 (Evergreen), 20 (กินเจ*), 23 (วันปิยมหาราช) |
+| พฤศจิกายน | 1, 16 (หวย), 8 (Evergreen), 24 (ลอยกระทง*), 29 (Evergreen) |
+| ธันวาคม | 1, 16 (หวย), 5 (วันพ่อ), 10 (รัฐธรรมนูญ), 24 (Evergreen), 31 (สิ้นปี) |
+
+\* วันที่เหล่านี้อิงจันทรคติ/เทศกาลที่เปลี่ยนแต่ละปี — ใช้วันที่ **approximate** จากปี 69 เป็น template  
+Admin สามารถแก้วันที่ได้ผ่านปุ่ม Edit ในตาราง (modal มี date picker + time + type + topic)
+
+### การทำงาน
+
+- Query ดึงข้อมูล `whereYear('publish_date', $planYear)` — clamp ไว้ที่ 2026–2037
+- URL parameter: `?plan_year=2027` เปลี่ยนปีที่แสดง (default = ปีปัจจุบัน)
+- Year switcher (ปุ่ม ‹ ปีก่อน / ปีถัดไป ›) อยู่ในหัวของตาราง
+- Manager เพิ่ม/แก้ไข/ลบแผนงานได้ผ่านปุ่ม "+ เพิ่มแผนงาน" และปุ่ม Edit ต่อ row
+- Row ที่มีบทความแล้ว (ตรวจจาก `published_at` date หรือ slug pattern ของหวย) จะแสดง ✅
+
+---
+
 ## ENV ที่เกี่ยวข้อง
 
 ```env

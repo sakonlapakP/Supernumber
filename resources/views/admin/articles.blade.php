@@ -58,6 +58,12 @@
            $planYearOptions[$y] = 'ปี ' . ($y + 543 - 2500);
        }
 
+       $thaiYear     = $planYear + 543 - 2500; // e.g. 2026 → 69
+       $prevYear     = $planYear > 2026 ? $planYear - 1 : null;
+       $nextYear     = $planYear < 2037 ? $planYear + 1 : null;
+       $prevThaiYear = $prevYear ? $prevYear + 543 - 2500 : null;
+       $nextThaiYear = $nextYear ? $nextYear + 543 - 2500 : null;
+
        $isManager = session('admin_user_role') === \App\Models\User::ROLE_MANAGER;
     @endphp
     <div class="admin-page-head">
