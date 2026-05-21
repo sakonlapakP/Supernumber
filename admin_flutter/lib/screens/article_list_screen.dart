@@ -501,6 +501,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
       ),
       appBar: AppBar(
         title: Row(
+          mainAxisSize: MainAxisSize.min,
           children: [
             Container(
               width: 28,
@@ -524,69 +525,133 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                 ),
               ),
             ),
-            const SizedBox(width: 12),
-            Text(
-              'ARTICLES',
-              style: GoogleFonts.kanit(
-                fontWeight: FontWeight.bold,
-                fontSize: 18,
-                letterSpacing: 0.5,
-                color: const Color(0xFF1D1816),
-              ),
-            ),
           ],
         ),
         actions: [
-          Container(
-            height: 36,
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            decoration: BoxDecoration(
-              color: Colors.grey[100],
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[300]!),
-            ),
-            child: DropdownButtonHideUnderline(
-              child: DropdownButton<String>(
-                value: _selectedMonthPlan,
-                hint: Text(
-                  'ทั้งหมด (แผนงาน)',
-                  style: GoogleFonts.kanit(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
+          Builder(
+            builder: (context) {
+              final isWide = MediaQuery.of(context).size.width > 600;
+              if (isWide) {
+                return Container(
+                  height: 36,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey[100],
+                    borderRadius: BorderRadius.circular(12),
+                    border: Border.all(color: Colors.grey[300]!),
                   ),
-                ),
-                icon: const Icon(Icons.calendar_month_rounded, size: 16),
-                style: GoogleFonts.kanit(
-                  fontSize: 13,
-                  fontWeight: FontWeight.w600,
-                  color: const Color(0xFF1E293B),
-                ),
-                onChanged: (String? newValue) {
-                  setState(() {
-                    _selectedMonthPlan = newValue;
-                  });
-                  context.read<ArticleProvider>().fetchArticles(
-                    monthPlan: newValue,
-                  );
-                },
-                items: [
-                  DropdownMenuItem<String>(
-                    value: null,
-                    child: Text('ทั้งหมด (แผนงาน)', style: GoogleFonts.kanit()),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: _selectedMonthPlan,
+                      hint: Text(
+                        'ทั้งหมด (แผนงาน)',
+                        style: GoogleFonts.kanit(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      icon: const Icon(Icons.calendar_month_rounded, size: 16),
+                      style: GoogleFonts.kanit(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF1E293B),
+                      ),
+                      onChanged: (String? newValue) {
+                        setState(() {
+                          _selectedMonthPlan = newValue;
+                        });
+                        context.read<ArticleProvider>().fetchArticles(
+                          monthPlan: newValue,
+                        );
+                      },
+                      items: [
+                        DropdownMenuItem<String>(
+                          value: null,
+                          child: Text(
+                            'ทั้งหมด (แผนงาน)',
+                            style: GoogleFonts.kanit(),
+                          ),
+                        ),
+                        ..._monthPlansForSelectedYear()
+                            .map<DropdownMenuItem<String>>(
+                              (String value) => DropdownMenuItem<String>(
+                                value: value,
+                                child: Text(value, style: GoogleFonts.kanit()),
+                              ),
+                            ),
+                      ],
+                    ),
                   ),
-                  ..._monthPlansForSelectedYear().map<DropdownMenuItem<String>>(
-                    (String value) {
-                      return DropdownMenuItem<String>(
-                        value: value,
-                        child: Text(value, style: GoogleFonts.kanit()),
+                );
+              }
+              // Narrow: icon button opens bottom sheet filter
+              return IconButton(
+                icon: Badge(
+                  isLabelVisible: _selectedMonthPlan != null,
+                  child: const Icon(Icons.filter_list_rounded),
+                ),
+                tooltip: _selectedMonthPlan ?? 'กรองตามแผนงาน',
+                onPressed: () {
+                  final options = [null, ..._monthPlansForSelectedYear()];
+                  showModalBottomSheet<void>(
+                    context: context,
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.vertical(
+                        top: Radius.circular(16),
+                      ),
+                    ),
+                    builder: (ctx) {
+                      return SafeArea(
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Padding(
+                              padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+                              child: Text(
+                                'กรองตามแผนงาน',
+                                style: GoogleFonts.kanit(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                            ...options.map(
+                              (opt) => ListTile(
+                                leading: Icon(
+                                  opt == null
+                                      ? Icons.all_inclusive_rounded
+                                      : Icons.calendar_month_rounded,
+                                  color: const Color(0xFF7C3AED),
+                                ),
+                                title: Text(
+                                  opt ?? 'ทั้งหมด (แผนงาน)',
+                                  style: GoogleFonts.kanit(),
+                                ),
+                                selected: _selectedMonthPlan == opt,
+                                selectedTileColor: const Color(
+                                  0xFF7C3AED,
+                                ).withValues(alpha: 0.08),
+                                onTap: () {
+                                  setState(() => _selectedMonthPlan = opt);
+                                  context.read<ArticleProvider>().fetchArticles(
+                                    monthPlan: opt,
+                                  );
+                                  Navigator.pop(ctx);
+                                },
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                          ],
+                        ),
                       );
                     },
-                  ),
-                ],
-              ),
-            ),
+                  );
+                },
+              );
+            },
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 4),
 
           LayoutBuilder(
             builder: (context, constraints) {
@@ -688,21 +753,7 @@ class _ArticleListScreenState extends State<ArticleListScreen> {
                     selectedMonth: _selectedMonthPlan,
                     selectedYear: _selectedPlanYear,
                     articles: provider.articles,
-                    onYearChanged: (year) {
-                      setState(() => _selectedPlanYear = year);
-                      if (_selectedMonthPlan != null &&
-                          !_monthPlansForSelectedYear().contains(
-                            _selectedMonthPlan,
-                          )) {
-                        _selectedMonthPlan = null;
-                      }
-                      context.read<ArticleProvider>().fetchArticles(
-                        monthPlan: _selectedMonthPlan,
-                      );
-                      context.read<ArticlePlanProvider>().fetchPlans(
-                        year: year,
-                      );
-                    },
+                    onYearChanged: onYearChanged,
                   ),
                   const SizedBox(height: 24),
                   if (provider.articles.isEmpty)
