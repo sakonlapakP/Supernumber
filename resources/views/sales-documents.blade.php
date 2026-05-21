@@ -264,7 +264,7 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
                 <th>รายการสินค้า/บริการ<br><small>DESCRIPTION</small></th>
                 <th>จำนวน<br><small>QUANTITY</small></th>
                 <th>หน่วย<br><small>UNIT</small></th>
-                <th>ราคา/หน่วย<br><small>UNIT/PRICE</small></th>
+                <th data-unit-price-heading>ราคา/หน่วย<br><small>UNIT/PRICE</small></th>
                 <th>จำนวนเงิน<br><small>AMOUNT</small></th>
               </tr>
             </thead>
@@ -353,7 +353,7 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
             <div class="document-total-row">
               <span>ภาษีมูลค่าเพิ่ม / Vat</span>
               <div class="document-total-row__value">
-                <input class="doc-input doc-input--tiny doc-input--align-right" data-editable-field data-vat-rate value="7" inputmode="decimal">
+                <input class="doc-input doc-input--tiny doc-input--align-right" data-vat-rate value="7" readonly>
                 <span>%</span>
                 <output data-vat-amount>0.00</output>
               </div>
@@ -397,7 +397,7 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
             <div class="document-total-row">
               <span>ภาษีหัก ณ ที่จ่าย (บาท) / Withheld Tax</span>
               <div class="document-total-row__value">
-                <input class="doc-input doc-input--tiny doc-input--align-right" data-editable-field data-withholding-rate value="3" inputmode="decimal">
+                <input class="doc-input doc-input--tiny doc-input--align-right" data-withholding-rate value="3" readonly>
                 <span>%</span>
                 <output data-withholding-amount>0.00</output>
               </div>
@@ -415,19 +415,16 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
     <div class="document-studio__settings">
       <div class="document-calculator">
         <div class="document-calculator__groups">
-          <div class="document-calculator__modes" role="group" aria-label="วิธีคิดภาษีหัก ณ ที่จ่าย" style="padding: 12px !important; background-color: #f5f5f5 !important; border-radius: 6px !important; border-left: 4px solid #3b82f6 !important;">
-            <span class="document-calculator__label" style="font-weight: 700 !important; display: block !important; margin-bottom: 8px !important; color: #1f2937;">ภาษีหัก ณ ที่จ่าย</span>
+          <div class="document-calculator__modes" role="group" aria-label="รูปแบบการคำนวณภาษี" style="display: grid !important; gap: 8px !important; min-width: min(100%, 360px) !important; padding: 12px !important; background-color: #f5f5f5 !important; border-radius: 6px !important; border-left: 4px solid #3b82f6 !important;">
+            <span class="document-calculator__label" style="font-weight: 700 !important; color: #1f2937;">รูปแบบการคำนวณภาษี</span>
             <div style="display: flex !important; gap: 8px !important;">
-              <button type="button" class="is-active" data-withholding-calc-mode="customer" title="ลูกค้ารับผิดชอบภาษีหัก ณ ที่จ่าย" style="flex: 1 !important;">ลูกค้าจ่าย</button>
-              <button type="button" data-withholding-calc-mode="company" title="เรารับผิดชอบภาษีหัก ณ ที่จ่าย" style="flex: 1 !important;">เรจ่าย</button>
+              <button type="button" class="is-active" data-calculation-mode="standard" style="flex: 1 !important;">Standard</button>
+              <button type="button" data-calculation-mode="reverse" style="flex: 1 !important;">Reverse</button>
             </div>
-          </div>
-
-          <div class="document-calculator__modes" role="group" aria-label="วิธีคิดภาษีมูลค่าเพิ่ม" style="padding: 12px !important; background-color: #f5f5f5 !important; border-radius: 6px !important; border-left: 4px solid #8b5cf6 !important; margin-top: 12px !important;">
-            <span class="document-calculator__label" style="font-weight: 700 !important; display: block !important; margin-bottom: 8px !important; color: #1f2937;">ภาษีมูลค่าเพิ่ม</span>
-            <div style="display: flex !important; gap: 8px !important;">
-              <button type="button" data-vat-calc-mode="customer" title="ลูกค้ารับผิดชอบภาษีมูลค่าเพิ่ม" style="flex: 1 !important;">ลูกค้าจ่าย</button>
-              <button type="button" class="is-active" data-vat-calc-mode="company" title="เรารับผิดชอบภาษีมูลค่าเพิ่ม" style="flex: 1 !important;">เรจ่าย</button>
+            <span class="document-calculator__label" data-calculation-caption>กรอกราคาค่าจ้างก่อน VAT</span>
+            <div style="display: flex !important; gap: 6px !important; flex-wrap: wrap !important;">
+              <span class="document-calculator__label" style="padding: 3px 8px !important; border: 1px solid rgba(70, 56, 43, .16) !important; border-radius: 999px !important; background: #fff !important;">VAT 7%</span>
+              <span class="document-calculator__label" style="padding: 3px 8px !important; border: 1px solid rgba(70, 56, 43, .16) !important; border-radius: 999px !important; background: #fff !important;">WHT 3%</span>
             </div>
           </div>
         </div>
@@ -474,8 +471,9 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
       const withholdingAmountOutput = root.querySelector("[data-withholding-amount]");
       const netToPayOutput = root.querySelector("[data-net-to-pay]");
       const bahtTextOutput = root.querySelector("[data-baht-text]");
-      const withholdingCalculatorModeButtons = document.querySelectorAll("[data-withholding-calc-mode]");
-      const vatCalculatorModeButtons = document.querySelectorAll("[data-vat-calc-mode]");
+      const calculationModeButtons = document.querySelectorAll("[data-calculation-mode]");
+      const calculationCaption = document.querySelector("[data-calculation-caption]");
+      const unitPriceHeading = root.querySelector("[data-unit-price-heading]");
       const printButton = document.querySelector("[data-print-document]");
       const itemRows = Array.from(root.querySelectorAll("[data-item-row]"));
       const addItemRowButton = root.querySelector("[data-add-item-row]");
@@ -516,7 +514,7 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
       const customerModalPhone = document.querySelector("[data-customer-modal-phone]");
 
       const numericFields = root.querySelectorAll(
-        "[data-item-qty], [data-item-unit-price], [data-discount-rate], [data-vat-rate], [data-withholding-rate]"
+        "[data-item-qty], [data-item-unit-price], [data-discount-rate]"
       );
 
       const moneyFormatter = new Intl.NumberFormat("en-US", {
@@ -572,54 +570,30 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
       const saveDownloadRoute = @json(route('admin.sales-documents.save-download'));
       const customerQuickUpdateRouteTemplate = @json(route('admin.customers.quick-update', ['customer' => '__CUSTOMER__']));
       const prefillPayload = @json($prefillPayload);
-      let withholdingCalculatorMode = "customer";
-      let vatCalculatorMode = "company";
+      const vatRate = 7;
+      const withholdingRate = 3;
+      let calculationMode = "standard";
       let customerDialogMode = "create";
       let editingCustomerId = null;
 
-      const withholdingCalculatorModeMeta = {
-        customer: {
-          responsibility: "customer",
-          label: "ลูกค้ารับผิดชอบภาษีหัก ณ ที่จ่าย",
-          successMessage: "คำนวณแบบลูกค้ารับผิดชอบภาษีหัก ณ ที่จ่ายเรียบร้อยแล้ว",
+      const calculationModeMeta = {
+        standard: {
+          label: "Standard Calculation",
+          caption: "กรอกราคาค่าจ้างก่อน VAT",
+          heading: "ราคา/หน่วย",
+          status: "คำนวณแบบ Standard",
         },
-        company: {
-          responsibility: "company",
-          label: "เรารับผิดชอบภาษีหัก ณ ที่จ่าย",
-          successMessage: "คำนวณแบบเรารับผิดชอบภาษีหัก ณ ที่จ่ายเรียบร้อยแล้ว",
-        },
-      };
-
-      const vatCalculatorModeMeta = {
-        customer: {
-          responsibility: "customer",
-          label: "ลูกค้ารับผิดชอบภาษีมูลค่าเพิ่ม",
-          successMessage: "คำนวณแบบลูกค้ารับผิดชอบภาษีมูลค่าเพิ่มเรียบร้อยแล้ว",
-        },
-        company: {
-          responsibility: "company",
-          label: "เรารับผิดชอบภาษีมูลค่าเพิ่ม",
-          successMessage: "คำนวณแบบเรารับผิดชอบภาษีมูลค่าเพิ่มเรียบร้อยแล้ว",
+        reverse: {
+          label: "Reverse Calculation",
+          caption: "กรอกรายได้เป้าหมายหลัง WHT",
+          heading: "รายได้เป้า/หน่วย",
+          status: "คำนวณแบบ Reverse",
         },
       };
 
-      const resolveWithholdingCalculatorMode = (mode) => (
-        mode === "company" || mode === "post-vat-net" ? "company" : "customer"
-      );
-      const resolveVatCalculatorMode = (mode) => mode === "customer" ? "customer" : "company";
-      const resolveLegacyCalculatorMode = (mode) => (
-        resolveWithholdingCalculatorMode(mode) === "company" ? "post-vat-net" : "normal"
-      );
-      const currentWithholdingCalculatorModeMeta = () => (
-        withholdingCalculatorModeMeta[resolveWithholdingCalculatorMode(withholdingCalculatorMode)]
-        || withholdingCalculatorModeMeta.customer
-      );
-      const currentVatCalculatorModeMeta = () => (
-        vatCalculatorModeMeta[resolveVatCalculatorMode(vatCalculatorMode)]
-        || vatCalculatorModeMeta.company
-      );
-      const isCompanyWithholdingMode = () => resolveWithholdingCalculatorMode(withholdingCalculatorMode) === "company";
-      const isCustomerVatMode = () => resolveVatCalculatorMode(vatCalculatorMode) === "customer";
+      const resolveCalculationMode = (mode) => mode === "reverse" ? "reverse" : "standard";
+      const currentCalculationModeMeta = () => calculationModeMeta[resolveCalculationMode(calculationMode)];
+      const isReverseMode = () => resolveCalculationMode(calculationMode) === "reverse";
 
       const twoDigit = (value) => String(value).padStart(2, "0");
 
@@ -680,15 +654,9 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
 
       const getRateValue = (selector) => parseNumber(root.querySelector(selector)?.value);
 
-      const getPricingAdjustmentFactor = () => {
-        const discountRate = getRateValue("[data-discount-rate]");
-        const withholdingRate = getRateValue("[data-withholding-rate]");
-        const discountMultiplier = 1 - (discountRate / 100);
-        const withholdingMultiplier = 1 - (withholdingRate / 100);
-        const combined = discountMultiplier * withholdingMultiplier;
-
-        return combined > 0 ? combined : 1;
-      };
+      const documentUnitPrice = (inputUnitPrice) => isReverseMode()
+        ? inputUnitPrice / (1 - (withholdingRate / 100))
+        : inputUnitPrice;
 
       const storeRowBaseUnitPrice = (row, displayedPrice = null) => {
         const priceInput = row.querySelector("[data-item-unit-price]");
@@ -707,10 +675,18 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
         row.dataset.baseUnitPrice = String(roundMoney(currentDisplayedPrice));
       };
 
-      const syncUnitPricesForMode = () => {
-        const factor = getPricingAdjustmentFactor();
-        const shouldGrossUpUnitPrices = isCompanyWithholdingMode();
+      const sourceUnitPriceForRow = (row) => {
+        const priceInput = row.querySelector("[data-item-unit-price]");
+        const displayedPrice = parseNumber(priceInput?.value);
 
+        if (isReverseMode() && row.dataset.baseUnitPrice) {
+          return parseNumber(row.dataset.baseUnitPrice);
+        }
+
+        return displayedPrice;
+      };
+
+      const syncUnitPricesForMode = () => {
         itemRows.forEach((row) => {
           const priceInput = row.querySelector("[data-item-unit-price]");
 
@@ -734,11 +710,7 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
             return;
           }
 
-          const displayedPrice = shouldGrossUpUnitPrices
-            ? roundMoney(baseUnitPrice / factor)
-            : roundMoney(baseUnitPrice);
-
-          priceInput.value = formatMoney(displayedPrice);
+          priceInput.value = formatMoney(roundMoney(documentUnitPrice(baseUnitPrice)));
         });
       };
 
@@ -804,8 +776,9 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
           const descriptionInput = row.querySelector("[data-item-description]");
           const quantityInput = row.querySelector("[data-item-qty]");
           const unitInput = row.querySelector("[data-item-unit]");
-          const unitPriceInput = row.querySelector("[data-item-unit-price]");
           const amountOutput = row.querySelector("[data-item-amount]");
+          const inputUnitPrice = sourceUnitPriceForRow(row);
+          const unitPrice = documentUnitPrice(inputUnitPrice);
 
           return {
             index: index + 1,
@@ -813,12 +786,23 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
             quantity: parseNumber(quantityInput?.value),
             quantity_display: quantityInput?.value || "",
             unit: unitInput?.value || "",
-            unit_price: parseNumber(unitPriceInput?.value),
-            unit_price_display: unitPriceInput?.value || "",
+            input_unit_price: inputUnitPrice,
+            input_unit_price_display: formatMoney(inputUnitPrice),
+            input_amount: roundMoney(parseNumber(quantityInput?.value) * inputUnitPrice),
+            input_amount_display: formatMoney(roundMoney(parseNumber(quantityInput?.value) * inputUnitPrice)),
+            unit_price: unitPrice,
+            unit_price_display: formatMoney(unitPrice),
             amount: parseNumber(amountOutput?.textContent),
             amount_display: amountOutput?.textContent || "0.00",
           };
         });
+        const inputSubtotal = items.reduce((total, item) => roundMoney(total + item.input_amount), 0);
+        const discountRate = getRateValue("[data-discount-rate]");
+        const inputDiscountAmount = roundMoney(inputSubtotal * discountRate / 100);
+        const targetIncome = roundMoney(inputSubtotal - inputDiscountAmount);
+        const serviceNetIncome = roundMoney(
+          parseNumber(afterDiscountOutput?.textContent) - parseNumber(withholdingAmountOutput?.textContent)
+        );
 
         return {
           document_type: currentType,
@@ -827,14 +811,15 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
           due_date: dueDateInput?.value || "",
           customer_id: selectedCustomer?.id || null,
           customer_name: customerNameInput?.value || "",
-          calculator_mode: resolveLegacyCalculatorMode(withholdingCalculatorMode),
-          calculator_mode_label: currentWithholdingCalculatorModeMeta().label,
-          withholding_calculator_mode: resolveWithholdingCalculatorMode(withholdingCalculatorMode),
-          withholding_calculator_mode_label: currentWithholdingCalculatorModeMeta().label,
-          withholding_tax_responsibility: currentWithholdingCalculatorModeMeta().responsibility,
-          vat_calculator_mode: resolveVatCalculatorMode(vatCalculatorMode),
-          vat_calculator_mode_label: currentVatCalculatorModeMeta().label,
-          vat_tax_responsibility: currentVatCalculatorModeMeta().responsibility,
+          calculation_mode: resolveCalculationMode(calculationMode),
+          calculation_mode_label: currentCalculationModeMeta().label,
+          calculator_mode: resolveCalculationMode(calculationMode),
+          withholding_calculator_mode: "customer",
+          withholding_calculator_mode_label: "คำนวณ WHT จากราคาก่อน VAT",
+          withholding_tax_responsibility: "customer",
+          vat_calculator_mode: "company",
+          vat_calculator_mode_label: "บวก VAT จากราคาก่อน VAT",
+          vat_tax_responsibility: "company",
           company: {
             name_th: companyNameThInput?.value || "",
             name_en: companyNameEnInput?.value || "",
@@ -872,24 +857,30 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
           totals: {
             subtotal: parseNumber(subtotalOutput?.textContent),
             subtotal_display: subtotalOutput?.textContent || "0.00",
-            discount_rate: getRateValue("[data-discount-rate]"),
+            discount_rate: discountRate,
             discount_rate_display: root.querySelector("[data-discount-rate]")?.value || "0.00",
             discount_amount: parseNumber(discountAmountOutput?.textContent),
             discount_amount_display: discountAmountOutput?.textContent || "0.00",
             after_discount: parseNumber(afterDiscountOutput?.textContent),
             after_discount_display: afterDiscountOutput?.textContent || "0.00",
-            vat_rate: getRateValue("[data-vat-rate]"),
-            vat_rate_display: root.querySelector("[data-vat-rate]")?.value || "7.00",
+            calculation_mode: resolveCalculationMode(calculationMode),
+            calculation_mode_label: currentCalculationModeMeta().label,
+            vat_rate: vatRate,
+            vat_rate_display: String(vatRate),
             vat_amount: parseNumber(vatAmountOutput?.textContent),
             vat_amount_display: vatAmountOutput?.textContent || "0.00",
             grand_total: parseNumber(grandTotalOutput?.textContent),
             grand_total_display: grandTotalOutput?.textContent || "0.00",
-            withholding_rate: getRateValue("[data-withholding-rate]"),
-            withholding_rate_display: root.querySelector("[data-withholding-rate]")?.value || "3.00",
+            withholding_rate: withholdingRate,
+            withholding_rate_display: String(withholdingRate),
             withholding_amount: parseNumber(withholdingAmountOutput?.textContent),
             withholding_amount_display: withholdingAmountOutput?.textContent || "0.00",
             net_to_pay: parseNumber(netToPayOutput?.textContent),
             net_to_pay_display: netToPayOutput?.textContent || "0.00",
+            target_income: targetIncome,
+            target_income_display: formatMoney(targetIncome),
+            service_net_income: serviceNetIncome,
+            service_net_income_display: formatMoney(serviceNetIncome),
             baht_text: bahtTextOutput?.textContent || "ศูนย์บาทถ้วน",
           },
           signatures: {
@@ -1117,8 +1108,7 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
 
       const captureDraftState = () => ({
         documentType: root.dataset.documentType || "quotation",
-        withholdingCalculatorMode,
-        vatCalculatorMode,
+        calculationMode,
         customerSelectValue: customerSelect?.value || "",
         documentNumberAutonumber: documentNumberInput?.dataset.documentAutonumber || "true",
         fields: Array.from(root.querySelectorAll("input, textarea, select")).map((field) => ({
@@ -1192,15 +1182,11 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
           });
         }
 
-        if (typeof state.withholdingCalculatorMode === "string" && state.withholdingCalculatorMode !== "") {
-          withholdingCalculatorMode = resolveWithholdingCalculatorMode(state.withholdingCalculatorMode);
-        } else if (typeof state.calculatorMode === "string" && state.calculatorMode !== "") {
-          withholdingCalculatorMode = resolveWithholdingCalculatorMode(state.calculatorMode);
-        }
-
-        if (typeof state.vatCalculatorMode === "string" && state.vatCalculatorMode !== "") {
-          vatCalculatorMode = resolveVatCalculatorMode(state.vatCalculatorMode);
-        }
+        calculationMode = resolveCalculationMode(
+          state.calculationMode
+          || state.calculatorMode
+          || (state.withholdingCalculatorMode === "company" ? "reverse" : "standard")
+        );
 
         if (companyAddressInput) {
           companyAddressInput.value = normalizeCompanyAddressValue(companyAddressInput.value);
@@ -1219,7 +1205,7 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
         syncUnitPricesForMode();
         syncTotals();
         syncAddRowButton();
-        syncCalculatorMode();
+        syncCalculationModeUi();
         setCustomerActionState();
 
         return true;
@@ -1337,19 +1323,13 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
         const payloadDocumentType = payload.document_type || payload.document?.type || "quotation";
         setDocumentType(payloadDocumentType);
 
-        withholdingCalculatorMode = typeof payload.withholding_calculator_mode === "string" && payload.withholding_calculator_mode !== ""
-          ? resolveWithholdingCalculatorMode(payload.withholding_calculator_mode)
-          : typeof payload.calculator_mode === "string" && payload.calculator_mode !== ""
-            ? resolveWithholdingCalculatorMode(payload.calculator_mode)
-            : typeof payload.withholding_tax_responsibility === "string" && payload.withholding_tax_responsibility !== ""
-              ? resolveWithholdingCalculatorMode(payload.withholding_tax_responsibility)
-              : withholdingCalculatorMode;
-
-        vatCalculatorMode = typeof payload.vat_calculator_mode === "string" && payload.vat_calculator_mode !== ""
-          ? resolveVatCalculatorMode(payload.vat_calculator_mode)
-          : typeof payload.vat_tax_responsibility === "string" && payload.vat_tax_responsibility !== ""
-            ? resolveVatCalculatorMode(payload.vat_tax_responsibility)
-            : vatCalculatorMode;
+        calculationMode = resolveCalculationMode(
+          payload.calculation_mode
+          || payload.totals?.calculation_mode
+          || payload.calculator_mode
+          || (payload.tax_method === "we-pay" ? "reverse" : "")
+          || (payload.withholding_calculator_mode === "company" ? "reverse" : "standard")
+        );
 
         if (companyNameThInput) {
           companyNameThInput.value = payload.company?.name_th || companyNameThInput.value;
@@ -1449,19 +1429,8 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
         }
 
         const discountRateInput = root.querySelector("[data-discount-rate]");
-        const vatRateInput = root.querySelector("[data-vat-rate]");
-        const withholdingRateInput = root.querySelector("[data-withholding-rate]");
-
         if (discountRateInput) {
           discountRateInput.value = payload.totals?.discount_rate_display || payload.totals?.discount_rate || discountRateInput.value;
-        }
-
-        if (vatRateInput) {
-          vatRateInput.value = payload.totals?.vat_rate_display || payload.totals?.vat_rate || vatRateInput.value;
-        }
-
-        if (withholdingRateInput) {
-          withholdingRateInput.value = payload.totals?.withholding_rate_display || payload.totals?.withholding_rate || withholdingRateInput.value;
         }
 
         itemRows.forEach((row, index) => {
@@ -1497,18 +1466,26 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
             unitInput.value = item.unit || "";
           }
 
+          const sourcePrice = item.input_unit_price
+            ?? item.source_unit_price
+            ?? item.originalPrice
+            ?? (isReverseMode() ? parseNumber(item.unit_price_display || item.unit_price || "") * (1 - (withholdingRate / 100)) : null)
+            ?? item.unit_price
+            ?? item.price
+            ?? "";
+
           if (unitPriceInput) {
-            unitPriceInput.value = item.unit_price_display || item.unit_price || "";
+            unitPriceInput.value = sourcePrice === "" ? "" : formatMoney(parseNumber(sourcePrice));
           }
 
-          storeRowBaseUnitPrice(row, parseNumber(item.unit_price_display || item.unit_price || ""));
+          storeRowBaseUnitPrice(row, parseNumber(sourcePrice));
         });
 
         syncTextareas();
         syncUnitPricesForMode();
         syncTotals();
         syncAddRowButton();
-        syncCalculatorMode();
+        syncCalculationModeUi();
         setCustomerActionState();
 
         return true;
@@ -1905,10 +1882,9 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
           }
 
           const quantityInput = row.querySelector("[data-item-qty]");
-          const priceInput = row.querySelector("[data-item-unit-price]");
           const amountOutput = row.querySelector("[data-item-amount]");
           const quantity = parseNumber(quantityInput?.value);
-          const unitPrice = parseNumber(priceInput?.value);
+          const unitPrice = documentUnitPrice(sourceUnitPriceForRow(row));
           const amount = roundMoney(quantity * unitPrice);
 
           subtotal = roundMoney(subtotal + amount);
@@ -1919,22 +1895,11 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
         });
 
         const discountRate = parseNumber(root.querySelector("[data-discount-rate]")?.value);
-        const vatRate = parseNumber(root.querySelector("[data-vat-rate]")?.value);
-        const withholdingRate = parseNumber(root.querySelector("[data-withholding-rate]")?.value);
-
         const discountAmount = roundMoney(subtotal * discountRate / 100);
         const afterDiscount = roundMoney(subtotal - discountAmount);
-        const vatMultiplier = 1 + (vatRate / 100);
-        const taxableAmount = isCustomerVatMode() && vatMultiplier > 0
-          ? roundMoney(afterDiscount / vatMultiplier)
-          : afterDiscount;
-        const vatAmount = isCustomerVatMode()
-          ? roundMoney(afterDiscount - taxableAmount)
-          : roundMoney(taxableAmount * vatRate / 100);
-        const grandTotal = isCustomerVatMode()
-          ? roundMoney(afterDiscount)
-          : roundMoney(afterDiscount + vatAmount);
-        const withholdingAmount = roundMoney(taxableAmount * withholdingRate / 100);
+        const vatAmount = roundMoney(afterDiscount * vatRate / 100);
+        const grandTotal = roundMoney(afterDiscount + vatAmount);
+        const withholdingAmount = roundMoney(afterDiscount * withholdingRate / 100);
         const netToPay = roundMoney(grandTotal - withholdingAmount);
 
         subtotalOutput.textContent = formatMoney(subtotal);
@@ -1947,20 +1912,20 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
         bahtTextOutput.textContent = convertBahtText(grandTotal);
       };
 
-      const syncCalculatorMode = () => {
-        withholdingCalculatorModeButtons.forEach((button) => {
-          button.classList.toggle(
-            "is-active",
-            button.dataset.withholdingCalcMode === resolveWithholdingCalculatorMode(withholdingCalculatorMode)
-          );
+      const syncCalculationModeUi = () => {
+        const modeMeta = currentCalculationModeMeta();
+
+        calculationModeButtons.forEach((button) => {
+          button.classList.toggle("is-active", button.dataset.calculationMode === resolveCalculationMode(calculationMode));
         });
 
-        vatCalculatorModeButtons.forEach((button) => {
-          button.classList.toggle(
-            "is-active",
-            button.dataset.vatCalcMode === resolveVatCalculatorMode(vatCalculatorMode)
-          );
-        });
+        if (calculationCaption) {
+          calculationCaption.textContent = modeMeta.caption;
+        }
+
+        if (unitPriceHeading) {
+          unitPriceHeading.innerHTML = modeMeta.heading + "<br><small>UNIT/PRICE</small>";
+        }
       };
 
       typeButtons.forEach((button) => {
@@ -1969,22 +1934,13 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
         });
       });
 
-      withholdingCalculatorModeButtons.forEach((button) => {
+      calculationModeButtons.forEach((button) => {
         button.addEventListener("click", () => {
-          withholdingCalculatorMode = resolveWithholdingCalculatorMode(button.dataset.withholdingCalcMode);
-          syncCalculatorMode();
+          calculationMode = resolveCalculationMode(button.dataset.calculationMode);
+          syncCalculationModeUi();
           syncUnitPricesForMode();
           syncTotals();
-          showStatus(currentWithholdingCalculatorModeMeta().successMessage, "success");
-        });
-      });
-
-      vatCalculatorModeButtons.forEach((button) => {
-        button.addEventListener("click", () => {
-          vatCalculatorMode = resolveVatCalculatorMode(button.dataset.vatCalcMode);
-          syncCalculatorMode();
-          syncTotals();
-          showStatus(currentVatCalculatorModeMeta().successMessage, "success");
+          showStatus(currentCalculationModeMeta().status, "success");
         });
       });
 
@@ -2022,7 +1978,7 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
         });
 
         field.addEventListener("focus", () => {
-          if (isPriceField && isCompanyWithholdingMode()) {
+          if (isPriceField && isReverseMode()) {
             const row = field.closest("[data-item-row]");
 
             if (row?.dataset.baseUnitPrice) {
@@ -2051,7 +2007,7 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
               storeRowBaseUnitPrice(row, parsed);
             }
 
-            if (isCompanyWithholdingMode()) {
+            if (isReverseMode()) {
               syncUnitPricesForMode();
             }
           }
@@ -2146,7 +2102,7 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
       syncUnitPricesForMode();
       syncTotals();
       syncAddRowButton();
-      syncCalculatorMode();
+      syncCalculationModeUi();
       setCustomerActionState();
       updateDraftControls();
     })();
