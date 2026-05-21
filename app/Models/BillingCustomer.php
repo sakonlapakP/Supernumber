@@ -40,7 +40,25 @@ class BillingCustomer extends Model
             return $companyName;
         }
 
-        return $this->contact_name;
+        $contactName = $this->contact_name;
+
+        if ($contactName !== '') {
+            return $contactName;
+        }
+
+        $phone = trim((string) $this->phone);
+
+        if ($phone !== '') {
+            return $phone;
+        }
+
+        $email = trim((string) $this->email);
+
+        if ($email !== '') {
+            return $email;
+        }
+
+        return 'ลูกค้า #' . $this->id;
     }
 
     public function getContactNameAttribute(): string

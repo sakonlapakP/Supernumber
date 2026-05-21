@@ -64,6 +64,11 @@ class AdminSalesDocumentWorkspaceTest extends TestCase
 
     public function test_admin_can_view_quick_sales_document_form_updates(): void
     {
+        BillingCustomer::query()->create([
+            'phone' => '0644623651',
+            'is_active' => true,
+        ]);
+
         $admin = User::factory()->create([
             'username' => 'admin-sales-docs-quick',
             'role' => User::ROLE_ADMIN,
@@ -77,6 +82,7 @@ class AdminSalesDocumentWorkspaceTest extends TestCase
         $response->assertOk();
         $response->assertSee('วันที่ออกเอกสาร');
         $response->assertSee('วันสิ้นสุดเอกสาร');
+        $response->assertSee('0644623651');
         $response->assertSee('data-qdoc-payment-method', false);
         $response->assertSee('data-qdoc-payment-bank value="ธนาคารกสิกรไทย บจก. ซุปเปอร์นัมเบอร์" readonly', false);
         $response->assertSee('data-qdoc-customer-name placeholder="เลือกชื่อบริษัทด้านบน" readonly', false);

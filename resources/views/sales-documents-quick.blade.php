@@ -456,6 +456,15 @@
       grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
       gap: 10px;
     }
+    .qdoc-meta-grid .qdoc-label,
+    .qdoc-meta-grid .qdoc-input {
+      min-width: 0;
+      min-inline-size: 0;
+    }
+    @media (max-width: 480px) {
+      .qdoc-meta-grid { gap: 8px; }
+      .qdoc-meta-grid .qdoc-input { padding-left: 6px; padding-right: 6px; }
+    }
 
     .qdoc-form-row {
       display: grid;
