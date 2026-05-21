@@ -3,6 +3,12 @@
 @section('title', 'Supernumber Admin | เบอร์ที่พักไว้')
 
 @section('content')
+  <style>
+    .hold-package-cell {
+      text-align: center;
+    }
+  </style>
+
   <div class="admin-page-head">
     <div>
       <h1>เบอร์ที่พักไว้</h1>
@@ -99,7 +105,7 @@
           <tr>
             <th>เบอร์</th>
             <th>เครือข่าย</th>
-            <th>แพ็กเกจ / ราคาเบอร์</th>
+            <th>แพ็กเกจ / ราคา</th>
             <th>ผู้จอง Number</th>
             <th>จัดการ</th>
           </tr>
@@ -112,16 +118,21 @@
                 $holdLog = $number->getRelation('holdLog');
                 $reservedBy = trim((string) ($holdOrder?->full_name ?: ''));
                 $reservedAt = $holdOrder?->created_at ?: $holdLog?->created_at;
+                // Intentionally keep hold-number postpaid package labels compact for admins:
+                // show "แพ็กเกจ 1499/1199/699" instead of the full "True Super Value ..." name.
+                $packageDisplay = $number->is_postpaid && $number->monthly_package_price !== null
+                    ? 'แพ็กเกจ ' . $number->monthly_package_price
+                    : 'เติมเงิน';
               @endphp
               <tr class="hold-number-row" data-phone-number="{{ preg_replace('/\D/', '', $number->phone_number) }}">
                 <td>
                   <div class="admin-number">{{ $number->formatted_number }}</div>
                 </td>
                 <td>{{ $number->network_label }}</td>
-                <td>
-                  <div>{{ $number->is_postpaid ? $number->package_label : 'เติมเงิน' }}</div>
+                <td class="hold-package-cell">
+                  <div>{{ $packageDisplay }}</div>
                   <div class="admin-muted" style="font-size: 0.86rem;">
-                    ราคาเบอร์ {{ $number->payment_label }}
+                    ราคา {{ $number->payment_label }}
 
                   </div>
                 </td>
