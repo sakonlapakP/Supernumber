@@ -98,12 +98,9 @@
         <thead>
           <tr>
             <th>เบอร์</th>
-            <th>ผลรวม</th>
-            <th>ประเภท</th>
             <th>เครือข่าย</th>
             <th>แพ็กเกจ / ราคาเบอร์</th>
             <th>ผู้จอง Number</th>
-            <th>วันเวลาจอง</th>
             <th>จัดการ</th>
           </tr>
         </thead>
@@ -123,8 +120,6 @@
                 <td>
                   <div class="admin-number">{{ $number->formatted_number }}</div>
                 </td>
-                <td>{{ $number->number_sum ?: '-' }}</td>
-                <td>{{ $number->service_type_label }}</td>
                 <td>{{ $number->network_label }}</td>
                 <td>
                   <div>{{ $number->is_postpaid ? $number->package_label : 'เติมเงิน' }}</div>
@@ -139,7 +134,6 @@
                     <div class="admin-muted" style="font-size: 0.86rem;">{{ $reservedContact }}</div>
                   @endif
                 </td>
-                <td>{{ $reservedAt?->timezone('Asia/Bangkok')->format('Y-m-d H:i') ?: '-' }}</td>
                 <td class="admin-action-cell">
                   <div class="admin-action-group">
                     <a href="{{ route('admin.numbers.edit', $number) }}" class="admin-button admin-button--muted admin-button--compact">แก้ไข</a>
@@ -153,11 +147,11 @@
               </tr>
             @endforeach
             <tr id="hold-numbers-empty-row" hidden>
-              <td colspan="8" class="admin-muted">ไม่พบเบอร์ที่ตรงกับคำค้นหา</td>
+              <td colspan="5" class="admin-muted">ไม่พบเบอร์ที่ตรงกับคำค้นหา</td>
             </tr>
           @else
             <tr>
-              <td colspan="8" class="admin-muted">ยังไม่มีเบอร์ที่อยู่ในสถานะ hold</td>
+              <td colspan="5" class="admin-muted">ยังไม่มีเบอร์ที่อยู่ในสถานะ hold</td>
             </tr>
           @endif
         </tbody>

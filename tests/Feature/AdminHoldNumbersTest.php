@@ -61,7 +61,9 @@ class AdminHoldNumbersTest extends TestCase
             ->assertSee('064-451-4194')
             ->assertSee('คุณ สมชาย ทดสอบ')
             ->assertSee('0811112222')
-            ->assertSee('2026-05-20 13:45');
+            ->assertDontSee('<th>ผลรวม</th>', false)
+            ->assertDontSee('<th>ประเภท</th>', false)
+            ->assertDontSee('<th>วันเวลาจอง</th>', false);
     }
 
     public function test_admin_hold_number_shows_admin_name_when_no_order_reserved_it(): void
@@ -94,8 +96,7 @@ class AdminHoldNumbersTest extends TestCase
             ->get(route('admin.hold-numbers'))
             ->assertOk()
             ->assertSee('064-999-8888')
-            ->assertSee('Admin Hold Tester')
-            ->assertSee('2026-05-20 14:10');
+            ->assertSee('Admin Hold Tester');
     }
 
     public function test_admin_hold_numbers_are_listed_newest_hold_time_first(): void
@@ -151,9 +152,7 @@ class AdminHoldNumbersTest extends TestCase
             ->assertOk()
             ->assertSeeInOrder([
                 '064-111-2222',
-                '2026-05-20 15:30',
                 '064-333-4444',
-                '2026-05-20 10:00',
             ]);
     }
 
