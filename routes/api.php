@@ -33,6 +33,7 @@ Route::middleware(ApiTokenAuth::class)->group(function () {
         Route::post('articles/{article}/share', [ArticleController::class, 'share'])->name('api.articles.share');
         Route::post('article-plans', [ArticlePlanController::class, 'store'])->name('api.article-plans.store');
         Route::match(['put', 'patch'], 'article-plans/{articlePlan}', [ArticlePlanController::class, 'update'])->name('api.article-plans.update');
+        Route::patch('article-plans/{articlePlan}/status', [ArticlePlanController::class, 'updateStatus'])->name('api.article-plans.update-status');
         Route::delete('article-plans/{articlePlan}', [ArticlePlanController::class, 'destroy'])->name('api.article-plans.destroy');
     });
 
