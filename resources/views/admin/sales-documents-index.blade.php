@@ -74,6 +74,34 @@
     {{ $documents->links() }}
   </div>
 
+  {{-- Calculation Mode Modal --}}
+  <div id="easy-docs-calc-modal" class="easy-docs-calc-modal" hidden>
+    <div class="easy-docs-calc-panel">
+      <h3>เลือกวิธีการคำนวนราคา</h3>
+
+      <div class="easy-docs-calc-modes">
+        <button type="button" class="easy-docs-calc-mode-btn active" data-calc-mode="standard">
+          <div class="easy-docs-calc-mode-label">📌 Standard (กำหนดราคาค่าจ้าง)</div>
+          <div class="easy-docs-calc-mode-desc">คุณกำหนดราคาค่าจ้าง ระบบคำนวนภาษี</div>
+        </button>
+        <button type="button" class="easy-docs-calc-mode-btn" data-calc-mode="reverse">
+          <div class="easy-docs-calc-mode-label">📈 Reverse (กำหนดรายได้สุทธิ)</div>
+          <div class="easy-docs-calc-mode-desc">คุณกำหนดรายได้สุทธิที่ต้องการ ระบบคำนวนราคา</div>
+        </button>
+      </div>
+
+      <div id="easy-docs-calc-input-section" class="easy-docs-calc-input-group">
+        <label class="easy-docs-calc-input-label" id="easy-docs-calc-input-label">ราคาค่าจ้าง (Base Price)</label>
+        <input type="number" id="easy-docs-calc-input" class="easy-docs-input" placeholder="0.00" step="0.01" min="0">
+      </div>
+
+      <div class="easy-docs-calc-buttons">
+        <button type="button" class="admin-button admin-button--ghost" data-calc-close>ยกเลิก</button>
+        <button type="button" class="admin-button admin-button--primary" id="easy-docs-calc-calculate-btn">คำนวน</button>
+      </div>
+    </div>
+  </div>
+
   {{-- Easy Documents Wizard Modal --}}
   <div id="easy-docs-modal" class="easy-docs-modal" hidden>
     <div class="easy-docs-backdrop" data-easy-docs-close></div>
@@ -124,6 +152,40 @@
 
             {{-- Items List --}}
             <div id="easy-docs-items-list" class="easy-docs-items-list"></div>
+          </div>
+
+          {{-- Calculate Button (shows when subtotal >= 50,000) --}}
+          <div id="easy-docs-calculate-section" class="easy-docs-section" style="display: none;">
+            <button type="button" class="easy-docs-button easy-docs-button--secondary" id="easy-docs-calculate-btn" style="width: 100%;">
+              🧮 คำนวนราคา
+            </button>
+          </div>
+
+          {{-- Detailed Pricing Breakdown --}}
+          <div id="easy-docs-pricing-breakdown" class="easy-docs-section" style="display: none;">
+            <h3 class="easy-docs-section-title">💵 รายละเอียดราคา</h3>
+            <div class="easy-docs-pricing-table">
+              <div class="easy-docs-pricing-row">
+                <span>ราคารวมก่อนภาษี:</span>
+                <strong id="easy-docs-subtotal">฿0.00</strong>
+              </div>
+              <div class="easy-docs-pricing-row">
+                <span>ภาษีมูลค่าเพิ่ม (7%):</span>
+                <strong id="easy-docs-vat">÷ ฿0.00</strong>
+              </div>
+              <div class="easy-docs-pricing-row easy-docs-pricing-row--divider">
+                <span>ยอดรวมทั้งหมด:</span>
+                <strong id="easy-docs-grand-total">฿0.00</strong>
+              </div>
+              <div class="easy-docs-pricing-row">
+                <span>ภาษีหัก ณ ที่จ่าย (3%):</span>
+                <strong id="easy-docs-wht">- ฿0.00</strong>
+              </div>
+              <div class="easy-docs-pricing-row easy-docs-pricing-row--highlight">
+                <span>ยอดชำระสุทธิ:</span>
+                <strong id="easy-docs-net-payment">฿0.00</strong>
+              </div>
+            </div>
           </div>
 
           <div class="easy-docs-section">
@@ -467,6 +529,113 @@
       margin-bottom: 12px;
       border: 1px solid #e5e7eb;
     }
+    .easy-docs-pricing-table {
+      display: flex;
+      flex-direction: column;
+      gap: 0;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      overflow: hidden;
+      background: #fff;
+    }
+    .easy-docs-pricing-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 10px 12px;
+      border-bottom: 1px solid #f3f4f6;
+      font-size: 13px;
+    }
+    .easy-docs-pricing-row:last-child {
+      border-bottom: none;
+    }
+    .easy-docs-pricing-row--divider {
+      border-bottom: 2px solid #bfdbfe;
+      background: #eff6ff;
+      font-weight: 600;
+    }
+    .easy-docs-pricing-row--highlight {
+      background: #f0fdf4;
+      border-bottom: none;
+      font-weight: 600;
+      color: #15803d;
+    }
+    .easy-docs-calc-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 3000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.5);
+    }
+    .easy-docs-calc-modal[hidden] {
+      display: none;
+    }
+    .easy-docs-calc-panel {
+      position: relative;
+      background: #fff;
+      border-radius: 8px;
+      padding: 20px;
+      width: min(400px, 90vw);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+    }
+    .easy-docs-calc-panel h3 {
+      margin: 0 0 16px;
+      font-size: 16px;
+      font-weight: 600;
+      color: #111827;
+    }
+    .easy-docs-calc-modes {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    .easy-docs-calc-mode-btn {
+      padding: 12px 16px;
+      border: 2px solid #d1d5db;
+      border-radius: 6px;
+      background: #fff;
+      font-size: 13px;
+      cursor: pointer;
+      text-align: left;
+      transition: all 0.15s;
+    }
+    .easy-docs-calc-mode-btn:hover {
+      border-color: #9ca3af;
+      background: #f9fafb;
+    }
+    .easy-docs-calc-mode-btn.active {
+      border-color: #2563eb;
+      background: #dbeafe;
+    }
+    .easy-docs-calc-mode-label {
+      font-weight: 600;
+      color: #111827;
+      margin-bottom: 4px;
+    }
+    .easy-docs-calc-mode-desc {
+      font-size: 12px;
+      color: #6b7280;
+    }
+    .easy-docs-calc-input-group {
+      margin-bottom: 16px;
+    }
+    .easy-docs-calc-input-label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b7280;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .easy-docs-calc-buttons {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+    }
     .easy-docs-footer {
       display: flex;
       justify-content: flex-end;
@@ -495,8 +664,20 @@
       const itemsList = document.getElementById('easy-docs-items-list');
       const totalDisplay = document.getElementById('easy-docs-total');
 
+      // Calculation modal elements
+      const calcModal = document.getElementById('easy-docs-calc-modal');
+      const calcCloseBtns = document.querySelectorAll('[data-calc-close]');
+      const calcModeBtns = document.querySelectorAll('[data-calc-mode]');
+      const calcInputLabel = document.getElementById('easy-docs-calc-input-label');
+      const calcInput = document.getElementById('easy-docs-calc-input');
+      const calcCalculateBtn = document.getElementById('easy-docs-calc-calculate-btn');
+      const calculateBtn = document.getElementById('easy-docs-calculate-btn');
+      const calculateSection = document.getElementById('easy-docs-calculate-section');
+      const pricingBreakdown = document.getElementById('easy-docs-pricing-breakdown');
+
       let currentStep = 1;
       const totalSteps = 4;
+      let currentCalcMode = 'standard';
       const wizardData = {
         customerId: null,
         items: [],
@@ -513,10 +694,17 @@
       openBtn?.addEventListener('click', () => {
         modal.removeAttribute('hidden');
         currentStep = 1;
+        currentCalcMode = 'standard';
         wizardData.items = [];
         productNameInput.value = '';
         productPriceInput.value = '';
         productQtyInput.value = '1';
+        calcInput.value = '';
+        pricingBreakdown.style.display = 'none';
+        calculateSection.style.display = 'none';
+        // Reset calculation mode buttons
+        calcModeBtns.forEach(btn => btn.classList.remove('active'));
+        calcModeBtns[0]?.classList.add('active');
         renderItems();
         showStep(1);
       });
@@ -584,7 +772,123 @@
           style: 'currency',
           currency: 'THB',
         }).format(total);
+
+        // Show/hide calculate section based on total >= 50,000
+        if (total >= 50000) {
+          calculateSection.style.display = 'block';
+        } else {
+          calculateSection.style.display = 'none';
+          pricingBreakdown.style.display = 'none';
+        }
       }
+
+      // Calculation modal handlers
+      calculateBtn?.addEventListener('click', () => {
+        calcModal.removeAttribute('hidden');
+        calcInput.value = '';
+        calcInput.focus();
+      });
+
+      calcCloseBtns?.forEach(btn => {
+        btn.addEventListener('click', () => {
+          calcModal.setAttribute('hidden', '');
+        });
+      });
+
+      // Calculate mode selection
+      calcModeBtns?.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          calcModeBtns.forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentCalcMode = btn.dataset.calcMode;
+
+          // Update input label based on mode
+          if (currentCalcMode === 'standard') {
+            calcInputLabel.textContent = 'ราคาค่าจ้าง (Base Price)';
+            calcInput.placeholder = '0.00';
+            const total = wizardData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+            calcInput.value = total.toFixed(2);
+          } else {
+            calcInputLabel.textContent = 'รายได้สุทธิที่ต้องการ (Target Income)';
+            calcInput.placeholder = '0.00';
+            calcInput.value = '';
+          }
+          calcInput.focus();
+        });
+      });
+
+      // Calculate pricing
+      function calculatePricing(baseOrTargetAmount) {
+        const amount = parseFloat(baseOrTargetAmount) || 0;
+        let sellingPrice, vat, grandTotal, wht, customerNetPayment, serviceNetIncome;
+
+        if (currentCalcMode === 'standard') {
+          // Standard Calculation
+          // Input: Base Price
+          // VAT = Base Price × 0.07
+          // Grand Total = Base Price + VAT
+          // WHT = Base Price × 0.03
+          // Customer Net Payment = Grand Total - WHT
+          // Service Net Income = Base Price - WHT
+          sellingPrice = amount;
+          vat = sellingPrice * 0.07;
+          grandTotal = sellingPrice + vat;
+          wht = sellingPrice * 0.03;
+          customerNetPayment = grandTotal - wht;
+          serviceNetIncome = sellingPrice - wht;
+        } else {
+          // Reverse Calculation
+          // Input: Target Income
+          // Selling Price = Target Income / 0.97
+          // VAT = Selling Price × 0.07
+          // Grand Total = Selling Price + VAT
+          // WHT = Selling Price × 0.03
+          // Customer Net Payment = Grand Total - WHT
+          // Service Net Income = Selling Price - WHT
+          sellingPrice = amount / 0.97;
+          vat = sellingPrice * 0.07;
+          grandTotal = sellingPrice + vat;
+          wht = sellingPrice * 0.03;
+          customerNetPayment = grandTotal - wht;
+          serviceNetIncome = sellingPrice - wht;
+        }
+
+        // Update pricing breakdown display
+        updatePricingBreakdown(sellingPrice, vat, grandTotal, wht, customerNetPayment);
+        pricingBreakdown.style.display = 'block';
+
+        // Close calculation modal
+        calcModal.setAttribute('hidden', '');
+      }
+
+      function updatePricingBreakdown(sellingPrice, vat, grandTotal, wht, customerNetPayment) {
+        const formatter = new Intl.NumberFormat('th-TH', {
+          style: 'currency',
+          currency: 'THB',
+        });
+
+        document.getElementById('easy-docs-subtotal').textContent = formatter.format(sellingPrice);
+        document.getElementById('easy-docs-vat').textContent = '÷ ' + formatter.format(vat);
+        document.getElementById('easy-docs-grand-total').textContent = formatter.format(grandTotal);
+        document.getElementById('easy-docs-wht').textContent = '- ' + formatter.format(wht);
+        document.getElementById('easy-docs-net-payment').textContent = formatter.format(customerNetPayment);
+      }
+
+      calcCalculateBtn?.addEventListener('click', () => {
+        const amount = parseFloat(calcInput.value);
+        if (!amount || amount <= 0) {
+          alert('กรุณากรอกจำนวนเงินที่ถูกต้อง');
+          return;
+        }
+        calculatePricing(amount);
+      });
+
+      // Allow enter key to submit calculation
+      calcInput?.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+          calcCalculateBtn.click();
+        }
+      });
 
       // Step navigation
       nextBtn?.addEventListener('click', () => {

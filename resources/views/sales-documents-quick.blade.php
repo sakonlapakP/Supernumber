@@ -286,6 +286,23 @@
           </label>
         </div>
       </div>
+
+      {{-- Document actions stay in the main column so mobile users can finish the document. --}}
+      <div class="admin-card qdoc-card qdoc-actions" aria-label="บันทึกและสร้างเอกสาร">
+        <div class="qdoc-section-title">จัดการเอกสาร</div>
+        <button type="button" class="admin-button admin-button--ghost qdoc-action-btn" data-qdoc-save-draft>
+          💾 บันทึกร่าง
+        </button>
+        <button type="button" class="admin-button admin-button--ghost qdoc-action-btn" data-qdoc-preview>
+          👁 ดูตัวอย่าง
+        </button>
+        <button type="button" class="admin-button admin-button--primary qdoc-action-btn" data-qdoc-download="quotation">
+          📄 สร้าง Quotation
+        </button>
+        <button type="button" class="admin-button admin-button--save qdoc-action-btn" data-qdoc-download="invoice">
+          🧾 สร้าง Invoice
+        </button>
+      </div>
     </section>{{-- end .qdoc-main --}}
 
     {{-- RIGHT SIDEBAR --}}
@@ -361,22 +378,6 @@
         <div class="qdoc-baht-text">
           <strong data-qdoc-baht-text>ศูนย์บาทถ้วน</strong>
         </div>
-      </div>
-
-      {{-- Action buttons --}}
-      <div class="admin-card qdoc-card qdoc-actions">
-        <button type="button" class="admin-button admin-button--ghost qdoc-action-btn" data-qdoc-save-draft>
-          💾 บันทึกร่าง
-        </button>
-        <button type="button" class="admin-button admin-button--ghost qdoc-action-btn" data-qdoc-preview>
-          👁 ดูตัวอย่าง
-        </button>
-        <button type="button" class="admin-button admin-button--primary qdoc-action-btn" data-qdoc-download="quotation">
-          📄 ดาวน์โหลด Quotation
-        </button>
-        <button type="button" class="admin-button admin-button--save qdoc-action-btn" data-qdoc-download="invoice">
-          🧾 ดาวน์โหลด Invoice
-        </button>
       </div>
 
       {{-- Drafts list --}}
