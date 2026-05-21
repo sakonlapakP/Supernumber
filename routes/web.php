@@ -4783,6 +4783,25 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             $number->setRelation('holdLog', $holdLog);
         });
 
+        $numbers = $numbers
+            ->sort(function (PhoneNumber $first, PhoneNumber $second): int {
+                $firstReservedAt = $first->getRelation('holdOrder')?->created_at
+                    ?: $first->getRelation('holdLog')?->created_at
+                    ?: $first->updated_at
+                    ?: $first->created_at;
+                $secondReservedAt = $second->getRelation('holdOrder')?->created_at
+                    ?: $second->getRelation('holdLog')?->created_at
+                    ?: $second->updated_at
+                    ?: $second->created_at;
+
+                $firstTimestamp = $firstReservedAt?->getTimestamp() ?? 0;
+                $secondTimestamp = $secondReservedAt?->getTimestamp() ?? 0;
+
+                return $secondTimestamp <=> $firstTimestamp
+                    ?: $second->id <=> $first->id;
+            })
+            ->values();
+
         return view('admin.hold-numbers', compact('numbers'));
     })->name('hold-numbers');
 
