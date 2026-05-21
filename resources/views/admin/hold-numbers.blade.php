@@ -110,10 +110,7 @@
               @php
                 $holdOrder = $number->getRelation('holdOrder');
                 $holdLog = $number->getRelation('holdLog');
-                $adminUser = $holdLog?->user;
-                $adminName = trim((string) ($adminUser?->name ?: $adminUser?->username ?: ''));
-                $reservedBy = trim((string) ($holdOrder?->full_name ?: $adminName));
-                $reservedContact = trim((string) ($holdOrder?->current_phone ?: $holdOrder?->email ?: ''));
+                $reservedBy = trim((string) ($holdOrder?->full_name ?: ''));
                 $reservedAt = $holdOrder?->created_at ?: $holdLog?->created_at;
               @endphp
               <tr class="hold-number-row" data-phone-number="{{ preg_replace('/\D/', '', $number->phone_number) }}">
@@ -130,9 +127,6 @@
                 </td>
                 <td>
                   <div>{{ $reservedBy !== '' ? $reservedBy : '-' }}</div>
-                  @if ($reservedContact !== '')
-                    <div class="admin-muted" style="font-size: 0.86rem;">{{ $reservedContact }}</div>
-                  @endif
                 </td>
                 <td class="admin-action-cell">
                   <div class="admin-action-group">

@@ -60,13 +60,13 @@ class AdminHoldNumbersTest extends TestCase
             ->assertOk()
             ->assertSee('064-451-4194')
             ->assertSee('คุณ สมชาย ทดสอบ')
-            ->assertSee('0811112222')
+            ->assertDontSee('0811112222')
             ->assertDontSee('<th>ผลรวม</th>', false)
             ->assertDontSee('<th>ประเภท</th>', false)
             ->assertDontSee('<th>วันเวลาจอง</th>', false);
     }
 
-    public function test_admin_hold_number_shows_admin_name_when_no_order_reserved_it(): void
+    public function test_admin_hold_number_shows_dash_when_no_order_reserved_it(): void
     {
         $this->travelTo('2026-05-20 14:10:00');
 
@@ -85,6 +85,12 @@ class AdminHoldNumbersTest extends TestCase
             'role' => User::ROLE_ADMIN,
             'is_active' => true,
         ]);
+        $viewer = User::factory()->create([
+            'name' => 'Hold Numbers Viewer',
+            'username' => 'hold-manager-viewer',
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
 
         $this->withSession($this->adminSession($admin))
             ->post(route('admin.hold-numbers.add'), [
@@ -92,11 +98,12 @@ class AdminHoldNumbersTest extends TestCase
             ])
             ->assertRedirect(route('admin.hold-numbers'));
 
-        $this->withSession($this->adminSession($admin))
+        $this->withSession($this->adminSession($viewer))
             ->get(route('admin.hold-numbers'))
             ->assertOk()
             ->assertSee('064-999-8888')
-            ->assertSee('Admin Hold Tester');
+            ->assertSee('<div>-</div>', false)
+            ->assertDontSee('Admin Hold Tester');
     }
 
     public function test_admin_hold_numbers_are_listed_newest_hold_time_first(): void
