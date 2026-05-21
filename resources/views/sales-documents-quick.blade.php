@@ -774,11 +774,20 @@
     /* ─── Mobile optimizations ─── */
     @media (max-width: 768px) {
       .qdoc-page { gap: 10px; padding: 8px 0; }
+      .qdoc-layout,
+      .qdoc-main,
+      .qdoc-sidebar,
+      .qdoc-card,
+      .qdoc-items-table-wrap {
+        min-width: 0;
+        max-width: 100%;
+      }
       .qdoc-main,
       .qdoc-sidebar { gap: 8px; }
       .qdoc-items-table-wrap { margin: 0 -4px; padding: 0 4px; }
       .qdoc-card { padding: 10px 8px; }
       .qdoc-main { gap: 8px; }
+      .qdoc-form-row { grid-template-columns: minmax(0, 1fr); }
       .qdoc-label { gap: 2px; }
       .qdoc-label span { font-size: 10px; }
       .qdoc-input { padding: 6px 8px; font-size: 12px; min-height: 30px; }
@@ -813,9 +822,15 @@
       h1 { font-size: 13px !important; margin-bottom: 2px !important; }
       .admin-subtitle { font-size: 9px !important; line-height: 1.1; }
       .qdoc-doc-type-label { font-size: 10px; }
-      .qdoc-items-table { font-size: 10px; }
+      .qdoc-items-table { min-width: 100%; font-size: 10px; }
       .qdoc-items-table th { font-size: 8px; padding: 2px 2px 3px; }
       .qdoc-items-table td { padding: 2px 2px; }
+      col.qdoc-col-index { width: 28px; }
+      col.qdoc-col-qty,
+      col.qdoc-col-unit { width: 48px; }
+      col.qdoc-col-price,
+      col.qdoc-col-amount { width: 64px; }
+      col.qdoc-col-del { width: 24px; }
       .qdoc-payment-method { max-width: 100%; font-size: 11px; }
       .qdoc-totals { font-size: 11px; }
       .qdoc-total-row { padding: 2px 0; }
