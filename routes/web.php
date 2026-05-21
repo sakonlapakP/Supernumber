@@ -1869,7 +1869,12 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->latest('updated_at')
             ->paginate(30);
 
-        return view('admin.sales-documents-index', compact('documents'));
+        $customers = BillingCustomer::query()
+            ->where('is_active', true)
+            ->orderByRaw('LOWER(COALESCE(company_name, first_name, last_name, ""))')
+            ->get();
+
+        return view('admin.sales-documents-index', compact('documents', 'customers'));
     })->name('saved-sales-documents.index');
 
     Route::get('/saved-sales-documents/{salesDocument}', function (SalesDocument $salesDocument) use ($ensureDocumentOfficer) {
@@ -2069,6 +2074,81 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         return response($html)->header('Content-Type', 'text/html; charset=UTF-8');
     })->name('sales-documents-quick.preview-html');
+
+    Route::post('/easy-documents/create', function (Request $request) use ($ensureAdmin, $currentAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return response()->json(['success' => false, 'message' => 'Unauthorized'], 401);
+        }
+
+        $data = $request->validate([
+            'customerId' => ['required', 'integer'],
+            'items' => ['required', 'array'],
+            'items.*.name' => ['required', 'string'],
+            'items.*.price' => ['required', 'numeric', 'min:0'],
+            'items.*.qty' => ['required', 'integer', 'min:1'],
+            'taxMethod' => ['required', 'in:customer-pays,we-pay'],
+            'paymentMethod' => ['required', 'in:bank,qr,cash'],
+            'paymentCondition' => ['required', 'in:full,installment,specific-date'],
+            'paymentDetail' => ['nullable', 'string'],
+        ]);
+
+        try {
+            // Get customer info
+            $customer = BillingCustomer::findOrFail($data['customerId']);
+
+            // Calculate total
+            $total = collect($data['items'])->sum(fn($item) => $item['price'] * $item['qty']);
+
+            // Build payload for sales document
+            $payload = [
+                'document_type' => 'quotation',
+                'document_number' => 'QT-' . now('Asia/Bangkok')->format('ymd') . '-001',
+                'document_date' => now('Asia/Bangkok')->format('Y-m-d'),
+                'due_date' => now('Asia/Bangkok')->addDays(7)->format('Y-m-d'),
+                'customer' => [
+                    'id' => $customer->id,
+                    'name' => $customer->display_name,
+                    'company_name' => $customer->company_name,
+                    'contact_name' => $customer->contact_name,
+                    'tax_id' => $customer->tax_id,
+                    'address' => $customer->address,
+                    'email' => $customer->email,
+                    'phone' => $customer->phone,
+                    'payment_term' => $customer->payment_term,
+                ],
+                'items' => $data['items'],
+                'tax_method' => $data['taxMethod'],
+                'payment_method' => $data['paymentMethod'],
+                'payment_condition' => $data['paymentCondition'],
+                'payment_detail' => $data['paymentDetail'],
+                'total' => $total,
+            ];
+
+            // Create draft document
+            $document = SalesDocument::create([
+                'document_type' => 'quotation',
+                'document_number' => 'DRAFT-' . now('Asia/Bangkok')->format('YmdHis'),
+                'file_name' => 'draft-' . now('Asia/Bangkok')->format('YmdHis'),
+                'customer_name' => $customer->display_name,
+                'is_draft' => true,
+                'is_active' => true,
+                'pdf_disk' => 'local',
+                'pdf_path' => '',
+                'payload' => $payload,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'สร้างร่างเอกสารสำเร็จ',
+                'redirect_url' => route('admin.sales-documents-quick', ['draft' => $document->id]),
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'เกิดข้อผิดพลาด: ' . $e->getMessage(),
+            ], 500);
+        }
+    })->name('easy-documents.create');
 
     Route::get('/customers', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {

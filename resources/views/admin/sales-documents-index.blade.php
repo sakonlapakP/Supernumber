@@ -16,6 +16,7 @@
     </div>
     <div class="admin-page-actions">
       <div class="admin-summary">ทั้งหมด {{ number_format($documents->total()) }} เอกสาร</div>
+      <button type="button" class="admin-button admin-button--primary admin-button--compact" data-easy-docs-open>✨ Easy Documents</button>
       <a href="{{ route('admin.sales-documents-quick') }}" class="admin-button admin-button--primary admin-button--compact">⚡ สร้างเอกสารด่วน</a>
       <a href="{{ route('admin.sales-documents') }}" class="admin-button admin-button--compact">สร้างใบเสนอราคา / ใบแจ้งหนี้</a>
     </div>
@@ -72,4 +73,658 @@
   <div style="margin-top: 18px;">
     {{ $documents->links() }}
   </div>
+
+  {{-- Easy Documents Wizard Modal --}}
+  <div id="easy-docs-modal" class="easy-docs-modal" hidden>
+    <div class="easy-docs-backdrop" data-easy-docs-close></div>
+    <div class="easy-docs-panel">
+      <div class="easy-docs-header">
+        <h2 id="easy-docs-title" class="easy-docs-title">ขั้นตอน 1: เลือกลูกค้า</h2>
+        <div class="easy-docs-step-indicator">
+          <span id="easy-docs-step" class="easy-docs-step">1 / 4</span>
+        </div>
+        <button type="button" class="easy-docs-close" data-easy-docs-close aria-label="ปิด">✕</button>
+      </div>
+
+      <div class="easy-docs-body">
+        {{-- Step 1: Customer Selection --}}
+        <div id="easy-docs-step-1" class="easy-docs-step-content is-active">
+          <div class="easy-docs-field">
+            <label class="easy-docs-label">
+              <span>เลือกลูกค้า</span>
+              <select id="easy-docs-customer" class="easy-docs-input">
+                <option value="">-- เลือกลูกค้า --</option>
+                @foreach ($customers ?? [] as $customer)
+                  <option value="{{ $customer->id }}">{{ $customer->display_name }}</option>
+                @endforeach
+              </select>
+            </label>
+          </div>
+          <button type="button" class="easy-docs-button easy-docs-button--link" data-easy-docs-create-customer>
+            ➕ สร้างลูกค้าใหม่
+          </button>
+        </div>
+
+        {{-- Step 2: Products & Tax Method --}}
+        <div id="easy-docs-step-2" class="easy-docs-step-content">
+          <div class="easy-docs-section">
+            <h3 class="easy-docs-section-title">📦 รายการสินค้า</h3>
+
+            {{-- Product Input Form --}}
+            <div id="easy-docs-product-form" class="easy-docs-product-form">
+              <div style="display: grid; grid-template-columns: 1fr 80px 80px; gap: 8px; margin-bottom: 12px;">
+                <input type="text" id="easy-docs-product-name" class="easy-docs-input" placeholder="ชื่อสินค้า/บริการ">
+                <input type="number" id="easy-docs-product-price" class="easy-docs-input" placeholder="ราคา" min="0" step="0.01">
+                <input type="number" id="easy-docs-product-qty" class="easy-docs-input" placeholder="จำนวน" value="1" min="1">
+              </div>
+              <button type="button" class="easy-docs-button easy-docs-button--secondary" id="easy-docs-add-item-btn" style="width: 100%;">
+                ➕ เพิ่มรายการ
+              </button>
+            </div>
+
+            {{-- Items List --}}
+            <div id="easy-docs-items-list" class="easy-docs-items-list"></div>
+          </div>
+
+          <div class="easy-docs-section">
+            <h3 class="easy-docs-section-title">💰 วิธีคำนวนภาษี</h3>
+            <div class="easy-docs-radio-group">
+              <label class="easy-docs-radio-label">
+                <input type="radio" name="tax-method" value="customer-pays" checked>
+                <span>ลูกค้าจ่ายภาษี (VAT บวก)</span>
+              </label>
+              <label class="easy-docs-radio-label">
+                <input type="radio" name="tax-method" value="we-pay">
+                <span>เราจ่ายภาษี (VAT หัก)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="easy-docs-summary">
+            <span>ราคารวม:</span>
+            <strong id="easy-docs-total">฿0.00</strong>
+          </div>
+        </div>
+
+        {{-- Step 3: Payment Method & Conditions --}}
+        <div id="easy-docs-step-3" class="easy-docs-step-content">
+          <div class="easy-docs-section">
+            <h3 class="easy-docs-section-title">💳 วิธีการชำระเงิน</h3>
+            <div class="easy-docs-radio-group">
+              <label class="easy-docs-radio-label">
+                <input type="radio" name="payment-method" value="bank" checked>
+                <span>ธนาคาร</span>
+              </label>
+              <label class="easy-docs-radio-label">
+                <input type="radio" name="payment-method" value="qr">
+                <span>โอน QR</span>
+              </label>
+              <label class="easy-docs-radio-label">
+                <input type="radio" name="payment-method" value="cash">
+                <span>เงินสด</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="easy-docs-section">
+            <h3 class="easy-docs-section-title">⏰ เงื่อนการชำระเงิน</h3>
+            <div class="easy-docs-radio-group">
+              <label class="easy-docs-radio-label">
+                <input type="radio" name="payment-condition" value="full" checked>
+                <span>ชำระทั้งหมด</span>
+              </label>
+              <label class="easy-docs-radio-label">
+                <input type="radio" name="payment-condition" value="installment">
+                <span>ชำระงวด</span>
+              </label>
+              <label class="easy-docs-radio-label">
+                <input type="radio" name="payment-condition" value="specific-date">
+                <span>ชำระตามกำหนดวัน</span>
+              </label>
+            </div>
+            <div id="easy-docs-payment-detail" style="margin-top: 12px; display: none;">
+              <input type="text" id="easy-docs-payment-detail-input" class="easy-docs-input" placeholder="กรอกรายละเอียด">
+            </div>
+          </div>
+        </div>
+
+        {{-- Step 4: Summary --}}
+        <div id="easy-docs-step-4" class="easy-docs-step-content">
+          <div class="easy-docs-summary-section">
+            <div class="easy-docs-summary-row">
+              <span>ลูกค้า:</span>
+              <strong id="easy-docs-summary-customer">-</strong>
+            </div>
+            <div class="easy-docs-summary-row">
+              <span>รายการ:</span>
+              <strong id="easy-docs-summary-items">0 รายการ</strong>
+            </div>
+            <div class="easy-docs-summary-row">
+              <span>ภาษี:</span>
+              <strong id="easy-docs-summary-tax">-</strong>
+            </div>
+            <div class="easy-docs-summary-row easy-docs-summary-row--highlight">
+              <span>รวม:</span>
+              <strong id="easy-docs-summary-total">฿0.00</strong>
+            </div>
+            <div class="easy-docs-summary-row">
+              <span>วิธีชำระ:</span>
+              <strong id="easy-docs-summary-payment">-</strong>
+            </div>
+            <div class="easy-docs-summary-row">
+              <span>เงื่อนการชำระ:</span>
+              <strong id="easy-docs-summary-condition">-</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="easy-docs-footer">
+        <button type="button" class="admin-button admin-button--ghost" data-easy-docs-close>ยกเลิก</button>
+        <button type="button" class="admin-button" id="easy-docs-prev-btn" style="display: none;">← ย้อนกลับ</button>
+        <button type="button" class="admin-button admin-button--primary" id="easy-docs-next-btn">ถัดไป →</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* Easy Documents Wizard Styles */
+    .easy-docs-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .easy-docs-modal[hidden] {
+      display: none;
+    }
+    .easy-docs-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      cursor: pointer;
+    }
+    .easy-docs-panel {
+      position: relative;
+      z-index: 1;
+      background: #fff;
+      border-radius: 12px;
+      width: min(600px, 95vw);
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      display: flex;
+      flex-direction: column;
+    }
+    .easy-docs-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 20px;
+      border-bottom: 1px solid #e5e7eb;
+      flex-shrink: 0;
+    }
+    .easy-docs-title {
+      margin: 0;
+      font-size: 18px;
+      font-weight: 600;
+      color: #111827;
+    }
+    .easy-docs-step-indicator {
+      font-size: 12px;
+      color: #6b7280;
+      background: #f3f4f6;
+      padding: 4px 10px;
+      border-radius: 6px;
+    }
+    .easy-docs-close {
+      background: none;
+      border: none;
+      font-size: 20px;
+      cursor: pointer;
+      color: #9ca3af;
+      padding: 0 8px;
+      transition: color 0.15s;
+    }
+    .easy-docs-close:hover {
+      color: #374151;
+    }
+    .easy-docs-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    .easy-docs-step-content {
+      display: none;
+    }
+    .easy-docs-step-content.is-active {
+      display: block;
+    }
+    .easy-docs-section {
+      margin-bottom: 20px;
+    }
+    .easy-docs-section-title {
+      margin: 0 0 12px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #374151;
+    }
+    .easy-docs-field {
+      margin-bottom: 12px;
+    }
+    .easy-docs-label {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .easy-docs-label span {
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+    .easy-docs-input {
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 13px;
+      width: 100%;
+      box-sizing: border-box;
+    }
+    .easy-docs-input:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 2px #dbeafe;
+    }
+    .easy-docs-radio-group {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+    .easy-docs-radio-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      font-size: 13px;
+      color: #111827;
+    }
+    .easy-docs-radio-label input {
+      margin: 0;
+      cursor: pointer;
+    }
+    .easy-docs-button {
+      padding: 8px 16px;
+      border: 1px solid #d1d5db;
+      border-radius: 6px;
+      background: #fff;
+      font-size: 13px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .easy-docs-button:hover {
+      border-color: #9ca3af;
+      background: #f9fafb;
+    }
+    .easy-docs-button--secondary {
+      background: #f0f9ff;
+      border-color: #bfdbfe;
+      color: #1e40af;
+    }
+    .easy-docs-button--secondary:hover {
+      background: #e0f2fe;
+    }
+    .easy-docs-button--link {
+      border: none;
+      background: none;
+      color: #2563eb;
+      text-decoration: none;
+      padding: 4px 0;
+      margin-top: 8px;
+    }
+    .easy-docs-button--link:hover {
+      text-decoration: underline;
+    }
+    .easy-docs-summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      background: #f3f4f6;
+      border-radius: 6px;
+      font-size: 13px;
+    }
+    .easy-docs-summary strong {
+      font-size: 16px;
+      color: #2563eb;
+    }
+    .easy-docs-summary-section {
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .easy-docs-summary-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 13px;
+    }
+    .easy-docs-summary-row:last-child {
+      border-bottom: none;
+    }
+    .easy-docs-summary-row--highlight {
+      background: #eff6ff;
+      padding: 8px 12px;
+      margin: 0 -16px;
+      padding-left: 16px;
+      padding-right: 16px;
+      border-top: 2px solid #bfdbfe;
+      border-bottom: none;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .easy-docs-summary-row strong {
+      font-weight: 600;
+      color: #111827;
+    }
+    .easy-docs-items-list {
+      margin-bottom: 12px;
+    }
+    .easy-docs-item {
+      padding: 10px;
+      background: #f9fafb;
+      border: 1px solid #e5e7eb;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 12px;
+    }
+    .easy-docs-item-text {
+      flex: 1;
+    }
+    .easy-docs-item-delete {
+      background: none;
+      border: none;
+      color: #d1d5db;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 0 4px;
+    }
+    .easy-docs-item-delete:hover {
+      color: #ef4444;
+    }
+    .easy-docs-product-form {
+      background: #f9fafb;
+      padding: 12px;
+      border-radius: 6px;
+      margin-bottom: 12px;
+      border: 1px solid #e5e7eb;
+    }
+    .easy-docs-footer {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      padding: 16px 20px;
+      border-top: 1px solid #e5e7eb;
+      flex-shrink: 0;
+    }
+  </style>
+
+  <script>
+    (() => {
+      const modal = document.getElementById('easy-docs-modal');
+      const backdrop = document.querySelector('.easy-docs-backdrop');
+      const openBtn = document.querySelector('[data-easy-docs-open]');
+      const closeBtn = document.querySelectorAll('[data-easy-docs-close]');
+      const nextBtn = document.getElementById('easy-docs-next-btn');
+      const prevBtn = document.getElementById('easy-docs-prev-btn');
+      const customerSelect = document.getElementById('easy-docs-customer');
+      const paymentConditionRadios = document.querySelectorAll('input[name="payment-condition"]');
+      const paymentDetailDiv = document.getElementById('easy-docs-payment-detail');
+      const addItemBtn = document.getElementById('easy-docs-add-item-btn');
+      const productNameInput = document.getElementById('easy-docs-product-name');
+      const productPriceInput = document.getElementById('easy-docs-product-price');
+      const productQtyInput = document.getElementById('easy-docs-product-qty');
+      const itemsList = document.getElementById('easy-docs-items-list');
+      const totalDisplay = document.getElementById('easy-docs-total');
+
+      let currentStep = 1;
+      const totalSteps = 4;
+      const wizardData = {
+        customerId: null,
+        items: [],
+        taxMethod: 'customer-pays',
+        paymentMethod: 'bank',
+        paymentCondition: 'full',
+        paymentDetail: '',
+      };
+
+      const customers = @json($customers ?? []);
+      const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+
+      // Open modal
+      openBtn?.addEventListener('click', () => {
+        modal.removeAttribute('hidden');
+        currentStep = 1;
+        wizardData.items = [];
+        productNameInput.value = '';
+        productPriceInput.value = '';
+        productQtyInput.value = '1';
+        renderItems();
+        showStep(1);
+      });
+
+      // Close modal
+      backdrop?.addEventListener('click', closeModal);
+      closeBtn?.forEach(btn => btn.addEventListener('click', closeModal));
+
+      function closeModal() {
+        modal.setAttribute('hidden', '');
+        currentStep = 1;
+        wizardData.items = [];
+      }
+
+      // Add product item
+      addItemBtn?.addEventListener('click', () => {
+        const name = productNameInput.value.trim();
+        const price = parseFloat(productPriceInput.value) || 0;
+        const qty = parseInt(productQtyInput.value) || 1;
+
+        if (!name || price <= 0 || qty <= 0) {
+          alert('กรุณากรอกข้อมูลให้ครบถ้วน');
+          return;
+        }
+
+        wizardData.items.push({
+          id: Date.now(),
+          name,
+          price,
+          qty,
+        });
+
+        productNameInput.value = '';
+        productPriceInput.value = '';
+        productQtyInput.value = '1';
+        renderItems();
+      });
+
+      function renderItems() {
+        itemsList.innerHTML = '';
+        wizardData.items.forEach((item, idx) => {
+          const itemEl = document.createElement('div');
+          itemEl.className = 'easy-docs-item';
+          itemEl.innerHTML = `
+            <div class="easy-docs-item-text">
+              <strong>${item.name}</strong><br>
+              ฿${item.price.toFixed(2)} × ${item.qty} = ฿${(item.price * item.qty).toFixed(2)}
+            </div>
+            <button type="button" class="easy-docs-item-delete" data-item-id="${item.id}">✕</button>
+          `;
+          itemEl.querySelector('[data-item-id]').addEventListener('click', (e) => {
+            e.preventDefault();
+            wizardData.items = wizardData.items.filter(i => i.id !== item.id);
+            renderItems();
+            updateTotal();
+          });
+          itemsList.appendChild(itemEl);
+        });
+        updateTotal();
+      }
+
+      function updateTotal() {
+        const total = wizardData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        totalDisplay.textContent = new Intl.NumberFormat('th-TH', {
+          style: 'currency',
+          currency: 'THB',
+        }).format(total);
+      }
+
+      // Step navigation
+      nextBtn?.addEventListener('click', () => {
+        if (validateStep(currentStep)) {
+          currentStep++;
+          if (currentStep > totalSteps) {
+            submitWizard();
+          } else {
+            showStep(currentStep);
+          }
+        }
+      });
+
+      prevBtn?.addEventListener('click', () => {
+        currentStep--;
+        showStep(currentStep);
+      });
+
+      // Payment condition detail input visibility
+      paymentConditionRadios.forEach(radio => {
+        radio.addEventListener('change', (e) => {
+          wizardData.paymentCondition = e.target.value;
+          if (e.target.value === 'installment' || e.target.value === 'specific-date') {
+            paymentDetailDiv.style.display = 'block';
+          } else {
+            paymentDetailDiv.style.display = 'none';
+          }
+        });
+      });
+
+      function showStep(step) {
+        // Hide all steps
+        document.querySelectorAll('.easy-docs-step-content').forEach(el => {
+          el.classList.remove('is-active');
+        });
+
+        // Show current step
+        document.getElementById(`easy-docs-step-${step}`)?.classList.add('is-active');
+
+        // Update title
+        const titles = [
+          'ขั้นตอน 1: เลือกลูกค้า',
+          'ขั้นตอน 2: เพิ่มรายการสินค้า',
+          'ขั้นตอน 3: เลือกวิธีชำระเงิน',
+          'ขั้นตอน 4: สรุปก่อนสร้าง',
+        ];
+        document.getElementById('easy-docs-title').textContent = titles[step - 1];
+        document.getElementById('easy-docs-step').textContent = `${step} / ${totalSteps}`;
+
+        // Update buttons
+        prevBtn.style.display = step === 1 ? 'none' : 'block';
+        nextBtn.textContent = step === totalSteps ? 'สร้างเอกสาร ✓' : 'ถัดไป →';
+
+        // Update summary if on final step
+        if (step === totalSteps) {
+          updateSummary();
+        }
+      }
+
+      function validateStep(step) {
+        if (step === 1) {
+          if (!customerSelect.value) {
+            alert('กรุณาเลือกลูกค้า');
+            return false;
+          }
+          wizardData.customerId = customerSelect.value;
+        }
+        if (step === 2) {
+          if (wizardData.items.length === 0) {
+            alert('กรุณาเพิ่มอย่างน้อย 1 รายการ');
+            return false;
+          }
+          wizardData.taxMethod = document.querySelector('input[name="tax-method"]:checked')?.value || 'customer-pays';
+        }
+        if (step === 3) {
+          wizardData.paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value || 'bank';
+          wizardData.paymentDetail = document.getElementById('easy-docs-payment-detail-input')?.value || '';
+        }
+        return true;
+      }
+
+      function updateSummary() {
+        const customer = customers.find(c => c.id == wizardData.customerId);
+        document.getElementById('easy-docs-summary-customer').textContent = customer?.display_name || '-';
+        document.getElementById('easy-docs-summary-items').textContent = `${wizardData.items.length} รายการ`;
+        document.getElementById('easy-docs-summary-tax').textContent = wizardData.taxMethod === 'customer-pays' ? 'ลูกค้าจ่าย' : 'เราจ่าย';
+
+        const total = wizardData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        document.getElementById('easy-docs-summary-total').textContent = new Intl.NumberFormat('th-TH', {
+          style: 'currency',
+          currency: 'THB',
+        }).format(total);
+
+        const paymentMethodLabels = {
+          'bank': 'ธนาคาร',
+          'qr': 'โอน QR',
+          'cash': 'เงินสด',
+        };
+        document.getElementById('easy-docs-summary-payment').textContent = paymentMethodLabels[wizardData.paymentMethod] || '-';
+
+        const conditionLabels = {
+          'full': 'ชำระทั้งหมด',
+          'installment': 'ชำระงวด',
+          'specific-date': 'ชำระตามกำหนดวัน',
+        };
+        document.getElementById('easy-docs-summary-condition').textContent = conditionLabels[wizardData.paymentCondition] || '-';
+      }
+
+      function submitWizard() {
+        nextBtn.disabled = true;
+        nextBtn.textContent = 'กำลังสร้าง...';
+
+        fetch('{{ route("admin.easy-documents.create") }}', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': csrfToken,
+          },
+          body: JSON.stringify(wizardData),
+        })
+          .then(response => response.json())
+          .then(data => {
+            if (data.success && data.redirect_url) {
+              window.location.href = data.redirect_url;
+            } else {
+              alert(data.message || 'เกิดข้อผิดพลาด');
+              nextBtn.disabled = false;
+              nextBtn.textContent = 'สร้างเอกสาร ✓';
+            }
+          })
+          .catch(error => {
+            console.error('Error:', error);
+            alert('เกิดข้อผิดพลาด: ' + error.message);
+            nextBtn.disabled = false;
+            nextBtn.textContent = 'สร้างเอกสาร ✓';
+          });
+      }
+
+      // Initialize
+      showStep(1);
+    })();
+  </script>
 @endsection
