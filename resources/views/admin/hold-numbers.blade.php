@@ -142,7 +142,7 @@
                 <td>{{ $reservedAt?->timezone('Asia/Bangkok')->format('Y-m-d H:i') ?: '-' }}</td>
                 <td class="admin-action-cell">
                   <div class="admin-action-group">
-                    <a href="{{ route('admin.numbers.edit', $number) }}" class="admin-button admin-button--secondary admin-button--compact">แก้ไข</a>
+                    <a href="{{ route('admin.numbers.edit', $number) }}" class="admin-button admin-button--muted admin-button--compact">แก้ไข</a>
                     <form action="{{ route('admin.hold-numbers.activate', $number) }}" method="post" class="hold-activate-form">
                       @csrf
                       <input type="hidden" name="confirmation" value="">
