@@ -154,6 +154,20 @@
             <div id="easy-docs-items-list" class="easy-docs-items-list"></div>
           </div>
 
+          <div class="easy-docs-section">
+            <h3 class="easy-docs-section-title">💰 วิธีคำนวนภาษี</h3>
+            <div class="easy-docs-radio-group">
+              <label class="easy-docs-radio-label">
+                <input type="radio" name="tax-method" value="customer-pays" checked>
+                <span>ลูกค้าจ่ายภาษี (VAT บวก)</span>
+              </label>
+              <label class="easy-docs-radio-label">
+                <input type="radio" name="tax-method" value="we-pay">
+                <span>เราจ่ายภาษี (VAT หัก)</span>
+              </label>
+            </div>
+          </div>
+
           {{-- Calculate Button (shows when subtotal >= 50,000) --}}
           <div id="easy-docs-calculate-section" class="easy-docs-section" style="display: none;">
             <button type="button" class="easy-docs-button easy-docs-button--secondary" id="easy-docs-calculate-btn" style="width: 100%;">
@@ -185,20 +199,6 @@
                 <span>ยอดชำระสุทธิ:</span>
                 <strong id="easy-docs-net-payment">฿0.00</strong>
               </div>
-            </div>
-          </div>
-
-          <div class="easy-docs-section">
-            <h3 class="easy-docs-section-title">💰 วิธีคำนวนภาษี</h3>
-            <div class="easy-docs-radio-group">
-              <label class="easy-docs-radio-label">
-                <input type="radio" name="tax-method" value="customer-pays" checked>
-                <span>ลูกค้าจ่ายภาษี (VAT บวก)</span>
-              </label>
-              <label class="easy-docs-radio-label">
-                <input type="radio" name="tax-method" value="we-pay">
-                <span>เราจ่ายภาษี (VAT หัก)</span>
-              </label>
             </div>
           </div>
 
@@ -771,14 +771,12 @@
 
       function updateTotal() {
         const total = wizardData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
-        totalDisplay.textContent = new Intl.NumberFormat('th-TH', {
-          style: 'currency',
-          currency: 'THB',
-        }).format(total);
 
         // Show/hide calculate section based on total >= 50,000
         if (total >= 50000) {
           calculateSection.style.display = 'block';
+          // Auto-calculate with Standard mode using the current subtotal
+          calculatePricing(total, true);
         } else {
           calculateSection.style.display = 'none';
           pricingBreakdown.style.display = 'none';
@@ -788,7 +786,16 @@
       // Calculation modal handlers
       calculateBtn?.addEventListener('click', () => {
         calcModal.removeAttribute('hidden');
-        calcInput.value = '';
+        const total = wizardData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+
+        // Reset modal to Standard mode
+        currentCalcMode = 'standard';
+        calcModeBtns.forEach(b => b.classList.remove('active'));
+        calcModeBtns[0]?.classList.add('active');
+
+        // Pre-fill with current subtotal
+        calcInputLabel.textContent = 'ราคาค่าจ้าง (Base Price)';
+        calcInput.value = total.toFixed(2);
         calcInput.focus();
       });
 
@@ -804,12 +811,12 @@
           calcModeBtns.forEach(b => b.classList.remove('active'));
           btn.classList.add('active');
           currentCalcMode = btn.dataset.calcMode;
+          const total = wizardData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
 
-          // Update input label based on mode
+          // Update input label and value based on mode
           if (currentCalcMode === 'standard') {
             calcInputLabel.textContent = 'ราคาค่าจ้าง (Base Price)';
             calcInput.placeholder = '0.00';
-            const total = wizardData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
             calcInput.value = total.toFixed(2);
           } else {
             calcInputLabel.textContent = 'รายได้สุทธิที่ต้องการ (Target Income)';
@@ -821,7 +828,7 @@
       });
 
       // Calculate pricing
-      function calculatePricing(baseOrTargetAmount) {
+      function calculatePricing(baseOrTargetAmount, isAutoCalc = false) {
         const amount = parseFloat(baseOrTargetAmount) || 0;
         let sellingPrice, vat, grandTotal, wht, customerNetPayment, serviceNetIncome;
 
@@ -860,8 +867,16 @@
         updatePricingBreakdown(sellingPrice, vat, grandTotal, wht, customerNetPayment);
         pricingBreakdown.style.display = 'block';
 
-        // Close calculation modal
-        calcModal.setAttribute('hidden', '');
+        // Update the total display to show final customer payment
+        totalDisplay.textContent = new Intl.NumberFormat('th-TH', {
+          style: 'currency',
+          currency: 'THB',
+        }).format(customerNetPayment);
+
+        // Close calculation modal (only if not auto-calculating)
+        if (!isAutoCalc) {
+          calcModal.setAttribute('hidden', '');
+        }
       }
 
       function updatePricingBreakdown(sellingPrice, vat, grandTotal, wht, customerNetPayment) {
