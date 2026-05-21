@@ -4526,7 +4526,6 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
 
         $submissionQuery = CustomerSubmission::query()
-            ->with('billingCustomer')
             ->when($selectedFormType !== '', fn ($query) => $query->where('form_type', $selectedFormType))
             ->when($selectedConsent === 'dev_yes', fn ($query) => $query->where('consent_dev', true))
             ->when($selectedConsent === 'dev_no', fn ($query) => $query->where('consent_dev', false))

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\BillingCustomer;
 use App\Models\ContactMessage;
 use App\Models\CustomerSubmission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -63,12 +64,14 @@ class ContactMessageStoreTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('customer_submissions', [
+            'customer_id' => null,
             'form_type' => CustomerSubmission::FORM_CONTACT,
             'name' => 'สมชาย ใจดี',
             'phone' => '0812345678',
             'consent_dev' => true,
             'consent_marketing' => false,
         ]);
+        $this->assertSame(0, BillingCustomer::query()->count());
     }
 
     public function test_it_stores_contact_message_when_turnstile_verification_passes(): void

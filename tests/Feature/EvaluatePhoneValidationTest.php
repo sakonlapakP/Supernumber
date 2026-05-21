@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\BillingCustomer;
 use App\Models\CustomerSubmission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -32,11 +33,13 @@ class EvaluatePhoneValidationTest extends TestCase
         $response->assertDontSee('10/10');
 
         $this->assertDatabaseHas('customer_submissions', [
+            'customer_id' => null,
             'form_type' => CustomerSubmission::FORM_EVALUATE,
             'phone' => '0812345678',
             'consent_dev' => true,
             'consent_marketing' => false,
         ]);
+        $this->assertSame(0, BillingCustomer::query()->count());
     }
 
     public function test_evaluate_bad_number_requires_a_10_digit_phone(): void

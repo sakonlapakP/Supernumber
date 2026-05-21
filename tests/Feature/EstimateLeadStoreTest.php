@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\BillingCustomer;
 use App\Models\CustomerSubmission;
 use App\Models\EstimateLead;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -43,6 +44,7 @@ class EstimateLeadStoreTest extends TestCase
         ]);
 
         $this->assertDatabaseHas('customer_submissions', [
+            'customer_id' => null,
             'form_type' => CustomerSubmission::FORM_ESTIMATE,
             'name' => 'สมชาย ใจดี',
             'phone' => '0899998888',
@@ -50,6 +52,7 @@ class EstimateLeadStoreTest extends TestCase
             'consent_dev' => false,
             'consent_marketing' => true,
         ]);
+        $this->assertSame(0, BillingCustomer::query()->count());
 
         $processingResponse = $this->get($processingUrl);
 

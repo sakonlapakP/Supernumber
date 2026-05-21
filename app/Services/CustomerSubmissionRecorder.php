@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\BillingCustomer;
 use App\Models\CustomerSubmission;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
@@ -27,11 +26,10 @@ class CustomerSubmissionRecorder
                 ?? null
         );
         $email = $this->cleanString($payload['email'] ?? null);
-        $customer = $this->resolveCustomer($name, $phone, $email);
-
-        // Keep the raw form context for admins while stripping transport, bot-trap, and CAPTCHA fields.
+        // Keep lead/submission data separate from billing customers. Billing customers
+        // are created explicitly from admin document workflows only.
         return CustomerSubmission::query()->create([
-            'customer_id' => $customer?->id,
+            'customer_id' => null,
             'form_type' => $formType,
             'name' => $name,
             'phone' => $phone,
@@ -42,46 +40,6 @@ class CustomerSubmissionRecorder
             'ip_address' => $request->ip(),
             'user_agent' => substr((string) $request->userAgent(), 0, 65535),
             'submitted_at' => now(),
-        ]);
-    }
-
-    private function resolveCustomer(?string $name, ?string $phone, ?string $email): ?BillingCustomer
-    {
-        if ($phone === null && $email === null && $name === null) {
-            return null;
-        }
-
-        $customer = null;
-
-        if ($phone !== null || $email !== null) {
-            // Phone/email identify repeat customers across contact, estimate, and evaluation forms.
-            $customer = BillingCustomer::query()
-                ->where(function ($query) use ($phone, $email) {
-                    if ($phone !== null) {
-                        $query->orWhere('phone', $phone);
-                    }
-
-                    if ($email !== null) {
-                        $query->orWhere('email', $email);
-                    }
-                })
-                ->first();
-        }
-
-        if ($customer !== null) {
-            return $customer;
-        }
-
-        $nameParts = $name !== null ? preg_split('/\s+/', $name) ?: [] : [];
-        $firstName = $nameParts !== [] ? array_shift($nameParts) : null;
-        $lastName = $nameParts !== [] ? implode(' ', $nameParts) : null;
-
-        return BillingCustomer::query()->create([
-            'first_name' => $firstName ?: null,
-            'last_name' => $lastName ?: null,
-            'phone' => $phone,
-            'email' => $email,
-            'is_active' => true,
         ]);
     }
 
