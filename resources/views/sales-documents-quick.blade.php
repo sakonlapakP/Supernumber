@@ -99,12 +99,12 @@
   <div id="qdoc-status" class="qdoc-status" hidden></div>
 
   {{-- Page header --}}
-  <div class="admin-page-head" style="margin-bottom: 16px;">
+  <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
     <div>
-      <h1>สร้างเอกสารด่วน</h1>
-      <p class="admin-subtitle">สร้างใบเสนอราคาหรือใบแจ้งหนี้ได้อย่างรวดเร็ว บันทึกร่าง หรือดาวน์โหลด PDF ได้ทันที</p>
+      <h1 style="margin: 0 0 8px 0;">สร้างเอกสารด่วน</h1>
+      <p class="admin-subtitle" style="margin: 0;">สร้างใบเสนอราคาหรือใบแจ้งหนี้ได้อย่างรวดเร็ว บันทึกร่าง หรือดาวน์โหลด PDF ได้ทันที</p>
     </div>
-    <div class="admin-page-actions">
+    <div style="display: flex; gap: 8px;">
       <a href="{{ route('admin.sales-documents') }}" class="admin-button admin-button--ghost admin-button--compact">เปิดหน้า Studio เต็ม</a>
       <a href="{{ route('admin.saved-sales-documents.index') }}" class="admin-button admin-button--ghost admin-button--compact">เอกสารที่บันทึกแล้ว</a>
     </div>
@@ -176,8 +176,14 @@
               <input type="text" class="qdoc-input" data-qdoc-customer-contact placeholder="เติมอัตโนมัติจากข้อมูลลูกค้า" readonly>
             </label>
             <label class="qdoc-label">
+              <span>เบอร์โทร</span>
+              <input type="text" class="qdoc-input" data-qdoc-customer-phone placeholder="กรอกเบอร์โทรลูกค้า">
+            </label>
+          </div>
+          <div class="qdoc-form-row">
+            <label class="qdoc-label">
               <span>เงื่อนไขการชำระ</span>
-              <input type="text" class="qdoc-input" data-qdoc-customer-payment-term placeholder="เติมอัตโนมัติจากข้อมูลลูกค้า" readonly>
+              <input type="text" class="qdoc-input" data-qdoc-customer-payment-term placeholder="กรอกเงื่อนไขการชำระ">
             </label>
           </div>
         </div>
@@ -220,14 +226,16 @@
       {{-- Payment method + bank --}}
       <div class="admin-card qdoc-card" style="margin-bottom: 12px;">
         <div class="qdoc-section-title">วิธีการชำระเงิน</div>
-        <label class="qdoc-label qdoc-payment-method">
-          <span>เลือกวิธีชำระเงิน</span>
-          <select class="qdoc-input" data-qdoc-payment-method>
-            <option value="cash">เงินสด</option>
-            <option value="transfer" selected>เงินโอน</option>
-            <option value="cheque">เช็คธนาคาร</option>
-          </select>
-        </label>
+        <div class="qdoc-form-row">
+          <label class="qdoc-label qdoc-payment-method">
+            <span>เลือกวิธีชำระเงิน</span>
+            <select class="qdoc-input" data-qdoc-payment-method>
+              <option value="cash">เงินสด</option>
+              <option value="transfer" selected>เงินโอน</option>
+              <option value="cheque">เช็คธนาคาร</option>
+            </select>
+          </label>
+        </div>
         <div class="qdoc-form-row" style="margin-top:8px;">
           <label class="qdoc-label">
             <span>ธนาคาร</span>
@@ -237,17 +245,25 @@
             <span>สาขา</span>
             <input type="text" class="qdoc-input" data-qdoc-payment-branch value="จามจุรีสแควร์" readonly>
           </label>
+        </div>
+        <div class="qdoc-form-row" style="margin-top:8px;">
           <label class="qdoc-label">
             <span>เลขบัญชี</span>
             <input type="text" class="qdoc-input" data-qdoc-payment-account value="0063701726" readonly>
           </label>
+          <div style="display: flex; flex-direction: column; gap: 4px; padding-top: 20px;">
+            <small style="color: #6b7280; font-weight: 600;">วิธีการชำระเงินแนะนำ:</small>
+            <small style="color: #9ca3af;">• เงินโอน: ใช้เลขบัญชีด้านบน</small>
+            <small style="color: #9ca3af;">• เช็คธนาคาร: ชื่อสั่งจ่าย ซุปเปอร์นัมเบอร์</small>
+            <small style="color: #9ca3af;">• เงินสด: ตกลงกับทางเรา</small>
+          </div>
         </div>
       </div>
 
       {{-- Signatures --}}
       <div class="admin-card qdoc-card">
         <div class="qdoc-section-title">ผู้ลงนาม (ไม่บังคับ)</div>
-        <div class="qdoc-form-row">
+        <div class="qdoc-meta-grid">
           <label class="qdoc-label">
             <span>ผู้อนุมัติ</span>
             <input type="text" class="qdoc-input" data-qdoc-approved-by placeholder="ชื่อผู้อนุมัติ">
@@ -256,6 +272,8 @@
             <span>วันที่อนุมัติ</span>
             <input type="date" class="qdoc-input" data-qdoc-approved-date value="{{ $documentDate }}">
           </label>
+        </div>
+        <div class="qdoc-meta-grid" style="margin-top: 10px;">
           <label class="qdoc-label">
             <span>ผู้รับเอกสาร</span>
             <input type="text" class="qdoc-input" data-qdoc-accepted-by placeholder="ชื่อผู้รับ">
@@ -732,6 +750,7 @@
       const customerTaxIdInput = document.querySelector('[data-qdoc-customer-tax-id]');
       const customerAddressInput = document.querySelector('[data-qdoc-customer-address]');
       const customerContactInput = document.querySelector('[data-qdoc-customer-contact]');
+      const customerPhoneInput = document.querySelector('[data-qdoc-customer-phone]');
       const customerPaymentTermInput = document.querySelector('[data-qdoc-customer-payment-term]');
       const itemBody = document.querySelector('[data-qdoc-item-body]');
       const addRowBtn = document.querySelector('[data-qdoc-add-row]');
@@ -818,6 +837,7 @@
         if (customerTaxIdInput) customerTaxIdInput.value = c?.tax_id || '';
         if (customerAddressInput) customerAddressInput.value = c?.address || '';
         if (customerContactInput) customerContactInput.value = c?.contact_name || '';
+        if (customerPhoneInput) customerPhoneInput.value = c?.phone || '';
         if (customerPaymentTermInput) customerPaymentTermInput.value = c?.payment_term || '';
       };
 
@@ -1057,7 +1077,7 @@
           calculator_mode: whtMode === 'company' ? 'post-vat-net' : 'normal',
           company: { name_th: 'บริษัท ซุปเปอร์นัมเบอร์ จำกัด (สำนักงานใหญ่)', name_en: 'SUPERNUMBER CO.,LTD.', address: '1418 ถนนพระรามที่ 4 แขวงคลองเตย เขตคลองเตย กรุงเทพมหานคร 10110\nTel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com', tax_id: '0105557133568' },
           document: { type, title_th: cfg.th, title_en: cfg.en, number: docNumber, date: docDateInput?.value || '', date_display: formatDate(docDateInput?.value), reference_number: refNumberInput?.value || '', due_date: dueDateInput?.value || '', due_date_display: formatDate(dueDateInput?.value) },
-          customer: { customer_id: selectedCustomer?.id || null, name: customerNameInput?.value || '', tax_id: customerTaxIdInput?.value || '', address: customerAddressInput?.value || '', contact: customerContactInput?.value || '', payment_term: customerPaymentTermInput?.value || '' },
+          customer: { customer_id: selectedCustomer?.id || null, name: customerNameInput?.value || '', tax_id: customerTaxIdInput?.value || '', address: customerAddressInput?.value || '', contact: customerContactInput?.value || '', phone: customerPhoneInput?.value || '', payment_term: customerPaymentTermInput?.value || '' },
           items,
           payment: {
             method: paymentMethod,
@@ -1275,6 +1295,7 @@
         if (customerTaxIdInput) customerTaxIdInput.value = c.tax_id || '';
         if (customerAddressInput) customerAddressInput.value = c.address || '';
         if (customerContactInput) customerContactInput.value = c.contact || '';
+        if (customerPhoneInput) customerPhoneInput.value = c.phone || '';
         if (customerPaymentTermInput) customerPaymentTermInput.value = c.payment_term || '';
         if (customerSelect && payload.customer_id) customerSelect.value = String(payload.customer_id);
 
