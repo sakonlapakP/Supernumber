@@ -950,13 +950,23 @@
         nextBtn.disabled = true;
         nextBtn.textContent = 'กำลังสร้าง...';
 
+        // Only send required fields to backend
+        const payloadData = {
+          customerId: wizardData.customerId,
+          items: wizardData.items,
+          taxMethod: wizardData.taxMethod,
+          paymentMethod: wizardData.paymentMethod,
+          paymentCondition: wizardData.paymentCondition,
+          paymentDetail: wizardData.paymentDetail,
+        };
+
         fetch('{{ route("admin.easy-documents.create") }}', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'X-CSRF-Token': csrfToken,
           },
-          body: JSON.stringify(wizardData),
+          body: JSON.stringify(payloadData),
         })
           .then(response => response.json())
           .then(data => {
