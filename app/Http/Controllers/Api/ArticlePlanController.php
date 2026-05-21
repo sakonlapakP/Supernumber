@@ -54,10 +54,15 @@ class ArticlePlanController extends Controller
             'type' => 'nullable|string|max:255',
             'topic' => 'required|string',
             'is_lottery' => 'sometimes|boolean',
+            'status' => 'sometimes|string|in:todo,in_progress,done,blocked,cancelled',
         ]);
 
         if (! $request->has('is_lottery')) {
             $validated['is_lottery'] = false;
+        }
+
+        if (! $request->has('status')) {
+            $validated['status'] = 'todo';
         }
 
         return $validated;
