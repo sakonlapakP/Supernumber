@@ -3,7 +3,10 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use Illuminate\Contracts\Debug\ExceptionHandler;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
+use Illuminate\Session\TokenMismatchException;
 use Illuminate\Support\Facades\Hash;
 use Tests\TestCase;
 
@@ -131,6 +134,16 @@ class AdminUserApprovalTest extends TestCase
             ->get(route('admin.login'))
             ->assertOk()
             ->assertSessionHas('login_probe', 'kept');
+    }
+
+    public function test_expired_login_csrf_redirects_to_login_instead_of_showing_419_page(): void
+    {
+        $request = Request::create(route('admin.login', [], false), 'POST');
+        $response = $this->app->make(ExceptionHandler::class)
+            ->render($request, new TokenMismatchException('CSRF token mismatch.'));
+
+        $this->assertSame(302, $response->getStatusCode());
+        $this->assertSame(route('admin.login'), $response->headers->get('Location'));
     }
 
     public function test_non_manager_cannot_approve_users(): void

@@ -5,6 +5,7 @@ use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
 use Illuminate\Http\Request;
 use Illuminate\Session\TokenMismatchException;
+use Symfony\Component\HttpKernel\Exception\HttpException;
 
 return Application::configure(basePath: dirname(__DIR__))
     ->withRouting(
@@ -29,8 +30,12 @@ return Application::configure(basePath: dirname(__DIR__))
         );
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        $exceptions->render(function (TokenMismatchException $exception, Request $request) {
-            if ($request->is('admin/login')) {
+        $exceptions->render(function (HttpException $exception, Request $request) {
+            if (
+                $request->is('admin/login')
+                && $exception->getStatusCode() === 419
+                && $exception->getPrevious() instanceof TokenMismatchException
+            ) {
                 return redirect()
                     ->route('admin.login')
                     ->withErrors(['username' => 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง']);

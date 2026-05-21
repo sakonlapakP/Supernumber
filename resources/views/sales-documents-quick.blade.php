@@ -512,15 +512,15 @@
       appearance: none;
     }
     @media (max-width: 768px) {
-      .qdoc-meta-grid { gap: 12px; }
-      .qdoc-meta-grid .qdoc-input { padding-left: 8px; padding-right: 8px; padding-top: 10px; padding-bottom: 10px; }
-      .qdoc-card { padding: 16px 14px; }
-      .qdoc-form-row { grid-template-columns: 1fr; gap: 12px; }
-      .qdoc-label span { font-size: 12px; }
-      .qdoc-input { padding: 10px 12px; font-size: 14px; min-height: 40px; }
+      .qdoc-meta-grid { gap: 8px; grid-template-columns: 1fr; }
+      .qdoc-meta-grid .qdoc-input { padding: 6px 8px; font-size: 12px; }
+      .qdoc-card { padding: 10px 8px; }
+      .qdoc-form-row { grid-template-columns: 1fr; gap: 8px; }
+      .qdoc-label span { font-size: 10px; }
+      .qdoc-input { padding: 6px 8px; font-size: 12px; min-height: 30px; }
       .qdoc-payment-method { max-width: 100%; }
-      .qdoc-type-switch button { padding: 8px 16px; font-size: 12px; }
-      .qdoc-main { gap: 10px; }
+      .qdoc-type-switch button { padding: 5px 10px; font-size: 11px; }
+      .qdoc-main { gap: 8px; }
       .qdoc-sidebar { display: none !important; }
     }
     @media (max-width: 480px) {
@@ -773,29 +773,53 @@
 
     /* ─── Mobile optimizations ─── */
     @media (max-width: 768px) {
-      .qdoc-page { gap: 12px; padding: 12px 0; }
+      .qdoc-page { gap: 10px; padding: 8px 0; }
       .qdoc-main,
-      .qdoc-sidebar { gap: 10px; }
+      .qdoc-sidebar { gap: 8px; }
       .qdoc-items-table-wrap { margin: 0 -4px; padding: 0 4px; }
-      .qdoc-card { padding: 14px; }
-      .qdoc-main { gap: 10px; }
+      .qdoc-card { padding: 10px 8px; }
+      .qdoc-main { gap: 8px; }
+      .qdoc-label { gap: 2px; }
+      .qdoc-label span { font-size: 10px; }
+      .qdoc-input { padding: 6px 8px; font-size: 12px; min-height: 30px; }
+      .qdoc-section-title { font-size: 11px; margin-bottom: 6px; }
+      .qdoc-type-switch button { padding: 5px 10px; font-size: 11px; }
+      .qdoc-card-header { margin-bottom: 6px; }
     }
     @media (max-width: 600px) {
-      div[style*="justify-content: space-between"] > div:last-child { display: flex; flex-direction: column; width: 100%; gap: 8px; }
-      div[style*="justify-content: space-between"] > div:last-child a { width: 100%; }
+      div[style*="justify-content: space-between"] > div:last-child { display: flex; flex-direction: column; width: 100%; gap: 6px; }
+      div[style*="justify-content: space-between"] > div:last-child a { width: 100%; font-size: 11px; padding: 5px 8px; }
+      h1 { font-size: 15px !important; margin-bottom: 3px !important; }
+      .admin-subtitle { font-size: 11px !important; line-height: 1.2; }
     }
     @media (max-width: 480px) {
-      .qdoc-customer-row { flex-wrap: wrap; }
-      .qdoc-customer-select { width: 100%; }
-      .qdoc-customer-fields { width: 100%; }
-      .qdoc-card-header { flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+      .qdoc-customer-row { flex-wrap: wrap; gap: 4px; }
+      .qdoc-customer-select { width: 100%; font-size: 12px; }
+      .qdoc-customer-fields { width: 100%; gap: 4px; }
+      .qdoc-card-header { flex-wrap: wrap; gap: 4px; margin-bottom: 4px; }
       .qdoc-type-switch { flex-wrap: wrap; }
-      .qdoc-section-title { font-size: 12px; margin-bottom: 8px; }
-      .admin-button--compact { padding: 6px 12px; font-size: 12px; }
-      [style*="display: flex; gap: 8px;"] { gap: 6px; flex-wrap: wrap; }
-      .qdoc-card { padding: 12px 10px; }
-      .qdoc-main { gap: 8px; }
-      .qdoc-card-header { margin-bottom: 8px; }
+      .qdoc-type-switch button { padding: 3px 6px; font-size: 9px; }
+      .qdoc-section-title { font-size: 9px; margin-bottom: 4px; }
+      .admin-button--compact { padding: 4px 6px; font-size: 10px; }
+      [style*="display: flex; gap: 8px;"] { gap: 3px; flex-wrap: wrap; }
+      .qdoc-card { padding: 8px 6px; }
+      .qdoc-main { gap: 5px; }
+      .qdoc-card-header { margin-bottom: 4px; }
+      .qdoc-label { gap: 1px; }
+      .qdoc-label span { font-size: 8px; letter-spacing: .2px; }
+      .qdoc-input { padding: 4px 5px; font-size: 11px; min-height: 24px; }
+      .qdoc-meta-grid { gap: 4px; }
+      .qdoc-form-row { gap: 4px; }
+      h1 { font-size: 13px !important; margin-bottom: 2px !important; }
+      .admin-subtitle { font-size: 9px !important; line-height: 1.1; }
+      .qdoc-doc-type-label { font-size: 10px; }
+      .qdoc-items-table { font-size: 10px; }
+      .qdoc-items-table th { font-size: 8px; padding: 2px 2px 3px; }
+      .qdoc-items-table td { padding: 2px 2px; }
+      .qdoc-payment-method { max-width: 100%; font-size: 11px; }
+      .qdoc-totals { font-size: 11px; }
+      .qdoc-total-row { padding: 2px 0; }
+      .qdoc-total-row span { font-size: 10px; }
     }
   </style>
 
