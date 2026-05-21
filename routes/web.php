@@ -1436,7 +1436,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->where('username', $username)
             ->first();
 
-        if (! $user) {
+        if (! $user || ! Hash::check($credentials['password'], $user->password)) {
             return $rejectAdminLogin($request);
         }
 
@@ -1447,10 +1447,6 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
 
         if (! $user->canAccessAdminPanel()) {
-            return $rejectAdminLogin($request);
-        }
-
-        if (! Hash::check($credentials['password'], $user->password)) {
             return $rejectAdminLogin($request);
         }
 
@@ -1538,6 +1534,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
     Route::get('/register', [\App\Http\Controllers\Admin\RegisterController::class, 'showRegistrationForm'])->name('register');
     Route::post('/register', [\App\Http\Controllers\Admin\RegisterController::class, 'register'])->name('register.store');
+
+    Route::get('/pending', function () {
+        return view('admin.pending');
+    })->name('pending');
 
     Route::get('/import-numbers', function () use ($ensureAdmin) {
         if ($redirect = $ensureAdmin('manager')) return $redirect;
