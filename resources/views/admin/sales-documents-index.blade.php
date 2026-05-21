@@ -127,15 +127,15 @@
           </div>
 
           <div class="easy-docs-section">
-            <h3 class="easy-docs-section-title">💰 วิธีคำนวนภาษี</h3>
+            <h3 class="easy-docs-section-title">💰 Calculation Method</h3>
             <div class="easy-docs-radio-group">
               <label class="easy-docs-radio-label">
                 <input type="radio" name="tax-method" value="customer-pays" checked>
-                <span>ลูกค้าจ่ายภาษี (VAT บวก)</span>
+                <span>Standard - Set Base Price</span>
               </label>
               <label class="easy-docs-radio-label">
                 <input type="radio" name="tax-method" value="we-pay">
-                <span>เราจ่ายภาษี (VAT หัก)</span>
+                <span>Reverse - Set Target Income</span>
               </label>
             </div>
           </div>
@@ -621,6 +621,7 @@
           id: Date.now(),
           name,
           price,
+          originalPrice: price,  // Keep original price for recalculation
           qty,
         });
 
@@ -679,12 +680,16 @@
 
         if (isReverseMode) {
           // Reverse mode: convert each item price using Reverse formula
-          // Each item price is treated as target income, convert to selling price
+          // Use original price for calculation to avoid compounding
           wizardData.items.forEach(item => {
-            item.price = item.price / 0.97; // Reverse calculation: price / 0.97
+            item.price = item.originalPrice / 0.97; // Reverse calculation: originalPrice / 0.97
+          });
+        } else {
+          // Standard mode: restore original prices
+          wizardData.items.forEach(item => {
+            item.price = item.originalPrice;
           });
         }
-        // Standard mode: prices stay as is, no change needed
 
         // Re-render items and recalculate totals
         renderItems();
