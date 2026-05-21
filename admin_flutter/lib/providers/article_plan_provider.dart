@@ -45,6 +45,17 @@ class ArticlePlanProvider with ChangeNotifier {
     return _mutate(() => ApiService.dio.delete('/article-plans/$id'), year);
   }
 
+  Future<bool> updateStatus(int id, String status, int year, {String? notes, String? blockedReason}) async {
+    final payload = <String, dynamic>{'status': status};
+    if (notes != null) payload['notes'] = notes;
+    if (blockedReason != null) payload['blocked_reason'] = blockedReason;
+
+    return _mutate(
+      () => ApiService.dio.patch('/article-plans/$id/status', data: payload),
+      year,
+    );
+  }
+
   Future<bool> _mutate(Future<Response> Function() action, int year) async {
     _lastErrorMessage = null;
     try {

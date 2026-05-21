@@ -39,6 +39,19 @@ class ArticlePlanController extends Controller
         return response()->json(['data' => $articlePlan]);
     }
 
+    public function updateStatus(Request $request, ArticlePlan $articlePlan): JsonResponse
+    {
+        $validated = $request->validate([
+            'status' => ['required', 'string', 'in:todo,in_progress,done,blocked,cancelled'],
+            'notes' => ['sometimes', 'nullable', 'string'],
+            'blocked_reason' => ['sometimes', 'nullable', 'string'],
+        ]);
+
+        $articlePlan->update($validated);
+
+        return response()->json(['data' => $articlePlan]);
+    }
+
     public function destroy(ArticlePlan $articlePlan): JsonResponse
     {
         $articlePlan->delete();
@@ -54,6 +67,9 @@ class ArticlePlanController extends Controller
             'type' => 'nullable|string|max:255',
             'topic' => 'required|string',
             'is_lottery' => 'sometimes|boolean',
+            'status' => 'sometimes|string|in:todo,in_progress,done,blocked,cancelled',
+            'notes' => 'sometimes|nullable|string',
+            'blocked_reason' => 'sometimes|nullable|string',
         ]);
 
         if (! $request->has('is_lottery')) {
