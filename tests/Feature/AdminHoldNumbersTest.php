@@ -157,6 +157,46 @@ class AdminHoldNumbersTest extends TestCase
             ]);
     }
 
+    public function test_activate_hold_number_requires_confirm_text(): void
+    {
+        $phoneNumber = PhoneNumber::query()->create([
+            'phone_number' => '0645556666',
+            'service_type' => PhoneNumber::SERVICE_TYPE_POSTPAID,
+            'network_code' => PhoneNumber::NETWORK_TRUE_DTAC,
+            'plan_name' => PhoneNumber::PACKAGE_NAME,
+            'sale_price' => 1199,
+            'status' => PhoneNumber::STATUS_HOLD,
+        ]);
+
+        $admin = User::factory()->create([
+            'username' => 'hold-admin-confirm',
+            'role' => User::ROLE_ADMIN,
+            'is_active' => true,
+        ]);
+
+        $this->withSession($this->adminSession($admin))
+            ->post(route('admin.hold-numbers.activate', $phoneNumber), [
+                'confirmation' => 'confirm',
+            ])
+            ->assertSessionHas('error_message');
+
+        $this->assertDatabaseHas('phone_numbers', [
+            'id' => $phoneNumber->id,
+            'status' => PhoneNumber::STATUS_HOLD,
+        ]);
+
+        $this->withSession($this->adminSession($admin))
+            ->post(route('admin.hold-numbers.activate', $phoneNumber), [
+                'confirmation' => 'Confirm',
+            ])
+            ->assertSessionHas('status_message');
+
+        $this->assertDatabaseHas('phone_numbers', [
+            'id' => $phoneNumber->id,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+    }
+
     /**
      * @return array<string, mixed>
      */

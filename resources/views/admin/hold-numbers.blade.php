@@ -104,7 +104,6 @@
             <th>แพ็กเกจ / ราคาเบอร์</th>
             <th>ผู้จอง Number</th>
             <th>วันเวลาจอง</th>
-            <th>สถานะ</th>
             <th>จัดการ</th>
           </tr>
         </thead>
@@ -141,12 +140,12 @@
                   @endif
                 </td>
                 <td>{{ $reservedAt?->timezone('Asia/Bangkok')->format('Y-m-d H:i') ?: '-' }}</td>
-                <td><span class="admin-status-pill admin-status-pill--hold">{{ $number->status_label ?: '-' }}</span></td>
                 <td class="admin-action-cell">
                   <div class="admin-action-group">
                     <a href="{{ route('admin.numbers.edit', $number) }}" class="admin-button admin-button--secondary admin-button--compact">แก้ไข</a>
-                    <form action="{{ route('admin.hold-numbers.activate', $number) }}" method="post">
+                    <form action="{{ route('admin.hold-numbers.activate', $number) }}" method="post" class="hold-activate-form">
                       @csrf
+                      <input type="hidden" name="confirmation" value="">
                       <button type="submit" class="admin-button admin-button--secondary admin-button--compact">เปิดใช้งาน</button>
                     </form>
                   </div>
@@ -154,11 +153,11 @@
               </tr>
             @endforeach
             <tr id="hold-numbers-empty-row" hidden>
-              <td colspan="9" class="admin-muted">ไม่พบเบอร์ที่ตรงกับคำค้นหา</td>
+              <td colspan="8" class="admin-muted">ไม่พบเบอร์ที่ตรงกับคำค้นหา</td>
             </tr>
           @else
             <tr>
-              <td colspan="9" class="admin-muted">ยังไม่มีเบอร์ที่อยู่ในสถานะ hold</td>
+              <td colspan="8" class="admin-muted">ยังไม่มีเบอร์ที่อยู่ในสถานะ hold</td>
             </tr>
           @endif
         </tbody>
@@ -173,6 +172,7 @@
       const lookupInput = document.getElementById("hold-lookup-number");
       const input = document.getElementById("hold-number-search");
       const rows = Array.from(document.querySelectorAll(".hold-number-row"));
+      const activateForms = Array.from(document.querySelectorAll(".hold-activate-form"));
       const emptyRow = document.getElementById("hold-numbers-empty-row");
       const visibleCount = document.getElementById("hold-visible-count");
 
@@ -192,6 +192,22 @@
           lookupInput.value = lookupInput.value.replace(/\D/g, "").slice(0, 10);
         });
       }
+
+      activateForms.forEach((form) => {
+        form.addEventListener("submit", (event) => {
+          const confirmation = window.prompt('พิมพ์ Confirm เพื่อยืนยันการเปิดใช้งานเบอร์นี้');
+
+          if (confirmation !== "Confirm") {
+            event.preventDefault();
+            return;
+          }
+
+          const confirmationInput = form.querySelector('input[name="confirmation"]');
+          if (confirmationInput) {
+            confirmationInput.value = confirmation;
+          }
+        });
+      });
 
       if (!input || rows.length === 0 || !visibleCount) return;
 

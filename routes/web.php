@@ -4854,9 +4854,13 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->with('status_message', 'เปลี่ยนสถานะเป็น hold เรียบร้อย');
     })->name('hold-numbers.add');
 
-    Route::post('/hold-numbers/{phoneNumber}/activate', function (PhoneNumber $phoneNumber) use ($ensureAdmin) {
+    Route::post('/hold-numbers/{phoneNumber}/activate', function (Request $request, PhoneNumber $phoneNumber) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
+        }
+
+        if ($request->input('confirmation') !== 'Confirm') {
+            return back()->with('error_message', 'กรุณาพิมพ์ Confirm เพื่อยืนยันการเปิดใช้งาน');
         }
 
         $adminUserId = session('admin_user_id');
