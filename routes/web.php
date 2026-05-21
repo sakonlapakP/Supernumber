@@ -2119,8 +2119,41 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 ];
             })->all();
 
-            $total = collect($documentItems)->sum(fn (array $item): float => (float) $item['input_amount']);
+            $subtotal = collect($documentItems)->sum(fn (array $item): float => (float) $item['input_amount']);
             $quickPaymentMethod = $data['paymentMethod'] === 'cash' ? 'cash' : 'transfer';
+
+            // Calculate totals based on calculation mode per QUOTATION_CALCULATION_RULES_TH.md
+            $baseAmount = $subtotal; // For standard calculation
+
+            // For reverse calculation, calculate the selling price from target income
+            if ($calculationMode === 'reverse') {
+                // Selling Price = Target Income / 0.97
+                $baseAmount = round($subtotal / 0.97, 2);
+            }
+
+            // Common calculations for both modes (VAT = 7%, WHT = 3%)
+            $vatAmount = round($baseAmount * 0.07, 2);
+            $whtAmount = round($baseAmount * 0.03, 2);
+            $grandTotal = round($baseAmount + $vatAmount, 2);
+            $netToPay = round($grandTotal - $whtAmount, 2);
+
+            // Build totals array with both numeric and display format versions
+            $totals = [
+                'subtotal' => $subtotal,
+                'subtotal_display' => number_format($subtotal, 2, '.', ','),
+                'vat_rate' => 7.00,
+                'vat_rate_display' => '7.00',
+                'vat_amount' => $vatAmount,
+                'vat_amount_display' => number_format($vatAmount, 2, '.', ','),
+                'grand_total' => $grandTotal,
+                'grand_total_display' => number_format($grandTotal, 2, '.', ','),
+                'withholding_rate' => 3.00,
+                'withholding_rate_display' => '3.00',
+                'withholding_amount' => $whtAmount,
+                'withholding_amount_display' => number_format($whtAmount, 2, '.', ','),
+                'net_to_pay' => $netToPay,
+                'net_to_pay_display' => number_format($netToPay, 2, '.', ','),
+            ];
 
             // Build payload for sales document
             $payload = [
@@ -2158,7 +2191,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                     'branch' => 'จามจุรีสแควร์',
                     'account_number' => '0063701726',
                 ],
-                'total' => $total,
+                'totals' => $totals,
+                'total' => $subtotal,
             ];
 
             // Create draft document
