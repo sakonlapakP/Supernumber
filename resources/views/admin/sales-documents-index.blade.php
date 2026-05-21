@@ -776,6 +776,12 @@
         }
 
         renderItems();
+
+        // Recalculate and show pricing breakdown if items exist
+        if (wizardData.items.length > 0) {
+          const total = wizardData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+          showPricingBreakdown(total);
+        }
       }
 
       calculateBtn?.addEventListener('click', syncItemsForTaxMethod);
@@ -786,8 +792,20 @@
       function showPricingBreakdown(basePrice) {
         const amount = parseFloat(basePrice) || 0;
 
-        // Standard calculation: base price as is
-        const sellingPrice = amount;
+        // Check which calculation mode is selected
+        const selectedTaxMethod = document.querySelector('input[name="tax-method"]:checked')?.value;
+        const isReverseMode = selectedTaxMethod === 'we-pay';
+
+        // Calculate based on mode per QUOTATION_CALCULATION_RULES_TH.md
+        let sellingPrice;
+        if (isReverseMode) {
+          // Reverse mode: amount is Target Income, calculate Selling Price = Target Income / 0.97
+          sellingPrice = amount / 0.97;
+        } else {
+          // Standard mode: amount is Base Price (selling price as is)
+          sellingPrice = amount;
+        }
+
         const vat = sellingPrice * 0.07;
         const grandTotal = sellingPrice + vat;
         const wht = sellingPrice * 0.03;
