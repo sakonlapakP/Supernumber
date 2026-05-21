@@ -62,6 +62,28 @@ class AdminSalesDocumentWorkspaceTest extends TestCase
         $response->assertSee('บันทึกร่าง');
     }
 
+    public function test_admin_can_view_quick_sales_document_form_updates(): void
+    {
+        $admin = User::factory()->create([
+            'username' => 'admin-sales-docs-quick',
+            'role' => User::ROLE_ADMIN,
+            'is_active' => true,
+        ]);
+
+        $response = $this
+            ->withSession($this->adminSession($admin))
+            ->get(route('admin.sales-documents-quick'));
+
+        $response->assertOk();
+        $response->assertSee('วันที่ออกเอกสาร');
+        $response->assertSee('วันสิ้นสุดเอกสาร');
+        $response->assertSee('data-qdoc-payment-method', false);
+        $response->assertSee('data-qdoc-payment-bank value="ธนาคารกสิกรไทย บจก. ซุปเปอร์นัมเบอร์" readonly', false);
+        $response->assertSee('data-qdoc-customer-name placeholder="เลือกชื่อบริษัทด้านบน" readonly', false);
+        $response->assertDontSee('วันที่เอกสาร');
+        $response->assertDontSee('data-qdoc-payment-transfer', false);
+    }
+
     public function test_document_officer_can_view_sales_document_workspace(): void
     {
         $documentOfficer = User::factory()->create([

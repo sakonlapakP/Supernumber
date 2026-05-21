@@ -2151,9 +2151,9 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $taxId = trim((string) ($data['tax_id'] ?? ''));
         $address = trim((string) ($data['address'] ?? ''));
 
-        if ($companyName === '' || $taxId === '' || $address === '') {
+        if ($companyName === '') {
             throw ValidationException::withMessages([
-                'company_name' => 'กรุณากรอกชื่อลูกค้า เลขภาษี และที่อยู่ให้ครบก่อนบันทึก',
+                'company_name' => 'กรุณากรอกชื่อบริษัทหรือชื่อลูกค้า',
             ]);
         }
 
@@ -2170,8 +2170,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'company_name' => $companyName,
             'first_name' => $firstName,
             'last_name' => $lastName,
-            'tax_id' => $taxId,
-            'address' => $address,
+            'tax_id' => $taxId !== '' ? $taxId : null,
+            'address' => $address !== '' ? $address : null,
             'email' => trim((string) ($data['email'] ?? '')) ?: null,
             'phone' => trim((string) ($data['phone'] ?? '')) ?: null,
             'payment_term' => trim((string) ($data['payment_term'] ?? '')) ?: null,

@@ -55,11 +55,11 @@
           </label>
         </div>
         <label class="qdoc-label">
-          <span>เลขประจำตัวผู้เสียภาษี <em>*</em></span>
+          <span>เลขประจำตัวผู้เสียภาษี</span>
           <input type="text" data-qdoc-modal-tax-id class="qdoc-input" placeholder="กรอกเลขประจำตัวผู้เสียภาษี">
         </label>
         <label class="qdoc-label">
-          <span>ที่อยู่ <em>*</em></span>
+          <span>ที่อยู่</span>
           <textarea rows="3" data-qdoc-modal-address class="qdoc-input" placeholder="กรอกที่อยู่ลูกค้า"></textarea>
         </label>
         <div class="qdoc-form-row">
@@ -129,16 +129,16 @@
             <input type="text" class="qdoc-input" data-qdoc-doc-number value="QT-{{ $sequence }}" data-autonumber="true">
           </label>
           <label class="qdoc-label">
-            <span>วันที่เอกสาร</span>
+            <span>เลขที่อ้างอิง</span>
+            <input type="text" class="qdoc-input" data-qdoc-ref-number placeholder="ไม่บังคับ">
+          </label>
+          <label class="qdoc-label">
+            <span>วันที่ออกเอกสาร</span>
             <input type="date" class="qdoc-input" data-qdoc-doc-date value="{{ $documentDate }}">
           </label>
           <label class="qdoc-label">
-            <span>วันครบกำหนด</span>
+            <span>วันสิ้นสุดเอกสาร</span>
             <input type="date" class="qdoc-input" data-qdoc-due-date value="{{ $dueDate }}">
-          </label>
-          <label class="qdoc-label">
-            <span>เลขที่อ้างอิง</span>
-            <input type="text" class="qdoc-input" data-qdoc-ref-number placeholder="ไม่บังคับ">
           </label>
         </div>
       </div>
@@ -159,25 +159,25 @@
           <div class="qdoc-form-row">
             <label class="qdoc-label">
               <span>ชื่อลูกค้า / บริษัท</span>
-              <input type="text" class="qdoc-input" data-qdoc-customer-name placeholder="ชื่อลูกค้าหรือบริษัท">
+              <input type="text" class="qdoc-input" data-qdoc-customer-name placeholder="เลือกชื่อบริษัทด้านบน" readonly>
             </label>
             <label class="qdoc-label">
               <span>เลขผู้เสียภาษี</span>
-              <input type="text" class="qdoc-input" data-qdoc-customer-tax-id placeholder="เลขประจำตัวผู้เสียภาษี">
+              <input type="text" class="qdoc-input" data-qdoc-customer-tax-id placeholder="เติมอัตโนมัติจากข้อมูลลูกค้า" readonly>
             </label>
           </div>
           <label class="qdoc-label">
             <span>ที่อยู่</span>
-            <textarea rows="3" class="qdoc-input" data-qdoc-customer-address placeholder="ที่อยู่ลูกค้า"></textarea>
+            <textarea rows="3" class="qdoc-input" data-qdoc-customer-address placeholder="เติมอัตโนมัติจากข้อมูลลูกค้า" readonly></textarea>
           </label>
           <div class="qdoc-form-row">
             <label class="qdoc-label">
               <span>ผู้ติดต่อ</span>
-              <input type="text" class="qdoc-input" data-qdoc-customer-contact placeholder="ชื่อผู้ติดต่อ">
+              <input type="text" class="qdoc-input" data-qdoc-customer-contact placeholder="เติมอัตโนมัติจากข้อมูลลูกค้า" readonly>
             </label>
             <label class="qdoc-label">
               <span>เงื่อนไขการชำระ</span>
-              <input type="text" class="qdoc-input" data-qdoc-customer-payment-term placeholder="เช่น ชำระภายใน 7 วัน">
+              <input type="text" class="qdoc-input" data-qdoc-customer-payment-term placeholder="เติมอัตโนมัติจากข้อมูลลูกค้า" readonly>
             </label>
           </div>
         </div>
@@ -220,23 +220,26 @@
       {{-- Payment method + bank --}}
       <div class="admin-card qdoc-card" style="margin-bottom: 12px;">
         <div class="qdoc-section-title">วิธีการชำระเงิน</div>
-        <div class="qdoc-payment-checks">
-          <label><input type="checkbox" data-qdoc-payment-cash> เงินสด</label>
-          <label><input type="checkbox" data-qdoc-payment-transfer checked> เงินโอน</label>
-          <label><input type="checkbox" data-qdoc-payment-cheque> เช็คธนาคาร</label>
-        </div>
+        <label class="qdoc-label qdoc-payment-method">
+          <span>เลือกวิธีชำระเงิน</span>
+          <select class="qdoc-input" data-qdoc-payment-method>
+            <option value="cash">เงินสด</option>
+            <option value="transfer" selected>เงินโอน</option>
+            <option value="cheque">เช็คธนาคาร</option>
+          </select>
+        </label>
         <div class="qdoc-form-row" style="margin-top:8px;">
           <label class="qdoc-label">
             <span>ธนาคาร</span>
-            <input type="text" class="qdoc-input" data-qdoc-payment-bank value="ธนาคารกสิกรไทย บจก. ซุปเปอร์นัมเบอร์">
+            <input type="text" class="qdoc-input" data-qdoc-payment-bank value="ธนาคารกสิกรไทย บจก. ซุปเปอร์นัมเบอร์" readonly>
           </label>
           <label class="qdoc-label">
             <span>สาขา</span>
-            <input type="text" class="qdoc-input" data-qdoc-payment-branch value="จามจุรีสแควร์">
+            <input type="text" class="qdoc-input" data-qdoc-payment-branch value="จามจุรีสแควร์" readonly>
           </label>
           <label class="qdoc-label">
             <span>เลขบัญชี</span>
-            <input type="text" class="qdoc-input" data-qdoc-payment-account value="0063701726">
+            <input type="text" class="qdoc-input" data-qdoc-payment-account value="0063701726" readonly>
           </label>
         </div>
       </div>
@@ -494,6 +497,11 @@
       transition: border-color .15s;
     }
     .qdoc-input:focus { outline: none; border-color: #2563eb; box-shadow: 0 0 0 2px #dbeafe; }
+    .qdoc-input[readonly] {
+      background: #f9fafb;
+      color: #374151;
+      cursor: default;
+    }
     .qdoc-input--tiny { width: 64px; }
     .qdoc-input--right { text-align: right; }
     .qdoc-input--center { text-align: center; }
@@ -546,8 +554,8 @@
     .qdoc-del-row-btn:hover { color: #ef4444; }
     .qdoc-add-row-btn { margin-top: 10px; }
 
-    /* ─── Payment checks ─── */
-    .qdoc-payment-checks { display: flex; gap: 18px; margin-bottom: 4px; font-size: 13px; }
+    /* ─── Payment method ─── */
+    .qdoc-payment-method { max-width: 260px; }
 
     /* ─── Tax groups ─── */
     .qdoc-tax-group { padding: 10px 12px; background: #f9fafb; border-radius: 6px; }
@@ -729,6 +737,7 @@
       const previewBtn = document.querySelector('[data-qdoc-preview]');
       const downloadButtons = document.querySelectorAll('[data-qdoc-download]');
       const customerAddBtn = document.querySelector('[data-qdoc-customer-add]');
+      const paymentMethodSelect = document.querySelector('[data-qdoc-payment-method]');
       const previewModal = document.getElementById('qdoc-preview-modal');
       const previewIframe = document.getElementById('qdoc-preview-iframe');
       const previewLoading = document.getElementById('qdoc-preview-loading');
@@ -790,9 +799,9 @@
         const c = customers.find(c => String(c.id) === String(id));
         if (customerNameInput) customerNameInput.value = c?.company_name || c?.display_name || '';
         if (customerTaxIdInput) customerTaxIdInput.value = c?.tax_id || '';
-        if (customerAddressInput) customerAddressInput.value = [c?.address, c?.email].filter(Boolean).join('\n');
+        if (customerAddressInput) customerAddressInput.value = c?.address || '';
         if (customerContactInput) customerContactInput.value = c?.contact_name || '';
-        if (customerPaymentTermInput && c?.payment_term) customerPaymentTermInput.value = c.payment_term;
+        if (customerPaymentTermInput) customerPaymentTermInput.value = c?.payment_term || '';
       };
 
       customerSelect?.addEventListener('change', () => applyCustomer(customerSelect.value));
@@ -988,6 +997,7 @@
         const type = docType || currentDocType;
         const cfg = typeConfig[type];
         const selectedCustomer = customers.find(c => String(c.id) === String(customerSelect?.value ?? ''));
+        const paymentMethod = paymentMethodSelect?.value || 'transfer';
         const discountRate = parseNum(discountRateInput?.value);
         const vatRate = parseNum(vatRateInput?.value);
         const whtRate = parseNum(whtRateInput?.value);
@@ -1033,9 +1043,10 @@
           customer: { customer_id: selectedCustomer?.id || null, name: customerNameInput?.value || '', tax_id: customerTaxIdInput?.value || '', address: customerAddressInput?.value || '', contact: customerContactInput?.value || '', payment_term: customerPaymentTermInput?.value || '' },
           items,
           payment: {
-            cash: document.querySelector('[data-qdoc-payment-cash]')?.checked || false,
-            transfer: document.querySelector('[data-qdoc-payment-transfer]')?.checked || false,
-            cheque: document.querySelector('[data-qdoc-payment-cheque]')?.checked || false,
+            method: paymentMethod,
+            cash: paymentMethod === 'cash',
+            transfer: paymentMethod === 'transfer',
+            cheque: paymentMethod === 'cheque',
             bank: document.querySelector('[data-qdoc-payment-bank]')?.value || '',
             branch: document.querySelector('[data-qdoc-payment-branch]')?.value || '',
             account_number: document.querySelector('[data-qdoc-payment-account]')?.value || '',
@@ -1217,7 +1228,7 @@
           const address = document.querySelector('[data-qdoc-modal-address]')?.value?.trim() || '';
           const email = document.querySelector('[data-qdoc-modal-email]')?.value?.trim() || '';
           const phone = document.querySelector('[data-qdoc-modal-phone]')?.value?.trim() || '';
-          if (!companyName || !taxId || !address) { setCustomerDialogStatus('กรุณากรอกชื่อลูกค้า เลขภาษี และที่อยู่ให้ครบ'); return; }
+          if (!companyName) { setCustomerDialogStatus('กรุณากรอกชื่อบริษัทหรือลูกค้า'); return; }
           const body = { company_name: companyName, contact_name: contactName, tax_id: taxId, address, email, phone, _token: csrfToken };
           const res = await fetch(@json(route('admin.customers.quick-store')), { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': csrfToken }, body: JSON.stringify(body) });
           const json = await res.json();
@@ -1262,13 +1273,9 @@
 
         // Payment
         const p = payload.payment || {};
-        const cashEl = document.querySelector('[data-qdoc-payment-cash]'); if (cashEl) cashEl.checked = Boolean(p.cash);
-        const transEl = document.querySelector('[data-qdoc-payment-transfer]'); if (transEl) transEl.checked = p.transfer !== false;
-        const cheqEl = document.querySelector('[data-qdoc-payment-cheque]'); if (cheqEl) cheqEl.checked = Boolean(p.cheque);
-        const bankEl = document.querySelector('[data-qdoc-payment-bank]'); if (bankEl && p.bank) bankEl.value = p.bank;
-        const branchEl = document.querySelector('[data-qdoc-payment-branch]'); if (branchEl && p.branch) branchEl.value = p.branch;
-        const accEl = document.querySelector('[data-qdoc-payment-account]'); if (accEl && p.account_number) accEl.value = p.account_number;
-
+        if (paymentMethodSelect) {
+          paymentMethodSelect.value = p.method || (p.cash ? 'cash' : (p.cheque ? 'cheque' : 'transfer'));
+        }
         // Signatures
         const s = payload.signatures || {};
         const abEl = document.querySelector('[data-qdoc-approved-by]'); if (abEl) abEl.value = s.approved_by || '';

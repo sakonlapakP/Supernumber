@@ -37,6 +37,29 @@ class AdminCustomerQuickStoreTest extends TestCase
         ]);
     }
 
+    public function test_admin_can_quick_store_customer_with_company_name_only(): void
+    {
+        $admin = User::factory()->create([
+            'username' => 'admin-quick-customer-minimal',
+            'role' => User::ROLE_ADMIN,
+            'is_active' => true,
+        ]);
+
+        $response = $this
+            ->withSession($this->adminSession($admin))
+            ->postJson(route('admin.customers.quick-store'), [
+                'company_name' => 'บริษัท กรอกเฉพาะชื่อ จำกัด',
+            ]);
+
+        $response->assertOk();
+        $response->assertJsonPath('customer.display_name', 'บริษัท กรอกเฉพาะชื่อ จำกัด');
+        $this->assertDatabaseHas('billing_customers', [
+            'company_name' => 'บริษัท กรอกเฉพาะชื่อ จำกัด',
+            'tax_id' => null,
+            'address' => null,
+        ]);
+    }
+
     public function test_admin_can_quick_update_customer_from_document_page(): void
     {
         $admin = User::factory()->create([
