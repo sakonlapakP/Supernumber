@@ -592,6 +592,11 @@
         background: #047857;
       }
 
+      .admin-button--secondary:hover,
+      .admin-button--secondary:focus {
+        background: #047857;
+      }
+
       .admin-button--muted {
         background: #eff3f8;
         border-color: var(--admin-border);

@@ -198,6 +198,7 @@
 
           if (confirmation !== "Confirm") {
             event.preventDefault();
+            event.submitter?.blur();
             return;
           }
 
