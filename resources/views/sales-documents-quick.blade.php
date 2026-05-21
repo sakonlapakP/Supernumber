@@ -507,9 +507,38 @@
       -webkit-appearance: none;
       appearance: none;
     }
+    @media (max-width: 768px) {
+      .qdoc-meta-grid { gap: 12px; }
+      .qdoc-meta-grid .qdoc-input { padding-left: 8px; padding-right: 8px; padding-top: 10px; padding-bottom: 10px; }
+      .qdoc-card { padding: 20px 16px; }
+      .qdoc-form-row { grid-template-columns: 1fr; gap: 12px; }
+      .qdoc-label span { font-size: 12px; }
+      .qdoc-input { padding: 10px 12px; font-size: 14px; min-height: 40px; }
+      .qdoc-payment-method { max-width: 100%; }
+      .qdoc-type-switch button { padding: 8px 16px; font-size: 12px; }
+    }
     @media (max-width: 480px) {
-      .qdoc-meta-grid { gap: 8px; }
-      .qdoc-meta-grid .qdoc-input { padding-left: 6px; padding-right: 6px; }
+      .qdoc-meta-grid { grid-template-columns: 1fr; gap: 10px; }
+      .qdoc-meta-grid .qdoc-input { padding: 8px 10px; }
+      .qdoc-card { padding: 16px 12px; }
+      .qdoc-form-row { gap: 10px; }
+      .qdoc-label { gap: 6px; }
+      .qdoc-label span { font-size: 11px; }
+      .qdoc-input { padding: 10px 10px; font-size: 13px; min-height: 38px; }
+      h1 { font-size: 18px; margin-bottom: 6px !important; }
+      .admin-subtitle { font-size: 12px; }
+      .qdoc-items-table { min-width: 100%; }
+      col.qdoc-col-index { width: 32px; }
+      col.qdoc-col-qty { width: 60px; }
+      col.qdoc-col-unit { width: 60px; }
+      col.qdoc-col-price,
+      col.qdoc-col-amount { width: 80px; }
+      col.qdoc-col-del { width: 28px; }
+      .qdoc-items-table { font-size: 12px; }
+      .qdoc-items-table th { font-size: 10px; padding: 4px 4px 6px; }
+      .qdoc-items-table td { padding: 4px 4px; }
+      .qdoc-items-table th,
+      .qdoc-items-table td { min-width: 0; }
     }
 
     .qdoc-form-row {
@@ -735,6 +764,24 @@
     .qdoc-preview-modal__body { flex: 1; overflow: hidden; position: relative; }
     .qdoc-preview-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-size: 14px; color: #6b7280; }
     .qdoc-preview-iframe { width: 100%; height: 100%; border: none; display: block; }
+
+    /* ─── Mobile optimizations ─── */
+    @media (max-width: 768px) {
+      .qdoc-page { gap: 12px; }
+      .qdoc-main,
+      .qdoc-sidebar { gap: 10px; }
+      .qdoc-items-table-wrap { margin: 0 -4px; padding: 0 4px; }
+    }
+    @media (max-width: 480px) {
+      .qdoc-customer-row { flex-wrap: wrap; }
+      .qdoc-customer-select { width: 100%; }
+      .qdoc-customer-fields { width: 100%; }
+      .qdoc-card-header { flex-wrap: wrap; gap: 8px; margin-bottom: 10px; }
+      .qdoc-type-switch { flex-wrap: wrap; }
+      .qdoc-section-title { font-size: 12px; margin-bottom: 8px; }
+      .admin-button--compact { padding: 6px 12px; font-size: 12px; }
+      [style*="display: flex; gap: 8px;"] { gap: 6px; flex-wrap: wrap; }
+    }
   </style>
 
   <script>
