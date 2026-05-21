@@ -56,6 +56,11 @@ class AdminEasyDocumentTest extends TestCase
 
         $document = SalesDocument::query()->sole();
 
+        $response->assertJsonPath(
+            'redirect_url',
+            route('admin.sales-documents-quick', ['draft' => $document->id], false)
+        );
+
         $this->assertTrue($document->is_draft);
         $this->assertSame('quotation', $document->document_type);
         $this->assertSame($customer->display_name, $document->customer_name);

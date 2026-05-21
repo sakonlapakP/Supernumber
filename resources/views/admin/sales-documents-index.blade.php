@@ -621,6 +621,7 @@
 
       const customers = @json($customers ?? []);
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
+      const createEasyDocumentUrl = @json(route('admin.easy-documents.create', [], false));
 
       // Open modal
       openBtn?.addEventListener('click', () => {
@@ -950,6 +951,7 @@
 
         // Only send required fields to backend
         const payloadData = {
+          _token: csrfToken,
           customerId: wizardData.customerId,
           contactName: wizardData.contactName,
           contactPhone: wizardData.contactPhone,
@@ -960,12 +962,13 @@
           paymentDetail: wizardData.paymentDetail,
         };
 
-        fetch('{{ route("admin.easy-documents.create") }}', {
+        fetch(createEasyDocumentUrl, {
           method: 'POST',
+          credentials: 'same-origin',
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            'X-CSRF-Token': csrfToken,
+            'X-CSRF-TOKEN': csrfToken,
           },
           body: JSON.stringify(payloadData),
         })
@@ -984,6 +987,10 @@
             }
 
             if (!response.ok) {
+              if (response.status === 419) {
+                throw new Error('เซสชันหมดอายุหรือ token ไม่ตรง กรุณารีเฟรชหน้าแล้วลองสร้างเอกสารอีกครั้ง');
+              }
+
               throw new Error(data.message || `ไม่สามารถสร้างเอกสารได้ (HTTP ${response.status})`);
             }
 

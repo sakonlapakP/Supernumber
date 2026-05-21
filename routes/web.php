@@ -2177,7 +2177,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             return response()->json([
                 'success' => true,
                 'message' => 'สร้างร่างเอกสารสำเร็จ',
-                'redirect_url' => route('admin.sales-documents-quick', ['draft' => $document->id]),
+                'redirect_url' => route('admin.sales-documents-quick', ['draft' => $document->id], false),
             ]);
         } catch (\Exception $e) {
             return response()->json([
