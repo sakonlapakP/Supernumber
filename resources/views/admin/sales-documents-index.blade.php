@@ -95,7 +95,7 @@
               <select id="easy-docs-customer" class="easy-docs-input">
                 <option value="">-- เลือกลูกค้า --</option>
                 @foreach ($customers ?? [] as $customer)
-                  <option value="{{ $customer->id }}">{{ $customer->display_name }}</option>
+                  <option value="{{ $customer->id }}" data-phone="{{ $customer->phone ?? '' }}" data-contact="{{ $customer->contact_name ?? '' }}">{{ $customer->display_name }}</option>
                 @endforeach
               </select>
             </label>
@@ -103,6 +103,23 @@
           <button type="button" class="easy-docs-button easy-docs-button--link" data-easy-docs-create-customer>
             ➕ สร้างลูกค้าใหม่
           </button>
+
+          {{-- Customer Details Section (shown after selection) --}}
+          <div id="easy-docs-customer-details" class="easy-docs-section" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
+            <h3 class="easy-docs-section-title">📋 รายละเอียดลูกค้า</h3>
+            <div class="easy-docs-field">
+              <label class="easy-docs-label">
+                <span>ชื่อผู้ติดต่อ</span>
+                <input type="text" id="easy-docs-contact-name" class="easy-docs-input" placeholder="ชื่อผู้ติดต่อ">
+              </label>
+            </div>
+            <div class="easy-docs-field">
+              <label class="easy-docs-label">
+                <span>เบอร์ติดต่อ</span>
+                <input type="tel" id="easy-docs-contact-phone" class="easy-docs-input" placeholder="เบอร์ติดต่อ">
+              </label>
+            </div>
+          </div>
         </div>
 
         {{-- Step 2: Products & Tax Method --}}
@@ -167,10 +184,6 @@
                 <span>ภาษีหัก ณ ที่จ่าย (3%):</span>
                 <strong id="easy-docs-wht">- ฿0.00</strong>
               </div>
-              <div class="easy-docs-pricing-row easy-docs-pricing-row--highlight">
-                <span>ยอดชำระสุทธิ:</span>
-                <strong id="easy-docs-net-payment">฿0.00</strong>
-              </div>
             </div>
           </div>
 
@@ -229,18 +242,33 @@
               <span>ลูกค้า:</span>
               <strong id="easy-docs-summary-customer">-</strong>
             </div>
-            <div class="easy-docs-summary-row">
-              <span>รายการ:</span>
-              <strong id="easy-docs-summary-items">0 รายการ</strong>
+
+            <!-- Items List -->
+            <div style="margin: 16px 0; border-top: 1px solid #e5e7eb; padding-top: 12px;">
+              <div style="font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">รายการสินค้า</div>
+              <div id="easy-docs-summary-items-list" style="font-size: 12px; color: #374151;"></div>
             </div>
-            <div class="easy-docs-summary-row">
-              <span>ภาษี:</span>
-              <strong id="easy-docs-summary-tax">-</strong>
+
+            <!-- Pricing Breakdown -->
+            <div style="margin: 16px 0; border-top: 1px solid #e5e7eb; padding-top: 12px;">
+              <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+                <span style="color: #6b7280;">ราคารวมก่อนภาษี:</span>
+                <strong id="easy-docs-summary-subtotal">฿0.00</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+                <span style="color: #6b7280;">ภาษีมูลค่าเพิ่ม (7%):</span>
+                <strong id="easy-docs-summary-vat">+ ฿0.00</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 2px solid #bfdbfe; margin-bottom: 8px;">
+                <span style="color: #6b7280;">ยอดรวมทั้งหมด:</span>
+                <strong id="easy-docs-summary-grand-total">฿0.00</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between; padding: 6px 0;">
+                <span style="color: #6b7280;">ภาษีหัก ณ ที่จ่าย (3%):</span>
+                <strong id="easy-docs-summary-wht">- ฿0.00</strong>
+              </div>
             </div>
-            <div class="easy-docs-summary-row easy-docs-summary-row--highlight">
-              <span>รวม:</span>
-              <strong id="easy-docs-summary-total">฿0.00</strong>
-            </div>
+
             <div class="easy-docs-summary-row">
               <span>วิธีชำระ:</span>
               <strong id="easy-docs-summary-payment">-</strong>
@@ -248,6 +276,10 @@
             <div class="easy-docs-summary-row">
               <span>เงื่อนการชำระ:</span>
               <strong id="easy-docs-summary-condition">-</strong>
+            </div>
+            <div class="easy-docs-summary-row easy-docs-summary-row--highlight">
+              <span>ราคารวม (สุทธิ):</span>
+              <strong id="easy-docs-summary-total">฿0.00</strong>
             </div>
           </div>
         </div>
@@ -572,6 +604,8 @@
       const totalSteps = 4;
       const wizardData = {
         customerId: null,
+        contactName: '',
+        contactPhone: '',
         items: [],
         taxMethod: 'customer-pays',
         paymentMethod: 'bank',
@@ -587,6 +621,13 @@
         modal.removeAttribute('hidden');
         currentStep = 1;
         wizardData.items = [];
+        wizardData.customerId = null;
+        wizardData.contactName = '';
+        wizardData.contactPhone = '';
+        customerSelect.value = '';
+        customerDetailsSection.style.display = 'none';
+        contactNameInput.value = '';
+        contactPhoneInput.value = '';
         productNameInput.value = '';
         productPriceInput.value = '';
         productQtyInput.value = '1';
@@ -594,6 +635,44 @@
         calculateSection.style.display = 'none';
         renderItems();
         showStep(1);
+      });
+
+      // Customer selection and details
+      const customerDetailsSection = document.getElementById('easy-docs-customer-details');
+      const contactNameInput = document.getElementById('easy-docs-contact-name');
+      const contactPhoneInput = document.getElementById('easy-docs-contact-phone');
+
+      customerSelect?.addEventListener('change', (e) => {
+        const selectedOption = e.target.options[e.target.selectedIndex];
+        if (e.target.value) {
+          // Show customer details section
+          customerDetailsSection.style.display = 'block';
+          // Populate from data attributes
+          contactNameInput.value = selectedOption.dataset.contact || '';
+          contactPhoneInput.value = selectedOption.dataset.phone || '';
+          // Store in wizard data
+          wizardData.customerId = e.target.value;
+          wizardData.contactName = contactNameInput.value;
+          wizardData.contactPhone = contactPhoneInput.value;
+        } else {
+          // Hide customer details section
+          customerDetailsSection.style.display = 'none';
+          contactNameInput.value = '';
+          contactPhoneInput.value = '';
+          wizardData.customerId = null;
+          wizardData.contactName = '';
+          wizardData.contactPhone = '';
+        }
+      });
+
+      // Contact name field change
+      contactNameInput?.addEventListener('change', (e) => {
+        wizardData.contactName = e.target.value;
+      });
+
+      // Contact phone field change
+      contactPhoneInput?.addEventListener('change', (e) => {
+        wizardData.contactPhone = e.target.value;
       });
 
       // Close modal
@@ -794,6 +873,8 @@
             return false;
           }
           wizardData.customerId = customerSelect.value;
+          wizardData.contactName = contactNameInput.value;
+          wizardData.contactPhone = contactPhoneInput.value;
         }
         if (step === 2) {
           if (wizardData.items.length === 0) {
@@ -810,16 +891,39 @@
       }
 
       function updateSummary() {
-        const customer = customers.find(c => c.id == wizardData.customerId);
-        document.getElementById('easy-docs-summary-customer').textContent = customer?.display_name || '-';
-        document.getElementById('easy-docs-summary-items').textContent = `${wizardData.items.length} รายการ`;
-        document.getElementById('easy-docs-summary-tax').textContent = wizardData.taxMethod === 'customer-pays' ? 'ลูกค้าจ่าย' : 'เราจ่าย';
-
-        const total = wizardData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
-        document.getElementById('easy-docs-summary-total').textContent = new Intl.NumberFormat('th-TH', {
+        const formatter = new Intl.NumberFormat('th-TH', {
           style: 'currency',
           currency: 'THB',
-        }).format(total);
+        });
+
+        const customer = customers.find(c => String(c.id) === String(wizardData.customerId));
+        let customerDisplay = customer?.display_name || '-';
+        if (wizardData.contactName) {
+          customerDisplay += ` (${wizardData.contactName})`;
+        }
+        if (wizardData.contactPhone) {
+          customerDisplay += ` - ${wizardData.contactPhone}`;
+        }
+        document.getElementById('easy-docs-summary-customer').textContent = customerDisplay;
+
+        // Show items list
+        const itemsListHtml = wizardData.items.map(item => {
+          return `<div style="margin-bottom: 6px;">• ${item.name} ${formatter.format(item.price)} × ${item.qty}</div>`;
+        }).join('');
+        document.getElementById('easy-docs-summary-items-list').innerHTML = itemsListHtml;
+
+        // Calculate and show pricing breakdown
+        const subtotal = wizardData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        const vat = subtotal * 0.07;
+        const grandTotal = subtotal + vat;
+        const wht = subtotal * 0.03;
+        const netPayment = grandTotal - wht;
+
+        document.getElementById('easy-docs-summary-subtotal').textContent = formatter.format(subtotal);
+        document.getElementById('easy-docs-summary-vat').textContent = '+ ' + formatter.format(vat);
+        document.getElementById('easy-docs-summary-grand-total').textContent = formatter.format(grandTotal);
+        document.getElementById('easy-docs-summary-wht').textContent = '- ' + formatter.format(wht);
+        document.getElementById('easy-docs-summary-total').textContent = formatter.format(netPayment);
 
         const paymentMethodLabels = {
           'bank': 'ธนาคาร',
