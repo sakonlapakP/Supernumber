@@ -99,7 +99,7 @@
   <div id="qdoc-status" class="qdoc-status" hidden></div>
 
   {{-- Page header --}}
-  <div style="margin-bottom: 16px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;">
+  <div style="margin-bottom: 16px; margin-left: -20px; margin-right: -20px; padding-left: 20px; padding-right: 20px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; background: #fff;">
     <div>
       <h1 style="margin: 0 0 8px 0;">สร้างเอกสารด่วน</h1>
       <p class="admin-subtitle" style="margin: 0;">สร้างใบเสนอราคาหรือใบแจ้งหนี้ได้อย่างรวดเร็ว บันทึกร่าง หรือดาวน์โหลด PDF ได้ทันที</p>
@@ -409,15 +409,9 @@
       grid-template-columns: 1fr 320px;
       gap: 16px;
       align-items: start;
-      margin-right: -16px;
-      padding-right: 16px;
     }
     @media (max-width: 900px) {
-      .qdoc-layout {
-        grid-template-columns: 1fr;
-        margin-right: -16px;
-        padding-right: 16px;
-      }
+      .qdoc-layout { grid-template-columns: 1fr; }
     }
 
     /* ─── Card & sections ─── */
@@ -538,8 +532,9 @@
     .qdoc-input--tiny { width: 64px; }
     .qdoc-input--right { text-align: right; }
     .qdoc-input--center { text-align: center; }
-    .qdoc-input--inline { border: none; border-bottom: 1px solid #e5e7eb; border-radius: 0; padding: 5px 6px; }
-    .qdoc-input--inline:focus { border-bottom-color: #2563eb; box-shadow: none; }
+    .qdoc-input--inline { border: none; border-bottom: 1px solid #e5e7eb; border-radius: 0; padding: 6px 4px; background: transparent; min-height: 28px; display: block; width: 100%; }
+    .qdoc-input--inline:focus { outline: none; border-bottom-color: #2563eb; box-shadow: none; background: #f0f9ff; }
+    .qdoc-input--inline::placeholder { color: #d1d5db; }
     textarea.qdoc-input { resize: vertical; }
 
     /* ─── Customer row ─── */
@@ -553,12 +548,12 @@
     .qdoc-customer-fields { display: flex; flex-direction: column; gap: 10px; }
 
     /* ─── Line items table ─── */
-    .qdoc-items-table-wrap { overflow-x: auto; }
+    .qdoc-items-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
     .qdoc-items-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 13px;
-      table-layout: fixed;
+      table-layout: auto;
     }
     .qdoc-items-table th {
       font-size: 11px;
@@ -570,14 +565,14 @@
       border-bottom: 2px solid #e5e7eb;
       text-align: left;
     }
-    .qdoc-items-table td { padding: 4px 4px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
-    .qdoc-col-index { width: 36px; text-align: center; color: #9ca3af; font-size: 12px; }
-    .qdoc-col-desc { /* auto */ }
-    .qdoc-col-qty { width: 80px; }
-    .qdoc-col-unit { width: 72px; }
-    .qdoc-col-price { width: 110px; }
-    .qdoc-col-amount { width: 110px; text-align: right; font-variant-numeric: tabular-nums; }
-    .qdoc-col-del { width: 30px; text-align: center; }
+    .qdoc-items-table td { padding: 6px 6px; border-bottom: 1px solid #f3f4f6; vertical-align: middle; }
+    .qdoc-col-index { width: 36px; text-align: center; color: #9ca3af; font-size: 12px; flex-shrink: 0; }
+    .qdoc-col-desc { min-width: 200px; flex-grow: 1; }
+    .qdoc-col-qty { width: 80px; flex-shrink: 0; }
+    .qdoc-col-unit { width: 72px; flex-shrink: 0; }
+    .qdoc-col-price { width: 110px; flex-shrink: 0; }
+    .qdoc-col-amount { width: 110px; text-align: right; font-variant-numeric: tabular-nums; flex-shrink: 0; }
+    .qdoc-col-del { width: 30px; text-align: center; flex-shrink: 0; }
     .qdoc-items-table output { font-size: 13px; }
     .qdoc-del-row-btn {
       background: none; border: none; cursor: pointer;
