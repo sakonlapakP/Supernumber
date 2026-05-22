@@ -2199,12 +2199,16 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             $document = SalesDocument::create([
                 'document_type' => 'quotation',
                 'document_number' => 'DRAFT-' . now('Asia/Bangkok')->format('YmdHis'),
+                'document_date' => now('Asia/Bangkok')->format('Y-m-d'),
+                'due_date' => now('Asia/Bangkok')->addDays(7)->format('Y-m-d'),
                 'file_name' => 'draft-' . now('Asia/Bangkok')->format('YmdHis'),
+                'customer_id' => $customer->id,
                 'customer_name' => $customer->display_name,
                 'is_draft' => true,
                 'is_active' => true,
                 'pdf_disk' => 'local',
                 'pdf_path' => '',
+                'saved_by_user_id' => $currentAdmin()?->id,
                 'payload' => $payload,
             ]);
 

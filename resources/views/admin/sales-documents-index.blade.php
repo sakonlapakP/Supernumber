@@ -57,7 +57,7 @@
               </td>
               <td>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                  <a href="{{ route('admin.saved-sales-documents.show', $document) }}" class="admin-button admin-button--muted admin-button--compact">ดูรายละเอียด</a>
+                  <a href="{{ route('admin.sales-documents', ['document' => $document->id]) }}" class="admin-button admin-button--muted admin-button--compact">แก้ไข</a>
                   <a href="{{ route('admin.saved-sales-documents.download', $document) }}" class="admin-button admin-button--compact" target="_blank" rel="noopener">พิมพ์ / บันทึก PDF</a>
                   @if (session('admin_user_role') === \App\Models\User::ROLE_MANAGER)
                     <form action="{{ route('admin.saved-sales-documents.delete', $document) }}" method="post" class="sales-doc-delete-form" data-document-name="{{ $documentTypeLabels[$document->document_type] ?? $document->document_type }} #{{ $document->document_number }}" style="margin: 0;">
@@ -86,14 +86,16 @@
   @if (session('admin_user_role') === \App\Models\User::ROLE_MANAGER)
     {{-- Delete Confirmation Modal --}}
     <div id="delete-confirmation-modal" style="display: none; position: fixed; inset: 0; z-index: 2000; background: rgba(0, 0, 0, 0.5); align-items: center; justify-content: center;">
-      <div style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); width: min(400px, 90vw);">
-        <h2 style="margin: 0 0 12px; font-size: 18px; font-weight: 600; color: #111827;">ยืนยันการลบเอกสาร</h2>
+      <div style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); width: min(420px, 90vw);">
+        <h2 style="margin: 0 0 12px; font-size: 18px; font-weight: 600; color: #111827;">⚠️ ยืนยันการลบเอกสาร</h2>
         <p style="margin: 0 0 12px; color: #6b7280; font-size: 14px;">คุณแน่ใจว่าต้องการลบเอกสาร:</p>
         <p style="margin: 0 0 16px; padding: 12px; background: #fef2f2; border-radius: 6px; border-left: 4px solid #dc2626; color: #991b1b; font-weight: 500;" id="delete-doc-name">-</p>
-        <p style="margin: 0 0 20px; color: #6b7280; font-size: 13px;">เอกสารจะถูกลบถาวรพร้อมไฟล์ PDF</p>
+        <p style="margin: 0 0 12px; color: #6b7280; font-size: 13px;">⚠️ เอกสารจะถูกลบถาวรพร้อมไฟล์ PDF (ไม่สามารถกู้คืนได้)</p>
+        <p style="margin: 0 0 8px; color: #111827; font-size: 13px; font-weight: 600;">พิมพ์ <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 3px; font-family: monospace; color: #dc2626;">confirm</code> เพื่อยืนยัน:</p>
+        <input type="text" id="delete-confirm-input" placeholder="พิมพ์ confirm" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; box-sizing: border-box; margin-bottom: 16px;">
         <div style="display: flex; gap: 8px; justify-content: flex-end;">
-          <button type="button" class="admin-button admin-button--ghost" onclick="document.getElementById('delete-confirmation-modal').style.display = 'none'; document.getElementById('delete-confirmation-modal').removeAttribute('data-form-to-submit');">ยกเลิก</button>
-          <button type="button" class="admin-button admin-button--primary" style="background: #dc2626;" onclick="submitDeleteForm();">ลบเอกสาร</button>
+          <button type="button" class="admin-button admin-button--ghost" onclick="closeDeleteModal();">ยกเลิก</button>
+          <button type="button" id="delete-confirm-btn" class="admin-button admin-button--primary" style="background: #dc2626; opacity: 0.5; cursor: not-allowed;" disabled onclick="submitDeleteForm();">ลบเอกสาร</button>
         </div>
       </div>
     </div>
@@ -1067,6 +1069,17 @@
         const modal = document.getElementById('delete-confirmation-modal');
         const deleteDocNameEl = document.getElementById('delete-doc-name');
         const deleteButtons = document.querySelectorAll('.sales-doc-delete-btn');
+        const confirmInput = document.getElementById('delete-confirm-input');
+        const confirmBtn = document.getElementById('delete-confirm-btn');
+
+        const updateConfirmButtonState = () => {
+          const isConfirmed = confirmInput.value.toLowerCase() === 'confirm';
+          confirmBtn.disabled = !isConfirmed;
+          confirmBtn.style.opacity = isConfirmed ? '1' : '0.5';
+          confirmBtn.style.cursor = isConfirmed ? 'pointer' : 'not-allowed';
+        };
+
+        confirmInput.addEventListener('input', updateConfirmButtonState);
 
         deleteButtons.forEach(btn => {
           btn.addEventListener('click', (e) => {
@@ -1075,27 +1088,40 @@
 
             deleteDocNameEl.textContent = form.dataset.documentName;
             modal.formToSubmit = form;
+            confirmInput.value = '';
+            updateConfirmButtonState();
             modal.style.display = 'flex';
+            confirmInput.focus();
           });
         });
 
         modal.addEventListener('click', (e) => {
           if (e.target === modal) {
-            modal.style.display = 'none';
-            modal.formToSubmit = null;
+            closeDeleteModal();
           }
         });
       })();
 
+      function closeDeleteModal() {
+        const modal = document.getElementById('delete-confirmation-modal');
+        modal.style.display = 'none';
+        modal.formToSubmit = null;
+        document.getElementById('delete-confirm-input').value = '';
+      }
+
       function submitDeleteForm() {
         const modal = document.getElementById('delete-confirmation-modal');
+        const confirmBtn = document.getElementById('delete-confirm-btn');
+
+        if (confirmBtn.disabled) {
+          return;
+        }
 
         if (modal.formToSubmit) {
           modal.formToSubmit.submit();
         }
 
-        modal.style.display = 'none';
-        modal.formToSubmit = null;
+        closeDeleteModal();
       }
     </script>
   @endif
