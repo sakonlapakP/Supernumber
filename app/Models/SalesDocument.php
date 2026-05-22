@@ -194,6 +194,11 @@ class SalesDocument extends Model
         return $this->isInvoiceDraft();
     }
 
+    public function isQuotationEditable(): bool
+    {
+        return $this->isQuotationDraft();
+    }
+
     public function getStatusLabelAttribute(): string
     {
         return match ($this->status) {

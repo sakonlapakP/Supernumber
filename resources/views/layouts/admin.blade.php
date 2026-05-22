@@ -993,6 +993,13 @@
         'document_officer' => 'เจ้าหน้าที่เอกสาร',
         default => 'ผู้ใช้',
       };
+
+      $processingOrdersCount = \App\Models\CustomerOrder::query()->where('status', \App\Models\CustomerOrder::STATUS_PROCESSING)->count();
+      $pendingCommentsCount = \App\Models\ArticleComment::query()->where('status', \App\Models\ArticleComment::STATUS_PENDING)->count();
+      $holdNumbersCount = \App\Models\PhoneNumber::query()->where('status', \App\Models\PhoneNumber::STATUS_HOLD)->count();
+      $estimateLeadsCount = \App\Models\EstimateLead::query()->count();
+      $contactMessagesCount = \App\Models\ContactMessage::query()->count();
+
       $adminNavGroups = [
         [
           'label' => 'ภาพรวม',
@@ -1026,6 +1033,7 @@
               'label' => 'เบอร์ที่พักไว้',
               'url' => route('admin.hold-numbers'),
               'active' => request()->routeIs('admin.hold-numbers'),
+              'badge' => $holdNumbersCount > 0 ? $holdNumbersCount : null,
             ],
             [
               'label' => 'แพ็กเกจรายเดือน',
@@ -1036,6 +1044,7 @@
               'label' => 'ลูกค้าที่ซื้อเบอร์ (คำสั่งซื้อ)',
               'url' => route('admin.orders'),
               'active' => request()->routeIs('admin.orders*'),
+              'badge' => $processingOrdersCount > 0 ? $processingOrdersCount : null,
             ],
           ],
         ],
@@ -1061,11 +1070,13 @@
               'label' => 'ลูกค้าเลือกเบอร์อัตโนมัติ',
               'url' => route('admin.estimate-leads'),
               'active' => request()->routeIs('admin.estimate-leads*'),
+              'badge' => $estimateLeadsCount > 0 ? $estimateLeadsCount : null,
             ],
             [
               'label' => 'ข้อความติดต่อ (Contact Us)',
               'url' => route('admin.contact-messages'),
               'active' => request()->routeIs('admin.contact-messages*'),
+              'badge' => $contactMessagesCount > 0 ? $contactMessagesCount : null,
             ],
           ],
         ],
@@ -1081,6 +1092,7 @@
               'label' => 'คอมเมนต์',
               'url' => route('admin.comments'),
               'active' => request()->routeIs('admin.comments*'),
+              'badge' => $pendingCommentsCount > 0 ? $pendingCommentsCount : null,
             ],
             [
               'label' => 'ตั้งค่าข้อความอัตโนมัติ',

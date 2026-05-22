@@ -21,6 +21,18 @@ class QuotationService
     {
         $data['document_type'] = 'quotation';
 
+        $documentNumber = trim((string) ($data['document_number'] ?? ''));
+        $existingQuotation = $documentNumber !== ''
+            ? SalesDocument::query()
+                ->where('document_type', SalesDocument::TYPE_QUOTATION)
+                ->where('document_number', $documentNumber)
+                ->first()
+            : null;
+
+        if ($existingQuotation && ! $existingQuotation->isQuotationEditable()) {
+            throw new RuntimeException('ไม่สามารถแก้ไขใบเสนอราคาที่ส่งแล้วหรือมีสถานะสุดท้าย');
+        }
+
         $document = $this->pdfService->saveDocument($data, $savedByUserId);
 
         // Set quotation status if not already set
