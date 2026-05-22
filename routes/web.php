@@ -28,6 +28,9 @@ use App\Services\Ga4AnalyticsService;
 use App\Services\LineEstimateLeadNotifier;
 use App\Services\LineLotteryImageService;
 use App\Services\LineOrderNotifier;
+use App\Services\InvoiceService;
+use App\Services\QuotationInvoiceConversionService;
+use App\Services\QuotationService;
 use App\Services\SalesDocumentPdfService;
 use App\Services\TurnstileVerifier;
 use Database\Seeders\ArticlePlanSeeder;
@@ -1838,7 +1841,6 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         ]);
 
         $currentAdminUser = $currentAdmin();
-        $service = app(SalesDocumentPdfService::class);
         $payload = $data['payload'];
         $payload['document_type'] = $data['document_type'];
         $payload['document_number'] = $data['document_number'];
@@ -1847,7 +1849,15 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $payload['customer_id'] = $data['customer_id'] ?? null;
         $payload['customer_name'] = $data['customer_name'] ?? null;
 
-        $document = $service->saveDocument($payload, $currentAdminUser?->id);
+        try {
+            $document = $data['document_type'] === SalesDocument::TYPE_INVOICE
+                ? app(InvoiceService::class)->save($payload, $currentAdminUser?->id)
+                : app(QuotationService::class)->save($payload, $currentAdminUser?->id);
+        } catch (RuntimeException $exception) {
+            return response()->json([
+                'message' => $exception->getMessage(),
+            ], 422);
+        }
 
         return response()->json([
             'message' => ($document->document_type === 'invoice' ? 'บันทึก Invoice' : 'บันทึก Quotation') . ' เรียบร้อยแล้ว กำลังเปิดหน้าพิมพ์สำหรับบันทึก PDF',
@@ -1865,6 +1875,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
 
         $documents = SalesDocument::query()
+            ->with(['savedByUser', 'convertedInvoice'])
             ->where('is_active', true)
             ->latest('updated_at')
             ->paginate(30);
@@ -1953,6 +1964,79 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->route('admin.saved-sales-documents.index')
             ->with('status_message', 'ลบเอกสารออกจากระบบถาวรเรียบร้อยแล้ว');
     })->name('saved-sales-documents.delete');
+
+    Route::post('/saved-sales-documents/{salesDocument}/quotation/{action}', function (
+        SalesDocument $salesDocument,
+        string $action
+    ) use ($ensureDocumentOfficer) {
+        if ($redirect = $ensureDocumentOfficer()) {
+            return $redirect;
+        }
+
+        try {
+            $service = app(QuotationService::class);
+            $updatedDocument = match ($action) {
+                'send' => $service->send($salesDocument),
+                'accept' => $service->accept($salesDocument),
+                'reject' => $service->reject($salesDocument),
+                'expire' => $service->expire($salesDocument),
+                'cancel' => $service->cancel($salesDocument),
+                default => abort(404),
+            };
+        } catch (RuntimeException $exception) {
+            return back()->with('status_error', $exception->getMessage());
+        }
+
+        return back()->with('status_message', 'อัปเดตสถานะ ' . $updatedDocument->status_label . ' เรียบร้อยแล้ว');
+    })->whereIn('action', ['send', 'accept', 'reject', 'expire', 'cancel'])
+        ->name('saved-sales-documents.quotation-status');
+
+    Route::post('/saved-sales-documents/{salesDocument}/invoice/{action}', function (
+        SalesDocument $salesDocument,
+        string $action
+    ) use ($ensureDocumentOfficer) {
+        if ($redirect = $ensureDocumentOfficer()) {
+            return $redirect;
+        }
+
+        try {
+            $service = app(InvoiceService::class);
+            $updatedDocument = match ($action) {
+                'issue' => $service->issue($salesDocument),
+                'partial-paid' => $service->markPartiallyPaid($salesDocument),
+                'paid' => $service->markPaid($salesDocument),
+                'overdue' => $service->markOverdue($salesDocument),
+                'void' => $service->void($salesDocument),
+                default => abort(404),
+            };
+        } catch (RuntimeException $exception) {
+            return back()->with('status_error', $exception->getMessage());
+        }
+
+        return back()->with('status_message', 'อัปเดตสถานะ ' . $updatedDocument->status_label . ' เรียบร้อยแล้ว');
+    })->whereIn('action', ['issue', 'partial-paid', 'paid', 'overdue', 'void'])
+        ->name('saved-sales-documents.invoice-status');
+
+    Route::post('/saved-sales-documents/{salesDocument}/convert-to-invoice', function (
+        SalesDocument $salesDocument
+    ) use ($ensureDocumentOfficer, $currentAdmin) {
+        if ($redirect = $ensureDocumentOfficer()) {
+            return $redirect;
+        }
+
+        try {
+            $invoice = app(QuotationInvoiceConversionService::class)->convertToInvoice(
+                $salesDocument,
+                $currentAdmin()?->id
+            );
+        } catch (RuntimeException $exception) {
+            return back()->with('status_error', $exception->getMessage());
+        }
+
+        return redirect()
+            ->route('admin.saved-sales-documents.show', $invoice)
+            ->with('status_message', 'แปลงใบเสนอราคาเป็นใบแจ้งหนี้ ' . $invoice->document_number . ' เรียบร้อยแล้ว');
+    })->name('saved-sales-documents.convert-to-invoice');
 
     Route::get('/sales-documents-quick', function (Request $request) use ($ensureAdmin, $currentAdmin) {
         if ($redirect = $ensureAdmin()) {

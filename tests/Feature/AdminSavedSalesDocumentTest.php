@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\SalesDocument;
 use App\Models\User;
-use App\Services\SalesDocumentPdfService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\View;
@@ -16,36 +15,11 @@ class AdminSavedSalesDocumentTest extends TestCase
 
     public function test_admin_can_save_and_download_sales_document(): void
     {
-        Storage::fake('local');
-
         $admin = User::factory()->create([
             'username' => 'admin-saved-document',
             'role' => User::ROLE_ADMIN,
             'is_active' => true,
         ]);
-
-        $this->app->instance(SalesDocumentPdfService::class, new class
-        {
-            public function saveDocument(array $data, ?int $savedByUserId = null): SalesDocument
-            {
-                $document = SalesDocument::query()->create([
-                    'document_type' => $data['document_type'],
-                    'document_number' => $data['document_number'],
-                    'document_date' => $data['document_date'] ?? null,
-                    'due_date' => $data['due_date'] ?? null,
-                    'customer_name' => $data['customer_name'] ?? null,
-                    'file_name' => 'Quotation QT-260403-001',
-                    'pdf_disk' => 'local',
-                    'pdf_path' => 'qoutation/2026/Quotation QT-260403-001.pdf',
-                    'saved_by_user_id' => $savedByUserId,
-                    'payload' => $data,
-                ]);
-
-                Storage::disk('local')->put($document->pdf_path, 'fake pdf');
-
-                return $document;
-            }
-        });
 
         $payload = [
             'document_type' => 'quotation',
@@ -70,7 +44,8 @@ class AdminSavedSalesDocumentTest extends TestCase
         $this->assertDatabaseHas('sales_documents', [
             'document_type' => 'quotation',
             'document_number' => 'QT-260403-001',
-            'pdf_path' => 'qoutation/2026/Quotation QT-260403-001.pdf',
+            'pdf_path' => 'quotation/2026/Quotation QT-260403-001.pdf',
+            'status' => SalesDocument::STATUS_QUOTATION_DRAFT,
         ]);
     }
 
@@ -110,6 +85,62 @@ class AdminSavedSalesDocumentTest extends TestCase
         $response->assertDontSee('ที่เก็บไฟล์');
         $response->assertDontSee('สถานะไฟล์');
         $response->assertDontSee('ลบ');
+    }
+
+    public function test_admin_can_accept_quotation_and_convert_it_to_invoice(): void
+    {
+        $admin = User::factory()->create([
+            'username' => 'admin-quotation-conversion',
+            'role' => User::ROLE_ADMIN,
+            'is_active' => true,
+        ]);
+
+        $quotation = SalesDocument::query()->create([
+            'document_type' => 'quotation',
+            'document_number' => 'QT-260522-001',
+            'document_date' => '2026-05-22',
+            'due_date' => '2026-05-29',
+            'customer_name' => 'บริษัท แปลงเอกสาร จำกัด',
+            'file_name' => 'Quotation QT-260522-001',
+            'pdf_disk' => 'local',
+            'pdf_path' => 'quotation/2026/Quotation QT-260522-001.pdf',
+            'status' => SalesDocument::STATUS_QUOTATION_SENT,
+            'payload' => [
+                'document_type' => 'quotation',
+                'document_number' => 'QT-260522-001',
+                'document_date' => '2026-05-22',
+                'due_date' => '2026-05-29',
+                'customer_name' => 'บริษัท แปลงเอกสาร จำกัด',
+                'document' => [
+                    'type' => 'quotation',
+                    'title_th' => 'ใบเสนอราคา',
+                    'title_en' => 'Quotation',
+                    'number' => 'QT-260522-001',
+                ],
+                'items' => [],
+            ],
+        ]);
+
+        $this
+            ->withSession($this->adminSession($admin))
+            ->post(route('admin.saved-sales-documents.quotation-status', [$quotation, 'accept']))
+            ->assertRedirect();
+
+        $quotation->refresh();
+        $this->assertSame(SalesDocument::STATUS_QUOTATION_ACCEPTED, $quotation->status);
+
+        $response = $this
+            ->withSession($this->adminSession($admin))
+            ->post(route('admin.saved-sales-documents.convert-to-invoice', $quotation));
+
+        $invoice = SalesDocument::query()
+            ->where('document_type', SalesDocument::TYPE_INVOICE)
+            ->sole();
+
+        $response->assertRedirect(route('admin.saved-sales-documents.show', $invoice));
+        $this->assertSame($quotation->id, $invoice->source_quotation_id);
+        $this->assertStringStartsWith('IV-', $invoice->document_number);
+        $this->assertSame(SalesDocument::STATUS_INVOICE_DRAFT, $invoice->status);
     }
 
     public function test_saved_sales_documents_page_shows_created_date_and_creator(): void
@@ -217,12 +248,12 @@ class AdminSavedSalesDocumentTest extends TestCase
 
         $response->assertRedirect(route('admin.saved-sales-documents.index'));
         $response->assertSessionHas('status_message', 'ซ่อนเอกสารเรียบร้อยแล้ว (แอดมินไม่มีสิทธิ์ลบถาวร)');
-        
+
         $this->assertDatabaseHas('sales_documents', [
             'id' => $document->id,
             'is_active' => false,
         ]);
-        
+
         // File should still exist because it was only hidden
         Storage::disk('local')->assertExists($document->pdf_path);
     }

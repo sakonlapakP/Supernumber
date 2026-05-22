@@ -29,6 +29,17 @@ class SalesDocumentPdfService
         $documentDate = $this->resolveDateValue($data['document_date'] ?? null);
         $dueDate = $this->resolveDateValue($data['due_date'] ?? null);
         $year = $documentDate?->format('Y') ?? now('Asia/Bangkok')->format('Y');
+
+        // If document_number is still a DRAFT number, generate a proper one
+        if (str_starts_with($documentNumber, 'DRAFT-')) {
+            $documentNumber = $this->generateProperDocumentNumber($documentType, $documentDate);
+        }
+
+        $data['document_type'] = $documentType;
+        $data['document_number'] = $documentNumber;
+        data_set($data, 'document.type', $documentType);
+        data_set($data, 'document.number', $documentNumber);
+
         $fileName = $this->buildFileName($documentType, $documentNumber);
         $relativePdfPath = $this->buildRelativePdfPath($documentType, $year, $fileName);
 
@@ -46,6 +57,7 @@ class SalesDocumentPdfService
             'pdf_disk' => 'local',
             'pdf_path' => $relativePdfPath,
             'saved_by_user_id' => $savedByUserId,
+            'is_draft' => false,
             'payload' => $data,
         ]);
         $document->save();
@@ -58,14 +70,14 @@ class SalesDocumentPdfService
         $prefix = $documentType === 'invoice' ? 'Invoice' : 'Quotation';
         $sanitizedNumber = trim(preg_replace('/[\\\\\\/:*?"<>|]+/', '-', $documentNumber) ?? $documentNumber);
 
-        return trim($prefix . ' ' . $sanitizedNumber);
+        return trim($prefix.' '.$sanitizedNumber);
     }
 
     protected function buildRelativePdfPath(string $documentType, string $year, string $fileName): string
     {
         $directory = $documentType === 'invoice' ? 'invoice' : 'quotation';
 
-        return $directory . '/' . $year . '/' . $fileName . '.pdf';
+        return $directory.'/'.$year.'/'.$fileName.'.pdf';
     }
 
     /**
@@ -99,5 +111,30 @@ class SalesDocumentPdfService
         $trimmed = trim((string) ($value ?? ''));
 
         return $trimmed !== '' ? $trimmed : null;
+    }
+
+    protected function generateProperDocumentNumber(string $documentType, ?Carbon $documentDate = null): string
+    {
+        $date = $documentDate ?? now('Asia/Bangkok');
+        $prefix = $documentType === 'invoice' ? 'IV' : 'QT';
+        $dateFormat = $date->format('ymd');
+        $sequence = '001';
+
+        // Check if document number with same prefix and date already exists
+        $latestDocument = SalesDocument::query()
+            ->where('document_type', $documentType)
+            ->where('document_number', 'like', $prefix.'-'.$dateFormat.'-%')
+            ->latest('document_number')
+            ->first();
+
+        if ($latestDocument) {
+            // Extract sequence number from latest document
+            preg_match('/-(\d+)$/', $latestDocument->document_number, $matches);
+            if (isset($matches[1])) {
+                $sequence = str_pad((int) $matches[1] + 1, 3, '0', STR_PAD_LEFT);
+            }
+        }
+
+        return $prefix.'-'.$dateFormat.'-'.$sequence;
     }
 }

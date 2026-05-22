@@ -25,6 +25,9 @@
   @if (session('status_message'))
     <div class="admin-alert admin-alert--success" style="margin-bottom: 18px;">{{ session('status_message') }}</div>
   @endif
+  @if (session('status_error'))
+    <div class="admin-alert admin-alert--error" style="margin-bottom: 18px;">{{ session('status_error') }}</div>
+  @endif
 
   <section class="admin-card admin-table-card">
     <div class="admin-table-wrap">
@@ -33,6 +36,7 @@
           <tr>
             <th>ประเภท / เลขที่</th>
             <th>ลูกค้า</th>
+            <th>สถานะ</th>
             <th>วันที่เอกสาร</th>
             <th>สร้างเมื่อ / สร้างโดย</th>
             <th>จัดการ</th>
@@ -46,6 +50,14 @@
                 <div class="admin-muted" style="margin-top: 6px;">{{ $document->document_number }}</div>
               </td>
               <td>{{ $document->customer_name ?: '-' }}</td>
+              <td>
+                <strong>{{ $document->status_label }}</strong>
+                @if ($document->isQuotation() && $document->convertedInvoice)
+                  <div class="admin-muted" style="margin-top: 6px;">
+                    แปลงเป็น {{ $document->convertedInvoice->document_number }}
+                  </div>
+                @endif
+              </td>
               <td>{{ $document->document_date?->format('d/m/Y') ?: '-' }}</td>
               <td>
                 <div class="admin-muted">
@@ -57,7 +69,9 @@
               </td>
               <td>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                  <a href="{{ route('admin.sales-documents', ['document' => $document->id]) }}" class="admin-button admin-button--muted admin-button--compact">แก้ไข</a>
+                  @if (! $document->isInvoice() || $document->isInvoiceEditable())
+                    <a href="{{ route('admin.sales-documents', ['document' => $document->id]) }}" class="admin-button admin-button--muted admin-button--compact">แก้ไข</a>
+                  @endif
                   <a href="{{ route('admin.saved-sales-documents.download', $document) }}" class="admin-button admin-button--compact" target="_blank" rel="noopener">พิมพ์ / บันทึก PDF</a>
                   @if (session('admin_user_role') === \App\Models\User::ROLE_MANAGER)
                     <form action="{{ route('admin.saved-sales-documents.delete', $document) }}" method="post" class="sales-doc-delete-form" data-document-name="{{ $documentTypeLabels[$document->document_type] ?? $document->document_type }} #{{ $document->document_number }}" style="margin: 0;">
@@ -67,11 +81,12 @@
                     </form>
                   @endif
                 </div>
+                @include('admin.partials.sales-document-workflow-actions', ['document' => $document])
               </td>
             </tr>
           @empty
             <tr>
-              <td colspan="5" class="admin-muted">ยังไม่มีใบเสนอราคา หรือใบแจ้งหนี้ที่บันทึกไว้</td>
+              <td colspan="6" class="admin-muted">ยังไม่มีใบเสนอราคา หรือใบแจ้งหนี้ที่บันทึกไว้</td>
             </tr>
           @endforelse
         </tbody>

@@ -71,9 +71,28 @@
       <h1 class="document-show-toolbar__title">{{ $documentTypeLabel }} {{ $document->document_number }}</h1>
       <div class="document-show-toolbar__actions">
         <a href="{{ route('admin.saved-sales-documents.index') }}" class="admin-button admin-button--small admin-button--muted">← กลับ</a>
-        <a href="{{ route('admin.sales-documents', ['document' => $document->id]) }}" class="admin-button admin-button--small admin-button--muted">แก้ไข</a>
+        @if (! $document->isInvoice() || $document->isInvoiceEditable())
+          <a href="{{ route('admin.sales-documents', ['document' => $document->id]) }}" class="admin-button admin-button--small admin-button--muted">แก้ไข</a>
+        @endif
         <a href="{{ route('admin.saved-sales-documents.download', $document) }}" class="admin-button admin-button--small" target="_blank" rel="noopener">📥 ดาวน์โหลด</a>
       </div>
+    </div>
+
+    @if (session('status_message'))
+      <div class="admin-alert admin-alert--success">{{ session('status_message') }}</div>
+    @endif
+    @if (session('status_error'))
+      <div class="admin-alert admin-alert--error">{{ session('status_error') }}</div>
+    @endif
+
+    <div class="document-show-toolbar" style="justify-content: flex-start; gap: 14px; flex-wrap: wrap;">
+      <strong>{{ $document->status_label }}</strong>
+      @if ($document->sourceQuotation)
+        <a href="{{ route('admin.saved-sales-documents.show', $document->sourceQuotation) }}" class="admin-button admin-button--small admin-button--muted">
+          จากใบเสนอราคา {{ $document->sourceQuotation->document_number }}
+        </a>
+      @endif
+      @include('admin.partials.sales-document-workflow-actions', ['document' => $document])
     </div>
 
     <div class="document-show-container">
