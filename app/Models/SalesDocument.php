@@ -44,6 +44,11 @@ class SalesDocument extends Model
         return $this->belongsTo(BillingCustomer::class, 'customer_id');
     }
 
+    public function savedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'saved_by_user_id');
+    }
+
     public function getFileExistsAttribute(): bool
     {
         $disk = $this->pdf_disk ?: 'local';

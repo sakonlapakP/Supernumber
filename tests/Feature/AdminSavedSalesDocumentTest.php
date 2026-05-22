@@ -92,6 +92,7 @@ class AdminSavedSalesDocumentTest extends TestCase
             'file_name' => 'Invoice IV-260403-001',
             'pdf_disk' => 'local',
             'pdf_path' => 'invoice/2026/Invoice IV-260403-001.pdf',
+            'saved_by_user_id' => $admin->id,
             'payload' => [],
         ]);
 
@@ -108,6 +109,42 @@ class AdminSavedSalesDocumentTest extends TestCase
         $response->assertDontSee('ที่เก็บไฟล์');
         $response->assertDontSee('สถานะไฟล์');
         $response->assertDontSee('ลบ');
+    }
+
+    public function test_saved_sales_documents_page_shows_created_date_and_creator(): void
+    {
+        Storage::fake('local');
+
+        $admin = User::factory()->create([
+            'username' => 'admin-creator',
+            'name' => 'Admin Creator',
+            'role' => User::ROLE_ADMIN,
+            'is_active' => true,
+        ]);
+
+        $document = SalesDocument::query()->create([
+            'document_type' => 'invoice',
+            'document_number' => 'IV-260405-001',
+            'document_date' => '2026-04-05',
+            'customer_name' => 'บริษัท ทดสอบวันสร้าง จำกัด',
+            'file_name' => 'Invoice IV-260405-001',
+            'pdf_disk' => 'local',
+            'pdf_path' => 'invoice/2026/Invoice IV-260405-001.pdf',
+            'saved_by_user_id' => $admin->id,
+            'payload' => [],
+            'created_at' => now(),
+        ]);
+
+        Storage::disk('local')->put($document->pdf_path, 'pdf');
+
+        $response = $this
+            ->withSession($this->adminSession($admin))
+            ->get(route('admin.saved-sales-documents.index'));
+
+        $response->assertOk();
+        $response->assertSee('IV-260405-001');
+        $response->assertSee('สร้างเมื่อ / สร้างโดย');
+        $response->assertSee($admin->name);
     }
 
     public function test_manager_can_delete_saved_sales_document(): void

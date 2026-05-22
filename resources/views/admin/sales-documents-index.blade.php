@@ -34,6 +34,7 @@
             <th>ประเภท / เลขที่</th>
             <th>ลูกค้า</th>
             <th>วันที่เอกสาร</th>
+            <th>สร้างเมื่อ / สร้างโดย</th>
             <th>จัดการ</th>
           </tr>
         </thead>
@@ -47,14 +48,22 @@
               <td>{{ $document->customer_name ?: '-' }}</td>
               <td>{{ $document->document_date?->format('d/m/Y') ?: '-' }}</td>
               <td>
+                <div class="admin-muted">
+                  {{ $document->created_at?->format('d/m/Y H:i') ?: '-' }}
+                </div>
+                <div class="admin-muted" style="margin-top: 4px; font-size: 0.9em;">
+                  {{ $document->savedByUser?->name ?? '-' }}
+                </div>
+              </td>
+              <td>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                   <a href="{{ route('admin.saved-sales-documents.show', $document) }}" class="admin-button admin-button--muted admin-button--compact">ดูรายละเอียด</a>
                   <a href="{{ route('admin.saved-sales-documents.download', $document) }}" class="admin-button admin-button--compact" target="_blank" rel="noopener">พิมพ์ / บันทึก PDF</a>
                   @if (session('admin_user_role') === \App\Models\User::ROLE_MANAGER)
-                    <form action="{{ route('admin.saved-sales-documents.delete', $document) }}" method="post" onsubmit="return confirm('ยืนยันลบเอกสารนี้?');" style="margin: 0;">
+                    <form action="{{ route('admin.saved-sales-documents.delete', $document) }}" method="post" class="sales-doc-delete-form" data-document-name="{{ $documentTypeLabels[$document->document_type] ?? $document->document_type }} #{{ $document->document_number }}" style="margin: 0;">
                       @csrf
                       @method('DELETE')
-                      <button type="submit" class="admin-button admin-button--compact" style="background:#b42318;">ลบ</button>
+                      <button type="button" class="admin-button admin-button--compact sales-doc-delete-btn" style="background:#b42318;">ลบ</button>
                     </form>
                   @endif
                 </div>
@@ -62,7 +71,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="4" class="admin-muted">ยังไม่มีใบเสนอราคา หรือใบแจ้งหนี้ที่บันทึกไว้</td>
+              <td colspan="5" class="admin-muted">ยังไม่มีใบเสนอราคา หรือใบแจ้งหนี้ที่บันทึกไว้</td>
             </tr>
           @endforelse
         </tbody>
@@ -73,6 +82,22 @@
   <div style="margin-top: 18px;">
     {{ $documents->links() }}
   </div>
+
+  @if (session('admin_user_role') === \App\Models\User::ROLE_MANAGER)
+    {{-- Delete Confirmation Modal --}}
+    <div id="delete-confirmation-modal" style="display: none; position: fixed; inset: 0; z-index: 2000; background: rgba(0, 0, 0, 0.5); align-items: center; justify-content: center;">
+      <div style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); width: min(400px, 90vw);">
+        <h2 style="margin: 0 0 12px; font-size: 18px; font-weight: 600; color: #111827;">ยืนยันการลบเอกสาร</h2>
+        <p style="margin: 0 0 12px; color: #6b7280; font-size: 14px;">คุณแน่ใจว่าต้องการลบเอกสาร:</p>
+        <p style="margin: 0 0 16px; padding: 12px; background: #fef2f2; border-radius: 6px; border-left: 4px solid #dc2626; color: #991b1b; font-weight: 500;" id="delete-doc-name">-</p>
+        <p style="margin: 0 0 20px; color: #6b7280; font-size: 13px;">เอกสารจะถูกลบถาวรพร้อมไฟล์ PDF</p>
+        <div style="display: flex; gap: 8px; justify-content: flex-end;">
+          <button type="button" class="admin-button admin-button--ghost" onclick="document.getElementById('delete-confirmation-modal').style.display = 'none'; document.getElementById('delete-confirmation-modal').removeAttribute('data-form-to-submit');">ยกเลิก</button>
+          <button type="button" class="admin-button admin-button--primary" style="background: #dc2626;" onclick="submitDeleteForm();">ลบเอกสาร</button>
+        </div>
+      </div>
+    </div>
+  @endif
 
   {{-- Easy Documents Wizard Modal --}}
   <div id="easy-docs-modal" class="easy-docs-modal" hidden>
@@ -1035,4 +1060,43 @@
       showStep(1);
     })();
   </script>
+
+  @if (session('admin_user_role') === \App\Models\User::ROLE_MANAGER)
+    <script>
+      (() => {
+        const modal = document.getElementById('delete-confirmation-modal');
+        const deleteDocNameEl = document.getElementById('delete-doc-name');
+        const deleteButtons = document.querySelectorAll('.sales-doc-delete-btn');
+
+        deleteButtons.forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const form = btn.closest('.sales-doc-delete-form');
+
+            deleteDocNameEl.textContent = form.dataset.documentName;
+            modal.formToSubmit = form;
+            modal.style.display = 'flex';
+          });
+        });
+
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) {
+            modal.style.display = 'none';
+            modal.formToSubmit = null;
+          }
+        });
+      })();
+
+      function submitDeleteForm() {
+        const modal = document.getElementById('delete-confirmation-modal');
+
+        if (modal.formToSubmit) {
+          modal.formToSubmit.submit();
+        }
+
+        modal.style.display = 'none';
+        modal.formToSubmit = null;
+      }
+    </script>
+  @endif
 @endsection
