@@ -36,7 +36,10 @@ class ArticleController extends Controller
                 
                 if (isset($thaiMonthsReverse[$monthName])) {
                     $monthNum = $thaiMonthsReverse[$monthName];
-                    $yearFull = 2000 + $yearShort - 43; 
+                    // Flutter sends the last 2 digits of the Thai Buddhist Era year (e.g. "69" for BE 2569 = CE 2026).
+                    // BE full year = 2500 + $yearShort (all current years are in the 2500s).
+                    // CE year = BE - 543 = 2500 + $yearShort - 543 = $yearShort + 1957.
+                    $yearFull = $yearShort + 1957;
                     
                     $query->whereMonth('published_at', $monthNum)
                           ->whereYear('published_at', $yearFull);
@@ -265,13 +268,13 @@ class ArticleController extends Controller
             'lsi_keywords' => 'nullable|string',
             'is_published' => 'boolean',
             'is_auto_post' => 'boolean',
+            'published_at' => 'nullable',
             'image_guidelines' => 'nullable|string',
             'cover_landscape' => 'nullable|image|max:2048',
             'cover_square' => 'nullable|image|max:2048',
         ]);
 
         $data = $validated;
-        $data['published_at'] = $request->published_at;
         unset($data['cover_landscape'], $data['cover_square']);
 
         if ($request->hasFile('cover_landscape')) {
@@ -312,12 +315,16 @@ class ArticleController extends Controller
 
     public function destroy(Article $article)
     {
-        if ($article->cover_image_landscape_path) {
-            Storage::disk('public')->delete($article->cover_image_landscape_path);
+        $pathsToDelete = array_filter(array_unique([
+            $article->cover_image_path,
+            $article->cover_image_landscape_path,
+            $article->cover_image_square_path,
+        ]));
+
+        foreach ($pathsToDelete as $path) {
+            Storage::disk('public')->delete($path);
         }
-        if ($article->cover_image_square_path) {
-            Storage::disk('public')->delete($article->cover_image_square_path);
-        }
+
         $article->delete();
         return response()->json(['message' => 'Article deleted']);
     }

@@ -606,27 +606,6 @@ $buildArticleSlug = function (string $title, ?int $ignoreId = null): string {
 };
 
 $resolvePlannedArticlePublishedAt = function (?string $slug, ?string $title): ?Carbon {
-    $slug = Str::lower(trim((string) $slug));
-    $title = trim((string) $title);
-
-    $plannedArticles = [
-        [
-            'slug' => 'thai-royal-ploughing-ceremony-history-and-significance',
-            'title_contains' => 'วันพืชมงคล',
-            'published_at' => '2026-05-11 09:00:00',
-        ],
-    ];
-
-    foreach ($plannedArticles as $plannedArticle) {
-        $matchesSlug = $slug !== '' && $slug === $plannedArticle['slug'];
-        $matchesTitle = $title !== '' && str_contains($title, $plannedArticle['title_contains']);
-
-        if ($matchesSlug || $matchesTitle) {
-            return Carbon::parse($plannedArticle['published_at'], 'Asia/Bangkok')
-                ->setTimezone(config('app.timezone'));
-        }
-    }
-
     return null;
 };
 
