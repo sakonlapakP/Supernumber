@@ -1801,8 +1801,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->paginate(20);
 
         $pageTitle = match ($selectedServiceType) {
-            PhoneNumber::SERVICE_TYPE_POSTPAID => 'Postpaid Numbers',
-            PhoneNumber::SERVICE_TYPE_PREPAID => 'Prepaid Numbers',
+            PhoneNumber::SERVICE_TYPE_POSTPAID => 'เบอร์รายเดือน',
+            PhoneNumber::SERVICE_TYPE_PREPAID => 'เบอร์เติมเงิน',
             default => 'All Numbers',
         };
 

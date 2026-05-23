@@ -147,6 +147,31 @@ class AdminPhoneNumberEditTest extends TestCase
             ->assertDontSee('081-111-2222');
     }
 
+    public function test_admin_numbers_page_displays_thai_titles_and_hides_columns_accordingly(): void
+    {
+        $manager = User::factory()->create([
+            'username' => 'manager-number-column-test',
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        // 1. Test Prepaid numbers view
+        $this->withSession($this->adminSession($manager))
+            ->get(route('admin.numbers', ['service_type' => PhoneNumber::SERVICE_TYPE_PREPAID]))
+            ->assertOk()
+            ->assertSee('เบอร์เติมเงิน')
+            ->assertDontSee('<th>ประเภท</th>', false)
+            ->assertDontSee('<th>แพ็กเกจ</th>', false);
+
+        // 2. Test Postpaid numbers view
+        $this->withSession($this->adminSession($manager))
+            ->get(route('admin.numbers', ['service_type' => PhoneNumber::SERVICE_TYPE_POSTPAID]))
+            ->assertOk()
+            ->assertSee('เบอร์รายเดือน')
+            ->assertDontSee('<th>ประเภท</th>', false)
+            ->assertSee('<th>แพ็กเกจ</th>', false);
+    }
+
     /**
      * @return array<string, mixed>
      */

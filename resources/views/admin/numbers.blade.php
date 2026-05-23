@@ -5,8 +5,8 @@
 @section('content')
   @php
     $numbersHeading = match ($selectedServiceType ?? null) {
-      \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID => 'Postpaid Numbers',
-      \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID => 'Prepaid Numbers',
+      \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID => 'เบอร์รายเดือน',
+      \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID => 'เบอร์เติมเงิน',
       default => 'All Numbers',
     };
     $numbersSubtitle = $pageSubtitle ?? 'แสดงเบอร์ทั้งหมดในระบบ พร้อมสถานะของแต่ละเบอร์';
@@ -18,6 +18,17 @@
       \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID => 'เติมเงิน',
       default => null,
     };
+    
+    $showType = ($selectedServiceType ?? null) === null;
+    $showPackage = ($selectedServiceType ?? null) !== \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID;
+    
+    $colspan = 5;
+    if ($showType) {
+        $colspan++;
+    }
+    if ($showPackage) {
+        $colspan++;
+    }
   @endphp
 
   <div class="admin-page-head">
@@ -98,9 +109,13 @@
         <thead>
           <tr>
             <th>เบอร์</th>
-            <th>ประเภท</th>
+            @if ($showType)
+              <th>ประเภท</th>
+            @endif
             <th>เครือข่าย</th>
-            <th>แพ็กเกจ</th>
+            @if ($showPackage)
+              <th>แพ็กเกจ</th>
+            @endif
             <th>ราคาเบอร์</th>
             <th>สถานะ</th>
             <th>จัดการ</th>
@@ -112,9 +127,13 @@
               <td>
                 <div class="admin-number">{{ $number->formatted_number }}</div>
               </td>
-              <td>{{ $number->service_type_label }}</td>
+              @if ($showType)
+                <td>{{ $number->service_type_label }}</td>
+              @endif
               <td>{{ $number->network_label }}</td>
-              <td>{{ $number->is_postpaid ? $number->package_label : '-' }}</td>
+              @if ($showPackage)
+                <td>{{ $number->is_postpaid ? $number->package_label : '-' }}</td>
+              @endif
               <td>{{ $number->payment_label }}</td>
               <td>
                 @php
@@ -140,7 +159,7 @@
             </tr>
           @empty
             <tr>
-              <td colspan="7" class="admin-muted">
+              <td colspan="{{ $colspan }}" class="admin-muted">
                 {{ ($search ?? '') !== '' ? 'ไม่พบเบอร์ที่ตรงกับคำค้นหา' : 'ยังไม่มีข้อมูลเบอร์ในระบบ' }}
               </td>
             </tr>
