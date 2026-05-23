@@ -310,17 +310,17 @@
                 return $q->where('phone_number', 'like', '%' . $searchQuery . '%');
             })
             ->inRandomOrder()
-            ->limit(4)
+            ->limit(3)
             ->get();
             
         // Fallback to random high quality if not enough relevant numbers
-        if ($relevantNumbers->count() < 4) {
+        if ($relevantNumbers->count() < 3) {
             $extra = \App\Models\PhoneNumber::query()
                 ->with('package')
                 ->available()
                 ->whereNotIn('id', $relevantNumbers->pluck('id'))
                 ->inRandomOrder()
-                ->limit(4 - $relevantNumbers->count())
+                ->limit(3 - $relevantNumbers->count())
                 ->get();
             $relevantNumbers = $relevantNumbers->concat($extra);
         }
@@ -336,9 +336,6 @@
                 @foreach($relevantNumbers as $num)
                     @include('partials.number-card', ['number' => $num])
                 @endforeach
-            </div>
-            <div class="article-related-numbers__footer">
-                <a href="{{ route('numbers.index', $searchQuery ? ['q' => $searchQuery] : []) }}" class="btn-view-all">ดูเบอร์หมวดนี้ทั้งหมด</a>
             </div>
         </section>
       @endif

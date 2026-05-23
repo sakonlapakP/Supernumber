@@ -1429,44 +1429,13 @@
     gap: 16px;
 }
 
-/* Custom localized styling overrides for article number cards (to prevent squeeze/overlap) */
-.article-related-numbers .number-card--home {
-    min-height: 145px !important;
-    padding: 6px !important;
-}
-
-.article-related-numbers .card-top {
-    font-size: 15px !important; /* Reduce phone number from 17px to 15px */
-    padding: 6px 4px !important;
-    border-radius: 8px !important;
-}
-
-.article-related-numbers .card-topic-icons {
-    gap: 3px !important;
-    margin-top: 3px !important;
-    min-height: 24px !important;
-    max-height: 24px !important;
-}
-
-.article-related-numbers .card-topic-icon {
-    width: 20px !important;
-    height: 20px !important;
-    font-size: 10px !important;
-}
-
-.article-related-numbers .card-meta-plan,
-.article-related-numbers .card-meta-price,
-.article-related-numbers .card-meta-plan *,
-.article-related-numbers .card-meta-price * {
-    font-size: 11px !important; /* Reduce plan/price from 12px to 11px */
-}
-
-.article-related-numbers .card-btn {
-    font-size: 12px !important; /* Reduce button text to 12px */
-    min-height: 28px !important;
-    height: 28px !important;
-    border-radius: 8px !important;
-    margin-top: 4px !important;
+/* Custom localized styling overrides for article number cards (displays exactly 3 columns matching homepage size) */
+@media (min-width: 992px) {
+    .article-related-numbers .home-card-grid[data-view=grid] {
+        grid-template-columns: repeat(3, 260px) !important;
+        justify-content: center !important;
+        gap: 20px !important;
+    }
 }
 
 .article-related-numbers__footer {
