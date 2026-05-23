@@ -242,6 +242,20 @@
         {{-- Step 3: Payment Method & Conditions --}}
         <div id="easy-docs-step-3" class="easy-docs-step-content">
           <div class="easy-docs-section">
+            <h3 class="easy-docs-section-title">📄 ประเภทเอกสาร</h3>
+            <div class="easy-docs-radio-group">
+              <label class="easy-docs-radio-label">
+                <input type="radio" name="document-type" value="quotation" checked>
+                <span>ใบเสนอราคา (Quotation)</span>
+              </label>
+              <label class="easy-docs-radio-label">
+                <input type="radio" name="document-type" value="invoice">
+                <span>ใบแจ้งหนี้ (Invoice)</span>
+              </label>
+            </div>
+          </div>
+
+          <div class="easy-docs-section">
             <h3 class="easy-docs-section-title">💳 วิธีการชำระเงิน</h3>
             <div class="easy-docs-radio-group">
               <label class="easy-docs-radio-label">
@@ -659,6 +673,7 @@
         paymentMethod: 'bank',
         paymentCondition: 'full',
         paymentDetail: '',
+        documentType: 'quotation',
       };
 
       const customers = @json($customers ?? []);
@@ -683,6 +698,9 @@
         productQtyInput.value = '1';
         pricingBreakdown.style.display = 'none';
         calculateSection.style.display = 'none';
+        const docTypeRadio = document.querySelector('input[name="document-type"][value="quotation"]');
+        if (docTypeRadio) docTypeRadio.checked = true;
+        wizardData.documentType = 'quotation';
         syncItemsForTaxMethod();
         showStep(1);
       });
@@ -834,19 +852,8 @@
       function showPricingBreakdown(basePrice) {
         const amount = parseFloat(basePrice) || 0;
 
-        // Check which calculation mode is selected
-        const selectedTaxMethod = document.querySelector('input[name="tax-method"]:checked')?.value;
-        const isReverseMode = selectedTaxMethod === 'we-pay';
-
-        // Calculate based on mode per QUOTATION_CALCULATION_RULES_TH.md
-        let sellingPrice;
-        if (isReverseMode) {
-          // Reverse mode: amount is Target Income, calculate Selling Price = Target Income / 0.97
-          sellingPrice = amount / 0.97;
-        } else {
-          // Standard mode: amount is Base Price (selling price as is)
-          sellingPrice = amount;
-        }
+        // amount is already the selling price (Reverse mode: items already divided by 0.97 in syncItemsForTaxMethod)
+        const sellingPrice = amount;
 
         const vat = sellingPrice * 0.07;
         const grandTotal = sellingPrice + vat;
@@ -949,6 +956,7 @@
           wizardData.taxMethod = document.querySelector('input[name="tax-method"]:checked')?.value || 'customer-pays';
         }
         if (step === 3) {
+          wizardData.documentType = document.querySelector('input[name="document-type"]:checked')?.value || 'quotation';
           wizardData.paymentMethod = document.querySelector('input[name="payment-method"]:checked')?.value || 'bank';
           wizardData.paymentDetail = document.getElementById('easy-docs-payment-detail-input')?.value || '';
         }
@@ -977,14 +985,14 @@
         }).join('');
         document.getElementById('easy-docs-summary-items-list').innerHTML = itemsListHtml;
 
-        // Calculate and show pricing breakdown
-        const subtotal = wizardData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
-        const vat = subtotal * 0.07;
-        const grandTotal = subtotal + vat;
-        const wht = subtotal * 0.03;
+        // Calculate and show pricing breakdown - items.price is already selling price in both modes
+        const sellingPrice = wizardData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        const vat = sellingPrice * 0.07;
+        const grandTotal = sellingPrice + vat;
+        const wht = sellingPrice * 0.03;
         const netPayment = grandTotal - wht;
 
-        document.getElementById('easy-docs-summary-subtotal').textContent = formatter.format(subtotal);
+        document.getElementById('easy-docs-summary-subtotal').textContent = formatter.format(sellingPrice);
         document.getElementById('easy-docs-summary-vat').textContent = '+ ' + formatter.format(vat);
         document.getElementById('easy-docs-summary-grand-total').textContent = formatter.format(grandTotal);
         document.getElementById('easy-docs-summary-wht').textContent = '- ' + formatter.format(wht);
@@ -1013,6 +1021,7 @@
         const payloadData = {
           _token: csrfToken,
           customerId: wizardData.customerId,
+          documentType: wizardData.documentType,
           contactName: wizardData.contactName,
           contactPhone: wizardData.contactPhone,
           items: wizardData.items,
@@ -1072,6 +1081,12 @@
             nextBtn.textContent = 'สร้างเอกสาร ✓';
           });
       }
+
+      // Create customer button
+      const createCustomerBtn = document.querySelector('[data-easy-docs-create-customer]');
+      createCustomerBtn?.addEventListener('click', () => {
+        window.open(@json(route('admin.customers', [], false)) + '#create', '_blank');
+      });
 
       // Initialize
       showStep(1);

@@ -53,6 +53,24 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        RateLimiter::for('estimate-leads', function (Request $request): array {
+            $ip = (string) ($request->ip() ?? 'unknown');
+            $userAgent = substr((string) $request->userAgent(), 0, 120);
+            $signature = $ip . '|' . $userAgent;
+
+            $tooManyAttemptsResponse = static function (Request $request, array $headers = []) {
+                return redirect()
+                    ->route('estimate')
+                    ->withInput($request->except('_token', 'cf-turnstile-response', 'website'))
+                    ->withErrors(['main_phone' => 'ทำรายการถี่เกินไป กรุณารอสักครู่แล้วลองใหม่อีกครั้ง']);
+            };
+
+            return [
+                Limit::perMinute(5)->by($signature)->response($tooManyAttemptsResponse),
+                Limit::perHour(20)->by($signature)->response($tooManyAttemptsResponse),
+            ];
+        });
+
         if (env('K_SERVICE')) {
             URL::forceScheme('https');
 

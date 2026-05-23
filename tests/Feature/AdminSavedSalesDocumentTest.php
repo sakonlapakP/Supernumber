@@ -274,7 +274,7 @@ class AdminSavedSalesDocumentTest extends TestCase
             'customer_name' => 'บริษัท พรีวิว จำกัด',
             'file_name' => 'Quotation QT-260403-002',
             'pdf_disk' => 'local',
-            'pdf_path' => 'qoutation/2026/Quotation QT-260403-002.pdf',
+            'pdf_path' => 'quotation/2026/Quotation QT-260403-002.pdf',
             'saved_by_user_id' => $admin->id,
             'payload' => [
                 'company' => [
@@ -324,7 +324,7 @@ class AdminSavedSalesDocumentTest extends TestCase
             'customer_name' => 'บริษัท แก้ไขเอกสาร จำกัด',
             'file_name' => 'Quotation QT-260403-003',
             'pdf_disk' => 'local',
-            'pdf_path' => 'qoutation/2026/Quotation QT-260403-003.pdf',
+            'pdf_path' => 'quotation/2026/Quotation QT-260403-003.pdf',
             'saved_by_user_id' => $admin->id,
             'payload' => [
                 'document_type' => 'quotation',
@@ -356,7 +356,7 @@ class AdminSavedSalesDocumentTest extends TestCase
             'customer_name' => 'บริษัท เช็กวิว จำกัด',
             'file_name' => 'Quotation QT-260403-001',
             'pdf_disk' => 'local',
-            'pdf_path' => 'qoutation/2026/Quotation QT-260403-001.pdf',
+            'pdf_path' => 'quotation/2026/Quotation QT-260403-001.pdf',
             'payload' => [],
         ]);
 

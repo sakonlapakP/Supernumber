@@ -880,7 +880,20 @@ Route::post('/contact-us', [PublicController::class, 'storeContact'])->middlewar
 Route::get('/privacy-policy', [PublicController::class, 'privacy'])->name('privacy');
 
 Route::post('/estimate', function (Request $request) use ($safelyRunLineNotification) {
-    $data = $request->validate([
+    // 1. Honeypot Validation
+    if (trim((string) $request->input('website', '')) !== '') {
+        Log::info('Blocked estimate form submission via honeypot.', [
+            'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()
+            ->route('estimate')
+            ->with('estimate_status_message', 'วิเคราะห์ข้อมูลเสร็จเรียบร้อยแล้ว กำลังนำส่งผลลัพธ์...');
+    }
+
+    // 2. Turnstile Site Key & Verifier Check
+    $turnstileVerifier = app(TurnstileVerifier::class);
+    $rules = [
         'first_name' => ['required', 'string', 'max:120'],
         'last_name' => ['required', 'string', 'max:120'],
         'gender' => ['nullable', Rule::in(['male', 'female'])],
@@ -890,7 +903,70 @@ Route::post('/estimate', function (Request $request) use ($safelyRunLineNotifica
         'main_phone' => ['required', 'string', 'max:20'],
         'email' => ['required', 'email', 'max:255'],
         'goal' => ['required', Rule::in(array_keys(EstimateLead::goalLabels()))],
-    ]);
+    ];
+
+    if ($turnstileVerifier->isEnabled()) {
+        $rules['cf-turnstile-response'] = ['required'];
+    }
+
+    $data = $request->validate($rules);
+
+    if ($turnstileVerifier->isEnabled()) {
+        $token = (string) $request->input('cf-turnstile-response', '');
+        $isVerified = $turnstileVerifier->verify($token, $request->ip());
+
+        if (! $isVerified) {
+            return redirect()
+                ->route('estimate')
+                ->withInput($request->except('_token'))
+                ->withErrors(['cf-turnstile-response' => 'การยืนยันตัวตนไม่สำเร็จ กรุณาลองใหม่อีกครั้ง']);
+        }
+    }
+
+    // 3. Heuristic Filtering: Gibberish Name Check
+    $firstName = trim((string) $data['first_name']);
+    $lastName = trim((string) $data['last_name']);
+    $isGibberish = false;
+
+    foreach ([$firstName, $lastName] as $name) {
+        if (preg_match('/^[A-Za-z]{15,}$/', $name)) {
+            $upperCount = preg_match_all('/[A-Z]/', $name);
+            $lowerCount = preg_match_all('/[a-z]/', $name);
+            if ($upperCount >= 3 && $lowerCount >= 3) {
+                $isGibberish = true;
+            }
+        }
+    }
+
+    if ($isGibberish) {
+        Log::info('Blocked estimate lead submission due to gibberish name.', [
+            'first_name' => $firstName,
+            'last_name' => $lastName,
+            'ip_address' => $request->ip(),
+        ]);
+
+        return redirect()
+            ->route('estimate')
+            ->with('estimate_status_message', 'วิเคราะห์ข้อมูลเสร็จเรียบร้อยแล้ว กำลังนำส่งผลลัพธ์...');
+    }
+
+    // 4. Heuristic Filtering: Gmail Dot Count Check
+    $email = trim((string) $data['email']);
+    $emailParts = explode('@', $email);
+    if (count($emailParts) === 2 && strtolower($emailParts[1]) === 'gmail.com') {
+        $username = $emailParts[0];
+        $dotCount = substr_count($username, '.');
+        if ($dotCount >= 4) {
+            Log::info('Blocked estimate lead submission due to excessive dots in Gmail address.', [
+                'email' => $email,
+                'ip_address' => $request->ip(),
+            ]);
+
+            return redirect()
+                ->route('estimate')
+                ->with('estimate_status_message', 'วิเคราะห์ข้อมูลเสร็จเรียบร้อยแล้ว กำลังนำส่งผลลัพธ์...');
+        }
+    }
 
     $digitsOnly = static fn (?string $value): string => preg_replace('/\D+/', '', (string) $value) ?? '';
     $currentPhone = $digitsOnly($data['current_phone'] ?? null);
@@ -904,14 +980,14 @@ Route::post('/estimate', function (Request $request) use ($safelyRunLineNotifica
     }
 
     $lead = EstimateLead::query()->create([
-        'first_name' => trim((string) $data['first_name']),
-        'last_name' => trim((string) $data['last_name']),
+        'first_name' => $firstName,
+        'last_name' => $lastName,
         'gender' => $data['gender'] ?? null,
         'birthday' => $data['birthday'] ?? null,
         'work_type' => $data['work_type'] ?? null,
         'current_phone' => $currentPhone !== '' ? $currentPhone : null,
         'main_phone' => $mainPhone,
-        'email' => trim((string) $data['email']),
+        'email' => $email,
         'goal' => $data['goal'] ?? null,
         'ip_address' => $request->ip(),
         'user_agent' => substr((string) $request->userAgent(), 0, 65535),
@@ -919,14 +995,14 @@ Route::post('/estimate', function (Request $request) use ($safelyRunLineNotifica
     ]);
 
     app(CustomerSubmissionRecorder::class)->record($request, CustomerSubmission::FORM_ESTIMATE, [
-        'first_name' => trim((string) $data['first_name']),
-        'last_name' => trim((string) $data['last_name']),
+        'first_name' => $firstName,
+        'last_name' => $lastName,
         'gender' => $data['gender'] ?? null,
         'birthday' => $data['birthday'] ?? null,
         'work_type' => $data['work_type'] ?? null,
         'current_phone' => $currentPhone !== '' ? $currentPhone : null,
         'main_phone' => $mainPhone,
-        'email' => trim((string) $data['email']),
+        'email' => $email,
         'goal' => $data['goal'] ?? null,
         'estimate_lead_id' => $lead->id,
     ]);
@@ -939,7 +1015,7 @@ Route::post('/estimate', function (Request $request) use ($safelyRunLineNotifica
 
     return redirect()
         ->to(URL::signedRoute('estimate.processing', $lead));
-})->name('estimate.store');
+})->middleware('throttle:estimate-leads')->name('estimate.store');
 
 Route::redirect('/good-number', '/numbers');
 
@@ -2166,6 +2242,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         $data = $request->validate([
             'customerId' => ['required', 'integer'],
+            'documentType' => ['nullable', 'in:quotation,invoice'],
             'items' => ['required', 'array'],
             'items.*.name' => ['required', 'string'],
             'items.*.price' => ['required', 'numeric', 'min:0'],
@@ -2183,37 +2260,34 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             // Get customer info
             $customer = BillingCustomer::findOrFail($data['customerId']);
 
+            $documentType = $data['documentType'] ?? 'quotation';
+            $prefix = $documentType === 'invoice' ? 'IV' : 'QT';
+
             $calculationMode = $data['taxMethod'] === 'we-pay' ? 'reverse' : 'standard';
-            $documentItems = collect($data['items'])->values()->map(function (array $item, int $index) use ($calculationMode): array {
-                $sourcePrice = $calculationMode === 'reverse'
-                    ? (float) ($item['originalPrice'] ?? $item['price'])
-                    : (float) $item['price'];
+            $documentItems = collect($data['items'])->values()->map(function (array $item, int $index): array {
                 $quantity = (int) $item['qty'];
-                $amount = round($sourcePrice * $quantity, 2);
+                $originalPrice = (float) ($item['originalPrice'] ?? $item['price']);
+                $price = (float) $item['price'];
 
                 return [
                     'index' => $index + 1,
                     'description' => $item['name'],
                     'quantity' => $quantity,
                     'unit' => '',
-                    'input_unit_price' => $sourcePrice,
-                    'input_amount' => $amount,
-                    'unit_price' => $sourcePrice,
-                    'amount' => $amount,
+                    'input_unit_price' => $originalPrice,
+                    'input_amount' => round($originalPrice * $quantity, 2),
+                    'unit_price' => $price,
+                    'amount' => round($price * $quantity, 2),
                 ];
             })->all();
 
-            $subtotal = collect($documentItems)->sum(fn (array $item): float => (float) $item['input_amount']);
+            $subtotal = collect($documentItems)->sum(fn (array $item): float => (float) $item['amount']);
+            $targetIncome = collect($documentItems)->sum(fn (array $item): float => (float) $item['input_amount']);
             $quickPaymentMethod = $data['paymentMethod'] === 'cash' ? 'cash' : 'transfer';
 
-            // Calculate totals based on calculation mode per QUOTATION_CALCULATION_RULES_TH.md
-            $baseAmount = $subtotal; // For standard calculation
-
-            // For reverse calculation, calculate the selling price from target income
-            if ($calculationMode === 'reverse') {
-                // Selling Price = Target Income / 0.97
-                $baseAmount = round($subtotal / 0.97, 2);
-            }
+            // Items already contain the selling price (Reverse: frontend divided by 0.97)
+            // So $subtotal is already the selling price for both modes
+            $baseAmount = $subtotal;
 
             // Common calculations for both modes (VAT = 7%, WHT = 3%)
             $vatAmount = round($baseAmount * 0.07, 2);
@@ -2223,6 +2297,17 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
             // Build totals array with both numeric and display format versions
             $totals = [
+                'discount_rate' => 0.00,
+                'discount_rate_display' => '0.00',
+                'discount_amount' => 0.00,
+                'discount_amount_display' => '0.00',
+                'after_discount' => $subtotal,
+                'after_discount_display' => number_format($subtotal, 2, '.', ','),
+                'target_income' => $targetIncome,
+                'target_income_display' => number_format($targetIncome, 2, '.', ','),
+                'service_net_income' => $targetIncome,
+                'service_net_income_display' => number_format($targetIncome, 2, '.', ','),
+                'calculation_mode' => $calculationMode,
                 'subtotal' => $subtotal,
                 'subtotal_display' => number_format($subtotal, 2, '.', ','),
                 'vat_rate' => 7.00,
@@ -2241,8 +2326,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
             // Build payload for sales document
             $payload = [
-                'document_type' => 'quotation',
-                'document_number' => 'QT-' . now('Asia/Bangkok')->format('ymd') . '-001',
+                'document_type' => $documentType,
+                'document_number' => $prefix . '-' . now('Asia/Bangkok')->format('ymd') . '-001',
                 'document_date' => now('Asia/Bangkok')->format('Y-m-d'),
                 'due_date' => now('Asia/Bangkok')->addDays(7)->format('Y-m-d'),
                 'customer_id' => $customer->id,
@@ -2265,7 +2350,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'tax_method' => $data['taxMethod'],
                 'payment_method' => $data['paymentMethod'],
                 'payment_condition' => $data['paymentCondition'],
-                'payment_detail' => $data['paymentDetail'],
+                'payment_detail' => $data['paymentDetail'] ?? null,
                 'payment' => [
                     'method' => $quickPaymentMethod,
                     'cash' => $quickPaymentMethod === 'cash',
@@ -2281,7 +2366,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
             // Create draft document
             $document = SalesDocument::create([
-                'document_type' => 'quotation',
+                'document_type' => $documentType,
                 'document_number' => 'DRAFT-' . now('Asia/Bangkok')->format('YmdHis'),
                 'document_date' => now('Asia/Bangkok')->format('Y-m-d'),
                 'due_date' => now('Asia/Bangkok')->addDays(7)->format('Y-m-d'),
@@ -3681,7 +3766,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             }
         }
 
-        $articles = $query->latest('created_at')->paginate(20)->withQueryString();
+        $articles = $query->latest('created_at')->paginate(10)->withQueryString();
 
         $existingArticlesInfo = Article::query()
             ->select('id', 'title', 'published_at', 'is_published', 'slug')

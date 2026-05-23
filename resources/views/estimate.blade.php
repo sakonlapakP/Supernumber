@@ -33,6 +33,7 @@
   @php
     $workTypeLabels = \App\Models\EstimateLead::workTypeLabels();
     $goalLabels = \App\Models\EstimateLead::goalLabels();
+    $turnstileSiteKey = trim((string) config('services.turnstile.site_key', ''));
   @endphp
 
   <section class="estimate-hero" aria-labelledby="estimate-title">
@@ -59,6 +60,10 @@
       <div class="estimate-card">
         <form class="estimate-form" action="{{ route('estimate.store') }}" method="post">
           @csrf
+          <div class="estimate-form__honeypot" aria-hidden="true" style="display: none;">
+            <label for="estimate-website">เว็บไซต์</label>
+            <input id="estimate-website" type="text" name="website" value="" tabindex="-1" autocomplete="new-password">
+          </div>
           <div class="estimate-form__intro">
             <p>ข้อมูลสำหรับวิเคราะห์เบอร์</p>
             <h3>กรอกข้อมูลเพื่อให้ระบบวิเคราะห์เบอร์ที่เหมาะกับคุณ</h3>
@@ -126,6 +131,15 @@
               @endforeach
             </select>
           </label>
+
+          @if ($turnstileSiteKey !== '')
+            <div style="display: flex; justify-content: center; margin-top: 15px; margin-bottom: 5px;">
+              <div class="cf-turnstile" data-sitekey="{{ $turnstileSiteKey }}" data-language="th"></div>
+            </div>
+            @error('cf-turnstile-response')
+              <div class="estimate-alert estimate-alert--error" style="margin-top: 10px; background: #fff4f4; border: 1px solid #ffcccc; color: #cc0000; padding: 10px; border-radius: 8px; font-weight: bold; text-align: center;">{{ $message }}</div>
+            @enderror
+          @endif
 
           <div class="estimate-submit-container">
             <button class="estimate-submit" type="submit">ส่งข้อมูลเพื่อวิเคราะห์เบอร์ที่เหมาะกับคุณ</button>
@@ -348,6 +362,10 @@
 @endsection
 
 @push('scripts')
+  @if ($turnstileSiteKey !== '')
+    <script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
+  @endif
+
   @if (session('estimate_status_message'))
     <script>
       (() => {
