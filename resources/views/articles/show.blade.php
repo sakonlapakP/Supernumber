@@ -1,5 +1,7 @@
 @extends('layouts.app')
 
+@section('body_class', 'home-scale-soft')
+
 @section('title', $article->title . ' | Supernumber')
 @section('meta_description', $article->meta_description ?: ($article->excerpt ?: \Illuminate\Support\Str::limit(strip_tags($article->sanitizedContent()), 150)))
 @section('canonical', route('articles.show', $article->slug))
@@ -330,16 +332,9 @@
                 <h2>เบอร์มงคลแนะนำสำหรับคุณ</h2>
                 <p>เลือกเบอร์ที่ใช่เพื่อเสริมพลังตามคำทำนายในบทความนี้</p>
             </div>
-            <div class="article-related-numbers__grid">
+            <div class="home-card-grid article-related-numbers__grid" data-view="grid">
                 @foreach($relevantNumbers as $num)
-                    <div class="article-number-card">
-                        <div class="article-number-card__phone">{{ $num->formatted_number }}</div>
-                        <div class="article-number-card__meta">
-                            <span class="article-number-card__price">{{ $num->payment_label }}</span>
-                            <span class="article-number-card__network">{{ $num->network_label }}</span>
-                        </div>
-                        <a href="{{ route('evaluate', ['phone' => $num->phone_number]) }}" class="article-number-card__btn">ดูรายละเอียด</a>
-                    </div>
+                    @include('partials.number-card', ['number' => $num])
                 @endforeach
             </div>
             <div class="article-related-numbers__footer">
