@@ -29,12 +29,69 @@
     <div class="admin-alert admin-alert--error" style="margin-bottom: 18px;">{{ session('status_error') }}</div>
   @endif
 
-  <section class="admin-card admin-table-card">
-    <div class="admin-table-wrap">
+  <style>
+    /* Premium Dropdown CSS */
+    .admin-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+    .admin-dropdown-menu {
+      display: none;
+      position: absolute;
+      right: 0;
+      top: 100%;
+      z-index: 1000;
+      background: white;
+      border: 1px solid var(--admin-border);
+      border-radius: 8px;
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+      min-width: 180px;
+      padding: 6px 0;
+      margin-top: 4px;
+    }
+    .admin-dropdown-menu.is-open {
+      display: block;
+    }
+    .admin-dropdown-item {
+      display: block;
+      width: 100%;
+      padding: 8px 16px;
+      font-size: 13px;
+      text-align: left;
+      color: #374151;
+      background: none;
+      border: none;
+      text-decoration: none;
+      cursor: pointer;
+      box-sizing: border-box;
+      transition: background-color 0.1s ease, color 0.1s ease;
+    }
+    .admin-dropdown-item:hover {
+      background-color: #f3f4f6;
+      color: #111827;
+    }
+  </style>
+
+  @php
+    $quotations = $documents->filter(fn($doc) => $doc->isQuotation());
+    $invoices = $documents->filter(fn($doc) => $doc->isInvoice());
+  @endphp
+
+  {{-- 1. Quotations Section --}}
+  <section class="admin-card admin-table-card" style="margin-bottom: 28px;">
+    <div class="admin-feature-card__head" style="padding: 18px 20px 0;">
+      <div>
+        <h2 class="admin-feature-card__title" style="font-size: 18px; display: flex; align-items: center; gap: 8px;">
+          <span>📄 รายการใบเสนอราคา (Quotations)</span>
+        </h2>
+        <p class="admin-feature-card__hint">ใบเสนอราคาที่ออกโดยระบบ สามารถยอมรับ ปฏิเสธ หรือแปลงเป็นใบแจ้งหนี้ได้</p>
+      </div>
+    </div>
+    <div class="admin-table-wrap" style="margin-top: 14px;">
       <table class="admin-table">
         <thead>
           <tr>
-            <th>ประเภท / เลขที่</th>
+            <th>เลขที่เอกสาร</th>
             <th>ลูกค้า</th>
             <th>สถานะ</th>
             <th>วันที่เอกสาร</th>
@@ -43,16 +100,15 @@
           </tr>
         </thead>
         <tbody>
-          @forelse ($documents as $document)
+          @forelse ($quotations as $document)
             <tr>
               <td>
-                <strong>{{ $documentTypeLabels[$document->document_type] ?? $document->document_type }}</strong>
-                <div class="admin-muted" style="margin-top: 6px;">{{ $document->document_number }}</div>
+                <div class="admin-number" style="font-size: 14px; font-weight: 700;">{{ $document->document_number }}</div>
               </td>
               <td>{{ $document->customer_name ?: '-' }}</td>
               <td>
                 <strong>{{ $document->status_label }}</strong>
-                @if ($document->isQuotation() && $document->convertedInvoice)
+                @if ($document->convertedInvoice)
                   <div class="admin-muted" style="margin-top: 6px;">
                     แปลงเป็น {{ $document->convertedInvoice->document_number }}
                   </div>
@@ -68,25 +124,142 @@
                 </div>
               </td>
               <td>
-                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
-                  @if (! $document->isInvoice() || $document->isInvoiceEditable())
-                    <a href="{{ route('admin.sales-documents', ['document' => $document->id]) }}" class="admin-button admin-button--muted admin-button--compact">แก้ไข</a>
-                  @endif
-                  <a href="{{ route('admin.saved-sales-documents.download', $document) }}" class="admin-button admin-button--compact" target="_blank" rel="noopener">พิมพ์ / บันทึก PDF</a>
-                  @if (session('admin_user_role') === \App\Models\User::ROLE_MANAGER)
-                    <form action="{{ route('admin.saved-sales-documents.delete', $document) }}" method="post" class="sales-doc-delete-form" data-document-name="{{ $documentTypeLabels[$document->document_type] ?? $document->document_type }} #{{ $document->document_number }}" style="margin: 0;">
-                      @csrf
-                      @method('DELETE')
-                      <button type="button" class="admin-button admin-button--compact sales-doc-delete-btn" style="background:#b42318;">ลบ</button>
-                    </form>
-                  @endif
+                <div class="admin-dropdown">
+                  <button type="button" class="admin-button admin-button--compact admin-dropdown-toggle">
+                    จัดการ ▾
+                  </button>
+                  <div class="admin-dropdown-menu">
+                    <!-- Edit -->
+                    @if (! $document->isInvoice() || $document->isInvoiceEditable())
+                      <a href="{{ route('admin.sales-documents', ['document' => $document->id]) }}" class="admin-dropdown-item">แก้ไข</a>
+                    @endif
+
+                    <!-- Print / PDF -->
+                    <a href="{{ route('admin.saved-sales-documents.download', $document) }}" class="admin-dropdown-item" target="_blank" rel="noopener">พิมพ์ / บันทึก PDF</a>
+
+                    <!-- Workflow Actions -->
+                    @if ($document->isQuotationDraft())
+                      <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.quotation-status', [$document, 'send']) }}" data-action-name="ส่งใบเสนอราคา" data-document-name="ใบเสนอราคา #{{ $document->document_number }}">ส่งใบเสนอราคา</button>
+                      <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.quotation-status', [$document, 'cancel']) }}" data-action-name="ยกเลิก" data-document-name="ใบเสนอราคา #{{ $document->document_number }}">ยกเลิก</button>
+                    @elseif ($document->isQuotationSent())
+                      <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.quotation-status', [$document, 'accept']) }}" data-action-name="ยอมรับ" data-document-name="ใบเสนอราคา #{{ $document->document_number }}">ยอมรับ</button>
+                      <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.quotation-status', [$document, 'reject']) }}" data-action-name="ปฏิเสธ" data-document-name="ใบเสนอราคา #{{ $document->document_number }}">ปฏิเสธ</button>
+                      <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.quotation-status', [$document, 'expire']) }}" data-action-name="หมดอายุ" data-document-name="ใบเสนอราคา #{{ $document->document_number }}">หมดอายุ</button>
+                    @elseif ($document->isQuotationAccepted())
+                      @if ($document->convertedInvoice)
+                        <a href="{{ route('admin.saved-sales-documents.show', $document->convertedInvoice) }}" class="admin-dropdown-item">
+                          เปิด Invoice {{ $document->convertedInvoice->document_number }}
+                        </a>
+                      @else
+                        <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.convert-to-invoice', $document) }}" data-action-name="แปลงเป็น Invoice" data-document-name="ใบเสนอราคา #{{ $document->document_number }}">แปลงเป็น Invoice</button>
+                      @endif
+                      <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.quotation-status', [$document, 'cancel']) }}" data-action-name="ยกเลิก" data-document-name="ใบเสนอราคา #{{ $document->document_number }}">ยกเลิก</button>
+                    @endif
+
+                    <!-- Delete -->
+                    @if (session('admin_user_role') === \App\Models\User::ROLE_MANAGER)
+                      <div style="border-top: 1px solid var(--admin-border); margin: 4px 0;"></div>
+                      <button type="button" class="admin-dropdown-item doc-delete-btn" data-action-url="{{ route('admin.saved-sales-documents.delete', $document) }}" data-document-name="ใบเสนอราคา #{{ $document->document_number }}" style="color: #b42318;">ลบเอกสาร</button>
+                    @endif
+                  </div>
                 </div>
-                @include('admin.partials.sales-document-workflow-actions', ['document' => $document])
               </td>
             </tr>
           @empty
             <tr>
-              <td colspan="6" class="admin-muted">ยังไม่มีใบเสนอราคา หรือใบแจ้งหนี้ที่บันทึกไว้</td>
+              <td colspan="6" class="admin-muted">ยังไม่มีใบเสนอราคาที่บันทึกไว้</td>
+            </tr>
+          @endforelse
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  {{-- 2. Invoices Section --}}
+  <section class="admin-card admin-table-card">
+    <div class="admin-feature-card__head" style="padding: 18px 20px 0;">
+      <div>
+        <h2 class="admin-feature-card__title" style="font-size: 18px; display: flex; align-items: center; gap: 8px;">
+          <span>🧾 รายการใบแจ้งหนี้ (Invoices)</span>
+        </h2>
+        <p class="admin-feature-card__hint">ใบแจ้งหนี้ที่ออกโดยระบบ สามารถอัปเดตสถานะการรับเงินได้</p>
+      </div>
+    </div>
+    <div class="admin-table-wrap" style="margin-top: 14px;">
+      <table class="admin-table">
+        <thead>
+          <tr>
+            <th>เลขที่เอกสาร</th>
+            <th>ลูกค้า</th>
+            <th>สถานะ</th>
+            <th>วันที่เอกสาร</th>
+            <th>สร้างเมื่อ / สร้างโดย</th>
+            <th>จัดการ</th>
+          </tr>
+        </thead>
+        <tbody>
+          @forelse ($invoices as $document)
+            <tr>
+              <td>
+                <div class="admin-number" style="font-size: 14px; font-weight: 700;">{{ $document->document_number }}</div>
+              </td>
+              <td>{{ $document->customer_name ?: '-' }}</td>
+              <td>
+                <strong>{{ $document->status_label }}</strong>
+              </td>
+              <td>{{ $document->document_date?->format('d/m/Y') ?: '-' }}</td>
+              <td>
+                <div class="admin-muted">
+                  {{ $document->created_at?->format('d/m/Y H:i') ?: '-' }}
+                </div>
+                <div class="admin-muted" style="margin-top: 4px; font-size: 0.9em;">
+                  {{ $document->savedByUser?->name ?? '-' }}
+                </div>
+              </td>
+              <td>
+                <div class="admin-dropdown">
+                  <button type="button" class="admin-button admin-button--compact admin-dropdown-toggle">
+                    จัดการ ▾
+                  </button>
+                  <div class="admin-dropdown-menu">
+                    <!-- Edit -->
+                    @if (! $document->isInvoice() || $document->isInvoiceEditable())
+                      <a href="{{ route('admin.sales-documents', ['document' => $document->id]) }}" class="admin-dropdown-item">แก้ไข</a>
+                    @endif
+
+                    <!-- Print / PDF -->
+                    <a href="{{ route('admin.saved-sales-documents.download', $document) }}" class="admin-dropdown-item" target="_blank" rel="noopener">พิมพ์ / บันทึก PDF</a>
+
+                    <!-- Workflow Actions -->
+                    @if ($document->isInvoiceDraft())
+                      <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.invoice-status', [$document, 'issue']) }}" data-action-name="ออกใบแจ้งหนี้" data-document-name="ใบแจ้งหนี้ #{{ $document->document_number }}">ออกใบแจ้งหนี้</button>
+                      <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.invoice-status', [$document, 'void']) }}" data-action-name="Void" data-document-name="ใบแจ้งหนี้ #{{ $document->document_number }}">Void</button>
+                    @elseif ($document->isInvoiceIssued())
+                      <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.invoice-status', [$document, 'partial-paid']) }}" data-action-name="ชำระบางส่วน" data-document-name="ใบแจ้งหนี้ #{{ $document->document_number }}">ชำระบางส่วน</button>
+                      <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.invoice-status', [$document, 'paid']) }}" data-action-name="ชำระแล้ว" data-document-name="ใบแจ้งหนี้ #{{ $document->document_number }}">ชำระแล้ว</button>
+                      <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.invoice-status', [$document, 'overdue']) }}" data-action-name="ค้างชำระ" data-document-name="ใบแจ้งหนี้ #{{ $document->document_number }}">ค้างชำระ</button>
+                      <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.invoice-status', [$document, 'void']) }}" data-action-name="Void" data-document-name="ใบแจ้งหนี้ #{{ $document->document_number }}">Void</button>
+                    @elseif ($document->status === \App\Models\SalesDocument::STATUS_INVOICE_PARTIALLY_PAID)
+                      <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.invoice-status', [$document, 'paid']) }}" data-action-name="ชำระแล้ว" data-document-name="ใบแจ้งหนี้ #{{ $document->document_number }}">ชำระแล้ว</button>
+                      <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.invoice-status', [$document, 'overdue']) }}" data-action-name="ค้างชำระ" data-document-name="ใบแจ้งหนี้ #{{ $document->document_number }}">ค้างชำระ</button>
+                      <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.invoice-status', [$document, 'void']) }}" data-action-name="Void" data-document-name="ใบแจ้งหนี้ #{{ $document->document_number }}">Void</button>
+                    @elseif ($document->status === \App\Models\SalesDocument::STATUS_INVOICE_OVERDUE)
+                      <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.invoice-status', [$document, 'paid']) }}" data-action-name="ชำระแล้ว" data-document-name="ใบแจ้งหนี้ #{{ $document->document_number }}">ชำระแล้ว</button>
+                      <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.invoice-status', [$document, 'void']) }}" data-action-name="Void" data-document-name="ใบแจ้งหนี้ #{{ $document->document_number }}">Void</button>
+                    @endif
+
+                    <!-- Delete -->
+                    @if (session('admin_user_role') === \App\Models\User::ROLE_MANAGER)
+                      <div style="border-top: 1px solid var(--admin-border); margin: 4px 0;"></div>
+                      <button type="button" class="admin-dropdown-item doc-delete-btn" data-action-url="{{ route('admin.saved-sales-documents.delete', $document) }}" data-document-name="ใบแจ้งหนี้ #{{ $document->document_number }}" style="color: #b42318;">ลบเอกสาร</button>
+                    @endif
+                  </div>
+                </div>
+              </td>
+            </tr>
+          @empty
+            <tr>
+              <td colspan="6" class="admin-muted">ยังไม่มีใบแจ้งหนี้ที่บันทึกไว้</td>
             </tr>
           @endforelse
         </tbody>
@@ -98,23 +271,29 @@
     {{ $documents->links() }}
   </div>
 
-  @if (session('admin_user_role') === \App\Models\User::ROLE_MANAGER)
-    {{-- Delete Confirmation Modal --}}
-    <div id="delete-confirmation-modal" style="display: none; position: fixed; inset: 0; z-index: 2000; background: rgba(0, 0, 0, 0.5); align-items: center; justify-content: center;">
-      <div style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); width: min(420px, 90vw);">
-        <h2 style="margin: 0 0 12px; font-size: 18px; font-weight: 600; color: #111827;">⚠️ ยืนยันการลบเอกสาร</h2>
-        <p style="margin: 0 0 12px; color: #6b7280; font-size: 14px;">คุณแน่ใจว่าต้องการลบเอกสาร:</p>
-        <p style="margin: 0 0 16px; padding: 12px; background: #fef2f2; border-radius: 6px; border-left: 4px solid #dc2626; color: #991b1b; font-weight: 500;" id="delete-doc-name">-</p>
-        <p style="margin: 0 0 12px; color: #6b7280; font-size: 13px;">⚠️ เอกสารจะถูกลบถาวรพร้อมไฟล์ PDF (ไม่สามารถกู้คืนได้)</p>
-        <p style="margin: 0 0 8px; color: #111827; font-size: 13px; font-weight: 600;">พิมพ์ <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 3px; font-family: monospace; color: #dc2626;">confirm</code> เพื่อยืนยัน:</p>
-        <input type="text" id="delete-confirm-input" placeholder="พิมพ์ confirm" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; box-sizing: border-box; margin-bottom: 16px;">
-        <div style="display: flex; gap: 8px; justify-content: flex-end;">
-          <button type="button" class="admin-button admin-button--ghost" onclick="closeDeleteModal();">ยกเลิก</button>
-          <button type="button" id="delete-confirm-btn" class="admin-button admin-button--primary" style="background: #dc2626; opacity: 0.5; cursor: not-allowed;" disabled onclick="submitDeleteForm();">ลบเอกสาร</button>
-        </div>
+  {{-- Unified Action Confirmation Modal --}}
+  <div id="action-confirmation-modal" style="display: none; position: fixed; inset: 0; z-index: 2000; background: rgba(0, 0, 0, 0.5); align-items: center; justify-content: center;">
+    <div style="background: white; border-radius: 8px; padding: 24px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2); width: min(450px, 90vw);">
+      <h2 style="margin: 0 0 12px; font-size: 18px; font-weight: 600; color: #111827;" id="action-modal-title">⚠️ ยืนยันการดำเนินการ</h2>
+      <p style="margin: 0 0 12px; color: #6b7280; font-size: 14px;" id="action-modal-text">คุณแน่ใจว่าต้องการดำเนินการกับเอกสารนี้หรือไม่?</p>
+      <p style="margin: 0 0 16px; padding: 12px; border-radius: 6px; border-left: 4px solid #3b82f6; font-weight: 500;" id="action-doc-name">-</p>
+      <p style="margin: 0 0 12px; color: #dc2626; font-size: 13px; font-weight: 600;" id="action-modal-warning"></p>
+      <p style="margin: 0 0 8px; color: #111827; font-size: 13px; font-weight: 600;">
+        พิมพ์ <code style="background: #f3f4f6; padding: 2px 6px; border-radius: 3px; font-family: monospace; color: #dc2626;" id="action-required-word">Confirm</code> เพื่อยืนยัน:
+      </p>
+      <input type="text" id="action-confirm-input" placeholder="พิมพ์ Confirm" style="width: 100%; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 14px; box-sizing: border-box; margin-bottom: 16px;">
+      <div style="display: flex; gap: 8px; justify-content: flex-end;">
+        <button type="button" class="admin-button admin-button--ghost" onclick="closeActionModal();">ยกเลิก</button>
+        <button type="button" id="action-confirm-btn" class="admin-button admin-button--primary" style="opacity: 0.5; cursor: not-allowed;" disabled onclick="submitActionForm();">ยืนยัน</button>
       </div>
     </div>
-  @endif
+  </div>
+
+  {{-- Hidden Action Form --}}
+  <form id="hidden-action-form" method="post" style="display: none;">
+    @csrf
+    <input type="hidden" name="_method" id="hidden-action-method" value="POST">
+  </form>
 
   {{-- Easy Documents Wizard Modal --}}
   <div id="easy-docs-modal" class="easy-docs-modal" hidden>
@@ -1093,66 +1272,149 @@
     })();
   </script>
 
-  @if (session('admin_user_role') === \App\Models\User::ROLE_MANAGER)
-    <script>
-      (() => {
-        const modal = document.getElementById('delete-confirmation-modal');
-        const deleteDocNameEl = document.getElementById('delete-doc-name');
-        const deleteButtons = document.querySelectorAll('.sales-doc-delete-btn');
-        const confirmInput = document.getElementById('delete-confirm-input');
-        const confirmBtn = document.getElementById('delete-confirm-btn');
+  <script>
+    (() => {
+      // 1. Dropdown Toggle and Click Outside Handler
+      document.addEventListener('click', (e) => {
+        const toggleBtn = e.target.closest('.admin-dropdown-toggle');
+        const openMenus = Array.from(document.querySelectorAll('.admin-dropdown-menu.is-open'));
 
-        const updateConfirmButtonState = () => {
-          const isConfirmed = confirmInput.value.toLowerCase() === 'confirm';
-          confirmBtn.disabled = !isConfirmed;
-          confirmBtn.style.opacity = isConfirmed ? '1' : '0.5';
-          confirmBtn.style.cursor = isConfirmed ? 'pointer' : 'not-allowed';
-        };
+        if (toggleBtn) {
+          e.preventDefault();
+          const currentMenu = toggleBtn.nextElementSibling;
+          const isCurrentlyOpen = currentMenu.classList.contains('is-open');
 
-        confirmInput.addEventListener('input', updateConfirmButtonState);
-
-        deleteButtons.forEach(btn => {
-          btn.addEventListener('click', (e) => {
-            e.preventDefault();
-            const form = btn.closest('.sales-doc-delete-form');
-
-            deleteDocNameEl.textContent = form.dataset.documentName;
-            modal.formToSubmit = form;
-            confirmInput.value = '';
-            updateConfirmButtonState();
-            modal.style.display = 'flex';
-            confirmInput.focus();
+          // Close other open menus
+          openMenus.forEach(menu => {
+            if (menu !== currentMenu) {
+              menu.classList.remove('is-open');
+            }
           });
-        });
 
-        modal.addEventListener('click', (e) => {
-          if (e.target === modal) {
-            closeDeleteModal();
+          // Toggle current menu
+          if (isCurrentlyOpen) {
+            currentMenu.classList.remove('is-open');
+          } else {
+            currentMenu.classList.add('is-open');
           }
-        });
-      })();
+        } else {
+          // Clicked outside a dropdown, close all menus
+          const insideDropdown = e.target.closest('.admin-dropdown');
+          if (!insideDropdown) {
+            openMenus.forEach(menu => menu.classList.remove('is-open'));
+          }
+        }
+      });
 
-      function closeDeleteModal() {
-        const modal = document.getElementById('delete-confirmation-modal');
-        modal.style.display = 'none';
-        modal.formToSubmit = null;
-        document.getElementById('delete-confirm-input').value = '';
-      }
+      // 2. Action Confirmation Modal Handler
+      const actionModal = document.getElementById('action-confirmation-modal');
+      const actionDocNameEl = document.getElementById('action-doc-name');
+      const actionModalTitle = document.getElementById('action-modal-title');
+      const actionModalText = document.getElementById('action-modal-text');
+      const actionModalWarning = document.getElementById('action-modal-warning');
+      const actionRequiredWord = document.getElementById('action-required-word');
+      const actionConfirmInput = document.getElementById('action-confirm-input');
+      const actionConfirmBtn = document.getElementById('action-confirm-btn');
+      const hiddenActionForm = document.getElementById('hidden-action-form');
+      const hiddenActionMethod = document.getElementById('hidden-action-method');
 
-      function submitDeleteForm() {
-        const modal = document.getElementById('delete-confirmation-modal');
-        const confirmBtn = document.getElementById('delete-confirm-btn');
+      let targetActionUrl = '';
+      let targetMethod = 'POST';
+      let expectedWord = 'Confirm';
 
-        if (confirmBtn.disabled) {
-          return;
+      const updateActionButtonState = () => {
+        const isConfirmed = actionConfirmInput.value.trim().toLowerCase() === expectedWord.toLowerCase();
+        actionConfirmBtn.disabled = !isConfirmed;
+        actionConfirmBtn.style.opacity = isConfirmed ? '1' : '0.5';
+        actionConfirmBtn.style.cursor = isConfirmed ? 'pointer' : 'not-allowed';
+        if (isConfirmed) {
+          actionConfirmBtn.style.background = expectedWord === 'Delete' ? '#dc2626' : '#2563eb';
+        } else {
+          actionConfirmBtn.style.background = '#e5e7eb';
+        }
+      };
+
+      actionConfirmInput.addEventListener('input', updateActionButtonState);
+
+      // Event delegation for workflow and delete buttons inside dropdowns
+      document.addEventListener('click', (e) => {
+        const workflowBtn = e.target.closest('.workflow-action-btn');
+        const deleteBtn = e.target.closest('.doc-delete-btn');
+
+        if (workflowBtn || deleteBtn) {
+          // Close all open dropdown menus when modal opens
+          document.querySelectorAll('.admin-dropdown-menu.is-open').forEach(menu => {
+            menu.classList.remove('is-open');
+          });
         }
 
-        if (modal.formToSubmit) {
-          modal.formToSubmit.submit();
+        if (workflowBtn) {
+          e.preventDefault();
+          targetActionUrl = workflowBtn.dataset.actionUrl;
+          targetMethod = 'POST';
+          expectedWord = 'Confirm';
+
+          actionModalTitle.textContent = '⚙️ ยืนยันการดำเนินการ';
+          actionModalText.textContent = `คุณแน่ใจว่าต้องการทำรายการ "${workflowBtn.dataset.actionName}" สำหรับเอกสาร:`;
+          actionDocNameEl.textContent = workflowBtn.dataset.documentName || 'เอกสาร';
+          actionDocNameEl.style.borderLeftColor = '#2563eb';
+          actionDocNameEl.style.color = '#1e3a8a';
+          actionDocNameEl.style.background = '#eff6ff';
+          
+          actionModalWarning.textContent = '';
+          actionRequiredWord.textContent = 'Confirm';
+          actionConfirmInput.placeholder = 'พิมพ์ Confirm';
+          actionConfirmInput.value = '';
+          
+          updateActionButtonState();
+          actionModal.style.display = 'flex';
+          actionConfirmInput.focus();
         }
 
-        closeDeleteModal();
-      }
-    </script>
-  @endif
+        if (deleteBtn) {
+          e.preventDefault();
+          targetActionUrl = deleteBtn.dataset.actionUrl;
+          targetMethod = 'DELETE';
+          expectedWord = 'Delete';
+
+          actionModalTitle.textContent = '⚠️ ยืนยันการ' + 'ล' + 'บเอกสาร';
+          actionModalText.textContent = 'คุณแน่ใจว่าต้องการ' + 'ล' + 'บเอกสาร:';
+          actionDocNameEl.textContent = deleteBtn.dataset.documentName || 'เอกสาร';
+          actionDocNameEl.style.borderLeftColor = '#dc2626';
+          actionDocNameEl.style.color = '#991b1b';
+          actionDocNameEl.style.background = '#fef2f2';
+          
+          actionModalWarning.textContent = '⚠️ เอกสารจะถูก' + 'ล' + 'บถาวรพร้อมไฟล์ PDF (ไม่สามารถกู้คืนได้)';
+          actionRequiredWord.textContent = 'Delete';
+          actionConfirmInput.placeholder = 'พิมพ์ Delete';
+          actionConfirmInput.value = '';
+          
+          updateActionButtonState();
+          actionModal.style.display = 'flex';
+          actionConfirmInput.focus();
+        }
+      });
+
+      // Close modal on backdrop click
+      actionModal.addEventListener('click', (e) => {
+        if (e.target === actionModal) {
+          closeActionModal();
+        }
+      });
+
+      window.closeActionModal = function() {
+        actionModal.style.display = 'none';
+        actionConfirmInput.value = '';
+        targetActionUrl = '';
+      };
+
+      window.submitActionForm = function() {
+        if (actionConfirmBtn.disabled) return;
+        hiddenActionForm.action = targetActionUrl;
+        hiddenActionMethod.value = targetMethod;
+        hiddenActionForm.submit();
+        closeActionModal();
+      };
+    })();
+  </script>
 @endsection

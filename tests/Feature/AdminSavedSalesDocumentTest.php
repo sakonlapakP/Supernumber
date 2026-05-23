@@ -390,6 +390,39 @@ class AdminSavedSalesDocumentTest extends TestCase
         $this->assertStringNotContainsString('>>>>>>>', $html);
     }
 
+    public function test_saved_sales_documents_page_displays_separate_tables_without_type_column(): void
+    {
+        $admin = User::factory()->create([
+            'username' => 'admin-saved-tables-test',
+            'role' => User::ROLE_ADMIN,
+            'is_active' => true,
+        ]);
+
+        SalesDocument::query()->create([
+            'document_type' => 'quotation',
+            'document_number' => 'QT-111111-111',
+            'document_date' => '2026-04-03',
+            'due_date' => '2026-04-10',
+            'customer_name' => 'บริษัท ทดสอบเสนอราคา จำกัด',
+            'file_name' => 'Quotation QT-111111-111',
+            'pdf_disk' => 'local',
+            'pdf_path' => 'quotation/2026/Quotation QT-111111-111.pdf',
+            'saved_by_user_id' => $admin->id,
+            'payload' => [],
+        ]);
+
+        $response = $this
+            ->withSession($this->adminSession($admin))
+            ->get(route('admin.saved-sales-documents.index'));
+
+        $response->assertOk();
+        $response->assertSee('รายการใบเสนอราคา (Quotations)');
+        $response->assertSee('รายการใบแจ้งหนี้ (Invoices)');
+        $response->assertDontSee('<th>ประเภท</th>', false);
+        $response->assertDontSee('ประเภท / เลขที่');
+        $response->assertSee('จัดการ ▾');
+    }
+
     /**
      * @return array<string, mixed>
      */
