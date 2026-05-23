@@ -89,10 +89,18 @@ class AdminHoldNumbersTest extends TestCase
             'role' => User::ROLE_ADMIN,
             'is_active' => true,
         ]);
-        $viewer = User::factory()->create([
-            'name' => 'Hold Numbers Viewer',
+        
+        $managerViewer = User::factory()->create([
+            'name' => 'Hold Numbers Manager Viewer',
             'username' => 'hold-manager-viewer',
             'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+        
+        $adminViewer = User::factory()->create([
+            'name' => 'Hold Numbers Admin Viewer',
+            'username' => 'hold-admin-viewer',
+            'role' => User::ROLE_ADMIN,
             'is_active' => true,
         ]);
 
@@ -102,7 +110,16 @@ class AdminHoldNumbersTest extends TestCase
             ])
             ->assertRedirect(route('admin.hold-numbers'));
 
-        $this->withSession($this->adminSession($viewer))
+        // Manager should see the admin name and NOT see the dash
+        $this->withSession($this->adminSession($managerViewer))
+            ->get(route('admin.hold-numbers'))
+            ->assertOk()
+            ->assertSee('064-999-8888')
+            ->assertSee('Admin Hold Tester')
+            ->assertDontSee('<td>\n                  <div>-</div>\n                </td>', false);
+
+        // Admin viewer should see the dash and NOT see the admin name
+        $this->withSession($this->adminSession($adminViewer))
             ->get(route('admin.hold-numbers'))
             ->assertOk()
             ->assertSee('064-999-8888')

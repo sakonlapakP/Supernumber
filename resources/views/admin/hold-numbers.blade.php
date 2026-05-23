@@ -7,6 +7,13 @@
     .hold-package-cell {
       text-align: center;
     }
+    .admin-table th,
+    .admin-table td {
+      text-align: center !important;
+    }
+    .admin-action-group {
+      justify-content: center !important;
+    }
   </style>
 
   <div class="admin-page-head">
@@ -116,7 +123,19 @@
               @php
                 $holdOrder = $number->getRelation('holdOrder');
                 $holdLog = $number->getRelation('holdLog');
-                $reservedBy = trim((string) ($holdOrder?->full_name ?: ''));
+                
+                $customerName = trim((string) ($holdOrder?->full_name ?: ''));
+                $adminName = trim((string) ($holdLog?->user?->name ?: ''));
+                $isManager = session('admin_user_role') === \App\Models\User::ROLE_MANAGER;
+                
+                if ($customerName !== '') {
+                    $reservedBy = $customerName;
+                } elseif ($adminName !== '') {
+                    $reservedBy = $isManager ? $adminName : '';
+                } else {
+                    $reservedBy = '';
+                }
+                
                 $reservedAt = $holdOrder?->created_at ?: $holdLog?->created_at;
                 // Intentionally keep hold-number postpaid package labels compact for admins:
                 // show "แพ็กเกจ 1499/1199/699" instead of the full "True Super Value ..." name.
