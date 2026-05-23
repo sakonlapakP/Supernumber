@@ -263,4 +263,155 @@ class AdminEasyDocumentTest extends TestCase
         $response->assertStatus(422);
         $response->assertJsonValidationErrors(['customerId', 'items']);
     }
+
+    // FIX #1 — easy invoice with referenceNumber sets quotation to ACCEPTED (not SENT)
+    public function test_easy_invoice_with_reference_number_sets_quotation_to_accepted(): void
+    {
+        $admin = User::factory()->create([
+            'username' => 'admin-fix1',
+            'role' => User::ROLE_ADMIN,
+            'is_active' => true,
+        ]);
+
+        $customer = BillingCustomer::create([
+            'display_name' => 'ลูกค้า Fix1 จำกัด',
+            'company_name' => 'ลูกค้า Fix1 จำกัด',
+            'is_active' => true,
+        ]);
+
+        $quotation = \App\Models\SalesDocument::create([
+            'document_type' => 'quotation',
+            'document_number' => 'QT-FIX1-001',
+            'document_date' => now()->format('Y-m-d'),
+            'due_date' => now()->addDays(7)->format('Y-m-d'),
+            'customer_id' => $customer->id,
+            'customer_name' => $customer->display_name,
+            'file_name' => 'qt-fix1-001',
+            'status' => \App\Models\SalesDocument::STATUS_QUOTATION_DRAFT,
+            'is_draft' => true,
+            'is_active' => true,
+            'pdf_disk' => 'local',
+            'pdf_path' => '',
+            'payload' => [],
+        ]);
+
+        $response = $this
+            ->withSession($this->adminSession($admin))
+            ->postJson(route('admin.easy-documents.create'), [
+                'customerId' => $customer->id,
+                'documentType' => 'invoice',
+                'referenceNumber' => 'QT-FIX1-001',
+                'items' => [['name' => 'บริการ', 'price' => 10000, 'originalPrice' => 10000, 'qty' => 1]],
+                'taxMethod' => 'customer-pays',
+                'paymentMethod' => 'bank',
+                'paymentCondition' => 'full',
+            ]);
+
+        $response->assertOk();
+
+        $quotation->refresh();
+        $this->assertSame(\App\Models\SalesDocument::STATUS_QUOTATION_ACCEPTED, $quotation->status);
+    }
+
+    // FIX #2 — easy invoice blocks duplicate when quotation already has an invoice
+    public function test_easy_invoice_prevents_duplicate_for_same_quotation(): void
+    {
+        $admin = User::factory()->create([
+            'username' => 'admin-fix2',
+            'role' => User::ROLE_ADMIN,
+            'is_active' => true,
+        ]);
+
+        $customer = BillingCustomer::create([
+            'display_name' => 'ลูกค้า Fix2 จำกัด',
+            'company_name' => 'ลูกค้า Fix2 จำกัด',
+            'is_active' => true,
+        ]);
+
+        $quotation = \App\Models\SalesDocument::create([
+            'document_type' => 'quotation',
+            'document_number' => 'QT-FIX2-001',
+            'document_date' => now()->format('Y-m-d'),
+            'due_date' => now()->addDays(7)->format('Y-m-d'),
+            'customer_id' => $customer->id,
+            'customer_name' => $customer->display_name,
+            'file_name' => 'qt-fix2-001',
+            'status' => \App\Models\SalesDocument::STATUS_QUOTATION_ACCEPTED,
+            'is_draft' => false,
+            'is_active' => true,
+            'pdf_disk' => 'local',
+            'pdf_path' => '',
+            'payload' => [],
+        ]);
+
+        // Existing invoice already linked to the quotation
+        \App\Models\SalesDocument::create([
+            'document_type' => 'invoice',
+            'document_number' => 'IV-FIX2-EXISTING',
+            'document_date' => now()->format('Y-m-d'),
+            'due_date' => now()->addDays(7)->format('Y-m-d'),
+            'customer_id' => $customer->id,
+            'customer_name' => $customer->display_name,
+            'file_name' => 'iv-fix2-existing',
+            'source_quotation_id' => $quotation->id,
+            'status' => \App\Models\SalesDocument::STATUS_INVOICE_DRAFT,
+            'is_draft' => true,
+            'is_active' => true,
+            'pdf_disk' => 'local',
+            'pdf_path' => '',
+            'payload' => [],
+        ]);
+
+        $response = $this
+            ->withSession($this->adminSession($admin))
+            ->postJson(route('admin.easy-documents.create'), [
+                'customerId' => $customer->id,
+                'documentType' => 'invoice',
+                'referenceNumber' => 'QT-FIX2-001',
+                'items' => [['name' => 'บริการ', 'price' => 10000, 'originalPrice' => 10000, 'qty' => 1]],
+                'taxMethod' => 'customer-pays',
+                'paymentMethod' => 'bank',
+                'paymentCondition' => 'full',
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('success', false);
+        $response->assertJsonPath('message', 'ใบแจ้งหนี้สำหรับใบเสนอราคานี้มีอยู่แล้ว');
+
+        // No additional invoice should be created
+        $this->assertSame(1, \App\Models\SalesDocument::where('document_type', 'invoice')->count());
+    }
+
+    // FIX #3 — draft document_number in payload matches the model's document_number
+    public function test_easy_quotation_draft_document_number_matches_payload(): void
+    {
+        $admin = User::factory()->create([
+            'username' => 'admin-fix3',
+            'role' => User::ROLE_ADMIN,
+            'is_active' => true,
+        ]);
+
+        $customer = BillingCustomer::create([
+            'display_name' => 'ลูกค้า Fix3 จำกัด',
+            'company_name' => 'ลูกค้า Fix3 จำกัด',
+            'is_active' => true,
+        ]);
+
+        $response = $this
+            ->withSession($this->adminSession($admin))
+            ->postJson(route('admin.easy-documents.create'), [
+                'customerId' => $customer->id,
+                'documentType' => 'quotation',
+                'items' => [['name' => 'บริการ', 'price' => 10000, 'originalPrice' => 10000, 'qty' => 1]],
+                'taxMethod' => 'customer-pays',
+                'paymentMethod' => 'bank',
+                'paymentCondition' => 'full',
+            ]);
+
+        $response->assertOk();
+
+        $document = \App\Models\SalesDocument::query()->sole();
+        $this->assertSame($document->document_number, $document->payload['document_number']);
+        $this->assertSame($document->document_number, $document->payload['document']['number']);
+    }
 }

@@ -2399,16 +2399,37 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             $isDirectInvoiceCreate = $documentType === 'invoice' && !empty($data['referenceNumber']);
 
             if ($isDirectInvoiceCreate) {
+                // [FIX #2] Guard: prevent duplicate invoice from the same quotation
+                $sourceQuotation = SalesDocument::where('document_number', $data['referenceNumber'])
+                    ->where('document_type', 'quotation')
+                    ->first();
+
+                if ($sourceQuotation) {
+                    $alreadyHasInvoice = SalesDocument::where('source_quotation_id', $sourceQuotation->id)
+                        ->where('document_type', 'invoice')
+                        ->exists();
+
+                    if ($alreadyHasInvoice) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'ใบแจ้งหนี้สำหรับใบเสนอราคานี้มีอยู่แล้ว',
+                        ], 422);
+                    }
+                }
+
                 // Immediately create a real invoice using the service to auto-generate document number and PDF
                 $payload['document_number'] = 'IV-' . now('Asia/Bangkok')->format('YmdHis');
                 $document = app(\App\Services\SalesDocumentPdfService::class)->saveDocument($payload, $currentAdmin()?->id);
                 $document->update(['status' => SalesDocument::STATUS_INVOICE_DRAFT]);
             } else {
-                // Create draft document for Easy Quotation
-                $prefix = $documentType === 'invoice' ? 'IV' : 'QT';
+                // [FIX #3] Use a single consistent document number for both model and payload
+                $draftDocumentNumber = $prefix . '-' . now('Asia/Bangkok')->format('YmdHis');
+                $payload['document_number'] = $draftDocumentNumber;
+                $payload['document']['number'] = $draftDocumentNumber;
+
                 $document = SalesDocument::create([
                     'document_type' => $documentType,
-                    'document_number' => $prefix . '-' . now('Asia/Bangkok')->format('YmdHis'),
+                    'document_number' => $draftDocumentNumber,
                     'document_date' => now('Asia/Bangkok')->format('Y-m-d'),
                     'due_date' => now('Asia/Bangkok')->addDays(7)->format('Y-m-d'),
                     'file_name' => strtolower($prefix) . '-' . now('Asia/Bangkok')->format('YmdHis'),
@@ -2426,18 +2447,15 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             $redirectUrl = route('admin.sales-documents-quick', ['draft' => $document->id], false);
 
             if ($isDirectInvoiceCreate) {
-                $sourceQuotation = SalesDocument::where('document_number', $data['referenceNumber'])
-                    ->where('document_type', 'quotation')
-                    ->first();
-                    
                 if ($sourceQuotation) {
+                    // [FIX #1] Set quotation to ACCEPTED (not SENT) to correctly reflect conversion state
                     $sourceQuotation->update([
-                        'status' => SalesDocument::STATUS_QUOTATION_SENT
+                        'status' => SalesDocument::STATUS_QUOTATION_ACCEPTED,
                     ]);
                     $document->update(['source_quotation_id' => $sourceQuotation->id]);
                 }
 
-                $redirectUrl = url('/admin/saved-sales-documents?type=invoice');
+                $redirectUrl = route('admin.saved-sales-documents.index', ['type' => 'invoice'], false);
             }
 
             return response()->json([
