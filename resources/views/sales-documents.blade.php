@@ -114,7 +114,7 @@
         <button type="button" class="document-action-button document-action-button--save" data-customer-action>เพิ่มลูกค้า</button>
         <button type="button" class="document-action-button document-action-button--ghost" data-save-draft>บันทึกร่าง</button>
         <button type="button" class="document-action-button" data-load-draft hidden>โหลดร่าง</button>
-        <div class="document-type-switch" role="group" aria-label="เลือกประเภทเอกสาร">
+        <div class="document-type-switch" role="group" aria-label="เลือกประเภทเอกสาร" style="display: none !important;">
           <button type="button" class="is-active" data-doc-switch="quotation">ใบเสนอราคา</button>
           <button type="button" data-doc-switch="invoice">ใบแจ้งหนี้</button>
         </div>
@@ -2074,7 +2074,7 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
 
       printButton?.addEventListener("click", saveAndDownloadDocument);
 
-      setDocumentType("quotation");
+      setDocumentType(@json($type ?? 'quotation'));
       const restoredFromReturnState = restoreReturnState();
       if (! restoredFromReturnState && prefillPayload) {
         applyPrefillPayload(prefillPayload);

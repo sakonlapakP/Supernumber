@@ -16,9 +16,6 @@
     </div>
     <div class="admin-page-actions">
       <div class="admin-summary">ทั้งหมด {{ number_format($documents->total()) }} เอกสาร</div>
-      <button type="button" class="admin-button admin-button--primary admin-button--compact" data-easy-docs-open>✨ Easy Documents</button>
-      {{-- <a href="{{ route('admin.sales-documents-quick') }}" class="admin-button admin-button--primary admin-button--compact">⚡ สร้างเอกสารด่วน</a> --}}
-      <a href="{{ route('admin.sales-documents') }}" class="admin-button admin-button--compact">สร้างใบเสนอราคา / ใบแจ้งหนี้</a>
     </div>
   </div>
 
@@ -85,6 +82,10 @@
           <span>📄 รายการใบเสนอราคา (Quotations)</span>
         </h2>
         <p class="admin-feature-card__hint">ใบเสนอราคาที่ออกโดยระบบ สามารถยอมรับ ปฏิเสธ หรือแปลงเป็นใบแจ้งหนี้ได้</p>
+      </div>
+      <div class="admin-feature-card__actions" style="margin-top: 4px;">
+        <button type="button" class="admin-button admin-button--primary admin-button--compact" data-easy-docs-open="quotation">✨ Easy Quotation</button>
+        <a href="{{ route('admin.sales-documents', ['type' => 'quotation']) }}" class="admin-button admin-button--compact">สร้างใบเสนอราคา</a>
       </div>
     </div>
     <div class="admin-table-wrap" style="margin-top: 14px;">
@@ -183,6 +184,10 @@
           <span>🧾 รายการใบแจ้งหนี้ (Invoices)</span>
         </h2>
         <p class="admin-feature-card__hint">ใบแจ้งหนี้ที่ออกโดยระบบ สามารถอัปเดตสถานะการรับเงินได้</p>
+      </div>
+      <div class="admin-feature-card__actions" style="margin-top: 4px;">
+        <button type="button" class="admin-button admin-button--primary admin-button--compact" data-easy-docs-open="invoice">✨ Easy Invoice</button>
+        <a href="{{ route('admin.sales-documents', ['type' => 'invoice']) }}" class="admin-button admin-button--compact">สร้างใบแจ้งหนี้</a>
       </div>
     </div>
     <div class="admin-table-wrap" style="margin-top: 14px;">
@@ -420,7 +425,7 @@
 
         {{-- Step 3: Payment Method & Conditions --}}
         <div id="easy-docs-step-3" class="easy-docs-step-content">
-          <div class="easy-docs-section">
+          <div class="easy-docs-section" style="display: none !important;">
             <h3 class="easy-docs-section-title">📄 ประเภทเอกสาร</h3>
             <div class="easy-docs-radio-group">
               <label class="easy-docs-radio-label">
@@ -820,7 +825,7 @@
     (() => {
       const modal = document.getElementById('easy-docs-modal');
       const backdrop = document.querySelector('.easy-docs-backdrop');
-      const openBtn = document.querySelector('[data-easy-docs-open]');
+      const openBtns = document.querySelectorAll('[data-easy-docs-open]');
       const closeBtn = document.querySelectorAll('[data-easy-docs-close]');
       const nextBtn = document.getElementById('easy-docs-next-btn');
       const prevBtn = document.getElementById('easy-docs-prev-btn');
@@ -860,28 +865,32 @@
       const createEasyDocumentUrl = @json(route('admin.easy-documents.create', [], false));
 
       // Open modal
-      openBtn?.addEventListener('click', () => {
-        modal.removeAttribute('hidden');
-        currentStep = 1;
-        wizardData.items = [];
-        wizardData.customerId = null;
-        wizardData.customerName = '';
-        wizardData.contactName = '';
-        wizardData.contactPhone = '';
-        customerSelect.value = '';
-        customerDetailsSection.style.display = 'none';
-        contactNameInput.value = '';
-        contactPhoneInput.value = '';
-        productNameInput.value = '';
-        productPriceInput.value = '';
-        productQtyInput.value = '1';
-        pricingBreakdown.style.display = 'none';
-        calculateSection.style.display = 'none';
-        const docTypeRadio = document.querySelector('input[name="document-type"][value="quotation"]');
-        if (docTypeRadio) docTypeRadio.checked = true;
-        wizardData.documentType = 'quotation';
-        syncItemsForTaxMethod();
-        showStep(1);
+      openBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          const type = e.currentTarget.getAttribute('data-easy-docs-open') || 'quotation';
+          modal.removeAttribute('hidden');
+          currentStep = 1;
+          wizardData.items = [];
+          wizardData.customerId = null;
+          wizardData.customerName = '';
+          wizardData.contactName = '';
+          wizardData.contactPhone = '';
+          customerSelect.value = '';
+          customerDetailsSection.style.display = 'none';
+          contactNameInput.value = '';
+          contactPhoneInput.value = '';
+          productNameInput.value = '';
+          productPriceInput.value = '';
+          productQtyInput.value = '1';
+          pricingBreakdown.style.display = 'none';
+          calculateSection.style.display = 'none';
+          
+          const docTypeRadio = document.querySelector(`input[name="document-type"][value="${type}"]`);
+          if (docTypeRadio) docTypeRadio.checked = true;
+          wizardData.documentType = type;
+          syncItemsForTaxMethod();
+          showStep(1);
+        });
       });
 
       // Customer selection and details

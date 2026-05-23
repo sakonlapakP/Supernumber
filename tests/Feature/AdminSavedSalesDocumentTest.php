@@ -80,7 +80,8 @@ class AdminSavedSalesDocumentTest extends TestCase
 
         $response->assertOk();
         $response->assertSee('รายการใบเสนอราคา / ใบแจ้งหนี้ทั้งหมด');
-        $response->assertSee('สร้างใบเสนอราคา / ใบแจ้งหนี้');
+        $response->assertSee('สร้างใบเสนอราคา');
+        $response->assertSee('สร้างใบแจ้งหนี้');
         $response->assertSee('IV-260403-001');
         $response->assertDontSee('ที่เก็บไฟล์');
         $response->assertDontSee('สถานะไฟล์');
@@ -421,6 +422,62 @@ class AdminSavedSalesDocumentTest extends TestCase
         $response->assertDontSee('<th>ประเภท</th>', false);
         $response->assertDontSee('ประเภท / เลขที่');
         $response->assertSee('จัดการ ▾');
+    }
+
+    public function test_editor_route_handles_quotation_type_correctly(): void
+    {
+        $admin = User::factory()->create([
+            'username' => 'admin-editor-type-q',
+            'role' => User::ROLE_ADMIN,
+            'is_active' => true,
+        ]);
+
+        $response = $this
+            ->withSession($this->adminSession($admin))
+            ->get(route('admin.sales-documents', ['type' => 'quotation']));
+
+        $response->assertOk();
+        // The script should set the document type dynamically:
+        $response->assertSee('setDocumentType("quotation")', false);
+        // The switch should be hidden:
+        $response->assertSee('class="document-type-switch" role="group" aria-label="เลือกประเภทเอกสาร" style="display: none !important;"', false);
+    }
+
+    public function test_editor_route_handles_invoice_type_correctly(): void
+    {
+        $admin = User::factory()->create([
+            'username' => 'admin-editor-type-i',
+            'role' => User::ROLE_ADMIN,
+            'is_active' => true,
+        ]);
+
+        $response = $this
+            ->withSession($this->adminSession($admin))
+            ->get(route('admin.sales-documents', ['type' => 'invoice']));
+
+        $response->assertOk();
+        // The script should set the document type dynamically:
+        $response->assertSee('setDocumentType("invoice")', false);
+    }
+
+    public function test_dashboard_displays_separate_easy_document_buttons(): void
+    {
+        $admin = User::factory()->create([
+            'username' => 'admin-easy-btns',
+            'role' => User::ROLE_ADMIN,
+            'is_active' => true,
+        ]);
+
+        $response = $this
+            ->withSession($this->adminSession($admin))
+            ->get(route('admin.saved-sales-documents.index'));
+
+        $response->assertOk();
+        // Check for separate Easy Quotation and Easy Invoice buttons
+        $response->assertSee('data-easy-docs-open="quotation"', false);
+        $response->assertSee('data-easy-docs-open="invoice"', false);
+        $response->assertSee('✨ Easy Quotation');
+        $response->assertSee('✨ Easy Invoice');
     }
 
     /**

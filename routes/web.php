@@ -1890,13 +1890,20 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         $prefillPayload = null;
 
         $savedDocumentId = (int) $request->integer('document');
+        $type = 'quotation';
 
         if ($savedDocumentId > 0) {
             $savedDocument = SalesDocument::query()->find($savedDocumentId);
             $prefillPayload = $savedDocument?->payload;
+            if ($savedDocument) {
+                $type = $savedDocument->document_type;
+            }
+        } else {
+            $requestType = trim((string) $request->query('type'));
+            $type = in_array($requestType, ['quotation', 'invoice'], true) ? $requestType : 'quotation';
         }
 
-        return view('sales-documents', compact('customers', 'prefillPayload'));
+        return view('sales-documents', compact('customers', 'prefillPayload', 'type'));
     })->name('sales-documents');
 
     Route::post('/sales-documents/save-download', function (Request $request) use ($ensureDocumentOfficer, $currentAdmin) {
