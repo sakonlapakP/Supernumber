@@ -12,6 +12,34 @@
     .admin-preview-box { margin-top: 12px; }
     .admin-preview-info { font-size: 12px; color: #94a3b8; margin-top: 6px; }
     .admin-image-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 24px; }
+    .copy-prompt-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px 10px;
+      font-size: 12px;
+      font-weight: 700;
+      background: #eff6ff;
+      color: #1d4ed8;
+      border: 1px solid #bfdbfe;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .copy-prompt-btn:hover {
+      background: #dbeafe;
+      color: #1e40af;
+      border-color: #93c5fd;
+      transform: translateY(-1px);
+    }
+    .copy-prompt-btn:active {
+      transform: translateY(0);
+    }
+    .copy-prompt-btn.success {
+      background: #ecfdf5;
+      color: #047857;
+      border-color: #a7f3d0;
+    }
     @media (max-width: 768px) {
       .admin-image-grid { grid-template-columns: 1fr; }
     }
@@ -101,7 +129,12 @@
             <p class="admin-preview-info" data-preview-info style="color: #2563eb; font-weight: bold;"></p>
           </div>
           <div class="admin-field" style="margin-top:16px;">
-            <label for="landscape_prompt">Prompt รูปหน้ารวมบทความ 16:9</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px;">
+              <label for="landscape_prompt" style="margin-bottom: 0;">Prompt รูปหน้ารวมบทความ 16:9</label>
+              <button type="button" class="copy-prompt-btn" onclick="copyFormattedPrompt('landscape_prompt', this)">
+                📋 คัดลอก Prompt
+              </button>
+            </div>
             <textarea id="landscape_prompt" name="image_guidelines[landscape_prompt]" class="admin-input" style="min-height: 96px; padding-top: 12px;" placeholder="Prompt สำหรับรูป 16:9">{{ old('image_guidelines.landscape_prompt') }}</textarea>
           </div>
         </div>
@@ -118,7 +151,12 @@
             <p class="admin-preview-info" data-preview-info style="color: #059669; font-weight: bold;"></p>
           </div>
           <div class="admin-field" style="margin-top:16px;">
-            <label for="square_prompt">Prompt รูปภาพบทความ 1:1</label>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; gap: 8px;">
+              <label for="square_prompt" style="margin-bottom: 0;">Prompt รูปภาพบทความ 1:1</label>
+              <button type="button" class="copy-prompt-btn" onclick="copyFormattedPrompt('square_prompt', this)">
+                📋 คัดลอก Prompt
+              </button>
+            </div>
             <textarea id="square_prompt" name="image_guidelines[square_prompt]" class="admin-input" style="min-height: 96px; padding-top: 12px;" placeholder="Prompt สำหรับรูป 1:1">{{ old('image_guidelines.square_prompt') }}</textarea>
           </div>
         </div>
@@ -156,6 +194,33 @@
     const ed = document.getElementById('rich-editor');
     const hc = document.getElementById('hidden-content');
     if (ed && hc) hc.value = ed.innerHTML;
+  };
+
+  // ---- Copy Formatted Prompt Helper ----
+  window.copyFormattedPrompt = (textareaId, btn) => {
+    const textarea = document.getElementById(textareaId);
+    if (!textarea) return;
+    const text = textarea.value.trim();
+    if (!text) {
+      alert('กรุณากรอกข้อความ Prompt ก่อนกดคัดลอกครับ');
+      textarea.focus();
+      return;
+    }
+    const template = `Here is the template. Please generate an image of [${text}] inside it. Make sure the edges of the generated image softly fade out (gradient blend) to perfectly match and fill the template without harsh borders.`;
+    navigator.clipboard.writeText(template).then(() => {
+      const originalHtml = btn.innerHTML;
+      btn.innerHTML = '✅ คัดลอกสำเร็จ!';
+      btn.classList.add('success');
+      btn.style.pointerEvents = 'none';
+      setTimeout(() => {
+        btn.innerHTML = originalHtml;
+        btn.classList.remove('success');
+        btn.style.pointerEvents = 'auto';
+      }, 2000);
+    }).catch(err => {
+      console.error('Failed to copy text: ', err);
+      alert('ไม่สามารถคัดลอกได้โดยอัตโนมัติ กรุณาลองคัดลอกด้วยตนเอง');
+    });
   };
 
   let pendingUploads = 0;
