@@ -95,6 +95,10 @@
   * รูปแบบรหัส: `IV-YYYYMMDDHHMMSS` (เช่น `IV-20260523190652`)
 * **การตั้งชื่อไฟล์ PDF ดราฟต์:** จะถูกตั้งชื่อล้อตามรหัสตัวพิมพ์เล็ก เช่น `qt-20260523190652.pdf` และ `iv-20260523190652.pdf`
 
+> [!IMPORTANT]
+> **กฎความสอดคล้องเลขที่เอกสาร (Document Number Consistency Rule):**
+> เลขที่เอกสารที่บันทึกใน `sales_documents.document_number` และเลขที่เดียวกันที่อยู่ใน `payload['document_number']` และ `payload['document']['number']` **ต้องมีค่าตรงกันทุกครั้ง** ห้ามสร้างเลขจาก format ต่างกัน (เช่น `ymd-001` vs `YmdHis`) เพราะเมื่อ Editor โหลด prefill payload มาแสดง แล้วผู้ใช้กด "บันทึก" ระบบจะ lookup ด้วย `document_number` ในฐานข้อมูล — ถ้าเลขในสองที่ต่างกันจะเกิด record ซ้อนกันในฐานข้อมูล
+
 ---
 
 ## 6. กฎการไหลเวียนและเปลี่ยนสถานะเอกสาร (Document Workflow States)
@@ -134,6 +138,15 @@ graph TD
 * **หมดอายุ (Expire):** อัปเดตสถานะเป็น `expired` และเปลี่ยน `is_draft = false`
 * **ยกเลิก (Cancel):** อัปเดตสถานะเป็น `cancelled` และเปลี่ยน `is_draft = false`
 * **แปลงเป็นใบแจ้งหนี้ (Convert to Invoice):** ใบเสนอราคาที่มีสถานะ `accepted` สามารถกดแปลงเป็นใบแจ้งหนี้ดึงข้อมูลไปเป็นตัวจริงในตาราง IV ได้ทันที
+
+### 6.3 กฎพิเศษ: Easy Invoice ที่ใช้ referenceNumber
+เมื่อสร้าง Easy Invoice พร้อมระบุ `referenceNumber` (เลขที่ใบเสนอราคาอ้างอิง) ระบบจะทำการตรวจสอบและปรับสถานะโดยอัตโนมัติดังนี้:
+
+1. **Guard กันสร้างซ้ำ:** ก่อนสร้างใบแจ้งหนี้ใหม่ ระบบจะตรวจว่า quotation นั้นมี invoice ที่ link ด้วย `source_quotation_id` อยู่แล้วหรือไม่ หากมีอยู่แล้วจะ return `422` ทันทีพร้อม message `"ใบแจ้งหนี้สำหรับใบเสนอราคานี้มีอยู่แล้ว"` โดยไม่สร้าง record ใหม่
+2. **ตั้ง Quotation เป็น Accepted:** หลังสร้าง invoice สำเร็จ quotation อ้างอิงจะถูกตั้งสถานะเป็น **`quotation_accepted`** (ไม่ใช่ `sent`) เพื่อสะท้อนว่าใบนั้นได้รับการยอมรับและมีใบแจ้งหนี้แล้ว ทำให้ปุ่ม "แปลงเป็น Invoice" หายออกไปจากหน้า Admin อย่างถูกต้อง
+
+> [!WARNING]
+> **ห้ามเปลี่ยน STATUS_QUOTATION_ACCEPTED กลับเป็น STATUS_QUOTATION_SENT** ในเส้นทางนี้ เพราะถ้า quotation อยู่ในสถานะ `sent` ปุ่ม "แปลงเป็น Invoice" จะแสดงขึ้นมาใน workflow actions ทำให้สร้าง invoice ซ้ำได้ทั้งที่มีอยู่แล้ว
 
 ---
 
