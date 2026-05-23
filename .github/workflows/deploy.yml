@@ -35,6 +35,38 @@ jobs:
         -d "{\"project\": \"Supernumber\", \"message\": \"กำลังเริ่ม Deploy เว็บไซต์ซูเปอร์นัมเบอร์ครับพี่อั้ม\", \"apiKey\": \"efaum-secret-key-789\"}"
       continue-on-error: true
 
+    - name: 🔍 Check and Clean FTP Sync State
+      env:
+        FTP_SERVER: ${{ secrets.FTP_SERVER }}
+        FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
+        FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+      run: |
+        echo "Checking if the remote .ftp-deploy-sync-state.json commit is present in local history..."
+        curl -s -f -u "${FTP_USERNAME}:${FTP_PASSWORD}" \
+          "ftp://${FTP_SERVER}/domains/supernumber.co.th/public_html/.ftp-deploy-sync-state.json" \
+          -o local-state.json || true
+        
+        if [ -f local-state.json ]; then
+          LAST_SHA=$(jq -r '.ref' local-state.json 2>/dev/null || echo "")
+          if [ ! -z "$LAST_SHA" ] && [ "$LAST_SHA" != "null" ]; then
+            echo "Found last deployed commit: $LAST_SHA"
+            if ! git cat-file -e "$LAST_SHA" 2>/dev/null; then
+              echo "⚠️ Commit $LAST_SHA is not found in the current git history."
+              echo "Deleting .ftp-deploy-sync-state.json from the FTP server to force a full clean sync..."
+              curl -s -u "${FTP_USERNAME}:${FTP_PASSWORD}" \
+                "ftp://${FTP_SERVER}/domains/supernumber.co.th/public_html/" \
+                -Q "DELE .ftp-deploy-sync-state.json" || echo "Failed to delete state file."
+            else
+              echo "✅ Commit $LAST_SHA exists in git history. Proceeding with incremental sync."
+            fi
+          else
+            echo "State file was empty or invalid JSON."
+          fi
+        else
+          echo "No existing state file found on FTP server."
+        fi
+      continue-on-error: true
+
     - name: 📂 Sync to public_html
       uses: SamKirkland/FTP-Deploy-Action@v4.3.5
       with:

@@ -164,7 +164,21 @@ graph TD
 
 ---
 
-## 8. ตำแหน่งไฟล์สำคัญสำหรับนักพัฒนา (Developer References)
+## 8. ระบบตรวจจับและซ่อมแซมตัวเองของท่อระบายโค้ด (Self-Healing Deploy Pipeline)
+
+เพื่อแก้ปัญหาท่อระบายโค้ด (GitHub Actions) ขัดข้องด้วยข้อผิดพลาด **Git Exit Code 128** เมื่อมีการบันทึกประวัติ Git ย้อนหลัง (Force-Push, Rebase หรือ Squash) ระบบจึงติดตั้งกลไกป้องกันอัจฉริยะแบบอัตโนมัติ:
+
+* **สาเหตุเดิมของปัญหา:** ตัวเลือกการ Deploy แบบ FTP (`SamKirkland/FTP-Deploy-Action`) จะจัดเก็บประวัติ Commit ล่าสุดที่อัปโหลดไว้บนเซิร์ฟเวอร์ในไฟล์ `.ftp-deploy-sync-state.json` เมื่อผู้ใช้นำประวัติใหม่ที่ถูกเขียนทับขึ้นไปเทียบกับไฟล์เก่า ทำให้ Git ค้นหารหัส Commit ย้อนหลังบนเซิร์ฟเวอร์ไม่พบ ส่งผลให้กระบวนการเปรียบเทียบความต่างล้มเหลวและท่อพังทันที
+* **กลไกการซ่อมแซมตัวเอง (Self-Healing):**
+  1. เพิ่มขั้นตอนตรวจสอบ **"🔍 Check and Clean FTP Sync State"** ก่อนดำเนินการอัปโหลดจริง
+  2. ทำการดึงไฟล์ `.ftp-deploy-sync-state.json` บนเซิร์ฟเวอร์จริงลงมาประเมินด้วยคำสั่ง `curl` อย่างปลอดภัย
+  3. ถอดรหัส JSON เพื่ออ่านค่า Commit ล่าสุด แล้วเปรียบเทียบในประวัติในเครื่องด้วย `git cat-file -e`
+  4. หากตรวจพบว่า **ไม่พบประวัติ Commit ดังกล่าว (Mismatch)** ระบบจะออกคำสั่งลบไฟล์ควบคุมสถานะเก่าทิ้งผ่านคำสั่ง FTP `DELE` ทันทีแบบเรียลไทม์
+  5. เมื่อลบไฟล์เก่าทิ้งแล้ว ท่อ FTP Deploy Action จะเปลี่ยนไปทำรายการอัปโหลดแบบสมบูรณ์ใหม่ (Full Sync) โดยอัตโนมัติ ช่วยให้งานอัปโหลดสำเร็จเสมอ ไม่มีทางสะดุดหรือสะสมข้อผิดพลาดอีกต่อไป
+
+---
+
+## 9. ตำแหน่งไฟล์สำคัญสำหรับนักพัฒนา (Developer References)
 
 * **ส่วนติดต่อผู้ใช้งาน (Blade View & JS Controller):**
   * [sales-documents-index.blade.php](file:///Users/efaum/Sites/localhost/Supernumber/resources/views/admin/sales-documents-index.blade.php) - หน้าตารางเอกสาร, ตัวช่วยสร้าง Easy Documents 3 ขั้นตอนด่วน, ฟอร์มสร้างลูกค้า Inline ด่วน, และ CSS/JS ควบคุมการคำนวณทั้งหมด
@@ -178,3 +192,4 @@ graph TD
 * **ระบบทดสอบความเสถียร (Specs & Automated Testing):**
   * [AdminEasyDocumentTest.php](file:///Users/efaum/Sites/localhost/Supernumber/tests/Feature/AdminEasyDocumentTest.php) - เคสทดสอบประเมินความถูกต้องของผลลัพธ์คำนวณ Standard, Reverse และการแนบเลขอ้างอิงของระบบช่วยสร้างด่วน
   * [AdminSavedSalesDocumentTest.php](file:///Users/efaum/Sites/localhost/Supernumber/tests/Feature/AdminSavedSalesDocumentTest.php) - เคสทดสอบพฤติกรรม workflow และสิทธิ์การเข้าถึงปุ่มจัดการสถานะบนตารางหลัก
+
