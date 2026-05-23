@@ -333,20 +333,36 @@
       <div class="easy-docs-body">
         {{-- Step 1: Customer Selection --}}
         <div id="easy-docs-step-1" class="easy-docs-step-content is-active">
-          <div class="easy-docs-field">
+          {{-- Quotation Selection (For Invoice) --}}
+          <div id="easy-docs-quotation-field-container" class="easy-docs-field" style="display: none; margin-bottom: 16px;">
             <label class="easy-docs-label">
-              <span>เลือกลูกค้า</span>
-              <select id="easy-docs-customer" class="easy-docs-input">
-                <option value="">-- เลือกลูกค้า --</option>
-                @foreach ($customers ?? [] as $customer)
-                  <option value="{{ $customer->id }}" data-phone="{{ $customer->phone ?? '' }}" data-contact="{{ $customer->contact_name ?? '' }}">{{ $customer->display_name }}</option>
+              <span>เลือกใบเสนอราคา (Quotation) / ค้นหาใบเสนอราคา</span>
+              <select id="easy-docs-quotation" class="easy-docs-input">
+                <option value="">-- เลือกใบเสนอราคา --</option>
+                @foreach ($allQuotations ?? [] as $qt)
+                  <option value="{{ $qt->id }}">{{ $qt->document_number }} - {{ $qt->customer_name }} (฿{{ number_format($qt->payload['totals']['net_to_pay'] ?? $qt->payload['total'] ?? 0, 2) }})</option>
                 @endforeach
               </select>
             </label>
           </div>
-          <button type="button" class="easy-docs-button easy-docs-button--link" data-easy-docs-create-customer>
-            ➕ สร้างลูกค้าใหม่
-          </button>
+
+          {{-- Customer Selection (For Quotation) --}}
+          <div id="easy-docs-customer-field-container">
+            <div class="easy-docs-field">
+              <label class="easy-docs-label">
+                <span>เลือกลูกค้า</span>
+                <select id="easy-docs-customer" class="easy-docs-input">
+                  <option value="">-- เลือกลูกค้า --</option>
+                  @foreach ($customers ?? [] as $customer)
+                    <option value="{{ $customer->id }}" data-phone="{{ $customer->phone ?? '' }}" data-contact="{{ $customer->contact_name ?? '' }}">{{ $customer->display_name }}</option>
+                  @endforeach
+                </select>
+              </label>
+            </div>
+            <button type="button" class="easy-docs-button easy-docs-button--link" data-easy-docs-create-customer>
+              ➕ สร้างลูกค้าใหม่
+            </button>
+          </div>
 
           {{-- Customer Details Section (shown after selection) --}}
           <div id="easy-docs-customer-details" class="easy-docs-section" style="display: none; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
@@ -876,9 +892,14 @@
         paymentCondition: 'full',
         paymentDetail: '',
         documentType: 'quotation',
+        referenceNumber: '',
       };
 
       const customers = @json($customers ?? []);
+      const quotationsMap = {};
+      @foreach ($allQuotations ?? [] as $qt)
+        quotationsMap[{{ $qt->id }}] = @json($qt);
+      @endforeach
       const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
       const createEasyDocumentUrl = @json(route('admin.easy-documents.create', [], false));
 
@@ -893,7 +914,23 @@
           wizardData.customerName = '';
           wizardData.contactName = '';
           wizardData.contactPhone = '';
+          wizardData.referenceNumber = '';
           customerSelect.value = '';
+
+          const quotationSelect = document.getElementById('easy-docs-quotation');
+          if (quotationSelect) quotationSelect.value = '';
+
+          const quotationFieldContainer = document.getElementById('easy-docs-quotation-field-container');
+          const customerFieldContainer = document.getElementById('easy-docs-customer-field-container');
+
+          if (type === 'invoice') {
+            if (quotationFieldContainer) quotationFieldContainer.style.display = 'block';
+            if (customerFieldContainer) customerFieldContainer.style.display = 'none';
+          } else {
+            if (quotationFieldContainer) quotationFieldContainer.style.display = 'none';
+            if (customerFieldContainer) customerFieldContainer.style.display = 'block';
+          }
+
           customerDetailsSection.style.display = 'none';
           contactNameInput.value = '';
           contactPhoneInput.value = '';
@@ -938,6 +975,103 @@
           wizardData.customerName = '';
           wizardData.contactName = '';
           wizardData.contactPhone = '';
+        }
+      });
+
+      // Quotation selection (Easy Invoice)
+      const quotationSelect = document.getElementById('easy-docs-quotation');
+      quotationSelect?.addEventListener('change', (e) => {
+        const quotationId = e.target.value;
+        if (quotationId && quotationsMap[quotationId]) {
+          const qt = quotationsMap[quotationId];
+          const payload = qt.payload || {};
+          
+          // 1. Pre-fill customer selection & contact details
+          customerSelect.value = qt.customer_id || '';
+          customerDetailsSection.style.display = 'block';
+          
+          const customerData = payload.customer || {};
+          contactNameInput.value = customerData.contact_name || customerData.contact || '';
+          contactPhoneInput.value = customerData.phone || '';
+          
+          wizardData.customerId = qt.customer_id;
+          wizardData.customerName = qt.customer_name || '';
+          wizardData.contactName = contactNameInput.value;
+          wizardData.contactPhone = contactPhoneInput.value;
+          
+          // 2. Pre-fill items list
+          wizardData.items = (payload.items || []).map(item => ({
+            id: Date.now() + Math.random(),
+            name: item.description || '',
+            price: parseFloat(item.unit_price) || 0,
+            originalPrice: parseFloat(item.input_unit_price) || parseFloat(item.unit_price) || 0,
+            qty: parseInt(item.quantity) || 1,
+          }));
+          
+          // 3. Pre-fill tax method
+          const taxMethod = payload.tax_method || 'customer-pays';
+          wizardData.taxMethod = taxMethod;
+          const taxRadio = document.querySelector(`input[name="tax-method"][value="${taxMethod}"]`);
+          if (taxRadio) taxRadio.checked = true;
+          
+          // 4. Pre-fill payment details
+          const paymentMethod = payload.payment_method || 'bank';
+          wizardData.paymentMethod = paymentMethod;
+          const paymentRadio = document.querySelector(`input[name="payment-method"][value="${paymentMethod}"]`);
+          if (paymentRadio) paymentRadio.checked = true;
+          
+          const paymentCondition = payload.payment_condition || 'full';
+          wizardData.paymentCondition = paymentCondition;
+          const conditionRadio = document.querySelector(`input[name="payment-condition"][value="${paymentCondition}"]`);
+          if (conditionRadio) {
+            conditionRadio.checked = true;
+            conditionRadio.dispatchEvent(new Event('change'));
+          }
+          
+          const paymentDetail = payload.payment_detail || '';
+          wizardData.paymentDetail = paymentDetail;
+          const detailInput = document.getElementById('easy-docs-payment-detail-input');
+          if (detailInput) detailInput.value = paymentDetail;
+
+          // 5. Pre-fill reference number (the quotation's document number)
+          wizardData.referenceNumber = qt.document_number || '';
+          
+          // Render items & update total
+          renderItems();
+        } else {
+          // Clear everything
+          customerSelect.value = '';
+          customerDetailsSection.style.display = 'none';
+          contactNameInput.value = '';
+          contactPhoneInput.value = '';
+          wizardData.customerId = null;
+          wizardData.customerName = '';
+          wizardData.contactName = '';
+          wizardData.contactPhone = '';
+          
+          wizardData.items = [];
+          wizardData.taxMethod = 'customer-pays';
+          const defaultTaxRadio = document.querySelector('input[name="tax-method"][value="customer-pays"]');
+          if (defaultTaxRadio) defaultTaxRadio.checked = true;
+          
+          wizardData.paymentMethod = 'bank';
+          const defaultPaymentRadio = document.querySelector('input[name="payment-method"][value="bank"]');
+          if (defaultPaymentRadio) defaultPaymentRadio.checked = true;
+          
+          wizardData.paymentCondition = 'full';
+          const defaultConditionRadio = document.querySelector('input[name="payment-condition"][value="full"]');
+          if (defaultConditionRadio) {
+            defaultConditionRadio.checked = true;
+            defaultConditionRadio.dispatchEvent(new Event('change'));
+          }
+          
+          wizardData.paymentDetail = '';
+          const detailInput = document.getElementById('easy-docs-payment-detail-input');
+          if (detailInput) detailInput.value = '';
+          
+          wizardData.referenceNumber = '';
+          
+          renderItems();
         }
       });
 
@@ -1123,8 +1257,9 @@
         document.getElementById(`easy-docs-step-${step}`)?.classList.add('is-active');
 
         // Update title
+        const step1Title = wizardData.documentType === 'invoice' ? 'ขั้นตอน 1: เลือกใบเสนอราคา' : 'ขั้นตอน 1: เลือกลูกค้า';
         const titles = [
-          'ขั้นตอน 1: เลือกลูกค้า',
+          step1Title,
           'ขั้นตอน 2: เพิ่มรายการสินค้า',
           'ขั้นตอน 3: เลือกวิธีชำระเงิน',
           'ขั้นตอน 4: สรุปก่อนสร้าง',
@@ -1144,13 +1279,21 @@
 
       function validateStep(step) {
         if (step === 1) {
-          if (!customerSelect.value) {
-            alert('กรุณาเลือกลูกค้า');
-            return false;
+          if (wizardData.documentType === 'invoice') {
+            const quotationSelect = document.getElementById('easy-docs-quotation');
+            if (!quotationSelect || !quotationSelect.value) {
+              alert('กรุณาเลือกใบเสนอราคา');
+              return false;
+            }
+          } else {
+            if (!customerSelect.value) {
+              alert('กรุณาเลือกลูกค้า');
+              return false;
+            }
           }
           const selectedOption = customerSelect.options[customerSelect.selectedIndex];
           wizardData.customerId = customerSelect.value;
-          wizardData.customerName = selectedOption.textContent;
+          wizardData.customerName = selectedOption ? selectedOption.textContent : '';
           wizardData.contactName = contactNameInput.value;
           wizardData.contactPhone = contactPhoneInput.value;
         }
@@ -1235,6 +1378,7 @@
           paymentMethod: wizardData.paymentMethod,
           paymentCondition: wizardData.paymentCondition,
           paymentDetail: wizardData.paymentDetail,
+          referenceNumber: wizardData.referenceNumber,
         };
 
         fetch(createEasyDocumentUrl, {

@@ -205,6 +205,48 @@ class AdminEasyDocumentTest extends TestCase
         $this->assertStringStartsWith('IV-', $document->payload['document_number']);
     }
 
+    public function test_admin_can_create_easy_document_invoice_with_reference_number(): void
+    {
+        $admin = User::factory()->create([
+            'username' => 'admin-easy-invoice-ref',
+            'role' => User::ROLE_ADMIN,
+            'is_active' => true,
+        ]);
+
+        $customer = BillingCustomer::create([
+            'display_name' => 'ลูกค้า แจ้งหนี้ อ้างอิง จำกัด',
+            'company_name' => 'ลูกค้า แจ้งหนี้ อ้างอิง จำกัด',
+            'is_active' => true,
+        ]);
+
+        $payload = [
+            'customerId' => $customer->id,
+            'documentType' => 'invoice',
+            'items' => [
+                [
+                    'name' => 'บริการแจ้งหนี้ด่วน',
+                    'price' => 10000,
+                    'originalPrice' => 10000,
+                    'qty' => 1,
+                ]
+            ],
+            'taxMethod' => 'customer-pays',
+            'paymentMethod' => 'bank',
+            'paymentCondition' => 'full',
+            'referenceNumber' => 'QT-260523-001',
+        ];
+
+        $response = $this
+            ->withSession($this->adminSession($admin))
+            ->postJson(route('admin.easy-documents.create'), $payload);
+
+        $response->assertOk();
+
+        $document = SalesDocument::query()->sole();
+        $this->assertSame('invoice', $document->document_type);
+        $this->assertSame('QT-260523-001', $document->payload['document']['reference_number']);
+    }
+
     public function test_easy_document_validation(): void
     {
         $admin = User::factory()->create([

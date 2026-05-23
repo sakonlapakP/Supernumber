@@ -1975,7 +1975,13 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->orderByRaw('LOWER(COALESCE(company_name, first_name, last_name, ""))')
             ->get();
 
-        return view('admin.sales-documents-index', compact('documents', 'customers', 'type'));
+        $allQuotations = SalesDocument::query()
+            ->where('document_type', 'quotation')
+            ->where('is_active', true)
+            ->latest('updated_at')
+            ->get();
+
+        return view('admin.sales-documents-index', compact('documents', 'customers', 'type', 'allQuotations'));
     })->name('saved-sales-documents.index');
 
     Route::get('/saved-sales-documents/{salesDocument}', function (SalesDocument $salesDocument) use ($ensureDocumentOfficer) {
@@ -2268,6 +2274,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'paymentDetail' => ['nullable', 'string'],
             'contactName' => ['nullable', 'string', 'max:255'],
             'contactPhone' => ['nullable', 'string', 'max:255'],
+            'referenceNumber' => ['nullable', 'string', 'max:255'],
         ]);
 
         try {
@@ -2276,6 +2283,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
             $documentType = $data['documentType'] ?? 'quotation';
             $prefix = $documentType === 'invoice' ? 'IV' : 'QT';
+            $documentNumber = $prefix . '-' . now('Asia/Bangkok')->format('ymd') . '-001';
 
             $calculationMode = $data['taxMethod'] === 'we-pay' ? 'reverse' : 'standard';
             $documentItems = collect($data['items'])->values()->map(function (array $item, int $index): array {
@@ -2341,9 +2349,18 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             // Build payload for sales document
             $payload = [
                 'document_type' => $documentType,
-                'document_number' => $prefix . '-' . now('Asia/Bangkok')->format('ymd') . '-001',
+                'document_number' => $documentNumber,
                 'document_date' => now('Asia/Bangkok')->format('Y-m-d'),
                 'due_date' => now('Asia/Bangkok')->addDays(7)->format('Y-m-d'),
+                'document' => [
+                    'type' => $documentType,
+                    'title_th' => $documentType === 'invoice' ? 'ใบแจ้งหนี้' : 'ใบเสนอราคา',
+                    'title_en' => $documentType === 'invoice' ? 'Invoice' : 'Quotation',
+                    'number' => $documentNumber,
+                    'date' => now('Asia/Bangkok')->format('Y-m-d'),
+                    'due_date' => now('Asia/Bangkok')->addDays(7)->format('Y-m-d'),
+                    'reference_number' => trim((string) ($data['referenceNumber'] ?? '')) ?: null,
+                ],
                 'customer_id' => $customer->id,
                 'customer_name' => $customer->display_name,
                 'customer' => [
