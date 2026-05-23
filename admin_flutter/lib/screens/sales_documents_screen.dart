@@ -3,8 +3,10 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../models/easy_document.model.dart';
 import '../providers/auth_provider.dart';
 import '../services/api_service.dart';
+import 'easy_document_wizard_screen.dart';
 
 class SalesDocumentsScreen extends StatefulWidget {
   const SalesDocumentsScreen({super.key});
@@ -15,6 +17,14 @@ class SalesDocumentsScreen extends StatefulWidget {
 
 class _SalesDocumentsScreenState extends State<SalesDocumentsScreen> {
   String? _loadingAction;
+
+  Future<void> _openEasyWizard(EasyDocumentType type) async {
+    await Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => EasyDocumentWizardScreen(documentType: type),
+      ),
+    );
+  }
 
   Future<void> _openAdminDocumentPage({
     required String action,
@@ -134,28 +144,20 @@ class _SalesDocumentsScreenState extends State<SalesDocumentsScreen> {
           children: [
             _DocumentActionCard(
               title: 'สร้างใบเสนอราคา',
-              subtitle: 'Quotation',
+              subtitle: 'Easy Quotation Wizard',
               icon: Icons.request_quote_outlined,
               color: const Color(0xFF223A63),
-              loading: _loadingAction == 'quotation',
-              onTap: () => _openAdminDocumentPage(
-                action: 'quotation',
-                target: 'sales-documents-quick',
-                documentType: 'quotation',
-              ),
+              loading: false,
+              onTap: () => _openEasyWizard(EasyDocumentType.quotation),
             ),
             const SizedBox(height: 14),
             _DocumentActionCard(
               title: 'สร้างใบแจ้งหนี้',
-              subtitle: 'Invoice',
+              subtitle: 'Easy Invoice Wizard',
               icon: Icons.receipt_long_outlined,
               color: const Color(0xFF1B8B6F),
-              loading: _loadingAction == 'invoice',
-              onTap: () => _openAdminDocumentPage(
-                action: 'invoice',
-                target: 'sales-documents-quick',
-                documentType: 'invoice',
-              ),
+              loading: false,
+              onTap: () => _openEasyWizard(EasyDocumentType.invoice),
             ),
             const SizedBox(height: 14),
             _DocumentActionCard(

@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\TarotReadingController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\ArticlePlanController;
+use App\Http\Controllers\Api\EasyDocumentController;
 use App\Http\Controllers\Api\FacebookImportedPostController;
 use App\Http\Controllers\Api\MobileAdminSessionLinkController;
 use App\Http\Middleware\ApiTokenAuth;
@@ -16,6 +17,18 @@ Route::middleware(ApiTokenAuth::class)->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/mobile-admin/session-link', [MobileAdminSessionLinkController::class, 'store'])
         ->name('api.mobile-admin.session-link');
+
+    // --- Easy Documents (Quotation / Invoice native wizard for Flutter app) ---
+    Route::middleware('role:admin,manager')->prefix('admin')->group(function (): void {
+        Route::get('billing-customers', [EasyDocumentController::class, 'listCustomers'])
+            ->name('api.admin.billing-customers.index');
+        Route::post('billing-customers', [EasyDocumentController::class, 'storeCustomer'])
+            ->name('api.admin.billing-customers.store');
+        Route::get('quotations/search', [EasyDocumentController::class, 'searchQuotations'])
+            ->name('api.admin.quotations.search');
+        Route::post('easy-documents', [EasyDocumentController::class, 'create'])
+            ->name('api.admin.easy-documents.create');
+    });
 
     // --- Articles Management ---
     // Read-only access for all authenticated users (Staff, Admin, Manager)
