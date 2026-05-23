@@ -51,7 +51,7 @@ class AdminEstimateLeadsTest extends TestCase
             ]));
 
         $response->assertOk();
-        $response->assertSee('Lead เลือกเบอร์');
+        $response->assertSee('ลูกค้าที่ใช้ระบบเลือกเบอร์อัตโนมัติ');
         $response->assertSee('สมชาย');
         $response->assertSee('somchai@example.com');
         $response->assertDontSee('somying@example.com');
@@ -98,7 +98,7 @@ class AdminEstimateLeadsTest extends TestCase
             ->get(route('admin.estimate-leads.show', $lead));
 
         $response->assertOk();
-        $response->assertSee('รายละเอียด Lead เลือกเบอร์');
+        $response->assertSee('รายละเอียดลูกค้าเลือกเบอร์อัตโนมัติ');
         $response->assertSee('lead@example.com');
         $response->assertSee('0866667777');
         $response->assertSee('lead ใหม่จากฟอร์มเลือกเบอร์');

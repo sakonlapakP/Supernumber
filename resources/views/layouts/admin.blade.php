@@ -1052,9 +1052,14 @@
           'label' => 'ใบเสนอราคา / ใบแจ้งหนี้',
           'items' => [
             [
-              'label' => 'รายการเอกสารทั้งหมด',
-              'url' => route('admin.saved-sales-documents.index'),
-              'active' => request()->routeIs('admin.saved-sales-documents.*') || request()->routeIs('admin.sales-documents'),
+              'label' => 'รายการใบเสนอราคา',
+              'url' => route('admin.saved-sales-documents.index', ['type' => 'quotation']),
+              'active' => (request()->routeIs('admin.saved-sales-documents.*') || request()->routeIs('admin.sales-documents')) && request('type') !== 'invoice',
+            ],
+            [
+              'label' => 'รายการใบแจ้งหนี้',
+              'url' => route('admin.saved-sales-documents.index', ['type' => 'invoice']),
+              'active' => (request()->routeIs('admin.saved-sales-documents.*') || request()->routeIs('admin.sales-documents')) && request('type') === 'invoice',
             ],
             [
               'label' => 'ลูกค้าที่ขอใบกำกับภาษี/ใบแจ้งหนี้',

@@ -137,7 +137,7 @@ class AdminAnalyticsTest extends TestCase
         $response->assertSee('paid social / cpc');
         $response->assertSee('/contact-us');
         $response->assertSee('generate_lead');
-        $response->assertSee('completed');
+        $response->assertSee('สำเร็จ');
     }
 
     public function test_manager_can_update_ga4_settings_from_admin_page(): void
@@ -175,7 +175,7 @@ class AdminAnalyticsTest extends TestCase
                 'ga4_service_account_json' => $json,
             ]);
 
-        $response->assertRedirect(route('admin.analytics'));
+        $response->assertRedirect(route('admin.analytics.settings'));
         $response->assertSessionHas('status_message', 'บันทึก GA4 settings เรียบร้อยแล้ว');
 
         $contents = (string) file_get_contents($envPath);

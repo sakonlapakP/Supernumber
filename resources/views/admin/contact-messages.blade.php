@@ -42,7 +42,7 @@
                 <form action="{{ route('admin.contact-messages.delete', $message) }}" method="post" style="display:inline-block;" onsubmit="return confirm('ยืนยันลบข้อความนี้?');">
                   @csrf
                   @method('DELETE')
-                  <button type="submit" class="admin-button admin-button--compact" style="background:#b42318;">ลบ</button>
+                  <button type="submit" class="admin-button admin-button--compact" style="background:#b42318; color:white;">ลบ</button>
                 </form>
               </td>
             </tr>

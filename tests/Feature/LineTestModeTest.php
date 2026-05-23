@@ -29,7 +29,7 @@ class LineTestModeTest extends TestCase
         config()->set('services.line.test_mode', false);
 
         $notifier = new LineNotifier();
-        $notifier->queueText('test_event', 'Hello Group');
+        $notifier->queueText('lottery_completed', 'Hello Group');
 
         Http::assertSent(function ($request) {
             return $request['to'] === 'group-id-123';
@@ -46,7 +46,7 @@ class LineTestModeTest extends TestCase
         config()->set('services.line.admin_user_id', 'U-admin-999');
 
         $notifier = new LineNotifier();
-        $notifier->queueText('test_event', 'Hello Admin');
+        $notifier->queueText('lottery_completed', 'Hello Admin');
 
         Http::assertSent(function ($request) {
             // ต้องส่งไปหา Admin ID แทน Group ID
@@ -64,7 +64,7 @@ class LineTestModeTest extends TestCase
         config()->set('services.line.admin_user_id', ''); // ว่างไว้
 
         $notifier = new LineNotifier();
-        $notifier->queueText('test_event', 'Hello Fallback');
+        $notifier->queueText('lottery_completed', 'Hello Fallback');
 
         Http::assertSent(function ($request) {
             return $request['to'] === 'group-id-123';

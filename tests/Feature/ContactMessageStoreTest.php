@@ -156,7 +156,7 @@ class ContactMessageStoreTest extends TestCase
         ]);
 
         $response->assertRedirect('/contact-us');
-        $response->assertSessionHas('contact_status_message');
+        $response->assertSessionHas('contact_spam_blocked');
         $this->assertSame(0, ContactMessage::query()->count());
     }
 
@@ -210,7 +210,7 @@ class ContactMessageStoreTest extends TestCase
         ]);
 
         $response->assertRedirect('/contact-us');
-        $response->assertSessionHas('contact_status_message');
+        $response->assertSessionHas('contact_spam_blocked');
         $this->assertSame(0, ContactMessage::query()->count());
     }
 
@@ -220,13 +220,13 @@ class ContactMessageStoreTest extends TestCase
 
         $response = $this->from('/contact-us')->post('/contact-us', [
             'name' => 'NAYUYUTY676374NERTHRYTH',
-            'phone' => '0812345678',
-            'message' => 'ต้องการติดต่อ',
+            'phone' => '0888888888',
+            'message' => 'ต้องการติดต่อผ่านลิงก์ https://spam.example',
             'cf-turnstile-response' => 'test-token',
         ]);
 
         $response->assertRedirect('/contact-us');
-        $response->assertSessionHas('contact_status_message');
+        $response->assertSessionHas('contact_spam_blocked');
         $this->assertSame(0, ContactMessage::query()->count());
     }
 
@@ -237,12 +237,12 @@ class ContactMessageStoreTest extends TestCase
         $response = $this->from('/contact-us')->post('/contact-us', [
             'name' => 'PaymentPro Services',
             'phone' => '0891234567',
-            'message' => 'Looking for a fast payment processor? Check out our payment gateway solution for handling online payments securely.',
+            'message' => 'Looking for a fast payment processor? Check out our payment gateway solution for handling online payments securely: https://paymentpro.example',
             'cf-turnstile-response' => 'test-token',
         ]);
 
         $response->assertRedirect('/contact-us');
-        $response->assertSessionHas('contact_status_message');
+        $response->assertSessionHas('contact_spam_blocked');
         $this->assertSame(0, ContactMessage::query()->count());
     }
 
@@ -263,7 +263,7 @@ class ContactMessageStoreTest extends TestCase
         ]);
 
         $response->assertRedirect('/contact-us');
-        $response->assertSessionHas('contact_status_message');
+        $response->assertSessionHas('contact_spam_blocked');
         $this->assertSame(0, ContactMessage::query()->count());
     }
 }

@@ -22,7 +22,7 @@ class AdminOrderPaymentSlipTest extends TestCase
             'ordered_number' => '0891234567',
             'selected_package' => 699,
             'payment_slip_path' => '202603/1.png',
-            'status' => 'submitted',
+            'status' => 'processing',
         ]);
 
         $manager = User::factory()->create([
@@ -50,7 +50,7 @@ class AdminOrderPaymentSlipTest extends TestCase
             'ordered_number' => '0891234567',
             'selected_package' => 699,
             'payment_slip_path' => '202603/2.png',
-            'status' => 'submitted',
+            'status' => 'processing',
         ]);
 
         $manager = User::factory()->create([
@@ -74,7 +74,7 @@ class AdminOrderPaymentSlipTest extends TestCase
             'ordered_number' => '0891234567',
             'selected_package' => 699,
             'payment_slip_path' => 'payment-slips/line-test-visible.jpg',
-            'status' => 'submitted',
+            'status' => 'processing',
         ]);
 
         $manager = User::factory()->create([
@@ -97,7 +97,7 @@ class AdminOrderPaymentSlipTest extends TestCase
             'ordered_number' => '0891234567',
             'selected_package' => 699,
             'payment_slip_path' => 'payment-slips/line-test-hidden.jpg',
-            'status' => 'submitted',
+            'status' => 'processing',
         ]);
 
         $admin = User::factory()->create([
@@ -123,7 +123,7 @@ class AdminOrderPaymentSlipTest extends TestCase
             'ordered_number' => '0891234567',
             'selected_package' => 699,
             'payment_slip_path' => '202603/3.png',
-            'status' => 'submitted',
+            'status' => 'processing',
         ]);
 
         $signedUrl = URL::signedRoute('line.payment-slip', ['order' => $order], absolute: false);

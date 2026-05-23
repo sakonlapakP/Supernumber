@@ -141,7 +141,14 @@
               </td>
               <td>{{ $lead->ip_address ?: '-' }}</td>
               <td class="admin-action-cell">
-                <a href="{{ route('admin.estimate-leads.show', $lead) }}" class="admin-button admin-button--muted admin-button--compact">ดูรายละเอียด</a>
+                <div style="display: flex; gap: 4px; justify-content: flex-end;">
+                  <a href="{{ route('admin.estimate-leads.show', $lead) }}" class="admin-button admin-button--muted admin-button--compact">ดูรายละเอียด</a>
+                  <form action="{{ route('admin.estimate-leads.delete', $lead) }}" method="post" style="display:inline-block;" onsubmit="return confirm('ยืนยันลบข้อมูลลูกค้านี้?');">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="admin-button admin-button--compact" style="background:#b42318; color:white;">ลบ</button>
+                  </form>
+                </div>
               </td>
             </tr>
           @empty

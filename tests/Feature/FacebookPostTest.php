@@ -23,9 +23,6 @@ class FacebookPostTest extends TestCase
         config()->set('services.lottery.fb_template', "{title}\n\n{excerpt}\n\n{article_url}");
     }
 
-    /**
-     * Case 2.1: ทดสอบการแชร์สำเร็จ
-     */
     public function test_it_successfully_posts_to_facebook_with_image(): void
     {
         Http::fake([
@@ -46,18 +43,23 @@ class FacebookPostTest extends TestCase
         $this->assertTrue($result['success']);
         $this->assertEquals('fb_post_123', $result['id']);
 
-        Http::assertSent(function ($request) {
+        $articleUrl = config('app.url') . '/articles/' . $article->slug;
+
+        Http::assertSent(function ($request) use ($articleUrl) {
+            $data = [];
+            parse_str($request->body(), $data);
             return $request->url() === 'https://graph.facebook.com'
-                && str_contains($request->body(), 'scrape=true')
-                && str_contains($request->body(), urlencode('https://localhost/articles/fb-success-test'));
+                && ($data['scrape'] ?? '') === 'true'
+                && ($data['id'] ?? '') === $articleUrl;
         });
 
-        Http::assertSent(function ($request) {
+        Http::assertSent(function ($request) use ($articleUrl) {
+            $data = [];
+            parse_str($request->body(), $data);
             return str_contains($request->url(), '12345/feed')
                 && ! $request->isMultipart()
-                && str_contains($request->body(), 'FB Success Test')
-                && str_contains($request->body(), 'link=')
-                && str_contains($request->body(), urlencode('https://localhost/articles/fb-success-test'));
+                && str_contains($data['message'] ?? '', 'FB Success Test')
+                && ($data['link'] ?? '') === $articleUrl;
         });
     }
 
@@ -117,19 +119,24 @@ class FacebookPostTest extends TestCase
 
         $this->assertFalse($article->is_line_broadcasted);
 
+        $articleUrl = config('app.url') . '/articles/' . $article->slug;
+
         Http::assertSentCount(2);
-        Http::assertSent(function ($request) {
+        Http::assertSent(function ($request) use ($articleUrl) {
+            $data = [];
+            parse_str($request->body(), $data);
             return $request->url() === 'https://graph.facebook.com'
-                && str_contains($request->body(), 'scrape=true')
-                && str_contains($request->body(), urlencode('https://localhost/articles/fb-only-route-test'));
+                && ($data['scrape'] ?? '') === 'true'
+                && ($data['id'] ?? '') === $articleUrl;
         });
 
-        Http::assertSent(function ($request) {
+        Http::assertSent(function ($request) use ($articleUrl) {
+            $data = [];
+            parse_str($request->body(), $data);
             return str_contains($request->url(), '12345/feed')
                 && ! $request->isMultipart()
-                && str_contains($request->body(), 'FB Only Route Test')
-                && str_contains($request->body(), 'link=')
-                && str_contains($request->body(), urlencode('https://localhost/articles/fb-only-route-test'));
+                && str_contains($data['message'] ?? '', 'FB Only Route Test')
+                && ($data['link'] ?? '') === $articleUrl;
         });
     }
 

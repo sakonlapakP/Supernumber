@@ -11,8 +11,8 @@
   @endphp
   <div class="admin-page-head">
     <div>
-      <h1>รายการใบเสนอราคา / ใบแจ้งหนี้ทั้งหมด</h1>
-      <p class="admin-subtitle">ดูย้อนหลังใบเสนอราคาและใบแจ้งหนี้ทั้งหมดในรูปแบบตาราง พร้อมเปิดดูรายละเอียดหรือพิมพ์/บันทึก PDF ได้ทันที</p>
+      <h1>{{ $type === 'invoice' ? 'รายการใบแจ้งหนี้' : ($type === 'quotation' ? 'รายการใบเสนอราคา' : 'รายการใบเสนอราคา / ใบแจ้งหนี้ทั้งหมด') }}</h1>
+      <p class="admin-subtitle">ดูย้อนหลังเอกสารทั้งหมดในรูปแบบตาราง พร้อมเปิดดูรายละเอียดหรือพิมพ์/บันทึก PDF ได้ทันที</p>
     </div>
     <div class="admin-page-actions">
       <div class="admin-summary">ทั้งหมด {{ number_format($documents->total()) }} เอกสาร</div>
@@ -75,6 +75,7 @@
   @endphp
 
   {{-- 1. Quotations Section --}}
+  @if (! $type || $type === 'quotation')
   <section class="admin-card admin-table-card" style="margin-bottom: 28px;">
     <div class="admin-feature-card__head" style="padding: 18px 20px 0;">
       <div>
@@ -84,8 +85,15 @@
         <p class="admin-feature-card__hint">ใบเสนอราคาที่ออกโดยระบบ สามารถยอมรับ ปฏิเสธ หรือแปลงเป็นใบแจ้งหนี้ได้</p>
       </div>
       <div class="admin-feature-card__actions" style="margin-top: 4px;">
-        <button type="button" class="admin-button admin-button--primary admin-button--compact" data-easy-docs-open="quotation">✨ Easy Quotation</button>
-        <a href="{{ route('admin.sales-documents', ['type' => 'quotation']) }}" class="admin-button admin-button--compact">สร้างใบเสนอราคา</a>
+        <div class="admin-dropdown">
+          <button type="button" class="admin-button admin-button--primary admin-button--compact admin-dropdown-toggle" style="display: flex; align-items: center; gap: 4px;">
+            สร้างใบเสนอราคา ▾
+          </button>
+          <div class="admin-dropdown-menu">
+            <a href="{{ route('admin.sales-documents', ['type' => 'quotation']) }}" class="admin-dropdown-item">📝 สร้างแบบละเอียด (Editor)</a>
+            <button type="button" class="admin-dropdown-item" data-easy-docs-open="quotation" style="color: #2563eb; font-weight: 500;">✨ สร้างด่วน (Easy Quotation)</button>
+          </div>
+        </div>
       </div>
     </div>
     <div class="admin-table-wrap" style="margin-top: 14px;">
@@ -175,8 +183,10 @@
       </table>
     </div>
   </section>
+  @endif
 
   {{-- 2. Invoices Section --}}
+  @if (! $type || $type === 'invoice')
   <section class="admin-card admin-table-card">
     <div class="admin-feature-card__head" style="padding: 18px 20px 0;">
       <div>
@@ -186,8 +196,15 @@
         <p class="admin-feature-card__hint">ใบแจ้งหนี้ที่ออกโดยระบบ สามารถอัปเดตสถานะการรับเงินได้</p>
       </div>
       <div class="admin-feature-card__actions" style="margin-top: 4px;">
-        <button type="button" class="admin-button admin-button--primary admin-button--compact" data-easy-docs-open="invoice">✨ Easy Invoice</button>
-        <a href="{{ route('admin.sales-documents', ['type' => 'invoice']) }}" class="admin-button admin-button--compact">สร้างใบแจ้งหนี้</a>
+        <div class="admin-dropdown">
+          <button type="button" class="admin-button admin-button--primary admin-button--compact admin-dropdown-toggle" style="display: flex; align-items: center; gap: 4px;">
+            สร้างใบแจ้งหนี้ ▾
+          </button>
+          <div class="admin-dropdown-menu">
+            <a href="{{ route('admin.sales-documents', ['type' => 'invoice']) }}" class="admin-dropdown-item">📝 สร้างแบบละเอียด (Editor)</a>
+            <button type="button" class="admin-dropdown-item" data-easy-docs-open="invoice" style="color: #2563eb; font-weight: 500;">✨ สร้างด่วน (Easy Invoice)</button>
+          </div>
+        </div>
       </div>
     </div>
     <div class="admin-table-wrap" style="margin-top: 14px;">
@@ -271,6 +288,7 @@
       </table>
     </div>
   </section>
+  @endif
 
   <div style="margin-top: 18px;">
     {{ $documents->links() }}

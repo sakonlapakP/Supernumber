@@ -1952,23 +1952,30 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         ]);
     })->name('sales-documents.save-download');
 
-    Route::get('/saved-sales-documents', function () use ($ensureDocumentOfficer) {
+    Route::get('/saved-sales-documents', function (\Illuminate\Http\Request $request) use ($ensureDocumentOfficer) {
         if ($redirect = $ensureDocumentOfficer()) {
             return $redirect;
         }
 
-        $documents = SalesDocument::query()
+        $type = $request->query('type');
+        $query = SalesDocument::query()
             ->with(['savedByUser', 'convertedInvoice'])
-            ->where('is_active', true)
-            ->latest('updated_at')
-            ->paginate(30);
+            ->where('is_active', true);
+            
+        if ($type === 'quotation') {
+            $query->where('document_type', 'quotation');
+        } elseif ($type === 'invoice') {
+            $query->where('document_type', 'invoice');
+        }
+
+        $documents = $query->latest('updated_at')->paginate(30);
 
         $customers = BillingCustomer::query()
             ->where('is_active', true)
             ->orderByRaw('LOWER(COALESCE(company_name, first_name, last_name, ""))')
             ->get();
 
-        return view('admin.sales-documents-index', compact('documents', 'customers'));
+        return view('admin.sales-documents-index', compact('documents', 'customers', 'type'));
     })->name('saved-sales-documents.index');
 
     Route::get('/saved-sales-documents/{salesDocument}', function (SalesDocument $salesDocument) use ($ensureDocumentOfficer) {
@@ -5001,6 +5008,16 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
         return view('admin.estimate-leads-show', compact('estimateLead'));
     })->name('estimate-leads.show');
+
+    Route::delete('/estimate-leads/{estimateLead}', function (EstimateLead $estimateLead) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+
+        $estimateLead->delete();
+
+        return back()->with('status_message', 'ลบข้อมูลเรียบร้อย');
+    })->name('estimate-leads.delete');
 
     Route::delete('/contact-messages/{contactMessage}', function (ContactMessage $contactMessage) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {

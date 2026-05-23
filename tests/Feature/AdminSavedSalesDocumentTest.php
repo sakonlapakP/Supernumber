@@ -476,8 +476,8 @@ class AdminSavedSalesDocumentTest extends TestCase
         // Check for separate Easy Quotation and Easy Invoice buttons
         $response->assertSee('data-easy-docs-open="quotation"', false);
         $response->assertSee('data-easy-docs-open="invoice"', false);
-        $response->assertSee('✨ Easy Quotation');
-        $response->assertSee('✨ Easy Invoice');
+        $response->assertSee('✨ สร้างด่วน (Easy Quotation)');
+        $response->assertSee('✨ สร้างด่วน (Easy Invoice)');
     }
 
     /**
