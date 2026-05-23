@@ -480,6 +480,37 @@ class AdminSavedSalesDocumentTest extends TestCase
         $response->assertSee('✨ สร้างด่วน (Easy Invoice)');
     }
 
+    public function test_admin_can_change_invoice_status_via_route(): void
+    {
+        $admin = User::factory()->create([
+            'username' => 'admin-invoice-status',
+            'role' => User::ROLE_ADMIN,
+            'is_active' => true,
+        ]);
+
+        $invoice = SalesDocument::query()->create([
+            'document_type' => 'invoice',
+            'document_number' => 'IV-260523-999',
+            'document_date' => '2026-05-23',
+            'due_date' => '2026-05-30',
+            'customer_name' => 'บริษัท ทดสอบ จำกัด',
+            'file_name' => 'Invoice IV-260523-999',
+            'pdf_disk' => 'local',
+            'pdf_path' => 'invoice/2026/Invoice IV-260523-999.pdf',
+            'status' => SalesDocument::STATUS_INVOICE_DRAFT,
+            'saved_by_user_id' => $admin->id,
+            'payload' => [],
+        ]);
+
+        $response = $this
+            ->withSession($this->adminSession($admin))
+            ->post(route('admin.saved-sales-documents.invoice-status', [$invoice, 'issue']));
+
+        $response->assertRedirect();
+        $response->assertSessionHasNoErrors();
+        $this->assertEquals(SalesDocument::STATUS_INVOICE_ISSUED, $invoice->refresh()->status);
+    }
+
     /**
      * @return array<string, mixed>
      */

@@ -224,6 +224,15 @@
             <tr>
               <td>
                 <div class="admin-number" style="font-size: 14px; font-weight: 700;">{{ $document->document_number }}</div>
+                @if ($document->sourceQuotation)
+                  <div class="admin-muted" style="margin-top: 4px; font-size: 12px;">
+                    อ้างอิง: <a href="{{ route('admin.saved-sales-documents.show', $document->sourceQuotation) }}" style="color: var(--admin-primary); text-decoration: underline;">{{ $document->sourceQuotation->document_number }}</a>
+                  </div>
+                @elseif (!empty($document->payload['document']['reference_number']))
+                  <div class="admin-muted" style="margin-top: 4px; font-size: 12px;">
+                    อ้างอิง: {{ $document->payload['document']['reference_number'] }}
+                  </div>
+                @endif
               </td>
               <td>{{ $document->customer_name ?: '-' }}</td>
               <td>
@@ -255,6 +264,9 @@
                     <!-- Workflow Actions -->
                     @if ($document->isInvoiceDraft())
                       <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.invoice-status', [$document, 'issue']) }}" data-action-name="ออกใบแจ้งหนี้" data-document-name="ใบแจ้งหนี้ #{{ $document->document_number }}">ออกใบแจ้งหนี้</button>
+                      <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.invoice-status', [$document, 'partial-paid']) }}" data-action-name="ชำระบางส่วน" data-document-name="ใบแจ้งหนี้ #{{ $document->document_number }}">ชำระบางส่วน</button>
+                      <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.invoice-status', [$document, 'paid']) }}" data-action-name="ชำระแล้ว" data-document-name="ใบแจ้งหนี้ #{{ $document->document_number }}">ชำระแล้ว</button>
+                      <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.invoice-status', [$document, 'overdue']) }}" data-action-name="ค้างชำระ" data-document-name="ใบแจ้งหนี้ #{{ $document->document_number }}">ค้างชำระ</button>
                       <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.invoice-status', [$document, 'void']) }}" data-action-name="Void" data-document-name="ใบแจ้งหนี้ #{{ $document->document_number }}">Void</button>
                     @elseif ($document->isInvoiceIssued())
                       <button type="button" class="admin-dropdown-item workflow-action-btn" data-action-url="{{ route('admin.saved-sales-documents.invoice-status', [$document, 'partial-paid']) }}" data-action-name="ชำระบางส่วน" data-document-name="ใบแจ้งหนี้ #{{ $document->document_number }}">ชำระบางส่วน</button>
@@ -360,9 +372,62 @@
                 </select>
               </label>
             </div>
-            <button type="button" class="easy-docs-button easy-docs-button--link" data-easy-docs-create-customer>
-              ➕ สร้างลูกค้าใหม่
+            <button type="button" class="easy-docs-button easy-docs-button--link" id="easy-docs-create-customer-btn">
+              ➕ สร้างลูกค้าใหม่ / Create Customer
             </button>
+
+            {{-- Inline Quick Customer Creation Form --}}
+            <div id="easy-docs-quick-customer-form" style="display: none; background: #f9fafb; padding: 16px; border-radius: 8px; border: 1px dashed #d1d5db; margin-top: 12px; text-align: left;">
+              <h4 style="margin: 0 0 12px; font-size: 13px; font-weight: 700; color: #374151; display: flex; justify-content: space-between; align-items: center;">
+                <span>➕ ข้อมูลลูกค้าใหม่ (Quick Create)</span>
+                <button type="button" id="easy-docs-close-customer-form" style="background: none; border: none; color: #9ca3af; cursor: pointer; font-size: 14px; padding: 4px;">✕</button>
+              </h4>
+              <div style="display: grid; grid-template-columns: 1fr; gap: 8px;">
+                <div class="easy-docs-field">
+                  <label class="easy-docs-label" style="font-size: 11px;">
+                    <span>ชื่อบริษัท หรือชื่อลูกค้า / Company Name <span style="color: #dc2626;">*</span></span>
+                    <input type="text" id="quick-cust-company" class="easy-docs-input" placeholder="ชื่อบริษัท หรือ ชื่อลูกค้า">
+                  </label>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                  <div class="easy-docs-field">
+                    <label class="easy-docs-label" style="font-size: 11px;">
+                      <span>ชื่อผู้ติดต่อ / Contact Name</span>
+                      <input type="text" id="quick-cust-contact" class="easy-docs-input" placeholder="ชื่อผู้ติดต่อ">
+                    </label>
+                  </div>
+                  <div class="easy-docs-field">
+                    <label class="easy-docs-label" style="font-size: 11px;">
+                      <span>เบอร์โทรศัพท์ / Phone</span>
+                      <input type="text" id="quick-cust-phone" class="easy-docs-input" placeholder="เบอร์โทรศัพท์">
+                    </label>
+                  </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                  <div class="easy-docs-field">
+                    <label class="easy-docs-label" style="font-size: 11px;">
+                      <span>อีเมล / Email</span>
+                      <input type="email" id="quick-cust-email" class="easy-docs-input" placeholder="อีเมล">
+                    </label>
+                  </div>
+                  <div class="easy-docs-field">
+                    <label class="easy-docs-label" style="font-size: 11px;">
+                      <span>เลขผู้เสียภาษี / Tax ID</span>
+                      <input type="text" id="quick-cust-tax" class="easy-docs-input" placeholder="เลขผู้เสียภาษี">
+                    </label>
+                  </div>
+                </div>
+                <div class="easy-docs-field">
+                  <label class="easy-docs-label" style="font-size: 11px;">
+                    <span>ที่อยู่ / Address</span>
+                    <textarea id="quick-cust-address" class="easy-docs-input" placeholder="ที่อยู่ลูกค้า" rows="2" style="resize: vertical; font-family: inherit;"></textarea>
+                  </label>
+                </div>
+                <button type="button" class="admin-button admin-button--primary" id="quick-cust-save-btn" style="width: 100%; padding: 8px; margin-top: 4px; font-size: 12px;">
+                  💾 บันทึกข้อมูลลูกค้า
+                </button>
+              </div>
+            </div>
           </div>
 
           {{-- Customer Details Section (shown after selection) --}}
@@ -427,138 +492,172 @@
 
           {{-- Detailed Pricing Breakdown --}}
           <div id="easy-docs-pricing-breakdown" class="easy-docs-section" style="display: none;">
-            <h3 class="easy-docs-section-title">💵 รายละเอียดราคา</h3>
+            <h3 class="easy-docs-section-title">💵 รายละเอียดราคา / Price Details</h3>
             <div class="easy-docs-pricing-table">
               <div class="easy-docs-pricing-row">
-                <span>ราคารวมก่อนภาษี:</span>
+                <span>รวมเป็นเงิน / Sub Total:</span>
                 <strong id="easy-docs-subtotal">฿0.00</strong>
               </div>
+              <div class="easy-docs-pricing-row" id="easy-docs-target-income-row" style="display: none;">
+                <span>รายได้เป้าหมาย / Target Income:</span>
+                <strong id="easy-docs-target-income">฿0.00</strong>
+              </div>
               <div class="easy-docs-pricing-row">
-                <span>ภาษีมูลค่าเพิ่ม (7%):</span>
+                <span>หัก ส่วนลด / Discount:</span>
+                <strong>฿0.00</strong>
+              </div>
+              <div class="easy-docs-pricing-row">
+                <span>ยอดหลังหักส่วนลด / Total After Discount:</span>
+                <strong id="easy-docs-total-after-discount">฿0.00</strong>
+              </div>
+              <div class="easy-docs-pricing-row">
+                <span>ภาษีมูลค่าเพิ่ม (7%) / Vat:</span>
                 <strong id="easy-docs-vat">+ ฿0.00</strong>
               </div>
               <div class="easy-docs-pricing-row easy-docs-pricing-row--divider">
-                <span>ยอดรวมทั้งหมด:</span>
+                <span>จำนวนเงินรวมทั้งสิ้น / Grand Total:</span>
                 <strong id="easy-docs-grand-total">฿0.00</strong>
               </div>
               <div class="easy-docs-pricing-row">
-                <span>ภาษีหัก ณ ที่จ่าย (3%):</span>
+                <span>ภาษีถูกหัก ณ ที่จ่าย (3%) / Withheld Tax:</span>
                 <strong id="easy-docs-wht">- ฿0.00</strong>
               </div>
               <div class="easy-docs-pricing-row easy-docs-pricing-row--highlight">
-                <span>ยอดสุทธิที่ลูกค้าต้องชำระ:</span>
+                <span>จำนวนเงินที่ต้องชำระ / Net to Pay:</span>
                 <strong id="easy-docs-net-payment">฿0.00</strong>
               </div>
             </div>
           </div>
 
-          <div class="easy-docs-summary">
-            <span>ราคารวม:</span>
-            <strong id="easy-docs-total">฿0.00</strong>
+          {{-- Relocated Payment Method & Conditions --}}
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: left;">
+            <div class="easy-docs-section" style="margin-bottom: 0;">
+              <h3 class="easy-docs-section-title">💳 วิธีการชำระเงิน / Payment Method</h3>
+              <div class="easy-docs-radio-group">
+                <label class="easy-docs-radio-label">
+                  <input type="radio" name="payment-method" value="bank" checked>
+                  <span>ธนาคาร / Bank Transfer</span>
+                </label>
+                <label class="easy-docs-radio-label">
+                  <input type="radio" name="payment-method" value="qr">
+                  <span>โอน QR / QR Payment</span>
+                </label>
+                <label class="easy-docs-radio-label">
+                  <input type="radio" name="payment-method" value="cash">
+                  <span>เงินสด / Cash</span>
+                </label>
+              </div>
+            </div>
+
+            <div class="easy-docs-section" style="margin-bottom: 0;">
+              <h3 class="easy-docs-section-title">⏰ เงื่อนไขการชำระเงิน / Payment Term</h3>
+              <div class="easy-docs-radio-group">
+                <label class="easy-docs-radio-label">
+                  <input type="radio" name="payment-condition" value="full" checked>
+                  <span>ชำระทั้งหมด / Full Payment</span>
+                </label>
+                <label class="easy-docs-radio-label">
+                  <input type="radio" name="payment-condition" value="installment">
+                  <span>ชำระงวด / Installment</span>
+                </label>
+                <label class="easy-docs-radio-label">
+                  <input type="radio" name="payment-condition" value="specific-date">
+                  <span>ชำระตามกำหนดวัน / Specific Date</span>
+                </label>
+              </div>
+              <div id="easy-docs-payment-detail" style="margin-top: 12px; display: none;">
+                <input type="text" id="easy-docs-payment-detail-input" class="easy-docs-input" placeholder="กรอกรายละเอียดเงื่อนไขการชำระเงิน">
+              </div>
+            </div>
           </div>
         </div>
 
-        {{-- Step 3: Payment Method & Conditions --}}
+        {{-- Step 3: Beautiful Quotation / Invoice Simulated Preview --}}
         <div id="easy-docs-step-3" class="easy-docs-step-content">
-          <div class="easy-docs-section" style="display: none !important;">
-            <h3 class="easy-docs-section-title">📄 ประเภทเอกสาร</h3>
-            <div class="easy-docs-radio-group">
-              <label class="easy-docs-radio-label">
-                <input type="radio" name="document-type" value="quotation" checked>
-                <span>ใบเสนอราคา (Quotation)</span>
-              </label>
-              <label class="easy-docs-radio-label">
-                <input type="radio" name="document-type" value="invoice">
-                <span>ใบแจ้งหนี้ (Invoice)</span>
-              </label>
-            </div>
-          </div>
-
-          <div class="easy-docs-section">
-            <h3 class="easy-docs-section-title">💳 วิธีการชำระเงิน</h3>
-            <div class="easy-docs-radio-group">
-              <label class="easy-docs-radio-label">
-                <input type="radio" name="payment-method" value="bank" checked>
-                <span>ธนาคาร</span>
-              </label>
-              <label class="easy-docs-radio-label">
-                <input type="radio" name="payment-method" value="qr">
-                <span>โอน QR</span>
-              </label>
-              <label class="easy-docs-radio-label">
-                <input type="radio" name="payment-method" value="cash">
-                <span>เงินสด</span>
-              </label>
-            </div>
-          </div>
-
-          <div class="easy-docs-section">
-            <h3 class="easy-docs-section-title">⏰ เงื่อนการชำระเงิน</h3>
-            <div class="easy-docs-radio-group">
-              <label class="easy-docs-radio-label">
-                <input type="radio" name="payment-condition" value="full" checked>
-                <span>ชำระทั้งหมด</span>
-              </label>
-              <label class="easy-docs-radio-label">
-                <input type="radio" name="payment-condition" value="installment">
-                <span>ชำระงวด</span>
-              </label>
-              <label class="easy-docs-radio-label">
-                <input type="radio" name="payment-condition" value="specific-date">
-                <span>ชำระตามกำหนดวัน</span>
-              </label>
-            </div>
-            <div id="easy-docs-payment-detail" style="margin-top: 12px; display: none;">
-              <input type="text" id="easy-docs-payment-detail-input" class="easy-docs-input" placeholder="กรอกรายละเอียด">
-            </div>
-          </div>
-        </div>
-
-        {{-- Step 4: Summary --}}
-        <div id="easy-docs-step-4" class="easy-docs-step-content">
-          <div class="easy-docs-summary-section">
-            <div class="easy-docs-summary-row">
-              <span>ลูกค้า:</span>
-              <strong id="easy-docs-summary-customer">-</strong>
-            </div>
-
-            <!-- Items List -->
-            <div style="margin: 16px 0; border-top: 1px solid #e5e7eb; padding-top: 12px;">
-              <div style="font-size: 12px; font-weight: 600; color: #6b7280; margin-bottom: 8px;">รายการสินค้า</div>
-              <div id="easy-docs-summary-items-list" style="font-size: 12px; color: #374151;"></div>
-            </div>
-
-            <!-- Pricing Breakdown -->
-            <div style="margin: 16px 0; border-top: 1px solid #e5e7eb; padding-top: 12px;">
-              <div style="display: flex; justify-content: space-between; padding: 6px 0;">
-                <span style="color: #6b7280;">ราคารวมก่อนภาษี:</span>
-                <strong id="easy-docs-summary-subtotal">฿0.00</strong>
+          <div style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05); padding: 24px; font-family: sans-serif; color: #1e293b; max-width: 100%; box-sizing: border-box; text-align: left;">
+            <!-- Document Header -->
+            <div style="display: flex; justify-content: space-between; border-bottom: 2px solid #2563eb; padding-bottom: 12px; margin-bottom: 16px;">
+              <div>
+                <h3 style="margin: 0; font-size: 16px; font-weight: 700; color: #1e3a8a;" id="easy-docs-preview-doc-title">ใบเสนอราคา / QUOTATION</h3>
+                <p style="margin: 4px 0 0; font-size: 11px; color: #64748b;">บจก. ซุปเปอร์นัมเบอร์ / SUPERNUMBER CO., LTD.</p>
               </div>
-              <div style="display: flex; justify-content: space-between; padding: 6px 0;">
-                <span style="color: #6b7280;">ภาษีมูลค่าเพิ่ม (7%):</span>
-                <strong id="easy-docs-summary-vat">+ ฿0.00</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between; padding: 6px 0; border-bottom: 2px solid #bfdbfe; margin-bottom: 8px;">
-                <span style="color: #6b7280;">ยอดรวมทั้งหมด:</span>
-                <strong id="easy-docs-summary-grand-total">฿0.00</strong>
-              </div>
-              <div style="display: flex; justify-content: space-between; padding: 6px 0;">
-                <span style="color: #6b7280;">ภาษีหัก ณ ที่จ่าย (3%):</span>
-                <strong id="easy-docs-summary-wht">- ฿0.00</strong>
+              <div style="text-align: right;">
+                <span style="font-size: 11px; font-weight: 600; color: #2563eb; background: #eff6ff; padding: 4px 8px; border-radius: 4px;" id="easy-docs-preview-doc-badge">DRAFT</span>
               </div>
             </div>
 
-            <div class="easy-docs-summary-row">
-              <span>วิธีชำระ:</span>
-              <strong id="easy-docs-summary-payment">-</strong>
+            <!-- Client & Doc Meta -->
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 20px; font-size: 12px;">
+              <div>
+                <strong style="color: #475569;">ลูกค้า / Customer:</strong>
+                <p style="margin: 4px 0 2px; font-weight: 600;" id="easy-docs-preview-customer-name">-</p>
+                <p style="margin: 0; color: #64748b;" id="easy-docs-preview-customer-contact">-</p>
+              </div>
+              <div style="text-align: right;">
+                <p style="margin: 0 0 4px;"><strong style="color: #475569;">วันที่ / Date:</strong> <span id="easy-docs-preview-date">-</span></p>
+                <p style="margin: 0 0 4px;"><strong style="color: #475569;">ครบกำหนด / Due Date:</strong> <span id="easy-docs-preview-due-date">-</span></p>
+                <p style="margin: 0;" id="easy-docs-preview-ref-container" style="display: none;"><strong style="color: #475569;">อ้างอิง / Ref No:</strong> <span id="easy-docs-preview-ref-no">-</span></p>
+              </div>
             </div>
-            <div class="easy-docs-summary-row">
-              <span>เงื่อนการชำระ:</span>
-              <strong id="easy-docs-summary-condition">-</strong>
+
+            <!-- Items Table Mockup -->
+            <div style="border: 1px solid #e2e8f0; border-radius: 6px; overflow: hidden; margin-bottom: 20px;">
+              <table style="width: 100%; border-collapse: collapse; font-size: 11px; text-align: left;">
+                <thead>
+                  <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; color: #475569;">
+                    <th style="padding: 8px 12px; font-weight: 600; width: 40px; text-align: center;">ลำดับ</th>
+                    <th style="padding: 8px 12px; font-weight: 600;">รายการสินค้า / Description</th>
+                    <th style="padding: 8px 12px; font-weight: 600; text-align: center; width: 60px;">จำนวน</th>
+                    <th style="padding: 8px 12px; font-weight: 600; text-align: right; width: 90px;">ราคา/หน่วย</th>
+                    <th style="padding: 8px 12px; font-weight: 600; text-align: right; width: 100px;">จำนวนเงิน</th>
+                  </tr>
+                </thead>
+                <tbody id="easy-docs-preview-table-body">
+                  <!-- Dynamic rows go here -->
+                </tbody>
+              </table>
             </div>
-            <div class="easy-docs-summary-row easy-docs-summary-row--highlight">
-              <span>ราคารวม (สุทธิ):</span>
-              <strong id="easy-docs-summary-total">฿0.00</strong>
+
+            <!-- Pricing Breakdown (Simulated) -->
+            <div style="display: grid; grid-template-columns: 1.2fr 1fr; gap: 16px; font-size: 12px; border-top: 1px solid #e2e8f0; padding-top: 16px;">
+              <div>
+                <p style="margin: 0 0 6px;"><strong style="color: #475569;">วิธีชำระ / Payment:</strong> <span id="easy-docs-preview-payment-method">-</span></p>
+                <p style="margin: 0 0 6px;"><strong style="color: #475569;">เงื่อนไขการชำระ / Term:</strong> <span id="easy-docs-preview-payment-condition">-</span></p>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 6px;">
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: #64748b;">รวมเป็นเงิน / Sub Total:</span>
+                  <strong id="easy-docs-preview-subtotal">฿0.00</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;" id="easy-docs-preview-target-income-row" style="display: none;">
+                  <span style="color: #64748b;">รายได้เป้าหมาย / Target Income:</span>
+                  <strong id="easy-docs-preview-target-income">฿0.00</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: #64748b;">หัก ส่วนลด / Discount:</span>
+                  <strong>฿0.00</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed #cbd5e1; padding-bottom: 4px;">
+                  <span style="color: #64748b;">ยอดหลังหักส่วนลด / Total After Discount:</span>
+                  <strong id="easy-docs-preview-total-after-discount">฿0.00</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between;">
+                  <span style="color: #64748b;">ภาษีมูลค่าเพิ่ม (7%) / Vat:</span>
+                  <strong id="easy-docs-preview-vat">+ ฿0.00</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 2px double #cbd5e1; padding-bottom: 4px; font-weight: bold; color: #1e3a8a;">
+                  <span>จำนวนเงินรวมทั้งสิ้น / Grand Total:</span>
+                  <strong id="easy-docs-preview-grand-total">฿0.00</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; color: #dc2626;">
+                  <span>ภาษีถูกหัก ณ ที่จ่าย (3%) / Withheld Tax:</span>
+                  <strong id="easy-docs-preview-wht">- ฿0.00</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; background: #f0fdf4; padding: 6px 8px; border-radius: 4px; font-weight: bold; color: #15803d; border: 1px solid #bbf7d0; font-size: 13px;">
+                  <span>จำนวนเงินที่ต้องชำระ / Net to Pay:</span>
+                  <strong id="easy-docs-preview-net-payment">฿0.00</strong>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -873,7 +972,7 @@
       const productPriceInput = document.getElementById('easy-docs-product-price');
       const productQtyInput = document.getElementById('easy-docs-product-qty');
       const itemsList = document.getElementById('easy-docs-items-list');
-      const totalDisplay = document.getElementById('easy-docs-total');
+      const totalDisplay = document.getElementById('easy-docs-total'); // Might be null
 
       // Calculation elements
       const calculateBtn = document.getElementById('easy-docs-calculate-btn');
@@ -881,7 +980,7 @@
       const pricingBreakdown = document.getElementById('easy-docs-pricing-breakdown');
 
       let currentStep = 1;
-      const totalSteps = 4;
+      const totalSteps = 3;
       const wizardData = {
         customerId: null,
         customerName: '',
@@ -1157,10 +1256,14 @@
 
       function updateTotal() {
         const total = wizardData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
-        totalDisplay.textContent = new Intl.NumberFormat('th-TH', {
-          style: 'currency',
-          currency: 'THB',
-        }).format(total);
+        const targetIncome = wizardData.items.reduce((sum, item) => sum + (item.originalPrice * item.qty), 0);
+
+        if (totalDisplay) {
+          totalDisplay.textContent = new Intl.NumberFormat('th-TH', {
+            style: 'currency',
+            currency: 'THB',
+          }).format(total);
+        }
 
         calculateSection.style.display = 'none';
         if (wizardData.items.length === 0) {
@@ -1168,7 +1271,7 @@
           return;
         }
 
-        showPricingBreakdown(total);
+        showPricingBreakdown(total, targetIncome);
       }
 
       function syncItemsForTaxMethod() {
@@ -1192,7 +1295,8 @@
         // Recalculate and show pricing breakdown if items exist
         if (wizardData.items.length > 0) {
           const total = wizardData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
-          showPricingBreakdown(total);
+          const targetIncome = wizardData.items.reduce((sum, item) => sum + (item.originalPrice * item.qty), 0);
+          showPricingBreakdown(total, targetIncome);
         }
       }
 
@@ -1201,7 +1305,7 @@
 
 
       // Calculate pricing breakdown for display
-      function showPricingBreakdown(basePrice) {
+      function showPricingBreakdown(basePrice, targetIncome = 0) {
         const amount = parseFloat(basePrice) || 0;
 
         // amount is already the selling price (Reverse mode: items already divided by 0.97 in syncItemsForTaxMethod)
@@ -1213,17 +1317,32 @@
         const customerNetPayment = grandTotal - wht;
 
         // Update pricing breakdown display
-        updatePricingBreakdown(sellingPrice, vat, grandTotal, wht, customerNetPayment);
+        updatePricingBreakdown(sellingPrice, vat, grandTotal, wht, customerNetPayment, targetIncome);
         pricingBreakdown.style.display = 'block';
       }
 
-      function updatePricingBreakdown(sellingPrice, vat, grandTotal, wht, customerNetPayment) {
+      function updatePricingBreakdown(sellingPrice, vat, grandTotal, wht, customerNetPayment, targetIncome = 0) {
         const formatter = new Intl.NumberFormat('th-TH', {
           style: 'currency',
           currency: 'THB',
         });
 
         document.getElementById('easy-docs-subtotal').textContent = formatter.format(sellingPrice);
+        
+        const targetIncomeRow = document.getElementById('easy-docs-target-income-row');
+        const targetIncomeVal = document.getElementById('easy-docs-target-income');
+        if (targetIncomeRow && targetIncomeVal) {
+          const isReverse = document.querySelector('input[name="tax-method"]:checked')?.value === 'we-pay';
+          if (isReverse) {
+            targetIncomeRow.style.display = 'flex';
+            targetIncomeVal.textContent = formatter.format(targetIncome);
+          } else {
+            targetIncomeRow.style.display = 'none';
+          }
+        }
+
+        const totalAfterDiscountEl = document.getElementById('easy-docs-total-after-discount');
+        if (totalAfterDiscountEl) totalAfterDiscountEl.textContent = formatter.format(sellingPrice);
         document.getElementById('easy-docs-vat').textContent = '+ ' + formatter.format(vat);
         document.getElementById('easy-docs-grand-total').textContent = formatter.format(grandTotal);
         document.getElementById('easy-docs-wht').textContent = '- ' + formatter.format(wht);
@@ -1276,9 +1395,8 @@
         const step1Title = wizardData.documentType === 'invoice' ? 'สร้างใบแจ้งหนี้จากใบเสนอราคา' : 'ขั้นตอน 1: เลือกลูกค้า';
         const titles = [
           step1Title,
-          'ขั้นตอน 2: เพิ่มรายการสินค้า',
-          'ขั้นตอน 3: เลือกวิธีชำระเงิน',
-          'ขั้นตอน 4: สรุปก่อนสร้าง',
+          'ขั้นตอน 2: เพิ่มรายการสินค้าและเงื่อนไขการชำระเงิน',
+          'ขั้นตอน 3: สรุปก่อนสร้าง (Quotation Preview)',
         ];
         document.getElementById('easy-docs-title').textContent = titles[step - 1];
         
@@ -1345,48 +1463,100 @@
           currency: 'THB',
         });
 
-        // Build customer display with all details
+        // 1. Populate basic preview fields
+        const docTitle = wizardData.documentType === 'invoice' ? 'ใบแจ้งหนี้ / INVOICE' : 'ใบเสนอราคา / QUOTATION';
+        document.getElementById('easy-docs-preview-doc-title').textContent = docTitle;
+        document.getElementById('easy-docs-preview-doc-badge').textContent = wizardData.documentType === 'invoice' ? 'INVOICE DRAFT' : 'QUOTATION DRAFT';
+
         let customerDisplay = wizardData.customerName || '-';
-        if (wizardData.contactName) {
-          customerDisplay += ` (${wizardData.contactName})`;
-        }
-        if (wizardData.contactPhone) {
-          customerDisplay += ` - ${wizardData.contactPhone}`;
-        }
-        document.getElementById('easy-docs-summary-customer').textContent = customerDisplay;
+        document.getElementById('easy-docs-preview-customer-name').textContent = customerDisplay;
 
-        // Show items list
-        const itemsListHtml = wizardData.items.map(item => {
-          return `<div style="margin-bottom: 6px;">• ${item.name} ${formatter.format(item.price)} × ${item.qty}</div>`;
-        }).join('');
-        document.getElementById('easy-docs-summary-items-list').innerHTML = itemsListHtml;
+        let contactDisplay = '-';
+        if (wizardData.contactName || wizardData.contactPhone) {
+          contactDisplay = `${wizardData.contactName || ''} ${wizardData.contactPhone ? 'เบอร์โทร: ' + wizardData.contactPhone : ''}`;
+        }
+        document.getElementById('easy-docs-preview-customer-contact').textContent = contactDisplay.trim();
 
-        // Calculate and show pricing breakdown - items.price is already selling price in both modes
+        // Dates
+        const todayStr = new Date().toLocaleDateString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        document.getElementById('easy-docs-preview-date').textContent = todayStr;
+        
+        const due = new Date();
+        due.setDate(due.getDate() + 7);
+        const dueStr = due.toLocaleDateString('th-TH', { year: 'numeric', month: '2-digit', day: '2-digit' });
+        document.getElementById('easy-docs-preview-due-date').textContent = dueStr;
+
+        // Reference Number
+        const refContainer = document.getElementById('easy-docs-preview-ref-container');
+        if (wizardData.referenceNumber) {
+          refContainer.style.display = 'block';
+          document.getElementById('easy-docs-preview-ref-no').textContent = wizardData.referenceNumber;
+        } else {
+          refContainer.style.display = 'none';
+        }
+
+        // 2. Populate table body with items
+        const tbody = document.getElementById('easy-docs-preview-table-body');
+        tbody.innerHTML = '';
+        if (wizardData.items.length === 0) {
+          tbody.innerHTML = `<tr><td colspan="5" style="padding: 12px; text-align: center; color: #94a3b8;">ยังไม่มีรายการสินค้า</td></tr>`;
+        } else {
+          wizardData.items.forEach((item, idx) => {
+            const tr = document.createElement('tr');
+            tr.style.borderBottom = '1px solid #e2e8f0';
+            tr.innerHTML = `
+              <td style="padding: 8px 12px; text-align: center; color: #64748b;">${idx + 1}</td>
+              <td style="padding: 8px 12px; font-weight: 500;">${item.name}</td>
+              <td style="padding: 8px 12px; text-align: center;">${item.qty}</td>
+              <td style="padding: 8px 12px; text-align: right;">${formatter.format(item.price)}</td>
+              <td style="padding: 8px 12px; text-align: right; font-weight: 600;">${formatter.format(item.price * item.qty)}</td>
+            `;
+            tbody.appendChild(tr);
+          });
+        }
+
+        // 3. Pricing calculations
         const sellingPrice = wizardData.items.reduce((sum, item) => sum + (item.price * item.qty), 0);
+        const targetIncome = wizardData.items.reduce((sum, item) => sum + (item.originalPrice * item.qty), 0);
         const vat = sellingPrice * 0.07;
         const grandTotal = sellingPrice + vat;
         const wht = sellingPrice * 0.03;
         const netPayment = grandTotal - wht;
 
-        document.getElementById('easy-docs-summary-subtotal').textContent = formatter.format(sellingPrice);
-        document.getElementById('easy-docs-summary-vat').textContent = '+ ' + formatter.format(vat);
-        document.getElementById('easy-docs-summary-grand-total').textContent = formatter.format(grandTotal);
-        document.getElementById('easy-docs-summary-wht').textContent = '- ' + formatter.format(wht);
-        document.getElementById('easy-docs-summary-total').textContent = formatter.format(netPayment);
+        document.getElementById('easy-docs-preview-subtotal').textContent = formatter.format(sellingPrice);
+        
+        // Preview Target Income
+        const previewTargetIncomeRow = document.getElementById('easy-docs-preview-target-income-row');
+        const previewTargetIncomeVal = document.getElementById('easy-docs-preview-target-income');
+        if (previewTargetIncomeRow && previewTargetIncomeVal) {
+          const isReverse = wizardData.taxMethod === 'we-pay';
+          if (isReverse) {
+            previewTargetIncomeRow.style.display = 'flex';
+            previewTargetIncomeVal.textContent = formatter.format(targetIncome);
+          } else {
+            previewTargetIncomeRow.style.display = 'none';
+          }
+        }
+
+        document.getElementById('easy-docs-preview-total-after-discount').textContent = formatter.format(sellingPrice);
+        document.getElementById('easy-docs-preview-vat').textContent = '+ ' + formatter.format(vat);
+        document.getElementById('easy-docs-preview-grand-total').textContent = formatter.format(grandTotal);
+        document.getElementById('easy-docs-preview-wht').textContent = '- ' + formatter.format(wht);
+        document.getElementById('easy-docs-preview-net-payment').textContent = formatter.format(netPayment);
 
         const paymentMethodLabels = {
-          'bank': 'ธนาคาร',
-          'qr': 'โอน QR',
-          'cash': 'เงินสด',
+          'bank': 'ธนาคาร / Bank Transfer',
+          'qr': 'โอน QR / QR Payment',
+          'cash': 'เงินสด / Cash',
         };
-        document.getElementById('easy-docs-summary-payment').textContent = paymentMethodLabels[wizardData.paymentMethod] || '-';
+        document.getElementById('easy-docs-preview-payment-method').textContent = paymentMethodLabels[wizardData.paymentMethod] || '-';
 
         const conditionLabels = {
-          'full': 'ชำระทั้งหมด',
-          'installment': 'ชำระงวด',
-          'specific-date': 'ชำระตามกำหนดวัน',
+          'full': 'ชำระทั้งหมด / Full Payment',
+          'installment': 'ชำระงวด / Installment',
+          'specific-date': 'ชำระตามกำหนดวัน / Specific Date',
         };
-        document.getElementById('easy-docs-summary-condition').textContent = conditionLabels[wizardData.paymentCondition] || '-';
+        document.getElementById('easy-docs-preview-payment-condition').textContent = conditionLabels[wizardData.paymentCondition] || '-';
       }
 
       function submitWizard() {
@@ -1443,8 +1613,10 @@
             return data;
           })
           .then(data => {
-            if (data.success && data.redirect_url) {
-              window.location.href = data.redirect_url;
+            if (data.success) {
+              closeModal();
+              // Redirect to active document list directly to display the new document immediately
+              window.location.href = `/admin/saved-sales-documents?type=${wizardData.documentType}`;
             } else {
               alert(data.message || 'เกิดข้อผิดพลาด');
               nextBtn.disabled = false;
@@ -1459,10 +1631,105 @@
           });
       }
 
-      // Create customer button
-      const createCustomerBtn = document.querySelector('[data-easy-docs-create-customer]');
-      createCustomerBtn?.addEventListener('click', () => {
-        window.open(@json(route('admin.customers', [], false)) + '#create', '_blank');
+      // Inline Quick Customer Creation Form Toggle & Submission
+      const createCustomerBtn = document.getElementById('easy-docs-create-customer-btn');
+      const quickCustForm = document.getElementById('easy-docs-quick-customer-form');
+      const closeCustFormBtn = document.getElementById('easy-docs-close-customer-form');
+      const saveCustBtn = document.getElementById('quick-cust-save-btn');
+
+      // Form input elements
+      const quickCustCompany = document.getElementById('quick-cust-company');
+      const quickCustContact = document.getElementById('quick-cust-contact');
+      const quickCustPhone = document.getElementById('quick-cust-phone');
+      const quickCustEmail = document.getElementById('quick-cust-email');
+      const quickCustTax = document.getElementById('quick-cust-tax');
+      const quickCustAddress = document.getElementById('quick-cust-address');
+
+      createCustomerBtn?.addEventListener('click', (e) => {
+        e.preventDefault();
+        quickCustForm.style.display = quickCustForm.style.display === 'none' ? 'block' : 'none';
+        if (quickCustForm.style.display === 'block') {
+          quickCustCompany.focus();
+        }
+      });
+
+      closeCustFormBtn?.addEventListener('click', (e) => {
+        e.preventDefault();
+        quickCustForm.style.display = 'none';
+        clearQuickCustForm();
+      });
+
+      function clearQuickCustForm() {
+        quickCustCompany.value = '';
+        quickCustContact.value = '';
+        quickCustPhone.value = '';
+        quickCustEmail.value = '';
+        quickCustTax.value = '';
+        quickCustAddress.value = '';
+      }
+
+      saveCustBtn?.addEventListener('click', async (e) => {
+        e.preventDefault();
+        const companyName = quickCustCompany.value.trim();
+        if (!companyName) {
+          alert('กรุณากรอกชื่อบริษัทหรือชื่อลูกค้า');
+          quickCustCompany.focus();
+          return;
+        }
+
+        saveCustBtn.disabled = true;
+        saveCustBtn.textContent = 'กำลังบันทึก...';
+
+        try {
+          const quickStoreUrl = @json(route('admin.customers.quick-store', [], false));
+          const response = await fetch(quickStoreUrl, {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: {
+              'Content-Type': 'application/json',
+              'Accept': 'application/json',
+              'X-CSRF-TOKEN': csrfToken,
+            },
+            body: JSON.stringify({
+              company_name: companyName,
+              contact_name: quickCustContact.value.trim(),
+              phone: quickCustPhone.value.trim(),
+              email: quickCustEmail.value.trim(),
+              tax_id: quickCustTax.value.trim(),
+              address: quickCustAddress.value.trim(),
+            })
+          });
+
+          const data = await response.json();
+          if (!response.ok) {
+            throw new Error(data.message || 'ไม่สามารถบันทึกข้อมูลลูกค้าได้');
+          }
+
+          const customer = data.customer;
+          
+          // 1. Add to the dropdown option
+          const option = document.createElement('option');
+          option.value = customer.id;
+          option.textContent = customer.display_name;
+          option.dataset.phone = customer.phone || '';
+          option.dataset.contact = customer.contact_name || '';
+          customerSelect.appendChild(option);
+
+          // 2. Select it
+          customerSelect.value = customer.id;
+          customerSelect.dispatchEvent(new Event('change'));
+
+          // 3. Clear and hide form
+          clearQuickCustForm();
+          quickCustForm.style.display = 'none';
+          alert('บันทึกข้อมูลลูกค้าเรียบร้อยแล้ว');
+        } catch (error) {
+          console.error(error);
+          alert('เกิดข้อผิดพลาด: ' + error.message);
+        } finally {
+          saveCustBtn.disabled = false;
+          saveCustBtn.textContent = '💾 บันทึกข้อมูลลูกค้า';
+        }
       });
 
       // Initialize
