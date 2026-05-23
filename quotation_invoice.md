@@ -191,7 +191,32 @@ graph TD
 
 ---
 
-## 9. ตำแหน่งไฟล์สำคัญสำหรับนักพัฒนา (Developer References)
+## 9. Native Easy Wizard ใน Flutter Admin App
+
+Flutter admin app มี **Native Easy Wizard** สำหรับสร้างใบเสนอราคา/ใบแจ้งหนี้ในตัว application โดยไม่ต้องเปิด browser ออกไป
+
+### 9.1 สถาปัตยกรรม
+* **Backend Service ใช้ร่วมกัน:** `App\Services\EasyDocumentService` เป็น single source of truth สำหรับ logic การสร้าง Easy Document — เรียกได้จากทั้ง web route และ API endpoint
+* **API endpoints (Bearer token + role:admin,manager):**
+  * `GET  /api/admin/billing-customers?q=` — list/ค้นหาลูกค้า
+  * `POST /api/admin/billing-customers` — สร้างลูกค้าใหม่จาก app
+  * `GET  /api/admin/quotations/search?q=` — ค้นหา quotation อ้างอิงสำหรับ invoice
+  * `POST /api/admin/easy-documents` — สร้างเอกสาร (return 422 พร้อม message ถ้า invoice ซ้ำ)
+
+### 9.2 Flutter Layer
+* **Models:** `lib/models/billing_customer.model.dart`, `lib/models/easy_document.model.dart` (enums: TaxMethod, PaymentMethod, PaymentCondition)
+* **Service:** `lib/services/easy_document_service.dart` (ใช้ Dio + EasyDocumentException สำหรับ user-facing message)
+* **Util:** `lib/utils/document_calculator.dart` — คำนวณ Standard/Reverse mode ฝั่ง client เพื่อ real-time preview ก่อนส่งไป backend
+* **UI:** `lib/screens/easy_document_wizard_screen.dart` ใช้ `Stepper` 3 ขั้น (ลูกค้า → รายการ+ภาษี → พรีวิว) พร้อม inline dialog สร้างลูกค้าใหม่
+
+### 9.3 กฎสำคัญ
+* **Single source of truth ของ logic การคำนวณ:** ฝั่ง Flutter `DocumentCalculator` ใช้สำหรับ **preview** เท่านั้น — ยอดจริงในฐานข้อมูลมาจากการคำนวณซ้ำใน `EasyDocumentService` ฝั่ง PHP เสมอ
+* **Tax method API value:** Frontend ส่ง `customer-pays` (Standard) หรือ `we-pay` (Reverse) เป็น snake-dashed format ตรงกับ web flow เพื่อให้ service backend ทำงานเหมือนเดิม
+* **Reverse mode item price:** Flutter `EasyDocumentItem.toApiPayload()` หาร `price / 0.97` ก่อนส่ง (เหมือนที่ web wizard ทำใน JavaScript) เพื่อให้ backend รับ selling price ที่ถูกต้อง
+
+---
+
+## 10. ตำแหน่งไฟล์สำคัญสำหรับนักพัฒนา (Developer References)
 
 * **ส่วนติดต่อผู้ใช้งาน (Blade View & JS Controller):**
   * [sales-documents-index.blade.php](file:///Users/efaum/Sites/localhost/Supernumber/resources/views/admin/sales-documents-index.blade.php) - หน้าตารางเอกสาร, ตัวช่วยสร้าง Easy Documents 3 ขั้นตอนด่วน, ฟอร์มสร้างลูกค้า Inline ด่วน, และ CSS/JS ควบคุมการคำนวณทั้งหมด
@@ -200,8 +225,14 @@ graph TD
 * **การจัดการเส้นทางและ API (Routes & Creation Endpoints):**
   * [routes/web.php](file:///Users/efaum/Sites/localhost/Supernumber/routes/web.php) - รวบรวม Route จัดการสถานะ, บันทึกฉบับร่าง และ API จัดทำเอกสารด่วน `/admin/easy-documents/create` รวมถึงตรรกะการคุมแปลงและสร้างรหัสต้นทาง
 * **ระบบจัดการความถูกต้องหลังบ้าน (Business Logic & Workflow Services):**
+  * [EasyDocumentService.php](file:///Users/efaum/Sites/localhost/Supernumber/app/Services/EasyDocumentService.php) - logic การสร้าง Easy Document (web + API ใช้ร่วมกัน), guard กัน invoice ซ้ำ
   * [QuotationService.php](file:///Users/efaum/Sites/localhost/Supernumber/app/Services/QuotationService.php) - คุมสถานะและการแปลงใบเสนอราคาเป็นใบแจ้งหนี้
   * [InvoiceService.php](file:///Users/efaum/Sites/localhost/Supernumber/app/Services/InvoiceService.php) - คุมการเปลี่ยนสถานะของใบแจ้งหนี้ดราฟต์ไปยังสถานะพร้อมชำระ
+* **Flutter Admin App (Native Wizard):**
+  * [easy_document_wizard_screen.dart](file:///Users/efaum/Sites/localhost/Supernumber/admin_flutter/lib/screens/easy_document_wizard_screen.dart) - 3-step wizard UI (ลูกค้า, รายการ+ภาษี, พรีวิว)
+  * [easy_document_service.dart](file:///Users/efaum/Sites/localhost/Supernumber/admin_flutter/lib/services/easy_document_service.dart) - Dio client ที่ map error 422 เป็น EasyDocumentException
+  * [document_calculator.dart](file:///Users/efaum/Sites/localhost/Supernumber/admin_flutter/lib/utils/document_calculator.dart) - คำนวณ VAT/WHT/Reverse mode ฝั่ง client (preview only)
+  * [api/EasyDocumentController.php](file:///Users/efaum/Sites/localhost/Supernumber/app/Http/Controllers/Api/EasyDocumentController.php) - API controller รองรับ Flutter wizard
 * **ระบบทดสอบความเสถียร (Specs & Automated Testing):**
   * [AdminEasyDocumentTest.php](file:///Users/efaum/Sites/localhost/Supernumber/tests/Feature/AdminEasyDocumentTest.php) - เคสทดสอบประเมินความถูกต้องของผลลัพธ์คำนวณ Standard, Reverse และการแนบเลขอ้างอิงของระบบช่วยสร้างด่วน
   * [AdminSavedSalesDocumentTest.php](file:///Users/efaum/Sites/localhost/Supernumber/tests/Feature/AdminSavedSalesDocumentTest.php) - เคสทดสอบพฤติกรรม workflow และสิทธิ์การเข้าถึงปุ่มจัดการสถานะบนตารางหลัก
