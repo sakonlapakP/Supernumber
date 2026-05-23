@@ -96,7 +96,7 @@
         </div>
       </div>
     </div>
-    <div class="admin-table-wrap" style="margin-top: 14px;">
+    <div class="admin-table-wrap" style="margin-top: 14px; padding-bottom: 140px;">
       <table class="admin-table">
         <thead>
           <tr>
@@ -207,7 +207,7 @@
         </div>
       </div>
     </div>
-    <div class="admin-table-wrap" style="margin-top: 14px;">
+    <div class="admin-table-wrap" style="margin-top: 14px; padding-bottom: 140px;">
       <table class="admin-table">
         <thead>
           <tr>
