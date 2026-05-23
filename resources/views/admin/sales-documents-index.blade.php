@@ -17,7 +17,7 @@
     <div class="admin-page-actions">
       <div class="admin-summary">ทั้งหมด {{ number_format($documents->total()) }} เอกสาร</div>
       <button type="button" class="admin-button admin-button--primary admin-button--compact" data-easy-docs-open>✨ Easy Documents</button>
-      <a href="{{ route('admin.sales-documents-quick') }}" class="admin-button admin-button--primary admin-button--compact">⚡ สร้างเอกสารด่วน</a>
+      {{-- <a href="{{ route('admin.sales-documents-quick') }}" class="admin-button admin-button--primary admin-button--compact">⚡ สร้างเอกสารด่วน</a> --}}
       <a href="{{ route('admin.sales-documents') }}" class="admin-button admin-button--compact">สร้างใบเสนอราคา / ใบแจ้งหนี้</a>
     </div>
   </div>
