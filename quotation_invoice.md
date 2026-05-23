@@ -41,7 +41,51 @@
 
 ---
 
-## 3. รูปแบบเลขที่เอกสารจำลอง (Document Numbering Strategy)
+## 3. ขั้นตอนการสร้างเอกสารแบบปกติ (Normal / Full Editor Flow)
+
+สำหรับผู้ใช้ที่ต้องการจัดทำเอกสารที่มีรายละเอียดเชิงลึกและปรับแต่งได้อิสระมากกว่าโหมดด่วน สามารถทำรายการผ่านระบบ **Full Editor** ได้ดังนี้:
+
+### 3.1 การเข้าใช้งาน (Access Point)
+* คลิกปุ่มเลือก **"📝 สร้างแบบละเอียด (Editor)"** ภายใต้เมนูด้านบน หรือเข้าทำรายการผ่านการส่งฟอร์มจากหน้าตรวจสอบลูกค้า Estimate Leads
+* ระบบจะนำทางผู้ใช้ไปยังหน้าจอจัดทำแบบเต็มรูปแบบ ได้แก่:
+  * หน้าสร้างเอกสารปกติ: `admin.sales-documents` (เรียกใช้ [sales-documents.blade.php](file:///Users/efaum/Sites/localhost/Supernumber/resources/views/sales-documents.blade.php))
+  * หน้าสร้างเอกสารด่วนขั้นสูง: `admin.sales-documents-quick` (เรียกใช้ [sales-documents-quick.blade.php](file:///Users/efaum/Sites/localhost/Supernumber/resources/views/sales-documents-quick.blade.php))
+
+### 3.2 ความสามารถของระบบ Editor ละเอียด
+* **ข้อมูลลูกค้าครบถ้วน:** กรอกที่อยู่ เลขผู้เสียภาษี และรายละเอียดเชิงพาณิชย์ของบริษัทได้อย่างเจาะจง
+* **ปรับแต่งรายการสินค้าอิสระ:** เพิ่ม ลด หรือสลับลำดับของรายการแถวสินค้าในรูปแบบตารางกริดจำลองได้อย่างเป็นอิสระ พร้อมกำหนดหน่วยสินค้า (Unit: EA, เล่ม, ครั้ง ฯลฯ)
+* **กำหนดสัดส่วนลดราคา (Discount Rate):** สามารถกำหนดสัดส่วนลดราคาเป็นเปอร์เซ็นต์ (%) หรือเป็นจำนวนเงินบาทถ้วนได้
+* **การบันทึกฉบับร่างอย่างรวดเร็ว (Save Draft):**
+  * มีปุ่มสำหรับ **"บันทึกฉบับร่าง"** เพื่อเก็บข้อมูลไว้แก้ไขในภายหลัง โดยไม่ต้องสร้างเอกสาร PDF ตัวจริง
+  * ข้อมูลจะถูกจัดเก็บลงในฐานข้อมูลด้วยสถานะดราฟต์ และเปิดให้กลับมาแก้ไขได้ตลอดเวลาผ่านลิงก์ `admin.sales-documents-quick` ที่มีพารามิเตอร์ `draft` นำทาง
+
+### 3.3 การบันทึกและแปลงเป็น PDF ตัวจริง
+* เมื่อยืนยันการทำรายการ ผู้ใช้จะกดยืนยันบันทึกเอกสาร
+* ข้อมูลทั้งหมดจะถูกส่งผ่านคำร้องขอ (POST) ไปยัง `/admin/sales-documents/save-download`
+* ฝั่งหลังบ้านจะเรียกใช้งาน `App\Services\SalesDocumentPdfService` เพื่อประมวลผลตารางภาษี สรุปยอดเงิน บันทึกข้ามสถานะดราฟต์ (`is_draft = false`) และสร้างไฟล์เอกสาร PDF ฉบับทางการสำหรับแจกจ่ายดาวน์โหลดทันที
+
+---
+
+## 4. กฎและคู่มือการคำนวณภาษีอย่างละเอียด (Calculation & Tax Rules Reference)
+
+การประมวลผลยอดเงิน สัดส่วนภาษีมูลค่าเพิ่ม (VAT 7%) และภาษีถูกหัก ณ ที่จ่าย (WHT 3%) ทั้งหมดของโปรเจกต์นี้ ไม่ว่าจะคำนวณผ่านสคริปต์หน้าบ้าน (JavaScript) หรือโปรแกรมหลังบ้าน (PHP) **ต้องเป็นไปตามมาตรฐานกฎเหล็กเดียวกันอย่างเคร่งครัด**
+
+> [!IMPORTANT]
+> **เอกสารอ้างอิงสูตรคำนวณหลัก:**
+> นักพัฒนาและผู้ออกแบบระบบจัดทำเอกสาร **ต้องศึกษาหลักเกณฑ์และสูตรบังคับทั้งหมดอย่างละเอียด** ในไฟล์คู่มือหลักของทางบริษัทที่ **[QUOTATION_CALCULATION_RULES_TH.md](file:///Users/efaum/Sites/localhost/Supernumber/QUOTATION_CALCULATION_RULES_TH.md)**
+> *ในไฟล์ดังกล่าวจะระบุสูตรการคำนวณ ยอดรวม ตัวอย่างทศนิยม ตารางปัดเศษ ตลอดจนข้อห้ามเชิงกฎหมายภาษีทั้งหมดที่ระบบต้องปฏิบัติตามอย่างไม่มีข้อยกเว้น*
+
+### สรุปหลักคิดภาษีอย่างย่อจากไฟล์อ้างอิง:
+* **โหมด Standard (กรอกราคาก่อน VAT):**
+  * `Customer Net Payment = Base Price + (Base Price * 0.07) - (Base Price * 0.03)`
+* **โหมด Reverse (กรอกรายได้เป้าหมายหลังหัก WHT 3%):**
+  * `Selling Price = Target Income / 0.97`
+  * `Service Net Income = Selling Price - (Selling Price * 0.03) = Target Income` (ใช้ตรวจสอบความถูกต้องหลังปัดทศนิยม)
+  * `Customer Net Payment = Selling Price + (Selling Price * 0.07) - (Selling Price * 0.03)`
+
+---
+
+## 5. รูปแบบเลขที่เอกสาร (Document Numbering Strategy)
 
 เพื่อแก้ปัญหาเลขที่เอกสารดราฟต์ที่ดูสับสนและซ้ำซ้อน ระบบได้นำคำว่า `DRAFT` ออกจากรหัสหลักทั้งหมด และแทนที่ด้วยรหัสตามจริงของประเภทเอกสารนั้นๆ เพื่อความเรียบร้อยและง่ายต่อการคัดแยก:
 
@@ -53,9 +97,9 @@
 
 ---
 
-## 4. กฎการไหลเวียนและเปลี่ยนสถานะเอกสาร (Document Workflow States)
+## 6. กฎการไหลเวียนและเปลี่ยนสถานะเอกสาร (Document Workflow States)
 
-### 4.1 การเปลี่ยนสถานะใบแจ้งหนี้ (Invoice Status Transitions)
+### 6.1 การเปลี่ยนสถานะใบแจ้งหนี้ (Invoice Status Transitions)
 ใบแจ้งหนี้ที่อยู่ในขั้นตอนเริ่มต้นหรือดราฟต์ สามารถเปลี่ยนผ่านสถานะได้อย่างอิสระผ่านเมนู "จัดการ" บนตาราง โดยผ่านการดูแลของ `app/Services/InvoiceService.php` ดังนี้:
 
 ```mermaid
@@ -82,7 +126,7 @@ graph TD
 > [!IMPORTANT]
 > **การควบคุมสถานะในฐานข้อมูล:** ทุกครั้งที่มีการคลิกอัปเดตเปลี่ยนสถานะเอกสารดราฟต์ผ่านตารางแผงควบคุมระบบ (Workflow Actions) ระบบจะทำการตั้งค่าฟิลด์ `is_draft = false` ให้ทันทีโดยอัตโนมัติ เพื่อให้ระบบหลังบ้านและเงื่อนไขการกรองข้อมูลบันทึกยอดชำระเงินทำงานได้อย่างแม่นยำ 100%
 
-### 4.2 การเปลี่ยนสถานะใบเสนอราคา (Quotation Status Transitions)
+### 6.2 การเปลี่ยนสถานะใบเสนอราคา (Quotation Status Transitions)
 การเปลี่ยนสถานะใบเสนอราคาผ่าน `app/Services/QuotationService.php` มีระบบดังนี้:
 * **ส่งใบเสนอราคา (Send):** อัปเดตสถานะเป็น `sent` และเปลี่ยน `is_draft = false`
 * **ยอมรับ (Accept):** อัปเดตสถานะเป็น `accepted` และเปลี่ยน `is_draft = false`
@@ -93,15 +137,15 @@ graph TD
 
 ---
 
-## 5. การปรับปรุง UI/UX ระดับพรีเมียม (Premium Frontend Implementation)
+## 7. การปรับปรุง UI/UX ระดับพรีเมียม (Premium Frontend Implementation)
 
-### 5.1 การปิดตัวช่วยสร้างทันทีและดึงข้อมูลใหม่ (Instant Refresh Callback)
+### 7.1 การปิดตัวช่วยสร้างทันทีและดึงข้อมูลใหม่ (Instant Refresh Callback)
 เมื่อกดยืนยันสร้างเอกสารสำเร็จในขั้นตอนที่ 3:
 1. ตัวช่วยสร้าง (Modal) จะถูกปิดตัวลงทันทีอย่างลื่นไหล
 2. ระบบจะทำการ Redirect หน้าจอหลักไปยังรายการของประเภทเอกสารนั้นๆ โดยทันทีผ่าน `window.location.href = '/admin/saved-sales-documents?type=[quotation|invoice]'`
 3. เอกสารใหม่ที่เพิ่งสร้างเสร็จจะปรากฏเด่นอยู่ทาง **แถวบนสุดของตารางทันที** ทำให้การทำงานต่อเนื่องไม่มีสะดุด
 
-### 5.2 การแก้ไข Dropdown ปุ่มจัดการโดนขลิบตัดทับซ้อน (Table Overflow Solution)
+### 7.2 การแก้ไข Dropdown ปุ่มจัดการโดนขลิบตัดทับซ้อน (Table Overflow Solution)
 * **ปัญหาเดิม:** การ์ดตารางแอดมิน `.admin-table-card` และตัวครอบตาราง `.admin-table-wrap` มีคำสั่ง `overflow: hidden;` และ `overflow-x: auto;` บังคับอยู่ เพื่อรองรับสกรอลล์แถวแนวนอนในมือถือ ทำให้เมื่อแถวสุดท้ายคลิกเปิดปุ่ม "จัดการ" กล่องตัวเลือก Dropdown จะโดนกรอบขอบล่างตัดขาดหายไป หรือเกิดช่องว่างโล่งใต้ตารางขนาดใหญ่หากไปใส่ padding-bottom ถาวร
 * **การแก้ไขด้วย CSS ระดับพรีเมียม:**
   * นำ inline padding ว่างๆ ออก เพื่อให้ภาพรวมรูปทรงการ์ดสั้นพอดีสวยงาม
@@ -120,15 +164,17 @@ graph TD
 
 ---
 
-## 6. ตำแหน่งไฟล์สำคัญสำหรับนักพัฒนา (Developer References)
+## 8. ตำแหน่งไฟล์สำคัญสำหรับนักพัฒนา (Developer References)
 
 * **ส่วนติดต่อผู้ใช้งาน (Blade View & JS Controller):**
   * [sales-documents-index.blade.php](file:///Users/efaum/Sites/localhost/Supernumber/resources/views/admin/sales-documents-index.blade.php) - หน้าตารางเอกสาร, ตัวช่วยสร้าง Easy Documents 3 ขั้นตอนด่วน, ฟอร์มสร้างลูกค้า Inline ด่วน, และ CSS/JS ควบคุมการคำนวณทั้งหมด
+  * [sales-documents.blade.php](file:///Users/efaum/Sites/localhost/Supernumber/resources/views/sales-documents.blade.php) - หน้าจอ Full Editor จัดการใบเอกสารแบบละเอียดปกติ
+  * [sales-documents-quick.blade.php](file:///Users/efaum/Sites/localhost/Supernumber/resources/views/sales-documents-quick.blade.php) - หน้าจอจัดทำแบบด่วนขั้นสูงประมวลภาพรวมเต็มรูปเล่ม
 * **การจัดการเส้นทางและ API (Routes & Creation Endpoints):**
   * [routes/web.php](file:///Users/efaum/Sites/localhost/Supernumber/routes/web.php) - รวบรวม Route จัดการสถานะ, บันทึกฉบับร่าง และ API จัดทำเอกสารด่วน `/admin/easy-documents/create` รวมถึงตรรกะการคุมแปลงและสร้างรหัสต้นทาง
 * **ระบบจัดการความถูกต้องหลังบ้าน (Business Logic & Workflow Services):**
   * [QuotationService.php](file:///Users/efaum/Sites/localhost/Supernumber/app/Services/QuotationService.php) - คุมสถานะและการแปลงใบเสนอราคาเป็นใบแจ้งหนี้
   * [InvoiceService.php](file:///Users/efaum/Sites/localhost/Supernumber/app/Services/InvoiceService.php) - คุมการเปลี่ยนสถานะของใบแจ้งหนี้ดราฟต์ไปยังสถานะพร้อมชำระ
-* **ระบบทดสอบความเสถียร (Verification Specs):**
+* **ระบบทดสอบความเสถียร (Specs & Automated Testing):**
   * [AdminEasyDocumentTest.php](file:///Users/efaum/Sites/localhost/Supernumber/tests/Feature/AdminEasyDocumentTest.php) - เคสทดสอบประเมินความถูกต้องของผลลัพธ์คำนวณ Standard, Reverse และการแนบเลขอ้างอิงของระบบช่วยสร้างด่วน
   * [AdminSavedSalesDocumentTest.php](file:///Users/efaum/Sites/localhost/Supernumber/tests/Feature/AdminSavedSalesDocumentTest.php) - เคสทดสอบพฤติกรรม workflow และสิทธิ์การเข้าถึงปุ่มจัดการสถานะบนตารางหลัก
