@@ -337,7 +337,8 @@
           <div id="easy-docs-quotation-field-container" class="easy-docs-field" style="display: none; margin-bottom: 16px;">
             <label class="easy-docs-label">
               <span>เลือกใบเสนอราคา (Quotation) / ค้นหาใบเสนอราคา</span>
-              <select id="easy-docs-quotation" class="easy-docs-input">
+              <input type="text" id="easy-docs-quotation-search" class="easy-docs-input" placeholder="พิมพ์เลขที่เอกสาร หรือ ชื่อลูกค้า เพื่อค้นหา..." style="margin-bottom: 8px;">
+              <select id="easy-docs-quotation" class="easy-docs-input" size="5" style="padding-top: 4px; padding-bottom: 4px;">
                 <option value="">-- เลือกใบเสนอราคา --</option>
                 @foreach ($allQuotations ?? [] as $qt)
                   <option value="{{ $qt->id }}">{{ $qt->document_number }} - {{ $qt->customer_name }} (฿{{ number_format($qt->payload['totals']['net_to_pay'] ?? $qt->payload['total'] ?? 0, 2) }})</option>
@@ -978,6 +979,17 @@
         }
       });
 
+      // Quotation search filter
+      const quotationSearchInput = document.getElementById('easy-docs-quotation-search');
+      quotationSearchInput?.addEventListener('input', (e) => {
+        const term = e.target.value.toLowerCase();
+        Array.from(quotationSelect.options).forEach(opt => {
+          if (!opt.value) return; // skip placeholder
+          const text = opt.textContent.toLowerCase();
+          opt.style.display = text.includes(term) ? '' : 'none';
+        });
+      });
+
       // Quotation selection (Easy Invoice)
       const quotationSelect = document.getElementById('easy-docs-quotation');
       quotationSelect?.addEventListener('change', (e) => {
@@ -988,7 +1000,7 @@
           
           // 1. Pre-fill customer selection & contact details
           customerSelect.value = qt.customer_id || '';
-          customerDetailsSection.style.display = 'block';
+          customerDetailsSection.style.display = wizardData.documentType === 'invoice' ? 'none' : 'block';
           
           const customerData = payload.customer || {};
           contactNameInput.value = customerData.contact_name || customerData.contact || '';
@@ -1221,6 +1233,10 @@
       // Step navigation
       nextBtn?.addEventListener('click', () => {
         if (validateStep(currentStep)) {
+          if (wizardData.documentType === 'invoice' && currentStep === 1) {
+            submitWizard();
+            return;
+          }
           currentStep++;
           if (currentStep > totalSteps) {
             submitWizard();
@@ -1257,7 +1273,7 @@
         document.getElementById(`easy-docs-step-${step}`)?.classList.add('is-active');
 
         // Update title
-        const step1Title = wizardData.documentType === 'invoice' ? 'ขั้นตอน 1: เลือกใบเสนอราคา' : 'ขั้นตอน 1: เลือกลูกค้า';
+        const step1Title = wizardData.documentType === 'invoice' ? 'สร้างใบแจ้งหนี้จากใบเสนอราคา' : 'ขั้นตอน 1: เลือกลูกค้า';
         const titles = [
           step1Title,
           'ขั้นตอน 2: เพิ่มรายการสินค้า',
@@ -1265,11 +1281,22 @@
           'ขั้นตอน 4: สรุปก่อนสร้าง',
         ];
         document.getElementById('easy-docs-title').textContent = titles[step - 1];
-        document.getElementById('easy-docs-step').textContent = `${step} / ${totalSteps}`;
+        
+        const stepIndicator = document.getElementById('easy-docs-step');
+        if (wizardData.documentType === 'invoice') {
+          stepIndicator.style.display = 'none';
+        } else {
+          stepIndicator.style.display = 'inline-block';
+          stepIndicator.textContent = `${step} / ${totalSteps}`;
+        }
 
         // Update buttons
         prevBtn.style.display = step === 1 ? 'none' : 'block';
-        nextBtn.textContent = step === totalSteps ? 'สร้างเอกสาร ✓' : 'ถัดไป →';
+        if (wizardData.documentType === 'invoice') {
+          nextBtn.textContent = 'สร้างใบแจ้งหนี้ ✓';
+        } else {
+          nextBtn.textContent = step === totalSteps ? 'สร้างเอกสาร ✓' : 'ถัดไป →';
+        }
 
         // Update summary if on final step
         if (step === totalSteps) {

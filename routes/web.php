@@ -2395,27 +2395,53 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'total' => $subtotal,
             ];
 
-            // Create draft document
-            $document = SalesDocument::create([
-                'document_type' => $documentType,
-                'document_number' => 'DRAFT-' . now('Asia/Bangkok')->format('YmdHis'),
-                'document_date' => now('Asia/Bangkok')->format('Y-m-d'),
-                'due_date' => now('Asia/Bangkok')->addDays(7)->format('Y-m-d'),
-                'file_name' => 'draft-' . now('Asia/Bangkok')->format('YmdHis'),
-                'customer_id' => $customer->id,
-                'customer_name' => $customer->display_name,
-                'is_draft' => true,
-                'is_active' => true,
-                'pdf_disk' => 'local',
-                'pdf_path' => '',
-                'saved_by_user_id' => $currentAdmin()?->id,
-                'payload' => $payload,
-            ]);
+            $isDirectInvoiceCreate = $documentType === 'invoice' && !empty($data['referenceNumber']);
+
+            if ($isDirectInvoiceCreate) {
+                // Immediately create a real invoice using the service to auto-generate document number and PDF
+                $payload['document_number'] = 'DRAFT-' . now('Asia/Bangkok')->format('YmdHis');
+                $document = app(\App\Services\SalesDocumentPdfService::class)->saveDocument($payload, $currentAdmin()?->id);
+                $document->update(['status' => SalesDocument::STATUS_INVOICE_DRAFT]);
+            } else {
+                // Create draft document for Easy Quotation
+                $document = SalesDocument::create([
+                    'document_type' => $documentType,
+                    'document_number' => 'DRAFT-' . now('Asia/Bangkok')->format('YmdHis'),
+                    'document_date' => now('Asia/Bangkok')->format('Y-m-d'),
+                    'due_date' => now('Asia/Bangkok')->addDays(7)->format('Y-m-d'),
+                    'file_name' => 'draft-' . now('Asia/Bangkok')->format('YmdHis'),
+                    'customer_id' => $customer->id,
+                    'customer_name' => $customer->display_name,
+                    'is_draft' => true,
+                    'is_active' => true,
+                    'pdf_disk' => 'local',
+                    'pdf_path' => '',
+                    'saved_by_user_id' => $currentAdmin()?->id,
+                    'payload' => $payload,
+                ]);
+            }
+
+            $redirectUrl = route('admin.sales-documents-quick', ['draft' => $document->id], false);
+
+            if ($isDirectInvoiceCreate) {
+                $sourceQuotation = SalesDocument::where('document_number', $data['referenceNumber'])
+                    ->where('document_type', 'quotation')
+                    ->first();
+                    
+                if ($sourceQuotation) {
+                    $sourceQuotation->update([
+                        'status' => SalesDocument::STATUS_QUOTATION_SENT
+                    ]);
+                    $document->update(['source_quotation_id' => $sourceQuotation->id]);
+                }
+
+                $redirectUrl = url('/admin/saved-sales-documents?type=invoice');
+            }
 
             return response()->json([
                 'success' => true,
                 'message' => 'สร้างร่างเอกสารสำเร็จ',
-                'redirect_url' => route('admin.sales-documents-quick', ['draft' => $document->id], false),
+                'redirect_url' => $redirectUrl,
             ]);
         } catch (\Exception $e) {
             return response()->json([
