@@ -333,7 +333,7 @@
             <div class="article-related-numbers__grid">
                 @foreach($relevantNumbers as $num)
                     <div class="article-number-card">
-                        <div class="article-number-card__phone">{{ $num->display_phone }}</div>
+                        <div class="article-number-card__phone">{{ $num->formatted_number }}</div>
                         <div class="article-number-card__meta">
                             <span class="article-number-card__price">{{ $num->payment_label }}</span>
                             <span class="article-number-card__network">{{ $num->network_label }}</span>
