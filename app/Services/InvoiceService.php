@@ -49,7 +49,10 @@ class InvoiceService
     {
         $this->assertInvoiceTransition($invoice, SalesDocument::STATUS_INVOICE_ISSUED);
 
-        $invoice->update(['status' => SalesDocument::STATUS_INVOICE_ISSUED]);
+        $invoice->update([
+            'status' => SalesDocument::STATUS_INVOICE_ISSUED,
+            'is_draft' => false,
+        ]);
 
         return $invoice->fresh();
     }
@@ -61,7 +64,10 @@ class InvoiceService
     {
         $this->assertInvoiceTransition($invoice, SalesDocument::STATUS_INVOICE_PARTIALLY_PAID);
 
-        $invoice->update(['status' => SalesDocument::STATUS_INVOICE_PARTIALLY_PAID]);
+        $invoice->update([
+            'status' => SalesDocument::STATUS_INVOICE_PARTIALLY_PAID,
+            'is_draft' => false,
+        ]);
 
         return $invoice->fresh();
     }
@@ -73,7 +79,10 @@ class InvoiceService
     {
         $this->assertInvoiceTransition($invoice, SalesDocument::STATUS_INVOICE_PAID);
 
-        $invoice->update(['status' => SalesDocument::STATUS_INVOICE_PAID]);
+        $invoice->update([
+            'status' => SalesDocument::STATUS_INVOICE_PAID,
+            'is_draft' => false,
+        ]);
 
         return $invoice->fresh();
     }
@@ -85,7 +94,10 @@ class InvoiceService
     {
         $this->assertInvoiceTransition($invoice, SalesDocument::STATUS_INVOICE_OVERDUE);
 
-        $invoice->update(['status' => SalesDocument::STATUS_INVOICE_OVERDUE]);
+        $invoice->update([
+            'status' => SalesDocument::STATUS_INVOICE_OVERDUE,
+            'is_draft' => false,
+        ]);
 
         return $invoice->fresh();
     }
@@ -97,7 +109,10 @@ class InvoiceService
     {
         $this->assertInvoiceTransition($invoice, SalesDocument::STATUS_INVOICE_VOID);
 
-        $invoice->update(['status' => SalesDocument::STATUS_INVOICE_VOID]);
+        $invoice->update([
+            'status' => SalesDocument::STATUS_INVOICE_VOID,
+            'is_draft' => false,
+        ]);
 
         return $invoice->fresh();
     }
@@ -122,6 +137,9 @@ class InvoiceService
         $transitions = [
             SalesDocument::STATUS_INVOICE_DRAFT => [
                 SalesDocument::STATUS_INVOICE_ISSUED,
+                SalesDocument::STATUS_INVOICE_PARTIALLY_PAID,
+                SalesDocument::STATUS_INVOICE_PAID,
+                SalesDocument::STATUS_INVOICE_OVERDUE,
                 SalesDocument::STATUS_INVOICE_VOID,
             ],
             SalesDocument::STATUS_INVOICE_ISSUED => [

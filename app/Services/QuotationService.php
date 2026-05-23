@@ -50,7 +50,10 @@ class QuotationService
     {
         $this->assertQuotationTransition($quotation, SalesDocument::STATUS_QUOTATION_SENT);
 
-        $quotation->update(['status' => SalesDocument::STATUS_QUOTATION_SENT]);
+        $quotation->update([
+            'status' => SalesDocument::STATUS_QUOTATION_SENT,
+            'is_draft' => false,
+        ]);
 
         return $quotation->fresh();
     }
@@ -62,7 +65,10 @@ class QuotationService
     {
         $this->assertQuotationTransition($quotation, SalesDocument::STATUS_QUOTATION_ACCEPTED);
 
-        $quotation->update(['status' => SalesDocument::STATUS_QUOTATION_ACCEPTED]);
+        $quotation->update([
+            'status' => SalesDocument::STATUS_QUOTATION_ACCEPTED,
+            'is_draft' => false,
+        ]);
 
         return $quotation->fresh();
     }
@@ -74,7 +80,10 @@ class QuotationService
     {
         $this->assertQuotationTransition($quotation, SalesDocument::STATUS_QUOTATION_REJECTED);
 
-        $quotation->update(['status' => SalesDocument::STATUS_QUOTATION_REJECTED]);
+        $quotation->update([
+            'status' => SalesDocument::STATUS_QUOTATION_REJECTED,
+            'is_draft' => false,
+        ]);
 
         return $quotation->fresh();
     }
@@ -86,7 +95,10 @@ class QuotationService
     {
         $this->assertQuotationTransition($quotation, SalesDocument::STATUS_QUOTATION_EXPIRED);
 
-        $quotation->update(['status' => SalesDocument::STATUS_QUOTATION_EXPIRED]);
+        $quotation->update([
+            'status' => SalesDocument::STATUS_QUOTATION_EXPIRED,
+            'is_draft' => false,
+        ]);
 
         return $quotation->fresh();
     }
@@ -107,7 +119,10 @@ class QuotationService
     {
         $this->assertQuotationTransition($quotation, SalesDocument::STATUS_QUOTATION_CANCELLED);
 
-        $quotation->update(['status' => SalesDocument::STATUS_QUOTATION_CANCELLED]);
+        $quotation->update([
+            'status' => SalesDocument::STATUS_QUOTATION_CANCELLED,
+            'is_draft' => false,
+        ]);
 
         return $quotation->fresh();
     }

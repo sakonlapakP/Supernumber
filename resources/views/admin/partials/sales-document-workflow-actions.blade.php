@@ -41,6 +41,18 @@
       @csrf
       <button type="submit" class="admin-button admin-button--compact">ออกใบแจ้งหนี้</button>
     </form>
+    <form action="{{ route('admin.saved-sales-documents.invoice-status', [$document, 'partial-paid']) }}" method="post" style="margin: 0;">
+      @csrf
+      <button type="submit" class="admin-button admin-button--compact">ชำระบางส่วน</button>
+    </form>
+    <form action="{{ route('admin.saved-sales-documents.invoice-status', [$document, 'paid']) }}" method="post" style="margin: 0;">
+      @csrf
+      <button type="submit" class="admin-button admin-button--compact">ชำระแล้ว</button>
+    </form>
+    <form action="{{ route('admin.saved-sales-documents.invoice-status', [$document, 'overdue']) }}" method="post" style="margin: 0;">
+      @csrf
+      <button type="submit" class="admin-button admin-button--compact admin-button--muted">ค้างชำระ</button>
+    </form>
     <form action="{{ route('admin.saved-sales-documents.invoice-status', [$document, 'void']) }}" method="post" style="margin: 0;">
       @csrf
       <button type="submit" class="admin-button admin-button--compact admin-button--muted">Void</button>
