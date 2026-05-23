@@ -1429,71 +1429,41 @@
     gap: 16px;
 }
 
-.article-number-card {
-    background: #fff;
-    padding: 20px;
-    border-radius: 18px;
-    border: 1px solid rgba(216, 163, 74, 0.15);
-    text-align: center;
-    transition: all 0.3s ease;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
+/* Custom localized styling overrides for article number cards (to prevent squeeze/overlap) */
+.article-related-numbers .number-card--home {
+    min-height: 155px !important;
+    padding: 8px !important;
 }
 
-.article-number-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 15px 30px rgba(216, 163, 74, 0.2);
-    border-color: #d8a34a;
+.article-related-numbers .card-top {
+    font-size: 17px !important; /* Reduce phone number from 21px to 17px to prevent squeeze */
+    padding: 8px 6px !important;
 }
 
-.article-number-card__phone {
-    font-size: 22px;
-    font-weight: 800;
-    color: #2a2321;
-    margin-bottom: 12px;
-    letter-spacing: 0.02em;
+.article-related-numbers .card-topic-icons {
+    gap: 4px !important;
+    margin-top: 4px !important;
+    min-height: 28px !important;
+    max-height: 28px !important;
 }
 
-.article-number-card__meta {
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    gap: 10px;
-    margin-bottom: 16px;
+.article-related-numbers .card-topic-icon {
+    width: 24px !important;
+    height: 24px !important;
+    font-size: 11px !important;
 }
 
-.article-number-card__price {
-    color: #d8a34a;
-    font-weight: 800;
-    font-size: 17px;
+.article-related-numbers .card-meta-plan,
+.article-related-numbers .card-meta-price,
+.article-related-numbers .card-meta-plan *,
+.article-related-numbers .card-meta-price * {
+    font-size: 12px !important; /* Reduce plan/price from 16px to 12px to prevent multi-line wrap */
 }
 
-.article-number-card__network {
-    font-size: 11px;
-    font-weight: 700;
-    padding: 2px 8px;
-    background: #f9f6f1;
-    border-radius: 6px;
-    color: #7a6c62;
-    border: 1px solid rgba(0,0,0,0.05);
-}
-
-.article-number-card__btn {
-    display: block;
-    padding: 10px;
-    background: #3b2f27;
-    color: #fff;
-    text-decoration: none;
-    border-radius: 12px;
-    font-size: 14px;
-    font-weight: 700;
-    transition: background 0.3s ease;
-}
-
-.article-number-card__btn:hover {
-    background: #d8a34a;
-    color: #2a2321;
+.article-related-numbers .card-btn {
+    font-size: 13px !important;
+    min-height: 32px !important;
+    margin-top: 4px !important;
 }
 
 .article-related-numbers__footer {
