@@ -86,6 +86,7 @@ jobs:
 
     - name: 🔧 Run Laravel Optimization
       uses: appleboy/ssh-action@master
+      continue-on-error: true
       with:
         host: ${{ secrets.PROD_SSH_HOST }}
         username: ${{ secrets.PROD_SSH_USER }}
@@ -95,6 +96,14 @@ jobs:
           php artisan optimize:clear
           php artisan cache:clear
           php artisan config:clear
+
+    - name: 🌐 Run Web-Trigger Cache Clear (Alternative)
+      env:
+        CRON_SECRET: ${{ secrets.CRON_SECRET }}
+      run: |
+        echo "Triggering cache clear via web endpoint..."
+        curl -s -f "https://supernumber.co.th/cron/clear-all-caches/${CRON_SECRET}" || echo "Web cache clear not triggered (Secret may not be set in GitHub secrets)"
+      continue-on-error: true
 
     - name: 📝 Prepare Notification Message
       id: prepare_msg
