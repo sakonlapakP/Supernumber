@@ -67,6 +67,14 @@
       background-color: #f3f4f6;
       color: #111827;
     }
+    @media (min-width: 1024px) {
+      .admin-table-card {
+        overflow: visible !important;
+      }
+      .admin-table-wrap {
+        overflow: visible !important;
+      }
+    }
   </style>
 
   @php
@@ -96,7 +104,7 @@
         </div>
       </div>
     </div>
-    <div class="admin-table-wrap" style="margin-top: 14px; padding-bottom: 140px;">
+    <div class="admin-table-wrap" style="margin-top: 14px;">
       <table class="admin-table">
         <thead>
           <tr>
@@ -207,7 +215,7 @@
         </div>
       </div>
     </div>
-    <div class="admin-table-wrap" style="margin-top: 14px; padding-bottom: 140px;">
+    <div class="admin-table-wrap" style="margin-top: 14px;">
       <table class="admin-table">
         <thead>
           <tr>
