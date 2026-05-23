@@ -2190,8 +2190,8 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             $document = new SalesDocument();
             $document->document_type = $payload['document_type'] ?? 'quotation';
             $prefix = $document->document_type === 'invoice' ? 'IV' : 'QT';
-            $document->document_number = $prefix . '-DRAFT-' . now('Asia/Bangkok')->format('YmdHis');
-            $document->file_name = strtolower($prefix) . '-draft-' . now('Asia/Bangkok')->format('YmdHis');
+            $document->document_number = $prefix . '-' . now('Asia/Bangkok')->format('YmdHis');
+            $document->file_name = strtolower($prefix) . '-' . now('Asia/Bangkok')->format('YmdHis');
             $document->pdf_disk = 'local';
             $document->pdf_path = '';
         }
@@ -2400,7 +2400,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
 
             if ($isDirectInvoiceCreate) {
                 // Immediately create a real invoice using the service to auto-generate document number and PDF
-                $payload['document_number'] = 'IV-DRAFT-' . now('Asia/Bangkok')->format('YmdHis');
+                $payload['document_number'] = 'IV-' . now('Asia/Bangkok')->format('YmdHis');
                 $document = app(\App\Services\SalesDocumentPdfService::class)->saveDocument($payload, $currentAdmin()?->id);
                 $document->update(['status' => SalesDocument::STATUS_INVOICE_DRAFT]);
             } else {
@@ -2408,10 +2408,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 $prefix = $documentType === 'invoice' ? 'IV' : 'QT';
                 $document = SalesDocument::create([
                     'document_type' => $documentType,
-                    'document_number' => $prefix . '-DRAFT-' . now('Asia/Bangkok')->format('YmdHis'),
+                    'document_number' => $prefix . '-' . now('Asia/Bangkok')->format('YmdHis'),
                     'document_date' => now('Asia/Bangkok')->format('Y-m-d'),
                     'due_date' => now('Asia/Bangkok')->addDays(7)->format('Y-m-d'),
-                    'file_name' => strtolower($prefix) . '-draft-' . now('Asia/Bangkok')->format('YmdHis'),
+                    'file_name' => strtolower($prefix) . '-' . now('Asia/Bangkok')->format('YmdHis'),
                     'customer_id' => $customer->id,
                     'customer_name' => $customer->display_name,
                     'is_draft' => true,
