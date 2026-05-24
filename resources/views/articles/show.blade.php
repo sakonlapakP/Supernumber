@@ -59,17 +59,20 @@
   <link rel="stylesheet" href="{{ asset('css/article.css') }}?v={{ substr(md5_file(public_path('css/article.css')), 0, 8) }}" />
   <style>
     /* Prevent any cached CSS from shrinking the cards or fonts on the article page */
+    .article-related-numbers {
+        padding: 24px 20px !important; /* Increase horizontal space for the 3-column grid */
+    }
     .article-related-numbers .number-card--home {
-        min-height: 160px !important;
-        padding: 8px 6px !important; /* Elegant horizontal space */
+        min-height: 165px !important;
+        padding: 10px !important; /* Standard premium spacing */
         border-radius: 12px !important;
         background: #fff !important;
         box-shadow: 0 8px 25px rgba(45,33,24,.08) !important;
         border: 1px solid rgba(0,0,0,.04) !important;
     }
     .article-related-numbers .card-top {
-        font-size: 18px !important; /* Scale to 18px to look extremely premium and bold */
-        padding: 9px 6px !important;
+        font-size: 20px !important; /* Scale to 20px for high readability */
+        padding: 10px 8px !important;
         border-radius: 12px !important;
         background: #1a1612 !important;
         color: #fff !important;
@@ -81,33 +84,33 @@
     .article-related-numbers .card-topic-icons {
         gap: 5px !important;
         margin-top: 5px !important;
-        min-height: 30px !important;
-        max-height: 30px !important;
+        min-height: 32px !important;
+        max-height: 32px !important;
     }
     .article-related-numbers .card-topic-icon {
-        width: 26px !important;
-        height: 26px !important;
-        font-size: 12px !important;
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 13px !important;
     }
     .article-related-numbers .card-network-main,
     .article-related-numbers .card-network-suffix {
-        font-size: 12px !important;
+        font-size: 13px !important;
     }
     .article-related-numbers .card-meta-plan,
     .article-related-numbers .card-meta-price,
     .article-related-numbers .card-meta-plan *,
     .article-related-numbers .card-meta-price * {
-        font-size: 10.8px !important; /* Increased font-size with wider 260px card */
+        font-size: 11.8px !important; /* Perfect spacious size that fits long package text comfortably inside a 280px card */
         color: #1a1612 !important;
         white-space: nowrap !important; /* Force text to stay on a single line */
-        letter-spacing: -0.01em !important; /* Squeeze font minimally */
+        letter-spacing: -0.01em !important;
     }
     .article-related-numbers .card-btn {
-        font-size: 13px !important; /* Standard comfortable font size */
-        min-height: 30px !important;
-        height: 30px !important;
+        font-size: 13.5px !important;
+        min-height: 32px !important;
+        height: 32px !important;
         border-radius: 12px !important;
-        margin-top: 5px !important;
+        margin-top: 6px !important;
         background: #e1b155 !important;
         color: #4b382a !important;
         box-shadow: 0 4px 12px rgba(225,177,85,.2) !important;
@@ -116,14 +119,14 @@
     /* 3-column desktop layout matching homepage */
     @media (min-width: 986px) {
         .article-related-numbers .home-card-grid[data-view=grid] {
-            grid-template-columns: repeat(3, 260px) !important; /* Increased to 260px to match homepage */
+            grid-template-columns: repeat(3, 280px) !important; /* Increased width to 280px for a beautiful layout */
             justify-content: center !important;
             gap: 16px !important;
         }
     }
     @media (max-width: 985px) and (min-width: 681px) {
         .article-related-numbers .home-card-grid[data-view=grid] {
-            grid-template-columns: repeat(2, 260px) !important; /* Increased to 260px to match homepage */
+            grid-template-columns: repeat(2, 280px) !important; /* Increased width to 280px */
             justify-content: center !important;
             gap: 16px !important;
         }
