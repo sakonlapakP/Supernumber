@@ -5608,3 +5608,20 @@ Route::get('/emergency-migrate', function () use ($ensureAdmin) {
         return "Migration failed: " . $e->getMessage();
     }
 });
+
+// DIAGNOSE & FIX POSTPAID NUMBERS — requires manager login
+Route::get('/diagnose-postpaid', function (Request $request) use ($ensureAdmin) {
+    if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+        return $redirect;
+    }
+
+    $fix = $request->boolean('fix');
+
+    Artisan::call('numbers:diagnose-postpaid', $fix ? ['--fix' => true] : []);
+    $output = Artisan::output();
+
+    return response("<pre style='font-family:monospace;padding:20px;'>"
+        . htmlspecialchars($output)
+        . ($fix ? '' : "\n<a href='?fix=1' style='color:blue;'>▶ Run with --fix</a>")
+        . "</pre>");
+});
