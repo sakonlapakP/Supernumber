@@ -391,6 +391,15 @@
 
     .topic-bar__icon { font-size: 16px; line-height: 1; }
 
+    .topic-bar-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: #4a3e35;
+      padding-left: 4px;
+      margin-bottom: 8px;
+      display: block;
+    }
+
     @media (max-width: 820px) {
       .topic-bar {
         grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -542,6 +551,7 @@
           return route('numbers.index') . ($query ? '?' . $query : '');
         };
       @endphp
+      <span class="topic-bar-label">เลือกหมวดที่เบอร์นี้ส่งเสริม</span>
       <nav class="topic-bar" aria-label="กรองตามหมวดหมู่มงคล">
         @foreach (\App\Models\PhoneNumber::TOPIC_ICON_MAP as $topic => $icon)
           @php
