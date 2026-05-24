@@ -384,6 +384,138 @@
         gap: 8px !important;
       }
     }
+
+    /* ===== HOME TOPICS SECTION ===== */
+    .home-topics {
+      padding: 32px 0 8px;
+    }
+
+    .home-topics__inner {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 28px;
+      padding: 28px 28px 24px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 24px rgba(45, 33, 24, 0.08);
+    }
+
+    .home-topics__header {
+      margin-bottom: 20px;
+    }
+
+    .home-topics__header h2 {
+      font-size: 20px;
+      font-weight: 800;
+      color: #3b2f27;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .home-topics__header h2::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 20px;
+      background: linear-gradient(to bottom, #d8a34a, #9a6f2e);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .home-topics__header p {
+      font-size: 14px;
+      color: #8a7a6c;
+      padding-left: 12px;
+    }
+
+    .home-topics__grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .home-topic-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #fff;
+      border: 1.5px solid rgba(73, 61, 52, 0.1);
+      border-radius: 14px;
+      padding: 14px 14px 14px 12px;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .home-topic-card:hover {
+      border-color: #d8a34a;
+      box-shadow: 0 4px 16px rgba(216, 163, 74, 0.2);
+      transform: translateY(-1px);
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .home-topic-card__icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 11px;
+      background: #f9f6f1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+      border: 1px solid rgba(216, 163, 74, 0.15);
+    }
+
+    .home-topic-card__text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .home-topic-card__name {
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #3b2f27;
+      line-height: 1.3;
+    }
+
+    .home-topic-card__arrow {
+      font-size: 14px;
+      color: #c5b09a;
+      flex-shrink: 0;
+      transition: color 0.2s, transform 0.2s;
+    }
+
+    .home-topic-card:hover .home-topic-card__arrow {
+      color: #d8a34a;
+      transform: translateX(2px);
+    }
+
+    @media (max-width: 640px) {
+      .home-topics__inner {
+        padding: 20px 16px;
+        border-radius: 20px;
+      }
+      .home-topics__grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+      .home-topic-card {
+        padding: 12px 10px;
+        gap: 8px;
+      }
+      .home-topic-card__icon {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+      }
+      .home-topic-card__name {
+        font-size: 12.5px;
+      }
+    }
   </style>
 
   <!-- Hero Section -->
@@ -554,6 +686,29 @@
             </div>
           </div>
         </form>
+      </div>
+    </div>
+  </section>
+
+  <!-- Category Topics Section -->
+  <section class="home-topics" aria-labelledby="home-topics-title">
+    <div class="container container--narrow">
+      <div class="home-topics__inner">
+        <div class="home-topics__header">
+          <h2 id="home-topics-title">ค้นหาตามหมวดหมู่มงคล</h2>
+          <p>เลือกหมวดที่คุณต้องการเสริมดวง</p>
+        </div>
+        <div class="home-topics__grid">
+          @foreach (\App\Models\PhoneNumber::TOPIC_ICON_MAP as $topic => $icon)
+            <a class="home-topic-card" href="{{ route('numbers.index', ['topic' => $topic]) }}">
+              <div class="home-topic-card__icon">{{ $icon }}</div>
+              <div class="home-topic-card__text">
+                <div class="home-topic-card__name">{{ $topic }}</div>
+              </div>
+              <span class="home-topic-card__arrow">›</span>
+            </a>
+          @endforeach
+        </div>
       </div>
     </div>
   </section>

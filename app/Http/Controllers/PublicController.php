@@ -96,10 +96,15 @@ class PublicController extends Controller
         $searchDigits = preg_replace('/[^0-9]/', '', $search);
         $selectedPlan = trim((string) $request->input('plan', ''));
         $selectedServiceType = trim((string) $request->input('service_type', ''));
+        $selectedTopic = trim((string) $request->input('topic', ''));
         $positionPattern = PhoneNumber::buildSearchPattern($request->query());
 
         if (! in_array($selectedServiceType, [PhoneNumber::SERVICE_TYPE_POSTPAID, PhoneNumber::SERVICE_TYPE_PREPAID], true)) {
             $selectedServiceType = '';
+        }
+
+        if (! array_key_exists($selectedTopic, PhoneNumber::TOPIC_ICON_MAP)) {
+            $selectedTopic = '';
         }
 
         $baseQuery = PhoneNumber::query()
@@ -108,6 +113,9 @@ class PublicController extends Controller
             ->supportedNetwork()
             ->when($selectedServiceType !== '', function ($query) use ($selectedServiceType) {
                 $query->ofServiceType($selectedServiceType);
+            })
+            ->when($selectedTopic !== '', function ($query) use ($selectedTopic) {
+                $query->forTopic($selectedTopic);
             });
 
         $buildPlanOptions = static fn (array $labels): array => collect($labels)
@@ -197,6 +205,7 @@ class PublicController extends Controller
         $isDefaultSplitLayout = $searchDigits === ''
             && $selectedPlan === ''
             && $selectedServiceType === ''
+            && $selectedTopic === ''
             && $positionPattern === null;
 
         $defaultPrepaidNumbers = collect();
@@ -282,7 +291,7 @@ class PublicController extends Controller
                 ->withQueryString();
         }
 
-        return view('numbers', compact('numbers', 'plans', 'planOptionsByServiceType', 'search', 'selectedPlan', 'selectedServiceType', 'positionPattern', 'isDefaultSplitLayout', 'defaultPrepaidNumbers', 'defaultPostpaidNumbers'));
+        return view('numbers', compact('numbers', 'plans', 'planOptionsByServiceType', 'search', 'selectedPlan', 'selectedServiceType', 'selectedTopic', 'positionPattern', 'isDefaultSplitLayout', 'defaultPrepaidNumbers', 'defaultPostpaidNumbers'));
     }
 
     /**

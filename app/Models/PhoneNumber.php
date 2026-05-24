@@ -140,6 +140,66 @@ class PhoneNumber extends Model
         return $query->whereIn('network_code', self::supportedNetworkCodes());
     }
 
+    public function scopeForTopic(Builder $query, string $topic): Builder
+    {
+        $topicMap = self::topicPairMap();
+
+        if (! isset($topicMap[$topic])) {
+            return $query;
+        }
+
+        $expandPairs = static function (array $pairs): array {
+            $expanded = [];
+            foreach ($pairs as $pair) {
+                $expanded[] = $pair;
+                $expanded[] = strrev($pair);
+                $chars = str_split($pair);
+                sort($chars);
+                $expanded[] = implode('', $chars);
+            }
+
+            return array_values(array_unique($expanded));
+        };
+
+        $goodPairs = $expandPairs($topicMap[$topic]['good']);
+        $badPairs = $expandPairs($topicMap[$topic]['bad']);
+        $conditionalPairs = $expandPairs($topicMap[$topic]['conditional'] ?? []);
+
+        // Pair positions within 10-digit phone_number (SUBSTR is 1-indexed).
+        // Last 7 digits → pairs at string positions 4–9; last pair (pos 9) has weight 2.
+        $pairPositions = [4, 5, 6, 7, 8, 9];
+
+        $goodCaseParts = [];
+        $conditionalCaseParts = [];
+        $badCaseParts = [];
+
+        foreach ($pairPositions as $pos) {
+            $weight = ($pos === 9) ? 2 : 1;
+            $col = "SUBSTR(phone_number, {$pos}, 2)";
+
+            if ($goodPairs !== []) {
+                $in = implode("','", $goodPairs);
+                $goodCaseParts[] = "CASE WHEN {$col} IN ('{$in}') THEN {$weight} ELSE 0 END";
+            }
+
+            if ($conditionalPairs !== []) {
+                $in = implode("','", $conditionalPairs);
+                $conditionalCaseParts[] = "CASE WHEN {$col} IN ('{$in}') THEN {$weight} ELSE 0 END";
+            }
+
+            if ($badPairs !== []) {
+                $in = implode("','", $badPairs);
+                $badCaseParts[] = "CASE WHEN {$col} IN ('{$in}') THEN {$weight} ELSE 0 END";
+            }
+        }
+
+        $goodSum = $goodCaseParts !== [] ? '(' . implode(' + ', $goodCaseParts) . ')' : '0';
+        $conditionalSum = $conditionalCaseParts !== [] ? '(' . implode(' + ', $conditionalCaseParts) . ')' : '0';
+        $badSum = $badCaseParts !== [] ? '(' . implode(' + ', $badCaseParts) . ')' : '0';
+
+        return $query->whereRaw("({$goodSum} + ({$conditionalSum} * 0.5)) > {$badSum}");
+    }
+
     public static function buildSearchPattern(array $filters): ?string
     {
         // Catalog digit filters become a SQL LIKE mask where "_" means "any digit" at that position.
