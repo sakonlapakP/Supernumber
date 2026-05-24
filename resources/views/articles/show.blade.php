@@ -68,8 +68,8 @@
         border: 1px solid rgba(0,0,0,.04) !important;
     }
     .article-related-numbers .card-top {
-        font-size: 19px !important; /* Slightly smaller than 21px to ensure it never squeezes, yet bold and big */
-        padding: 10px 8px !important;
+        font-size: 17px !important; /* Scale down to 17px to keep it balanced and prevent overflow */
+        padding: 9px 8px !important;
         border-radius: 12px !important;
         background: #1a1612 !important;
         color: #fff !important;
@@ -93,14 +93,14 @@
     .article-related-numbers .card-meta-price,
     .article-related-numbers .card-meta-plan *,
     .article-related-numbers .card-meta-price * {
-        font-size: 13.5px !important; /* Extremely safe size, slightly smaller than 15px to guarantee it stays on one line */
+        font-size: 11.8px !important; /* Perfect compact size to fit long price text like 3,999 บาท เดือนละ 1,499/เดือน without overflow */
         color: #1a1612 !important;
-        white-space: nowrap !important; /* Force text to stay on a single line! */
+        white-space: nowrap !important; /* Force text to stay on a single line */
     }
     .article-related-numbers .card-btn {
-        font-size: 14px !important; /* Standard home page font size */
-        min-height: 36px !important;
-        height: 36px !important;
+        font-size: 13px !important; /* Standard compact button font size */
+        min-height: 32px !important;
+        height: 32px !important;
         border-radius: 12px !important;
         margin-top: 6px !important;
         background: #e1b155 !important;
