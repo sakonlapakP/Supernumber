@@ -5107,7 +5107,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             ->orderBy('id')
             ->get();
 
-        $roleOptions = User::roleOptions();
+        $roleOptions = array_values(array_diff(User::roleOptions(), [User::ROLE_MANAGER]));
 
         return view('admin.users', compact('users', 'roleOptions'));
     })->name('users');
@@ -5121,7 +5121,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'name' => ['required', 'string', 'max:255'],
             'username' => ['required', 'string', 'max:255', Rule::unique('users', 'username')],
             'email' => ['required', 'email', 'max:255', Rule::unique('users', 'email')],
-            'role' => ['required', 'string', Rule::in(User::roleOptions())],
+            'role' => ['required', 'string', Rule::in(array_values(array_diff(User::roleOptions(), [User::ROLE_MANAGER])))],
             'password' => ['required', 'string', 'min:8'],
         ]);
 
@@ -5144,8 +5144,12 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             return $redirect;
         }
 
+        if ($user->role === User::ROLE_MANAGER) {
+            abort(403);
+        }
+
         $data = $request->validate([
-            'role' => ['required', 'string', Rule::in(User::roleOptions())],
+            'role' => ['required', 'string', Rule::in(array_values(array_diff(User::roleOptions(), [User::ROLE_MANAGER])))],
         ]);
 
         $user->update([
@@ -5161,6 +5165,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     Route::post('/users/{user}/email', function (Request $request, User $user) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
             return $redirect;
+        }
+
+        if ($user->role === User::ROLE_MANAGER) {
+            abort(403);
         }
 
         $data = $request->validate([
@@ -5185,6 +5193,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             return $redirect;
         }
 
+        if ($user->role === User::ROLE_MANAGER) {
+            abort(403);
+        }
+
         if ($user->is_active) {
             return back()->withErrors(['error' => 'ไม่สามารถลบผู้ใช้ที่เปิดใช้งานอยู่ได้']);
         }
@@ -5200,6 +5212,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     Route::post('/users/{user}/toggle-active', function (Request $request, User $user) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
             return $redirect;
+        }
+
+        if ($user->role === User::ROLE_MANAGER) {
+            abort(403);
         }
 
         if (! $user->is_active) {

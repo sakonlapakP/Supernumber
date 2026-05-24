@@ -113,6 +113,27 @@ class AdminUserApprovalTest extends TestCase
         $this->assertSame(User::ROLE_DOCUMENT_OFFICER, $pending->role);
     }
 
+    public function test_manager_cannot_approve_user_as_manager(): void
+    {
+        $manager = User::factory()->create([
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        $pending = User::factory()->create([
+            'is_active' => false,
+            'role' => User::ROLE_STAFF,
+        ]);
+
+        $this->withSession($this->managerSession($manager))
+            ->post(route('admin.users.approve', $pending), ['role' => User::ROLE_MANAGER])
+            ->assertSessionHasErrors(['role']);
+
+        $pending->refresh();
+        $this->assertFalse($pending->is_active);
+        $this->assertSame(User::ROLE_STAFF, $pending->role);
+    }
+
     public function test_document_officer_login_redirects_to_sales_documents(): void
     {
         User::factory()->create([
@@ -171,6 +192,7 @@ class AdminUserApprovalTest extends TestCase
 
         $user = User::factory()->create([
             'email' => 'old@example.com',
+            'role' => User::ROLE_STAFF,
         ]);
 
         $this->withSession($this->managerSession($manager))
@@ -178,6 +200,26 @@ class AdminUserApprovalTest extends TestCase
             ->assertRedirect(route('admin.users'));
 
         $this->assertSame('new@example.com', $user->refresh()->email);
+    }
+
+    public function test_manager_cannot_update_another_manager_email(): void
+    {
+        $manager = User::factory()->create([
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        $otherManager = User::factory()->create([
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+            'email' => 'other-manager@example.com',
+        ]);
+
+        $this->withSession($this->managerSession($manager))
+            ->post(route('admin.users.email.update', $otherManager), ['email' => 'changed@example.com'])
+            ->assertForbidden();
+
+        $this->assertSame('other-manager@example.com', $otherManager->refresh()->email);
     }
 
     public function test_manager_cannot_update_user_email_to_existing_email(): void
@@ -189,9 +231,11 @@ class AdminUserApprovalTest extends TestCase
 
         $existing = User::factory()->create([
             'email' => 'existing@example.com',
+            'role' => User::ROLE_STAFF,
         ]);
         $user = User::factory()->create([
             'email' => 'old@example.com',
+            'role' => User::ROLE_STAFF,
         ]);
 
         $this->withSession($this->managerSession($manager))
@@ -228,7 +272,10 @@ class AdminUserApprovalTest extends TestCase
             'is_active' => true,
         ]);
 
-        $pending = User::factory()->create(['is_active' => false]);
+        $pending = User::factory()->create([
+            'is_active' => false,
+            'role' => User::ROLE_STAFF,
+        ]);
         $pendingId = $pending->id;
 
         $this->withSession($this->managerSession($manager))
@@ -236,6 +283,25 @@ class AdminUserApprovalTest extends TestCase
             ->assertRedirect(route('admin.users'));
 
         $this->assertNull(User::find($pendingId));
+    }
+
+    public function test_manager_cannot_reject_pending_manager(): void
+    {
+        $manager = User::factory()->create([
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        $pendingManager = User::factory()->create([
+            'role' => User::ROLE_MANAGER,
+            'is_active' => false,
+        ]);
+
+        $this->withSession($this->managerSession($manager))
+            ->post(route('admin.users.reject', $pendingManager))
+            ->assertForbidden();
+
+        $this->assertNotNull(User::find($pendingManager->id));
     }
 
     public function test_manager_cannot_reject_active_user(): void
@@ -277,6 +343,25 @@ class AdminUserApprovalTest extends TestCase
 
         $active->refresh();
         $this->assertFalse($active->is_active);
+    }
+
+    public function test_manager_cannot_deactivate_another_manager(): void
+    {
+        $manager = User::factory()->create([
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        $otherManager = User::factory()->create([
+            'role' => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        $this->withSession($this->managerSession($manager))
+            ->post(route('admin.users.toggle-active', $otherManager))
+            ->assertForbidden();
+
+        $this->assertTrue($otherManager->refresh()->is_active);
     }
 
     public function test_deactivated_user_cannot_login(): void

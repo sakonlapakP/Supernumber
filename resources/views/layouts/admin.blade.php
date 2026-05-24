@@ -784,6 +784,12 @@
         border-color: #f0dbad;
       }
 
+      .admin-badge--muted {
+        color: #55606e;
+        background: #f4f6f8;
+        border-color: #d9e0e7;
+      }
+
       .admin-button--danger {
         background: var(--admin-danger);
         color: #ffffff;

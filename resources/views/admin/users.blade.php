@@ -77,23 +77,29 @@
               <td>{{ $user->name }}</td>
               <td>{{ $user->username ?: '-' }}</td>
               <td>
-                <form action="{{ route('admin.users.email.update', $user) }}" method="post" style="display: flex; gap: 8px; align-items: center; min-width: 280px;">
-                  @csrf
-                  <input
-                    class="admin-input"
-                    type="email"
-                    name="email"
-                    value="{{ $user->email }}"
-                    required
-                    style="margin: 0; min-width: 190px;"
-                    aria-label="อีเมลของ {{ $user->name }}"
-                  />
-                  <button type="submit" class="admin-button admin-button--compact admin-button--muted">บันทึก</button>
-                </form>
+                @if ($user->role === \App\Models\User::ROLE_MANAGER)
+                  {{ $user->email }}
+                @else
+                  <form action="{{ route('admin.users.email.update', $user) }}" method="post" style="display: flex; gap: 8px; align-items: center; min-width: 280px;">
+                    @csrf
+                    <input
+                      class="admin-input"
+                      type="email"
+                      name="email"
+                      value="{{ $user->email }}"
+                      required
+                      style="margin: 0; min-width: 190px;"
+                      aria-label="อีเมลของ {{ $user->name }}"
+                    />
+                    <button type="submit" class="admin-button admin-button--compact admin-button--muted">บันทึก</button>
+                  </form>
+                @endif
               </td>
               <td>{{ $user->role_label }}</td>
               <td>
-                @if ($user->is_active)
+                @if ($user->role === \App\Models\User::ROLE_MANAGER)
+                  <span class="admin-badge admin-badge--muted">Manager</span>
+                @elseif ($user->is_active)
                   <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
                     <span class="admin-badge admin-badge--success">เปิดใช้งาน</span>
                     <form action="{{ route('admin.users.toggle-active', $user) }}" method="post">
