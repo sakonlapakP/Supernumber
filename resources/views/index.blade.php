@@ -516,6 +516,301 @@
         font-size: 12.5px;
       }
     }
+
+    /* ===== HOME LEGENDARY SECTION ===== */
+    .home-legendary {
+      padding: 24px 0 16px;
+    }
+
+    .home-legendary__inner {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 28px;
+      padding: 32px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 24px rgba(45, 33, 24, 0.08);
+    }
+
+    .home-legendary__header {
+      margin-bottom: 24px;
+      text-align: center;
+    }
+
+    .home-legendary__header h2 {
+      font-size: 24px;
+      font-weight: 800;
+      color: #3b2f27;
+      margin-bottom: 6px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .home-legendary__header h2::before,
+    .home-legendary__header h2::after {
+      content: '';
+      display: inline-block;
+      width: 24px;
+      height: 2px;
+      background: linear-gradient(to right, transparent, #d8a34a);
+      flex-shrink: 0;
+    }
+    
+    .home-legendary__header h2::after {
+      background: linear-gradient(to left, transparent, #d8a34a);
+    }
+
+    .home-legendary__header p {
+      font-size: 14.5px;
+      color: #8a7a6c;
+      font-weight: 500;
+    }
+
+    .home-legendary__grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+    }
+
+    .legendary-card {
+      position: relative;
+      overflow: hidden;
+      border-radius: 20px;
+      padding: 28px 24px;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      min-height: 220px;
+      text-decoration: none;
+      transition: transform 0.3s cubic-bezier(0.25, 0.8, 0.25, 1), box-shadow 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .legendary-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.1), rgba(255,255,255,0.05));
+      opacity: 0;
+      transition: opacity 0.3s ease;
+      z-index: 1;
+    }
+
+    .legendary-card:hover::before {
+      opacity: 1;
+    }
+
+    .legendary-card:hover {
+      transform: translateY(-4px);
+      text-decoration: none;
+    }
+
+    /* Dragon Card Styles */
+    .legendary-card--dragon {
+      background: linear-gradient(135deg, #1f1a16 0%, #3a1c13 100%);
+      box-shadow: 0 10px 30px rgba(58, 28, 19, 0.15);
+      border: 1px solid rgba(216, 163, 74, 0.15);
+    }
+
+    .legendary-card--dragon:hover {
+      box-shadow: 0 15px 35px rgba(58, 28, 19, 0.3), 0 0 15px rgba(216, 163, 74, 0.2);
+      border-color: rgba(216, 163, 74, 0.4);
+    }
+
+    /* Swan Card Styles */
+    .legendary-card--swan {
+      background: linear-gradient(135deg, #fcfaf7 0%, #f6ebe1 100%);
+      box-shadow: 0 10px 30px rgba(138, 122, 108, 0.1);
+      border: 1px solid rgba(216, 163, 74, 0.1);
+    }
+
+    .legendary-card--swan:hover {
+      box-shadow: 0 15px 35px rgba(138, 122, 108, 0.2), 0 0 15px rgba(216, 163, 74, 0.15);
+      border-color: rgba(216, 163, 74, 0.3);
+    }
+
+    .legendary-card__content {
+      position: relative;
+      z-index: 2;
+    }
+
+    .legendary-card__badge-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .legendary-card__badge {
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      padding: 4px 10px;
+      border-radius: 20px;
+    }
+
+    .legendary-card--dragon .legendary-card__badge {
+      background: rgba(216, 163, 74, 0.2);
+      color: #e6bd73;
+      border: 1px solid rgba(216, 163, 74, 0.3);
+    }
+
+    .legendary-card--swan .legendary-card__badge {
+      background: rgba(216, 163, 74, 0.12);
+      color: #9a6f2e;
+      border: 1px solid rgba(216, 163, 74, 0.2);
+    }
+
+    .legendary-card__icon {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 38px;
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+      border: 2px solid rgba(216, 163, 74, 0.35);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .legendary-card--dragon .legendary-card__icon {
+      background: linear-gradient(135deg, #e6bd73 0%, #9a6f2e 100%);
+      border-color: rgba(230, 189, 115, 0.4);
+      box-shadow: 0 8px 24px rgba(216, 163, 74, 0.25);
+    }
+
+    .legendary-card--swan .legendary-card__icon {
+      background: linear-gradient(135deg, #fcfaf7 0%, #f6ebe1 100%);
+      border-color: rgba(216, 163, 74, 0.3);
+      box-shadow: 0 8px 24px rgba(138, 122, 108, 0.15);
+    }
+
+    .legendary-card:hover .legendary-card__icon {
+      transform: scale(1.15) rotate(8deg);
+    }
+
+    .legendary-card__title {
+      font-size: 22px;
+      font-weight: 850;
+      margin-bottom: 8px;
+      line-height: 1.2;
+    }
+
+    .legendary-card--dragon .legendary-card__title {
+      color: #f7e6c4;
+      background: linear-gradient(to right, #ffffff, #e6bd73);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .legendary-card--swan .legendary-card__title {
+      color: #3b2f27;
+      background: linear-gradient(to right, #3b2f27, #7a583c);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .legendary-card__desc {
+      font-size: 13.5px;
+      line-height: 1.45;
+      font-weight: 500;
+    }
+
+    .legendary-card--dragon .legendary-card__desc {
+      color: #c9b8ad;
+    }
+
+    .legendary-card--swan .legendary-card__desc {
+      color: #726255;
+    }
+
+    .legendary-card__numbers-preview {
+      display: flex;
+      gap: 6px;
+      margin-top: 14px;
+    }
+
+    .legendary-card__number-pill {
+      font-size: 12px;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+    }
+
+    .legendary-card--dragon .legendary-card__number-pill {
+      background: rgba(255, 255, 255, 0.08);
+      color: #e6bd73;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .legendary-card--swan .legendary-card__number-pill {
+      background: rgba(74, 62, 53, 0.05);
+      color: #9a6f2e;
+      border: 1px solid rgba(74, 62, 53, 0.03);
+    }
+
+    .legendary-card__action {
+      margin-top: 24px;
+      display: flex;
+      align-items: center;
+      font-size: 14px;
+      font-weight: 700;
+      gap: 8px;
+      z-index: 2;
+    }
+
+    .legendary-card--dragon .legendary-card__action {
+      color: #e6bd73;
+    }
+
+    .legendary-card--swan .legendary-card__action {
+      color: #9a6f2e;
+    }
+
+    .legendary-card__arrow {
+      transition: transform 0.2s ease;
+    }
+
+    .legendary-card:hover .legendary-card__arrow {
+      transform: translateX(4px);
+    }
+
+    @media (max-width: 768px) {
+      .home-legendary__inner {
+        padding: 24px 16px;
+        border-radius: 20px;
+      }
+      
+      .home-legendary__header h2 {
+        font-size: 20px;
+      }
+
+      .home-legendary__header h2::before,
+      .home-legendary__header h2::after {
+        width: 16px;
+      }
+
+      .home-legendary__grid {
+        grid-template-columns: 1fr;
+        gap: 16px;
+      }
+
+      .legendary-card {
+        min-height: 190px;
+        padding: 20px 18px;
+      }
+
+      .legendary-card__title {
+        font-size: 19px;
+      }
+    }
   </style>
 
   <!-- Hero Section -->
@@ -705,9 +1000,63 @@
               <div class="home-topic-card__text">
                 <div class="home-topic-card__name">{{ $topic }}</div>
               </div>
-              <span class="home-topic-card__arrow">›</span>
             </a>
           @endforeach
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Legendary Numbers Section (Dragon & Swan) -->
+  <section class="home-legendary" style="display: none;" aria-labelledby="home-legendary-title">
+    <div class="container container--narrow">
+      <div class="home-legendary__inner">
+        <div class="home-legendary__header">
+          <h2 id="home-legendary-title">กลุ่มเบอร์ระดับตำนาน</h2>
+          <p>เสริมพลังอำนาจ บารมี และเสน่ห์ทางการเงินขั้นสุดให้กับชีวิตคุณ</p>
+        </div>
+        <div class="home-legendary__grid">
+          <!-- Dragon Numbers Card -->
+          <a class="legendary-card legendary-card--dragon" href="{{ route('numbers.index', ['q' => '789']) }}">
+            <div class="legendary-card__content">
+              <div class="legendary-card__badge-row">
+                <span class="legendary-card__badge">เบอร์มังกร</span>
+                <div class="legendary-card__icon">🐉</div>
+              </div>
+              <h3 class="legendary-card__title">เบอร์มังกร (เลข 789)</h3>
+              <p class="legendary-card__desc">เบอร์แห่งอำนาจ บารมี ความมั่งคั่งร่ำรวย ดึงดูดเงินก้อนโตและโอกาสทางธุรกิจขนาดใหญ่ เหมาะสำหรับผู้บริหาร เจ้าของกิจการ หรือผู้ต้องการความก้าวหน้าแบบก้าวกระโดด</p>
+              <div class="legendary-card__numbers-preview">
+                <span class="legendary-card__number-pill">789</span>
+                <span class="legendary-card__number-pill">782</span>
+                <span class="legendary-card__number-pill">879</span>
+              </div>
+            </div>
+            <div class="legendary-card__action">
+              <span>ค้นหาเบอร์มังกรทั้งหมด</span>
+              <span class="legendary-card__arrow">→</span>
+            </div>
+          </a>
+
+          <!-- Swan Numbers Card -->
+          <a class="legendary-card legendary-card--swan" href="{{ route('numbers.index', ['q' => '289']) }}">
+            <div class="legendary-card__content">
+              <div class="legendary-card__badge-row">
+                <span class="legendary-card__badge">เบอร์หงส์</span>
+                <div class="legendary-card__icon">🦢</div>
+              </div>
+              <h3 class="legendary-card__title">เบอร์หงส์ (เลข 289)</h3>
+              <p class="legendary-card__desc">เบอร์แห่งเสน่ห์ เมตตามหานิยม เงินทองไหลมาไม่ขาดสายและการอุปถัมภ์ค้ำชูที่ดีเยี่ยม เหมาะสำหรับนักขาย นักเจรจา เจ้าของธุรกิจร้านค้า หรือผู้ที่ทำงานประสานงานกับผู้คน</p>
+              <div class="legendary-card__numbers-preview">
+                <span class="legendary-card__number-pill">289</span>
+                <span class="legendary-card__number-pill">282</span>
+                <span class="legendary-card__number-pill">828</span>
+              </div>
+            </div>
+            <div class="legendary-card__action">
+              <span>ค้นหาเบอร์หงส์ทั้งหมด</span>
+              <span class="legendary-card__arrow">→</span>
+            </div>
+          </a>
         </div>
       </div>
     </div>

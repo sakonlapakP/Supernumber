@@ -638,8 +638,7 @@
       @endphp
       <div class="numbers-topics-box">
         <div class="numbers-topics__header">
-          <h2>ค้นหาตามหมวดหมู่มงคล</h2>
-          <p>เลือกหมวดที่เบอร์นี้ส่งเสริม</p>
+          <h2>เลือกหมวดที่เบอร์นี้ส่งเสริม</h2>
         </div>
         <nav class="numbers-topics__grid" aria-label="กรองตามหมวดหมู่มงคล">
           @foreach (\App\Models\PhoneNumber::TOPIC_ICON_MAP as $topic => $icon)
@@ -660,7 +659,7 @@
               <div class="numbers-topic-card__text">
                 <div class="numbers-topic-card__name">{{ $topic }}</div>
               </div>
-              <span class="numbers-topic-card__arrow">›</span>
+
             </a>
           @endforeach
         </nav>
@@ -669,7 +668,7 @@
       <div class="section-title numbers-catalog-title">
         <div class="numbers-catalog-title__content">
           @if ($selectedTopics !== [])
-            <h2 id="numbers-catalog-title">เบอร์หมวด {{ implode(', ', $selectedTopics) }}</h2>
+            <h2 id="numbers-catalog-title">กรองเบอร์ตามหมวด {{ implode(', ', $selectedTopics) }}</h2>
           @else
             <h2 id="numbers-catalog-title">เบอร์ทั้งหมด</h2>
           @endif
