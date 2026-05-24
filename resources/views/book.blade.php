@@ -2,6 +2,15 @@
 
 @section('title', 'Supernumber | สั่งซื้อเบอร์')
 
+@push('head')
+  <style>
+    .network-ais-color {
+      color: #b8d400;
+      font-weight: 600;
+    }
+  </style>
+@endpush
+
 @section('content')
   @php
     $orderedNumber = $currentNumber?->phone_number ?? request('number', '-');
@@ -117,32 +126,28 @@
               เบอร์ที่สั่งซื้อ
               <input type="text" name="ordered_number" value="{{ $orderedNumber }}" readonly>
             </label>
+            @php
+              $networkDisplay = match ($currentNumber?->network_code) {
+                'true_dtac' => 'TRUEDTAC',
+                'ais' => 'AIS',
+                default => 'TRUEDTAC',
+              };
+              $networkColorClass = match ($currentNumber?->network_code) {
+                'true_dtac' => 'network-brand-gradient',
+                'ais' => 'network-ais-color',
+                default => 'network-brand-gradient',
+              };
+            @endphp
             <div class="full book-network-row">
               <p class="book-network-line">
                 เครือข่าย:
-                <span class="network-brand-gradient">True / Dtac / AIS</span>
+                <span class="{{ $networkColorClass }}">{{ $networkDisplay }}</span>
               </p>
-              <label class="book-network-select-label">
-                {{ $isPrepaid ? 'ราคาขายเบอร์' : 'ยอดชำระแรก' }}
-                <select name="selected_package" id="selected_package">
-                  @foreach ($availablePackages as $packagePrice)
-                    @php $plan = $packageCatalog[$packagePrice]; @endphp
-                    <option
-                      value="{{ $packagePrice }}"
-                      data-promo="{{ $isPrepaid ? 'ราคาขาย ' . number_format($packagePrice) . ' บาท' : $selectedPackageLabel }}"
-                      data-label="{{ $plan['label'] }}"
-                      data-data="{{ $plan['data'] }}"
-                      data-speed="{{ $plan['speed'] }}"
-                      data-voice="{{ $plan['voice'] }}"
-                      data-ent="{{ $plan['ent'] }}"
-                      data-monthly="{{ $plan['monthly_price'] }}"
-                      {{ $packagePrice === $selectedPackage ? 'selected' : '' }}
-                    >
-                      {{ $isPrepaid ? number_format($packagePrice) . ' บาท' : number_format($packagePrice) . ' บาท' }}
-                    </option>
-                  @endforeach
-                </select>
-              </label>
+              <div class="book-network-select-label">
+                <p>{{ $isPrepaid ? 'ราคาขายเบอร์' : 'ยอดชำระครั้งแรก' }}: <strong>{{ number_format($selectedPackage) }} บาท</strong></p>
+                <p class="text-sm mt-1">สัญญา 12 เดือน</p>
+                <input type="hidden" name="selected_package" value="{{ $selectedPackage }}">
+              </div>
             </div>
             @php
               $selectedPlan = $packageCatalog[$selectedPackage] ?? ['data' => '-', 'speed' => '-', 'voice' => '-', 'ent' => '-'];
@@ -338,13 +343,12 @@
     (function () {
       const isPrepaid = @json($isPrepaid);
       const form = document.getElementById("book-form");
-      const packageSelect = document.getElementById("selected_package");
       const previewBox = document.getElementById("package-preview");
       const stepPills = Array.from(document.querySelectorAll("[data-step-pill]"));
       const stepPanels = Array.from(document.querySelectorAll("[data-step-panel]"));
       const goStepButtons = Array.from(document.querySelectorAll("[data-go-step]"));
       const storageKey = `bookFormDraft:${form?.querySelector('[name=\"ordered_number\"]')?.value || "default"}`;
-      if (!form || !packageSelect || !previewBox) return;
+      if (!form || !previewBox) return;
 
       const trackAnalyticsEvent = (eventName, params = {}) => {
         if (!window.SupernumberAnalytics || typeof window.SupernumberAnalytics.track !== "function") {
@@ -418,10 +422,8 @@
       ];
 
       const updatePreview = () => {
-        const opt = packageSelect.options[packageSelect.selectedIndex];
-        if (!opt) return;
-        const initialPaymentAmount = Number(opt.value);
-        const monthlyAmount = Number(opt.dataset.monthly || opt.value);
+        const initialPaymentAmount = @json($selectedPackage);
+        const monthlyAmount = @json($selectedPlan['monthly_price'] ?? 0);
         const priceText = initialPaymentAmount.toLocaleString("th-TH");
         const monthlyText = monthlyAmount.toLocaleString("th-TH");
         const initialPaymentText = initialPaymentAmount.toLocaleString("th-TH");
@@ -429,13 +431,13 @@
           if (nameEl) nameEl.textContent = "ประเภท: เบอร์เติมเงิน";
           title.textContent = `ราคาขาย ${priceText} บาท`;
         } else {
-          if (nameEl) nameEl.textContent = `ชื่อโปร: ${opt.dataset.promo || "-"}`;
+          if (nameEl) nameEl.textContent = `ชื่อโปร: @json($selectedPackageLabel)`;
           title.textContent = `โปรโมชั่นแพคเกจ ${monthlyText} บาท`;
         }
-        dataEl.textContent = opt.dataset.data || "-";
-        speedEl.textContent = opt.dataset.speed || "-";
-        voiceEl.textContent = opt.dataset.voice || "-";
-        entEl.textContent = opt.dataset.ent || "-";
+        dataEl.textContent = @json($selectedPlan['data'] ?? '-');
+        speedEl.textContent = @json($selectedPlan['speed'] ?? '-');
+        voiceEl.textContent = @json($selectedPlan['voice'] ?? '-');
+        entEl.textContent = @json($selectedPlan['ent'] ?? '-');
         if (step2Title) step2Title.textContent = "การชำระเงิน";
         if (payCardTitle) payCardTitle.textContent = `ขั้นตอนที่ 2. ชำระเงิน ${initialPaymentText} บาท`;
         if (payCardNote) payCardNote.textContent = `โอนเงินจำนวน ${initialPaymentText} บาท แล้วแนบสลิปด้านล่าง`;
@@ -923,7 +925,6 @@
         setStep(next, false);
       });
 
-      packageSelect.addEventListener("change", updatePreview);
       copyAccountBtn?.addEventListener("click", copyBankAccount);
       paymentSlipInput?.addEventListener("change", updateSlipClearButton);
       clearSlipBtn?.addEventListener("click", clearPaymentSlip);

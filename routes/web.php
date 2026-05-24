@@ -831,6 +831,7 @@ Route::get('/evaluate', [PublicController::class, 'evaluate'])->name('evaluate')
 Route::get('/evaluateBadNumber', [PublicController::class, 'evaluateBad'])->name('evaluate.bad');
 
 Route::get('/tiers', [PublicController::class, 'tiers'])->name('tiers');
+Route::get('/videos', fn () => view('videos'))->name('videos');
 
 Route::get('/estimate', function () {
     return view('estimate');

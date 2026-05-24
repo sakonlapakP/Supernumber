@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "supernumber-dev",
+      "runtimeExecutable": "php",
+      "runtimeArgs": ["artisan", "serve", "--port=8000", "--host=127.0.0.1"],
+      "port": 8000
+    },
+    {
+      "name": "mockup-preview",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": ["-m", "http.server", "9090", "--directory", "/Users/efaum/Sites/localhost/Supernumber"],
+      "port": 9090
+    }
+  ]
+}

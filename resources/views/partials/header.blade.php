@@ -12,6 +12,7 @@
       <a class="nav-link {{ request()->routeIs('numbers.index') ? 'is-active' : '' }}" href="{{ route('numbers.index') }}">เบอร์ทั้งหมด</a>
       <a class="nav-link {{ request()->routeIs('estimate') ? 'is-active' : '' }}" href="{{ route('estimate') }}">ค้นหาเบอร์ให้เหมาะกับคุณ</a>
       <a class="nav-link {{ request()->routeIs('articles.*') ? 'is-active' : '' }}" href="/articles">บทความ</a>
+      <a class="nav-link {{ request()->routeIs('videos') ? 'is-active' : '' }}" href="{{ route('videos') }}">วิดีโอ</a>
       <a class="nav-link {{ request()->routeIs('contact') ? 'is-active' : '' }}" href="{{ route('contact') }}">ติดต่อเรา</a>
     </nav>
     <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mobile-menu">
@@ -25,6 +26,7 @@
     <a href="{{ route('numbers.index') }}" class="nav-mobile__link">เบอร์ทั้งหมด</a>
     <a href="{{ route('estimate') }}" class="nav-mobile__link">ค้นหาเบอร์ให้เหมาะกับคุณ</a>
     <a href="/articles" class="nav-mobile__link">บทความ</a>
+    <a href="{{ route('videos') }}" class="nav-mobile__link">วิดีโอ</a>
     <a href="{{ route('contact') }}" class="nav-mobile__link">ติดต่อเรา</a>
   </div>
 </header>
