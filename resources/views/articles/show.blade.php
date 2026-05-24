@@ -60,10 +60,10 @@
   <style>
     /* Prevent any cached CSS from shrinking the cards or fonts on the article page */
     .article-related-numbers {
-        padding: 24px 20px !important; /* Increase horizontal space for the 3-column grid */
+        padding: 24px 10px !important; /* Maximize horizontal space for wider cards */
     }
     .article-related-numbers .number-card--home {
-        min-height: 165px !important;
+        min-height: 168px !important;
         padding: 10px !important; /* Standard premium spacing */
         border-radius: 12px !important;
         background: #fff !important;
@@ -71,13 +71,13 @@
         border: 1px solid rgba(0,0,0,.04) !important;
     }
     .article-related-numbers .card-top {
-        font-size: 20px !important; /* Scale to 20px for high readability */
-        padding: 10px 8px !important;
+        font-size: 21px !important; /* EXACT match of standard homepage card top font size! */
+        padding: 12px 10px !important; /* EXACT match of standard homepage padding! */
         border-radius: 12px !important;
         background: #1a1612 !important;
         color: #fff !important;
         font-weight: 800 !important;
-        letter-spacing: .05em !important;
+        letter-spacing: .06em !important;
         box-shadow: 0 4px 10px rgba(0,0,0,.1) !important;
         white-space: nowrap !important;
     }
@@ -94,21 +94,21 @@
     }
     .article-related-numbers .card-network-main,
     .article-related-numbers .card-network-suffix {
-        font-size: 13px !important;
+        font-size: 13.5px !important;
     }
     .article-related-numbers .card-meta-plan,
     .article-related-numbers .card-meta-price,
     .article-related-numbers .card-meta-plan *,
     .article-related-numbers .card-meta-price * {
-        font-size: 11.8px !important; /* Perfect spacious size that fits long package text comfortably inside a 280px card */
+        font-size: 12.8px !important; /* Premium spacious font size, perfectly readable on single line */
         color: #1a1612 !important;
         white-space: nowrap !important; /* Force text to stay on a single line */
         letter-spacing: -0.01em !important;
     }
     .article-related-numbers .card-btn {
-        font-size: 13.5px !important;
-        min-height: 32px !important;
-        height: 32px !important;
+        font-size: 14px !important; /* EXACT match of standard homepage button font size! */
+        min-height: 34px !important;
+        height: 34px !important;
         border-radius: 12px !important;
         margin-top: 6px !important;
         background: #e1b155 !important;
@@ -119,14 +119,14 @@
     /* 3-column desktop layout matching homepage */
     @media (min-width: 986px) {
         .article-related-numbers .home-card-grid[data-view=grid] {
-            grid-template-columns: repeat(3, 280px) !important; /* Increased width to 280px for a beautiful layout */
+            grid-template-columns: repeat(3, 300px) !important; /* Increased to 300px to match homepage sizes */
             justify-content: center !important;
-            gap: 16px !important;
+            gap: 12px !important; /* Slight gap compression to ensure it never overflows desktop viewport */
         }
     }
     @media (max-width: 985px) and (min-width: 681px) {
         .article-related-numbers .home-card-grid[data-view=grid] {
-            grid-template-columns: repeat(2, 280px) !important; /* Increased width to 280px */
+            grid-template-columns: repeat(2, 300px) !important; /* Increased to 300px */
             justify-content: center !important;
             gap: 16px !important;
         }
