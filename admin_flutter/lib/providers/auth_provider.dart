@@ -9,12 +9,14 @@ class AuthProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _lastErrorMessage;
   Map<String, dynamic>? _user;
+  String? _savedLogin;
 
   bool get isAuthenticated => _isAuthenticated;
   bool get isLoading => _isLoading;
   String? get token => _token;
   String? get lastErrorMessage => _lastErrorMessage;
   Map<String, dynamic>? get user => _user;
+  String? get savedLogin => _savedLogin;
 
   AuthProvider() {
     _loadAuthStatus();
@@ -23,6 +25,7 @@ class AuthProvider extends ChangeNotifier {
   Future<void> _loadAuthStatus() async {
     final prefs = await SharedPreferences.getInstance();
     _token = prefs.getString('auth_token');
+    _savedLogin = prefs.getString('saved_login');
     _isAuthenticated = _token != null;
 
     if (_token != null) {
@@ -64,6 +67,8 @@ class AuthProvider extends ChangeNotifier {
 
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('auth_token', _token!);
+        _savedLogin = login.trim();
+        await prefs.setString('saved_login', login.trim());
 
         _isLoading = false;
         notifyListeners();

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../providers/auth_provider.dart';
@@ -15,6 +16,17 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   final _formKey = GlobalKey<FormState>();
 
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final saved = context.read<AuthProvider>().savedLogin;
+      if (saved != null && saved.isNotEmpty) {
+        _emailController.text = saved;
+      }
+    });
+  }
+
   void _handleLogin() async {
     if (_formKey.currentState!.validate()) {
       final auth = context.read<AuthProvider>();
@@ -23,7 +35,9 @@ class _LoginScreenState extends State<LoginScreen> {
             _passwordController.text,
           );
       if (!mounted) return;
-      if (!success) {
+      if (success) {
+        TextInput.finishAutofillContext();
+      } else {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             backgroundColor: const Color(0xFFC54B3D),
@@ -69,7 +83,8 @@ class _LoginScreenState extends State<LoginScreen> {
               ),
               child: Form(
                 key: _formKey,
-                child: Column(
+                child: AutofillGroup(
+                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     // Brand Logo Area
@@ -137,6 +152,9 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 32),
                     TextFormField(
                       controller: _emailController,
+                      autofillHints: const [AutofillHints.username, AutofillHints.email],
+                      keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
                       style: const TextStyle(color: Color(0xFF1E2D45)),
                       decoration: const InputDecoration(
                         labelText: 'ชื่อผู้ใช้ หรือ อีเมล',
@@ -147,7 +165,10 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 20),
                     TextFormField(
                       controller: _passwordController,
+                      autofillHints: const [AutofillHints.password],
                       obscureText: true,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) => _handleLogin(),
                       style: const TextStyle(color: Color(0xFF1E2D45)),
                       decoration: const InputDecoration(
                         labelText: 'รหัสผ่าน',
@@ -172,6 +193,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ],
                 ),
+               ),
               ),
             ),
           ),

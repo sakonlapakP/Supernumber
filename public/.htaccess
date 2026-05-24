@@ -36,6 +36,11 @@
     <FilesMatch "\.html$">
         Header set Cache-Control "no-cache, no-store, must-revalidate"
     </FilesMatch>
+
+    # Apple App Site Association — must be served as JSON
+    <FilesMatch "apple-app-site-association">
+        Header set Content-Type "application/json"
+    </FilesMatch>
 </IfModule>
 # ─────────────────────────────────────────────────────────────────────────────
 
