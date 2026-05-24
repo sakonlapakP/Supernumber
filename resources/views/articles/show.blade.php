@@ -384,9 +384,10 @@
             $searchQuery = '42'; // Sample logic for charm
         }
 
-        $relevantNumbers = \App\Models\PhoneNumber::query()
+        $relevantPrepaidNumbers = \App\Models\PhoneNumber::query()
             ->with('package')
             ->available()
+            ->where('service_type', \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID)
             ->when($searchQuery, function($q) use ($searchQuery) {
                 return $q->where('phone_number', 'like', '%' . $searchQuery . '%');
             })
@@ -394,30 +395,78 @@
             ->limit(8)
             ->get();
             
-        // Fallback to random high quality if not enough relevant numbers
-        if ($relevantNumbers->count() < 8) {
-            $extra = \App\Models\PhoneNumber::query()
+        // Fallback to random high quality prepaid if not enough relevant numbers
+        if ($relevantPrepaidNumbers->count() < 8) {
+            $extraPrepaid = \App\Models\PhoneNumber::query()
                 ->with('package')
                 ->available()
-                ->whereNotIn('id', $relevantNumbers->pluck('id'))
+                ->where('service_type', \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID)
+                ->whereNotIn('id', $relevantPrepaidNumbers->pluck('id'))
                 ->inRandomOrder()
-                ->limit(8 - $relevantNumbers->count())
+                ->limit(8 - $relevantPrepaidNumbers->count())
                 ->get();
-            $relevantNumbers = $relevantNumbers->concat($extra);
+            $relevantPrepaidNumbers = $relevantPrepaidNumbers->concat($extraPrepaid);
+        }
+
+        $relevantPostpaidNumbers = \App\Models\PhoneNumber::query()
+            ->with('package')
+            ->available()
+            ->where('service_type', \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID)
+            ->when($searchQuery, function($q) use ($searchQuery) {
+                return $q->where('phone_number', 'like', '%' . $searchQuery . '%');
+            })
+            ->inRandomOrder()
+            ->limit(8)
+            ->get();
+            
+        // Fallback to random high quality postpaid if not enough relevant numbers
+        if ($relevantPostpaidNumbers->count() < 8) {
+            $extraPostpaid = \App\Models\PhoneNumber::query()
+                ->with('package')
+                ->available()
+                ->where('service_type', \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID)
+                ->whereNotIn('id', $relevantPostpaidNumbers->pluck('id'))
+                ->inRandomOrder()
+                ->limit(8 - $relevantPostpaidNumbers->count())
+                ->get();
+            $relevantPostpaidNumbers = $relevantPostpaidNumbers->concat($extraPostpaid);
         }
       @endphp
 
-      @if($relevantNumbers->count() > 0)
+      @if($relevantPrepaidNumbers->count() > 0 || $relevantPostpaidNumbers->count() > 0)
         <section class="article-related-numbers">
             <div class="article-related-numbers__header">
                 <h2>เบอร์มงคลแนะนำสำหรับคุณ</h2>
                 <p>เลือกเบอร์ที่ใช่เพื่อเสริมพลังตามคำทำนายในบทความนี้</p>
             </div>
-            <div class="home-card-grid article-related-numbers__grid" data-view="grid">
-                @foreach($relevantNumbers as $num)
-                    @include('partials.number-card', ['number' => $num])
-                @endforeach
-            </div>
+            
+            @if($relevantPrepaidNumbers->count() > 0)
+              <div class="article-related-numbers__subheader" style="margin-top: 32px; margin-bottom: 16px; text-align: center;">
+                  <h3 style="font-size: 22px; color: #1a1612; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center;">
+                      <span>📱 เบอร์เติมเงินพร้อมใช้</span>
+                      <span style="font-size: 14px; color: #7a6c62; font-weight: 500;">(เบอร์เติมเงินสามารถย้ายค่ายได้)</span>
+                  </h3>
+              </div>
+              <div class="home-card-grid article-related-numbers__grid" data-view="grid">
+                  @foreach($relevantPrepaidNumbers as $num)
+                      @include('partials.number-card', ['number' => $num])
+                  @endforeach
+              </div>
+            @endif
+
+            @if($relevantPostpaidNumbers->count() > 0)
+              <div class="article-related-numbers__subheader" style="margin-top: 40px; margin-bottom: 16px; text-align: center;">
+                  <h3 style="font-size: 22px; color: #1a1612; font-weight: 800; display: inline-flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: center;">
+                      <span>💼 เบอร์รายเดือนแนะนำ</span>
+                      <span style="font-size: 14px; color: #7a6c62; font-weight: 500;">(รวมเบอร์รายเดือนที่พร้อมเลือกแพ็กเกจ)</span>
+                  </h3>
+              </div>
+              <div class="home-card-grid article-related-numbers__grid" data-view="grid">
+                  @foreach($relevantPostpaidNumbers as $num)
+                      @include('partials.number-card', ['number' => $num])
+                  @endforeach
+              </div>
+            @endif
         </section>
       @endif
 
