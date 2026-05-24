@@ -156,7 +156,14 @@ class PublicController extends Controller
             ? [null, null]
             : PhoneNumber::parsePackageLabel($selectedPlan);
 
-        $applyCatalogFilters = static function ($query) use ($searchDigits, $positionPattern, $selectedPlan, $selectedServiceType, $selectedPrepaidPriceRange, $selectedPlanName, $selectedPlanPrice) {
+        // Per-session seed so random ordering stays stable across pagination.
+        $randomSeed = (int) $request->session()->get('numbers_random_seed', 0);
+        if ($randomSeed === 0) {
+            $randomSeed = random_int(1, 2147483647);
+            $request->session()->put('numbers_random_seed', $randomSeed);
+        }
+
+        $applyCatalogFilters = static function ($query) use ($searchDigits, $positionPattern, $selectedPlan, $selectedServiceType, $selectedPrepaidPriceRange, $selectedPlanName, $selectedPlanPrice, $randomSeed) {
             // The same filter closure is reused for split default lists and normal paginated search.
             return $query
                 ->when($searchDigits !== '', function ($builder) use ($searchDigits) {
@@ -198,8 +205,7 @@ class PublicController extends Controller
                         }
                     });
                 })
-                ->orderByRaw('COALESCE(initial_payment_price, sale_price)')
-                ->orderBy('phone_number');
+                ->orderByRaw('((id * ?) % 2147483647)', [$randomSeed]);
         };
 
         $isDefaultSplitLayout = $searchDigits === ''

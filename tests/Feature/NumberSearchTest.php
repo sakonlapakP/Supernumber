@@ -157,7 +157,8 @@ class NumberSearchTest extends TestCase
 
         $response->assertOk();
         $response->assertViewHas('numbers', function ($numbers) {
-            return $numbers->getCollection()->pluck('phone_number')->all() === [
+            $actual = $numbers->getCollection()->pluck('phone_number')->sort()->values()->all();
+            return $actual === [
                 '0810000001',
                 '0820000002',
                 '0830000003',
@@ -204,7 +205,8 @@ class NumberSearchTest extends TestCase
 
         $response->assertOk();
         $response->assertViewHas('numbers', function ($numbers) {
-            return $numbers->getCollection()->pluck('phone_number')->all() === [
+            $actual = $numbers->getCollection()->pluck('phone_number')->sort()->values()->all();
+            return $actual === [
                 '0810000001',
                 '0820000002',
             ];
