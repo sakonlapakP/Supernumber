@@ -340,74 +340,159 @@
       color: white;
     }
 
-    /* ===== TOPIC TAG BAR ===== */
-    .topic-bar {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 10px;
-      padding: 0 0 14px;
+    /* ===== NUMBERS TOPICS SECTION (HOMEPAGE DESIGN) ===== */
+    .numbers-topics-box {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 28px;
+      padding: 28px 28px 24px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 24px rgba(45, 33, 24, 0.08);
+      margin-bottom: 30px;
+    }
+
+    .numbers-topics__header {
+      margin-bottom: 20px;
+    }
+
+    .numbers-topics__header h2 {
+      font-size: 20px;
+      font-weight: 800;
+      color: #3b2f27;
       margin-bottom: 4px;
-    }
-
-    .topic-bar__tag {
-      display: inline-flex;
+      display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 6px;
-      min-height: 42px;
-      min-width: 0;
-      padding: 9px 14px;
-      border-radius: 12px;
+      gap: 8px;
+    }
+
+    .numbers-topics__header h2::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 20px;
+      background: linear-gradient(to bottom, #d8a34a, #9a6f2e);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .numbers-topics__header p {
       font-size: 14px;
-      font-weight: 600;
-      line-height: 1.25;
-      border: 1.5px solid rgba(73, 61, 52, 0.15);
+      color: #8a7a6c;
+      padding-left: 12px;
+    }
+
+    .numbers-topics__grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+    .numbers-topic-card {
+      display: flex;
+      align-items: center;
+      gap: 12px;
       background: #fff;
-      color: #3b2f27;
+      border: 1.5px solid rgba(73, 61, 52, 0.1);
+      border-radius: 14px;
+      padding: 14px 14px 14px 12px;
       text-decoration: none;
-      text-align: center;
-      transition: border-color 0.2s, background 0.2s, color 0.2s, box-shadow 0.2s;
+      color: inherit;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
     }
 
-    .topic-bar__tag:hover {
+    .numbers-topic-card:hover {
       border-color: #d8a34a;
-      background: #fffbf2;
-      color: #3b2f27;
+      box-shadow: 0 4px 16px rgba(216, 163, 74, 0.2);
+      transform: translateY(-1px);
       text-decoration: none;
-      box-shadow: 0 2px 8px rgba(216, 163, 74, 0.2);
+      color: inherit;
     }
 
-    .topic-bar__tag.is-active {
+    .numbers-topic-card.is-active {
+      background: linear-gradient(135deg, #fffcf6, #fff6e0);
+      border-color: #d8a34a;
+      box-shadow: 0 4px 16px rgba(216, 163, 74, 0.25);
+    }
+
+    .numbers-topic-card.is-active .numbers-topic-card__icon {
       background: linear-gradient(135deg, #e4bd65, #f5d98a);
       border-color: #c3912f;
-      color: #2f241d;
-      box-shadow: 0 4px 12px rgba(195, 145, 47, 0.24);
     }
 
-    .topic-bar__tag.is-active:hover {
-      background: linear-gradient(135deg, #d8a34a, #f0ca73);
-      border-color: #b98224;
+    .numbers-topic-card.is-active .numbers-topic-card__arrow {
+      color: #d8a34a;
+      transform: translateX(2px);
     }
 
-    .topic-bar__icon { font-size: 16px; line-height: 1; }
+    .numbers-topic-card__icon {
+      width: 40px;
+      height: 40px;
+      border-radius: 11px;
+      background: #f9f6f1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+      border: 1px solid rgba(216, 163, 74, 0.15);
+    }
 
-    .topic-bar-label {
-      font-size: 14px;
+    .numbers-topic-card__text {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .numbers-topic-card__name {
+      font-size: 13.5px;
       font-weight: 700;
-      color: #4a3e35;
-      padding-left: 4px;
-      margin-bottom: 8px;
-      display: block;
+      color: #3b2f27;
+      line-height: 1.3;
+    }
+
+    .numbers-topic-card__arrow {
+      font-size: 14px;
+      color: #c5b09a;
+      flex-shrink: 0;
+      transition: color 0.2s, transform 0.2s;
+    }
+
+    .numbers-topic-card:hover .numbers-topic-card__arrow {
+      color: #d8a34a;
+      transform: translateX(2px);
     }
 
     @media (max-width: 820px) {
-      .topic-bar {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+      .numbers-topics__grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 640px) {
+      .numbers-topics-box {
+        padding: 20px 16px;
+        border-radius: 20px;
+      }
+      .numbers-topics__grid {
+        grid-template-columns: repeat(2, 1fr);
+        gap: 8px;
+      }
+      .numbers-topic-card {
+        padding: 12px 10px;
+        gap: 8px;
+      }
+      .numbers-topic-card__icon {
+        width: 36px;
+        height: 36px;
+        font-size: 18px;
+      }
+      .numbers-topic-card__name {
+        font-size: 12.5px;
       }
     }
 
     @media (max-width: 560px) {
-      .topic-bar {
+      .numbers-topics__grid {
         grid-template-columns: 1fr;
       }
     }
@@ -551,27 +636,35 @@
           return route('numbers.index') . ($query ? '?' . $query : '');
         };
       @endphp
-      <span class="topic-bar-label">เลือกหมวดที่เบอร์นี้ส่งเสริม</span>
-      <nav class="topic-bar" aria-label="กรองตามหมวดหมู่มงคล">
-        @foreach (\App\Models\PhoneNumber::TOPIC_ICON_MAP as $topic => $icon)
-          @php
-            $isTopicSelected = in_array($topic, $selectedTopics, true);
-            $nextTopics = $isTopicSelected
-              ? array_values(array_diff($selectedTopics, [$topic]))
-              : array_values(array_unique([...$selectedTopics, $topic]));
-            $topicParams = $baseParams;
-            if ($nextTopics !== []) {
-              $topicParams['topic'] = $nextTopics;
-            }
-          @endphp
-          <a class="topic-bar__tag {{ $isTopicSelected ? 'is-active' : '' }}"
-             href="{{ $buildNumbersTopicUrl($topicParams) }}"
-             aria-pressed="{{ $isTopicSelected ? 'true' : 'false' }}">
-            <span class="topic-bar__icon">{{ $icon }}</span>
-            {{ $topic }}
-          </a>
-        @endforeach
-      </nav>
+      <div class="numbers-topics-box">
+        <div class="numbers-topics__header">
+          <h2>ค้นหาตามหมวดหมู่มงคล</h2>
+          <p>เลือกหมวดที่เบอร์นี้ส่งเสริม</p>
+        </div>
+        <nav class="numbers-topics__grid" aria-label="กรองตามหมวดหมู่มงคล">
+          @foreach (\App\Models\PhoneNumber::TOPIC_ICON_MAP as $topic => $icon)
+            @php
+              $isTopicSelected = in_array($topic, $selectedTopics, true);
+              $nextTopics = $isTopicSelected
+                ? array_values(array_diff($selectedTopics, [$topic]))
+                : array_values(array_unique([...$selectedTopics, $topic]));
+              $topicParams = $baseParams;
+              if ($nextTopics !== []) {
+                $topicParams['topic'] = $nextTopics;
+              }
+            @endphp
+            <a class="numbers-topic-card {{ $isTopicSelected ? 'is-active' : '' }}"
+               href="{{ $buildNumbersTopicUrl($topicParams) }}"
+               aria-pressed="{{ $isTopicSelected ? 'true' : 'false' }}">
+              <div class="numbers-topic-card__icon">{{ $icon }}</div>
+              <div class="numbers-topic-card__text">
+                <div class="numbers-topic-card__name">{{ $topic }}</div>
+              </div>
+              <span class="numbers-topic-card__arrow">›</span>
+            </a>
+          @endforeach
+        </nav>
+      </div>
 
       <div class="section-title numbers-catalog-title">
         <div class="numbers-catalog-title__content">
