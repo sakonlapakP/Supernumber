@@ -68,14 +68,15 @@
         border: 1px solid rgba(0,0,0,.04) !important;
     }
     .article-related-numbers .card-top {
-        font-size: 21px !important; /* Standard home page font size */
-        padding: 12px 10px !important;
+        font-size: 19px !important; /* Slightly smaller than 21px to ensure it never squeezes, yet bold and big */
+        padding: 10px 8px !important;
         border-radius: 12px !important;
         background: #1a1612 !important;
         color: #fff !important;
         font-weight: 800 !important;
         letter-spacing: .06em !important;
         box-shadow: 0 4px 10px rgba(0,0,0,.1) !important;
+        white-space: nowrap !important;
     }
     .article-related-numbers .card-topic-icons {
         gap: 5px !important;
@@ -92,8 +93,9 @@
     .article-related-numbers .card-meta-price,
     .article-related-numbers .card-meta-plan *,
     .article-related-numbers .card-meta-price * {
-        font-size: 16px !important; /* Standard home page font size */
+        font-size: 13.5px !important; /* Extremely safe size, slightly smaller than 15px to guarantee it stays on one line */
         color: #1a1612 !important;
+        white-space: nowrap !important; /* Force text to stay on a single line! */
     }
     .article-related-numbers .card-btn {
         font-size: 14px !important; /* Standard home page font size */
