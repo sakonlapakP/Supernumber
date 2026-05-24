@@ -247,7 +247,7 @@
     }
 
     @media (min-width: 992px) {
-      body.numbers-scale-soft .numbers-results-grid[data-view="grid"] {
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"]:not(.is-default-split) {
         grid-template-columns: repeat(4, 240px) !important;
         justify-content: center !important;
         gap: 12px !important;
