@@ -342,33 +342,31 @@
 
     /* ===== TOPIC TAG BAR ===== */
     .topic-bar {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      overflow-x: auto;
-      padding: 0 0 12px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+      padding: 0 0 14px;
       margin-bottom: 4px;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
     }
-
-    .topic-bar::-webkit-scrollbar { display: none; }
 
     .topic-bar__tag {
       display: inline-flex;
       align-items: center;
+      justify-content: center;
       gap: 6px;
-      white-space: nowrap;
-      padding: 8px 16px;
-      border-radius: 24px;
+      min-height: 42px;
+      min-width: 0;
+      padding: 9px 14px;
+      border-radius: 12px;
       font-size: 14px;
       font-weight: 600;
+      line-height: 1.25;
       border: 1.5px solid rgba(73, 61, 52, 0.15);
       background: #fff;
       color: #3b2f27;
       text-decoration: none;
+      text-align: center;
       transition: border-color 0.2s, background 0.2s, color 0.2s, box-shadow 0.2s;
-      flex-shrink: 0;
     }
 
     .topic-bar__tag:hover {
@@ -380,18 +378,30 @@
     }
 
     .topic-bar__tag.is-active {
-      background: linear-gradient(135deg, #3b2f27, #201812);
-      border-color: #3b2f27;
-      color: #f0d080;
-      box-shadow: 0 4px 12px rgba(32, 24, 18, 0.25);
+      background: linear-gradient(135deg, #e4bd65, #f5d98a);
+      border-color: #c3912f;
+      color: #2f241d;
+      box-shadow: 0 4px 12px rgba(195, 145, 47, 0.24);
     }
 
     .topic-bar__tag.is-active:hover {
-      background: linear-gradient(135deg, #4d3e34, #2a2019);
-      border-color: #4d3e34;
+      background: linear-gradient(135deg, #d8a34a, #f0ca73);
+      border-color: #b98224;
     }
 
     .topic-bar__icon { font-size: 16px; line-height: 1; }
+
+    @media (max-width: 820px) {
+      .topic-bar {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 560px) {
+      .topic-bar {
+        grid-template-columns: 1fr;
+      }
+    }
   </style>
   @php
     $selectedView = request('view') === 'list' ? 'list' : 'grid';
@@ -412,9 +422,9 @@
       <div class="numbers-catalog-toolbar">
         <form class="numbers-filter-form" action="{{ route('numbers.index') }}" method="get">
           <input id="numbers-view-input" type="hidden" name="view" value="{{ $selectedView }}">
-          @if (!empty($selectedTopic))
-            <input type="hidden" name="topic" value="{{ $selectedTopic }}">
-          @endif
+          @foreach ($selectedTopics as $topic)
+            <input type="hidden" name="topic[]" value="{{ $topic }}">
+          @endforeach
           
           <div class="home-filter">
             <div class="home-filter__main">
@@ -517,15 +527,28 @@
 
       @php
         $baseParams = array_filter(request()->except('topic', 'page'));
+        $buildNumbersTopicUrl = static function (array $params): string {
+          $query = http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+          $query = preg_replace('/topic%5B\d+%5D=/', 'topic%5B%5D=', $query);
+
+          return route('numbers.index') . ($query ? '?' . $query : '');
+        };
       @endphp
       <nav class="topic-bar" aria-label="กรองตามหมวดหมู่มงคล">
-        <a class="topic-bar__tag {{ empty($selectedTopic) ? 'is-active' : '' }}"
-           href="{{ route('numbers.index', $baseParams) }}">
-          ทั้งหมด
-        </a>
         @foreach (\App\Models\PhoneNumber::TOPIC_ICON_MAP as $topic => $icon)
-          <a class="topic-bar__tag {{ $selectedTopic === $topic ? 'is-active' : '' }}"
-             href="{{ route('numbers.index', array_merge($baseParams, ['topic' => $topic])) }}">
+          @php
+            $isTopicSelected = in_array($topic, $selectedTopics, true);
+            $nextTopics = $isTopicSelected
+              ? array_values(array_diff($selectedTopics, [$topic]))
+              : array_values(array_unique([...$selectedTopics, $topic]));
+            $topicParams = $baseParams;
+            if ($nextTopics !== []) {
+              $topicParams['topic'] = $nextTopics;
+            }
+          @endphp
+          <a class="topic-bar__tag {{ $isTopicSelected ? 'is-active' : '' }}"
+             href="{{ $buildNumbersTopicUrl($topicParams) }}"
+             aria-pressed="{{ $isTopicSelected ? 'true' : 'false' }}">
             <span class="topic-bar__icon">{{ $icon }}</span>
             {{ $topic }}
           </a>
@@ -534,8 +557,8 @@
 
       <div class="section-title numbers-catalog-title">
         <div class="numbers-catalog-title__content">
-          @if (!empty($selectedTopic))
-            <h2 id="numbers-catalog-title">เบอร์หมวด {{ $selectedTopic }}</h2>
+          @if ($selectedTopics !== [])
+            <h2 id="numbers-catalog-title">เบอร์หมวด {{ implode(', ', $selectedTopics) }}</h2>
           @else
             <h2 id="numbers-catalog-title">เบอร์ทั้งหมด</h2>
           @endif
@@ -583,7 +606,7 @@
                   </div>
                   <div class="card-body">
                     <div class="card-meta-stack">
-                      <span class="card-tier card-tier--network"><span class="card-network-main">{{ $number->network_label }}</span><span class="card-network-suffix">{{ $number->service_type_label }}</span></span>
+                      <span class="card-tier card-tier--network"><span class="card-network-main" data-network="{{ strtolower($number->network_code) }}">{{ $number->network_label }}</span><span class="card-network-suffix">{{ $number->service_type_label }}</span></span>
                       @if ($number->is_prepaid)
                         <span class="card-meta-plan">{{ $number->payment_label }}</span>
                       @endif
@@ -628,7 +651,7 @@
                   </div>
                   <div class="card-body">
                     <div class="card-meta-stack">
-                      <span class="card-tier card-tier--network"><span class="card-network-main">{{ $number->network_label }}</span><span class="card-network-suffix">{{ $number->service_type_label }}</span></span>
+                      <span class="card-tier card-tier--network"><span class="card-network-main" data-network="{{ strtolower($number->network_code) }}">{{ $number->network_label }}</span><span class="card-network-suffix">{{ $number->service_type_label }}</span></span>
                       @if ($number->is_prepaid)
                         <span class="card-meta-plan">{{ $number->payment_label }}</span>
                       @endif
@@ -667,7 +690,7 @@
               </div>
               <div class="card-body">
                 <div class="card-meta-stack">
-                  <span class="card-tier card-tier--network"><span class="card-network-main">{{ $number->network_label }}</span><span class="card-network-suffix">{{ $number->service_type_label }}</span></span>
+                  <span class="card-tier card-tier--network"><span class="card-network-main" data-network="{{ strtolower($number->network_code) }}">{{ $number->network_label }}</span><span class="card-network-suffix">{{ $number->service_type_label }}</span></span>
                   @if ($number->is_prepaid)
                     <span class="card-meta-plan">{{ $number->payment_label }}</span>
                   @endif

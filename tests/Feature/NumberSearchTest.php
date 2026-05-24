@@ -219,6 +219,49 @@ class NumberSearchTest extends TestCase
         });
     }
 
+    public function test_it_filters_numbers_by_multiple_topics(): void
+    {
+        PhoneNumber::create([
+            'phone_number' => '0814444444',
+            'network_code' => 'true_dtac',
+            'plan_name' => 'Promo A',
+            'sale_price' => 100,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
+        PhoneNumber::create([
+            'phone_number' => '0817878787',
+            'network_code' => 'true_dtac',
+            'plan_name' => 'Promo A',
+            'sale_price' => 100,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
+        PhoneNumber::create([
+            'phone_number' => '0810000000',
+            'network_code' => 'true_dtac',
+            'plan_name' => 'Promo A',
+            'sale_price' => 100,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->get('/numbers?topic[]=' . urlencode('การสื่อสาร') . '&topic[]=' . urlencode('การเงิน/โชคลาภ'));
+
+        $response->assertOk();
+        $response->assertViewHas('selectedTopics', [
+            'การสื่อสาร',
+            'การเงิน/โชคลาภ',
+        ]);
+        $response->assertViewHas('numbers', function ($numbers) {
+            $actual = $numbers->getCollection()->pluck('phone_number')->sort()->values()->all();
+
+            return $actual === [
+                '0814444444',
+                '0817878787',
+            ];
+        });
+    }
+
     public function test_book_page_uses_promotion_name_from_database(): void
     {
         PhoneNumber::create([

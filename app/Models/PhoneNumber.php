@@ -200,6 +200,28 @@ class PhoneNumber extends Model
         return $query->whereRaw("({$goodSum} + ({$conditionalSum} * 0.5)) > {$badSum}");
     }
 
+    public function scopeForAnyTopic(Builder $query, array $topics): Builder
+    {
+        $topics = collect($topics)
+            ->map(fn ($topic) => trim((string) $topic))
+            ->filter(fn (string $topic) => array_key_exists($topic, self::TOPIC_ICON_MAP))
+            ->unique()
+            ->values()
+            ->all();
+
+        if ($topics === []) {
+            return $query;
+        }
+
+        return $query->where(function (Builder $query) use ($topics): void {
+            foreach ($topics as $index => $topic) {
+                $query->{$index === 0 ? 'where' : 'orWhere'}(function (Builder $topicQuery) use ($topic): void {
+                    $topicQuery->forTopic($topic);
+                });
+            }
+        });
+    }
+
     public static function buildSearchPattern(array $filters): ?string
     {
         // Catalog digit filters become a SQL LIKE mask where "_" means "any digit" at that position.

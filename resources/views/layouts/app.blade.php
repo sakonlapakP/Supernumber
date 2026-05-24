@@ -147,6 +147,15 @@
             background: rgba(216, 163, 74, 0.1) !important;
             border-color: #d8a34a !important;
         }
+
+        /* AIS Green Branding Override */
+        .card-tier--network .card-network-main[data-network="ais"] {
+            background-image: none !important;
+            background: none !important;
+            -webkit-text-fill-color: #8cc63f !important;
+            color: #8cc63f !important;
+            font-weight: 800 !important;
+        }
     </style>
     @yield('seo_schema')
   </head>

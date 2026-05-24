@@ -644,7 +644,7 @@
               </div>
               <div class="card-body">
                 <div class="card-meta-stack">
-                  <span class="card-tier card-tier--network"><span class="card-network-main">{{ $recommended->network_label }}</span><span class="card-network-suffix">{{ $recommended->service_type_label }}</span></span>
+                  <span class="card-tier card-tier--network"><span class="card-network-main" data-network="{{ strtolower($recommended->network_code) }}">{{ $recommended->network_label }}</span><span class="card-network-suffix">{{ $recommended->service_type_label }}</span></span>
                   @if ($recommended->is_prepaid)
                     <span class="card-meta-plan">{{ $recommended->payment_label }}</span>
                   @endif
