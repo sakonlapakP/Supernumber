@@ -510,8 +510,6 @@
                   <select id="numbers-network" name="network">
                     <option value="">ทั้งหมด</option>
                     <option value="{{ \App\Models\PhoneNumber::NETWORK_AIS }}" @selected($selectedNetwork === \App\Models\PhoneNumber::NETWORK_AIS)>AIS</option>
-                    <option value="{{ \App\Models\PhoneNumber::NETWORK_TRUE }}" @selected($selectedNetwork === \App\Models\PhoneNumber::NETWORK_TRUE)>TRUE</option>
-                    <option value="{{ \App\Models\PhoneNumber::NETWORK_DTAC }}" @selected($selectedNetwork === \App\Models\PhoneNumber::NETWORK_DTAC)>DTAC</option>
                     <option value="{{ \App\Models\PhoneNumber::NETWORK_TRUE_DTAC }}" @selected($selectedNetwork === \App\Models\PhoneNumber::NETWORK_TRUE_DTAC)>TRUE-DTAC</option>
                   </select>
                 </div>

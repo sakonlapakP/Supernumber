@@ -475,8 +475,6 @@ class PhoneNumber extends Model
     public static function supportedNetworkCodes(): array
     {
         return [
-            self::NETWORK_TRUE,
-            self::NETWORK_DTAC,
             self::NETWORK_AIS,
             self::NETWORK_TRUE_DTAC,
         ];
@@ -485,8 +483,6 @@ class PhoneNumber extends Model
     public static function networkLabel(?string $networkCode): string
     {
         return match (self::normalizeNetworkCode($networkCode)) {
-            self::NETWORK_TRUE => 'TRUE',
-            self::NETWORK_DTAC => 'DTAC',
             self::NETWORK_AIS => 'AIS',
             self::NETWORK_TRUE_DTAC => 'TRUE-DTAC',
             default => '-',
@@ -797,8 +793,8 @@ class PhoneNumber extends Model
         return match ($networkCode) {
             self::NETWORK_TRUE,
             self::NETWORK_DTAC,
-            self::NETWORK_AIS,
-            self::NETWORK_TRUE_DTAC => $networkCode,
+            self::NETWORK_TRUE_DTAC => self::NETWORK_TRUE_DTAC,
+            self::NETWORK_AIS => $networkCode,
             default => null,
         };
     }
