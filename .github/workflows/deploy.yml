@@ -11,8 +11,6 @@ jobs:
   web-deploy:
     name: 🎉 Deploying to Production
     runs-on: ubuntu-latest
-    env:
-      FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
     steps:
     - name: 🚚 Get latest code
       uses: actions/checkout@v4
@@ -37,14 +35,16 @@ jobs:
 
     - name: 🔍 Check and Clean FTP Sync State
       env:
-        FTP_SERVER: ${{ secrets.FTP_SERVER }}
-        FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
-        FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
+        SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
+        SSH_USER: ${{ secrets.PROD_SSH_USER }}
+        SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
       run: |
-        echo "Checking if the remote .ftp-deploy-sync-state.json commit is present in local history..."
-        curl -s -f -u "${FTP_USERNAME}:${FTP_PASSWORD}" \
-          "ftp://${FTP_SERVER}/domains/supernumber.co.th/public_html/.ftp-deploy-sync-state.json" \
-          -o local-state.json || true
+        mkdir -p ~/.ssh
+        echo "$SSH_KEY" > ~/.ssh/id_rsa
+        chmod 600 ~/.ssh/id_rsa
+        
+        echo "Fetching remote .ftp-deploy-sync-state.json via SCP..."
+        scp -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST:domains/supernumber.co.th/public_html/.ftp-deploy-sync-state.json" local-state.json || true
         
         if [ -f local-state.json ]; then
           LAST_SHA=$(jq -r '.ref' local-state.json 2>/dev/null || echo "")
@@ -52,10 +52,8 @@ jobs:
             echo "Found last deployed commit: $LAST_SHA"
             if ! git cat-file -e "$LAST_SHA" 2>/dev/null; then
               echo "⚠️ Commit $LAST_SHA is not found in the current git history."
-              echo "Deleting .ftp-deploy-sync-state.json from the FTP server to force a full clean sync..."
-              curl -s -u "${FTP_USERNAME}:${FTP_PASSWORD}" \
-                "ftp://${FTP_SERVER}/domains/supernumber.co.th/public_html/" \
-                -Q "DELE .ftp-deploy-sync-state.json" || echo "Failed to delete state file."
+              echo "Deleting .ftp-deploy-sync-state.json from the remote server via SSH to force a full clean sync..."
+              ssh -o StrictHostKeyChecking=no "$SSH_USER@$SSH_HOST" "rm -f domains/supernumber.co.th/public_html/.ftp-deploy-sync-state.json" || echo "Failed to delete state file."
             else
               echo "✅ Commit $LAST_SHA exists in git history. Proceeding with incremental sync."
             fi
@@ -63,7 +61,7 @@ jobs:
             echo "State file was empty or invalid JSON."
           fi
         else
-          echo "No existing state file found on FTP server."
+          echo "No existing state file found on remote server (or SCP failed/skipped)."
         fi
       continue-on-error: true
 
