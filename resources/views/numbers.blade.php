@@ -493,7 +493,11 @@
 
     @media (max-width: 560px) {
       .numbers-topics__grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 6px;
+      }
+      .numbers-topic-card__name {
+        font-size: 12px;
       }
     }
   </style>
