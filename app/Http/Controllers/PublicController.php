@@ -96,6 +96,7 @@ class PublicController extends Controller
         $searchDigits = preg_replace('/[^0-9]/', '', $search);
         $selectedPlan = trim((string) $request->input('plan', ''));
         $selectedServiceType = trim((string) $request->input('service_type', ''));
+        $selectedNetwork = trim((string) $request->input('network', ''));
         $selectedTopicInput = $request->input('topic', []);
         $selectedTopics = collect(is_array($selectedTopicInput) ? $selectedTopicInput : [$selectedTopicInput])
             ->map(fn ($topic) => trim((string) $topic))
@@ -109,12 +110,19 @@ class PublicController extends Controller
             $selectedServiceType = '';
         }
 
+        if (! in_array($selectedNetwork, PhoneNumber::supportedNetworkCodes(), true)) {
+            $selectedNetwork = '';
+        }
+
         $baseQuery = PhoneNumber::query()
             ->with('package')
             ->available()
             ->supportedNetwork()
             ->when($selectedServiceType !== '', function ($query) use ($selectedServiceType) {
                 $query->ofServiceType($selectedServiceType);
+            })
+            ->when($selectedNetwork !== '', function ($query) use ($selectedNetwork) {
+                $query->where('network_code', $selectedNetwork);
             })
             ->when($selectedTopics !== [], function ($query) use ($selectedTopics) {
                 $query->forAnyTopic($selectedTopics);
@@ -213,6 +221,7 @@ class PublicController extends Controller
         $isDefaultSplitLayout = $searchDigits === ''
             && $selectedPlan === ''
             && $selectedServiceType === ''
+            && $selectedNetwork === ''
             && $selectedTopics === []
             && $positionPattern === null;
 
@@ -299,7 +308,7 @@ class PublicController extends Controller
                 ->withQueryString();
         }
 
-        return view('numbers', compact('numbers', 'plans', 'planOptionsByServiceType', 'search', 'selectedPlan', 'selectedServiceType', 'selectedTopics', 'positionPattern', 'isDefaultSplitLayout', 'defaultPrepaidNumbers', 'defaultPostpaidNumbers'));
+        return view('numbers', compact('numbers', 'plans', 'planOptionsByServiceType', 'search', 'selectedPlan', 'selectedServiceType', 'selectedTopics', 'positionPattern', 'isDefaultSplitLayout', 'defaultPrepaidNumbers', 'defaultPostpaidNumbers', 'selectedNetwork'));
     }
 
     /**

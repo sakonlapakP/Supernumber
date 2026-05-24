@@ -277,4 +277,40 @@ class NumberSearchTest extends TestCase
         $response->assertOk();
         $response->assertSee('ชื่อโปร: True Super Value 699');
     }
+
+    public function test_it_filters_numbers_by_network(): void
+    {
+        PhoneNumber::create([
+            'phone_number' => '0810000001',
+            'network_code' => 'true',
+            'plan_name' => 'Promo A',
+            'sale_price' => 699,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
+        PhoneNumber::create([
+            'phone_number' => '0820000002',
+            'network_code' => 'dtac',
+            'plan_name' => 'Promo A',
+            'sale_price' => 699,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
+        PhoneNumber::create([
+            'phone_number' => '0830000003',
+            'network_code' => 'ais',
+            'plan_name' => 'Promo A',
+            'sale_price' => 699,
+            'status' => PhoneNumber::STATUS_ACTIVE,
+        ]);
+
+        $response = $this->get('/numbers?network=ais');
+
+        $response->assertOk();
+        $response->assertViewHas('selectedNetwork', 'ais');
+        $response->assertViewHas('numbers', function ($numbers) {
+            $actual = $numbers->getCollection()->pluck('phone_number')->all();
+            return $actual === ['0830000003'];
+        });
+    }
 }

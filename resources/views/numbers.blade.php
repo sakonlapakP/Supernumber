@@ -196,7 +196,7 @@
 
     .home-filter__footer-controls {
       display: grid;
-      grid-template-columns: 1fr 1.5fr auto;
+      grid-template-columns: 1fr 1fr 1.5fr auto;
       gap: 20px;
       align-items: center;
     }
@@ -503,6 +503,16 @@
                     <option value="">ทั้งหมด</option>
                     <option value="{{ \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID }}" @selected($selectedServiceType === \App\Models\PhoneNumber::SERVICE_TYPE_POSTPAID)>รายเดือน</option>
                     <option value="{{ \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID }}" @selected($selectedServiceType === \App\Models\PhoneNumber::SERVICE_TYPE_PREPAID)>เติมเงิน</option>
+                  </select>
+                </div>
+                <div class="home-filter__select-wrapper">
+                  <label>เครือข่าย</label>
+                  <select id="numbers-network" name="network">
+                    <option value="">ทั้งหมด</option>
+                    <option value="{{ \App\Models\PhoneNumber::NETWORK_AIS }}" @selected($selectedNetwork === \App\Models\PhoneNumber::NETWORK_AIS)>AIS</option>
+                    <option value="{{ \App\Models\PhoneNumber::NETWORK_TRUE }}" @selected($selectedNetwork === \App\Models\PhoneNumber::NETWORK_TRUE)>TRUE</option>
+                    <option value="{{ \App\Models\PhoneNumber::NETWORK_DTAC }}" @selected($selectedNetwork === \App\Models\PhoneNumber::NETWORK_DTAC)>DTAC</option>
+                    <option value="{{ \App\Models\PhoneNumber::NETWORK_TRUE_DTAC }}" @selected($selectedNetwork === \App\Models\PhoneNumber::NETWORK_TRUE_DTAC)>TRUE-DTAC</option>
                   </select>
                 </div>
                 <div class="home-filter__select-wrapper">
