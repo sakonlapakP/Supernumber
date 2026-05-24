@@ -116,12 +116,12 @@
         box-shadow: 0 4px 12px rgba(225,177,85,.2) !important;
     }
     
-    /* 3-column desktop layout matching homepage */
+    /* 4-column desktop layout */
     @media (min-width: 986px) {
         .article-related-numbers .home-card-grid[data-view=grid] {
-            grid-template-columns: repeat(3, 300px) !important; /* Increased to 300px to match homepage sizes */
+            grid-template-columns: repeat(4, 1fr) !important;
             justify-content: center !important;
-            gap: 12px !important; /* Slight gap compression to ensure it never overflows desktop viewport */
+            gap: 12px !important;
         }
     }
     @media (max-width: 985px) and (min-width: 681px) {
@@ -391,17 +391,17 @@
                 return $q->where('phone_number', 'like', '%' . $searchQuery . '%');
             })
             ->inRandomOrder()
-            ->limit(3)
+            ->limit(8)
             ->get();
             
         // Fallback to random high quality if not enough relevant numbers
-        if ($relevantNumbers->count() < 3) {
+        if ($relevantNumbers->count() < 8) {
             $extra = \App\Models\PhoneNumber::query()
                 ->with('package')
                 ->available()
                 ->whereNotIn('id', $relevantNumbers->pluck('id'))
                 ->inRandomOrder()
-                ->limit(3 - $relevantNumbers->count())
+                ->limit(8 - $relevantNumbers->count())
                 ->get();
             $relevantNumbers = $relevantNumbers->concat($extra);
         }
