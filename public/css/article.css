@@ -1212,7 +1212,16 @@
 
 @media (max-width: 720px) {
   .article-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .article-card__title {
+    font-size: 16px;
+  }
+
+  .article-card__excerpt {
+    font-size: 13px;
   }
 
   .article-card__cover {
