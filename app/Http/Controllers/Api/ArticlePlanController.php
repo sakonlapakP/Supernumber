@@ -3,9 +3,11 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Article;
 use App\Models\ArticlePlan;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ArticlePlanController extends Controller
 {
@@ -20,7 +22,53 @@ class ArticlePlanController extends Controller
             ->orderBy('publish_time')
             ->get();
 
+        $readyDates = $this->buildReadyDates($plans);
+
+        $plans->each(function (ArticlePlan $plan) use ($readyDates): void {
+            $dateStr = optional($plan->publish_date)->toDateString();
+            $plan->is_article_ready = isset($readyDates[$dateStr]);
+        });
+
         return response()->json(['data' => $plans]);
+    }
+
+    /**
+     * @param  \Illuminate\Support\Collection<int, ArticlePlan>  $plans
+     * @return array<string, true>
+     */
+    private function buildReadyDates(\Illuminate\Support\Collection $plans): array
+    {
+        $dates = $plans->map(fn ($p) => optional($p->publish_date)->toDateString())->filter()->unique()->values()->all();
+
+        if (empty($dates)) {
+            return [];
+        }
+
+        $ready = Article::query()
+            ->whereIn(DB::raw('DATE(published_at)'), $dates)
+            ->whereNotNull('published_at')
+            ->selectRaw('DATE(published_at) AS pub_date')
+            ->pluck('pub_date')
+            ->flip()
+            ->all();
+
+        $lotteryPlans = $plans->filter(fn ($p) => $p->is_lottery && $p->publish_date !== null);
+        if ($lotteryPlans->isNotEmpty()) {
+            $slugToDate = $lotteryPlans->mapWithKeys(function (ArticlePlan $plan): array {
+                $isRound1 = (int) $plan->publish_date->format('j') <= 15;
+                $slug = 'thai-goverment-lottery-' . $plan->publish_date->format('Ym') . ($isRound1 ? 'first' : 'second');
+                return [$slug => $plan->publish_date->toDateString()];
+            });
+
+            Article::query()
+                ->whereIn('slug', $slugToDate->keys())
+                ->pluck('slug')
+                ->each(function (string $slug) use ($slugToDate, &$ready): void {
+                    $ready[$slugToDate[$slug]] = true;
+                });
+        }
+
+        return $ready;
     }
 
     public function store(Request $request): JsonResponse

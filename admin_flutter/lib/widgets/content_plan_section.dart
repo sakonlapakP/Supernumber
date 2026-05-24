@@ -90,9 +90,12 @@ const _thaiWeekdayFull = [
 // ─────────────────────────────────────────────────────────
 
 String _effectiveStatus(ArticlePlan item, List<Article> articles) {
+  // Server-side flag: a published article exists for this plan's date
+  if (item.isArticleReady) return 'done';
+
   final planDateStr = DateFormat('yyyy-MM-dd').format(item.publishDate);
 
-  // Check matching published article
+  // Client-side fallback: search currently loaded articles
   for (final a in articles) {
     if (a.publishedAt != null &&
         DateFormat('yyyy-MM-dd').format(a.publishedAt!) == planDateStr) {

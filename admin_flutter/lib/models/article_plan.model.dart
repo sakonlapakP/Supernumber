@@ -6,6 +6,7 @@ class ArticlePlan {
   final String topic;
   final bool isLottery;
   final String status; // todo, in_progress, done, blocked, cancelled
+  final bool isArticleReady;
   final String? assignedTo;
   final DateTime? dueDate;
   final String? blockedReason;
@@ -20,6 +21,7 @@ class ArticlePlan {
     required this.topic,
     required this.isLottery,
     this.status = 'todo',
+    this.isArticleReady = false,
     this.assignedTo,
     this.dueDate,
     this.blockedReason,
@@ -51,6 +53,7 @@ class ArticlePlan {
       topic: (json['topic'] ?? '').toString(),
       isLottery: json['is_lottery'] == true || json['is_lottery'] == 1,
       status: (json['status'] ?? 'todo').toString(),
+      isArticleReady: json['is_article_ready'] == true || json['is_article_ready'] == 1,
       assignedTo: json['assigned_to']?.toString(),
       dueDate: json['due_date'] != null
           ? DateTime.tryParse(json['due_date'].toString())
@@ -82,6 +85,7 @@ class ArticlePlan {
       topic: topic,
       isLottery: isLottery,
       status: status ?? this.status,
+      isArticleReady: isArticleReady,
       assignedTo: assignedTo,
       dueDate: dueDate,
       blockedReason: blockedReason ?? this.blockedReason,

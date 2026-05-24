@@ -646,6 +646,10 @@ class PlanningInterface {
   }
 
   effectiveStatus(plan) {
+    // Treat as done when a published article exists (linked or matched by date)
+    if (plan.is_article_ready || (plan.article && plan.article.is_published)) {
+      return 'done';
+    }
     if (plan.publish_date < this.today &&
         plan.status !== 'done' && plan.status !== 'cancelled') {
       return 'overdue';
