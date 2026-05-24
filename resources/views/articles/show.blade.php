@@ -60,54 +60,54 @@
   <style>
     /* Prevent any cached CSS from shrinking the cards or fonts on the article page */
     .article-related-numbers .number-card--home {
-        min-height: 155px !important;
-        padding: 8px 4px !important; /* Increased horizontal inner space by reducing padding */
+        min-height: 160px !important;
+        padding: 8px 6px !important; /* Elegant horizontal space */
         border-radius: 12px !important;
         background: #fff !important;
         box-shadow: 0 8px 25px rgba(45,33,24,.08) !important;
         border: 1px solid rgba(0,0,0,.04) !important;
     }
     .article-related-numbers .card-top {
-        font-size: 16px !important; /* Scale down to 16px to prevent black box overflow */
-        padding: 8px 4px !important;
-        border-radius: 10px !important;
+        font-size: 18px !important; /* Scale to 18px to look extremely premium and bold */
+        padding: 9px 6px !important;
+        border-radius: 12px !important;
         background: #1a1612 !important;
         color: #fff !important;
         font-weight: 800 !important;
-        letter-spacing: .04em !important;
+        letter-spacing: .05em !important;
         box-shadow: 0 4px 10px rgba(0,0,0,.1) !important;
         white-space: nowrap !important;
     }
     .article-related-numbers .card-topic-icons {
-        gap: 4px !important;
-        margin-top: 4px !important;
-        min-height: 28px !important;
-        max-height: 28px !important;
+        gap: 5px !important;
+        margin-top: 5px !important;
+        min-height: 30px !important;
+        max-height: 30px !important;
     }
     .article-related-numbers .card-topic-icon {
-        width: 24px !important;
-        height: 24px !important;
-        font-size: 11px !important;
+        width: 26px !important;
+        height: 26px !important;
+        font-size: 12px !important;
     }
     .article-related-numbers .card-network-main,
     .article-related-numbers .card-network-suffix {
-        font-size: 11px !important;
+        font-size: 12px !important;
     }
     .article-related-numbers .card-meta-plan,
     .article-related-numbers .card-meta-price,
     .article-related-numbers .card-meta-plan *,
     .article-related-numbers .card-meta-price * {
-        font-size: 9.8px !important; /* Extremely compact to prevent overflow */
+        font-size: 10.8px !important; /* Increased font-size with wider 260px card */
         color: #1a1612 !important;
         white-space: nowrap !important; /* Force text to stay on a single line */
-        letter-spacing: -0.02em !important; /* Tighten font slightly to fit the card width */
+        letter-spacing: -0.01em !important; /* Squeeze font minimally */
     }
     .article-related-numbers .card-btn {
-        font-size: 12px !important; /* Smaller button text */
-        min-height: 28px !important;
-        height: 28px !important;
-        border-radius: 10px !important;
-        margin-top: 4px !important;
+        font-size: 13px !important; /* Standard comfortable font size */
+        min-height: 30px !important;
+        height: 30px !important;
+        border-radius: 12px !important;
+        margin-top: 5px !important;
         background: #e1b155 !important;
         color: #4b382a !important;
         box-shadow: 0 4px 12px rgba(225,177,85,.2) !important;
@@ -116,14 +116,14 @@
     /* 3-column desktop layout matching homepage */
     @media (min-width: 986px) {
         .article-related-numbers .home-card-grid[data-view=grid] {
-            grid-template-columns: repeat(3, 240px) !important;
+            grid-template-columns: repeat(3, 260px) !important; /* Increased to 260px to match homepage */
             justify-content: center !important;
             gap: 16px !important;
         }
     }
     @media (max-width: 985px) and (min-width: 681px) {
         .article-related-numbers .home-card-grid[data-view=grid] {
-            grid-template-columns: repeat(2, 240px) !important;
+            grid-template-columns: repeat(2, 260px) !important; /* Increased to 260px to match homepage */
             justify-content: center !important;
             gap: 16px !important;
         }
