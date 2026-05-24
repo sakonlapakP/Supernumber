@@ -299,6 +299,99 @@
         font-size: 16px;
       }
     }
+
+    .topic-active-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: #f9f6f1;
+      border: 1.5px solid rgba(216, 163, 74, 0.4);
+      border-radius: 24px;
+      padding: 7px 14px 7px 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #3b2f27;
+      margin-bottom: 12px;
+    }
+
+    .topic-active-badge__icon {
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    .topic-active-badge__clear {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      background: rgba(73, 61, 52, 0.12);
+      border-radius: 50%;
+      font-size: 12px;
+      color: #7a6c62;
+      text-decoration: none;
+      margin-left: 2px;
+      flex-shrink: 0;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .topic-active-badge__clear:hover {
+      background: #d8a34a;
+      color: white;
+    }
+
+    /* ===== TOPIC TAG BAR ===== */
+    .topic-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      overflow-x: auto;
+      padding: 0 0 12px;
+      margin-bottom: 4px;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .topic-bar::-webkit-scrollbar { display: none; }
+
+    .topic-bar__tag {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      white-space: nowrap;
+      padding: 8px 16px;
+      border-radius: 24px;
+      font-size: 14px;
+      font-weight: 600;
+      border: 1.5px solid rgba(73, 61, 52, 0.15);
+      background: #fff;
+      color: #3b2f27;
+      text-decoration: none;
+      transition: border-color 0.2s, background 0.2s, color 0.2s, box-shadow 0.2s;
+      flex-shrink: 0;
+    }
+
+    .topic-bar__tag:hover {
+      border-color: #d8a34a;
+      background: #fffbf2;
+      color: #3b2f27;
+      text-decoration: none;
+      box-shadow: 0 2px 8px rgba(216, 163, 74, 0.2);
+    }
+
+    .topic-bar__tag.is-active {
+      background: linear-gradient(135deg, #3b2f27, #201812);
+      border-color: #3b2f27;
+      color: #f0d080;
+      box-shadow: 0 4px 12px rgba(32, 24, 18, 0.25);
+    }
+
+    .topic-bar__tag.is-active:hover {
+      background: linear-gradient(135deg, #4d3e34, #2a2019);
+      border-color: #4d3e34;
+    }
+
+    .topic-bar__icon { font-size: 16px; line-height: 1; }
   </style>
   @php
     $selectedView = request('view') === 'list' ? 'list' : 'grid';
@@ -319,6 +412,9 @@
       <div class="numbers-catalog-toolbar">
         <form class="numbers-filter-form" action="{{ route('numbers.index') }}" method="get">
           <input id="numbers-view-input" type="hidden" name="view" value="{{ $selectedView }}">
+          @if (!empty($selectedTopic))
+            <input type="hidden" name="topic" value="{{ $selectedTopic }}">
+          @endif
           
           <div class="home-filter">
             <div class="home-filter__main">
@@ -419,9 +515,30 @@
         <p class="numbers-filter-hint">รูปแบบที่ค้นหา: {{ $positionPattern }}</p>
       @endif
 
+      @php
+        $baseParams = array_filter(request()->except('topic', 'page'));
+      @endphp
+      <nav class="topic-bar" aria-label="กรองตามหมวดหมู่มงคล">
+        <a class="topic-bar__tag {{ empty($selectedTopic) ? 'is-active' : '' }}"
+           href="{{ route('numbers.index', $baseParams) }}">
+          ทั้งหมด
+        </a>
+        @foreach (\App\Models\PhoneNumber::TOPIC_ICON_MAP as $topic => $icon)
+          <a class="topic-bar__tag {{ $selectedTopic === $topic ? 'is-active' : '' }}"
+             href="{{ route('numbers.index', array_merge($baseParams, ['topic' => $topic])) }}">
+            <span class="topic-bar__icon">{{ $icon }}</span>
+            {{ $topic }}
+          </a>
+        @endforeach
+      </nav>
+
       <div class="section-title numbers-catalog-title">
         <div class="numbers-catalog-title__content">
-          <h2 id="numbers-catalog-title">เบอร์ทั้งหมด</h2>
+          @if (!empty($selectedTopic))
+            <h2 id="numbers-catalog-title">เบอร์หมวด {{ $selectedTopic }}</h2>
+          @else
+            <h2 id="numbers-catalog-title">เบอร์ทั้งหมด</h2>
+          @endif
           <p>
             แสดง
             {{ $numbers->count() ? $numbers->firstItem() . '-' . $numbers->lastItem() : '0' }}
