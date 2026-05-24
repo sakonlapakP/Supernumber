@@ -60,49 +60,54 @@
   <style>
     /* Prevent any cached CSS from shrinking the cards or fonts on the article page */
     .article-related-numbers .number-card--home {
-        min-height: 165px !important;
-        padding: 10px !important;
+        min-height: 155px !important;
+        padding: 8px 4px !important; /* Increased horizontal inner space by reducing padding */
         border-radius: 12px !important;
         background: #fff !important;
         box-shadow: 0 8px 25px rgba(45,33,24,.08) !important;
         border: 1px solid rgba(0,0,0,.04) !important;
     }
     .article-related-numbers .card-top {
-        font-size: 17px !important; /* Scale down to 17px to keep it balanced and prevent overflow */
-        padding: 9px 8px !important;
-        border-radius: 12px !important;
+        font-size: 16px !important; /* Scale down to 16px to prevent black box overflow */
+        padding: 8px 4px !important;
+        border-radius: 10px !important;
         background: #1a1612 !important;
         color: #fff !important;
         font-weight: 800 !important;
-        letter-spacing: .06em !important;
+        letter-spacing: .04em !important;
         box-shadow: 0 4px 10px rgba(0,0,0,.1) !important;
         white-space: nowrap !important;
     }
     .article-related-numbers .card-topic-icons {
-        gap: 5px !important;
-        margin-top: 5px !important;
-        min-height: 32px !important;
-        max-height: 32px !important;
+        gap: 4px !important;
+        margin-top: 4px !important;
+        min-height: 28px !important;
+        max-height: 28px !important;
     }
     .article-related-numbers .card-topic-icon {
-        width: 28px !important;
-        height: 28px !important;
-        font-size: 13px !important;
+        width: 24px !important;
+        height: 24px !important;
+        font-size: 11px !important;
+    }
+    .article-related-numbers .card-network-main,
+    .article-related-numbers .card-network-suffix {
+        font-size: 11px !important;
     }
     .article-related-numbers .card-meta-plan,
     .article-related-numbers .card-meta-price,
     .article-related-numbers .card-meta-plan *,
     .article-related-numbers .card-meta-price * {
-        font-size: 11.8px !important; /* Perfect compact size to fit long price text like 3,999 บาท เดือนละ 1,499/เดือน without overflow */
+        font-size: 9.8px !important; /* Extremely compact to prevent overflow */
         color: #1a1612 !important;
         white-space: nowrap !important; /* Force text to stay on a single line */
+        letter-spacing: -0.02em !important; /* Tighten font slightly to fit the card width */
     }
     .article-related-numbers .card-btn {
-        font-size: 13px !important; /* Standard compact button font size */
-        min-height: 32px !important;
-        height: 32px !important;
-        border-radius: 12px !important;
-        margin-top: 6px !important;
+        font-size: 12px !important; /* Smaller button text */
+        min-height: 28px !important;
+        height: 28px !important;
+        border-radius: 10px !important;
+        margin-top: 4px !important;
         background: #e1b155 !important;
         color: #4b382a !important;
         box-shadow: 0 4px 12px rgba(225,177,85,.2) !important;
