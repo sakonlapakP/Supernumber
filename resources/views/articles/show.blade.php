@@ -57,6 +57,77 @@
 
 @push('styles')
   <link rel="stylesheet" href="{{ asset('css/article.css') }}?v={{ substr(md5_file(public_path('css/article.css')), 0, 8) }}" />
+  <style>
+    /* Prevent any cached CSS from shrinking the cards or fonts on the article page */
+    .article-related-numbers .number-card--home {
+        min-height: 165px !important;
+        padding: 10px !important;
+        border-radius: 12px !important;
+        background: #fff !important;
+        box-shadow: 0 8px 25px rgba(45,33,24,.08) !important;
+        border: 1px solid rgba(0,0,0,.04) !important;
+    }
+    .article-related-numbers .card-top {
+        font-size: 21px !important; /* Standard home page font size */
+        padding: 12px 10px !important;
+        border-radius: 12px !important;
+        background: #1a1612 !important;
+        color: #fff !important;
+        font-weight: 800 !important;
+        letter-spacing: .06em !important;
+        box-shadow: 0 4px 10px rgba(0,0,0,.1) !important;
+    }
+    .article-related-numbers .card-topic-icons {
+        gap: 5px !important;
+        margin-top: 5px !important;
+        min-height: 32px !important;
+        max-height: 32px !important;
+    }
+    .article-related-numbers .card-topic-icon {
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 13px !important;
+    }
+    .article-related-numbers .card-meta-plan,
+    .article-related-numbers .card-meta-price,
+    .article-related-numbers .card-meta-plan *,
+    .article-related-numbers .card-meta-price * {
+        font-size: 16px !important; /* Standard home page font size */
+        color: #1a1612 !important;
+    }
+    .article-related-numbers .card-btn {
+        font-size: 14px !important; /* Standard home page font size */
+        min-height: 36px !important;
+        height: 36px !important;
+        border-radius: 12px !important;
+        margin-top: 6px !important;
+        background: #e1b155 !important;
+        color: #4b382a !important;
+        box-shadow: 0 4px 12px rgba(225,177,85,.2) !important;
+    }
+    
+    /* 3-column desktop layout matching homepage */
+    @media (min-width: 986px) {
+        .article-related-numbers .home-card-grid[data-view=grid] {
+            grid-template-columns: repeat(3, 240px) !important;
+            justify-content: center !important;
+            gap: 16px !important;
+        }
+    }
+    @media (max-width: 985px) and (min-width: 681px) {
+        .article-related-numbers .home-card-grid[data-view=grid] {
+            grid-template-columns: repeat(2, 240px) !important;
+            justify-content: center !important;
+            gap: 16px !important;
+        }
+    }
+    @media (max-width: 680px) {
+        .article-related-numbers .home-card-grid[data-view=grid] {
+            grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+            gap: 10px !important;
+        }
+    }
+  </style>
 @endpush
 
 @section('content')
