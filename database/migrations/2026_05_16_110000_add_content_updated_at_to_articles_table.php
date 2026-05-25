@@ -13,10 +13,9 @@ return new class extends Migration
             $table->bigInteger('content_updated_at')->nullable()->after('published_at');
         });
 
-        // Backfill: seed content_updated_at as Unix timestamp from published_at for existing rows
         // UNIX_TIMESTAMP() is MySQL-only; SQLite uses strftime('%s', ...) for tests
         if (DB::connection()->getDriverName() === 'sqlite') {
-            DB::statement("UPDATE articles SET content_updated_at = strftime('%s', published_at) WHERE published_at IS NOT NULL AND content_updated_at IS NULL");
+            DB::statement("UPDATE articles SET content_updated_at = CAST(strftime('%s', published_at) AS INTEGER) WHERE published_at IS NOT NULL AND content_updated_at IS NULL");
         } else {
             DB::statement('UPDATE articles SET content_updated_at = UNIX_TIMESTAMP(published_at) WHERE published_at IS NOT NULL AND content_updated_at IS NULL');
         }

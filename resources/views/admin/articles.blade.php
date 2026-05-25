@@ -1344,7 +1344,7 @@
                           <form id="share-social-form-{{ $article->id }}" action="{{ route('admin.articles.share-social', $article) }}" method="POST" style="margin:0;">
                             @csrf
                             <input type="hidden" name="manual_image_url" id="share-social-image-{{ $article->id }}">
-                            <button type="button" id="btn-share-social-{{ $article->id }}" onclick="renderAndShareSocial(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ route('admin.articles.upload-rendered-image', $article) }}', '{{ route('admin.articles.report-render-error', $article) }}', {{ $lotteryIsComplete ? 1 : 0 }})" style="width:100%; border:none; background:#fff; color:#1e293b; font-size:14px; font-weight:600; text-align:left; padding:8px 10px; border-radius:8px; cursor:pointer;">Facebook Page</button>
+                            <button type="button" id="btn-share-social-{{ $article->id }}" onclick="renderAndShareSocial(this, '{{ $article->id }}', '{{ $article->cover_image_square_path }}', '{{ $article->cover_image_landscape_path }}', '{{ route('admin.articles.upload-rendered-image', $article) }}', '{{ route('admin.articles.report-render-error', $article) }}', {{ $lotteryIsComplete ? 1 : 0 }})" style="width:100%; border:none; background:#fff; color:#1e293b; font-size:14px; font-weight:600; text-align:left; padding:8px 10px; border-radius:8px; cursor:pointer;">Facebook Page</button>
                           </form>
                         @else
                           <form action="{{ route('admin.articles.share-social', $article) }}" method="POST" style="margin:0;" onsubmit="return confirm('ยืนยันแชร์บทความนี้ไปที่ Facebook Page?')">
@@ -1654,7 +1654,7 @@
          * ฟังก์ชันกลางสำหรับวาดรูปพรีเมียมและอัปโหลดขึ้น Server
          * คืนค่าเป็นข้อมูลรูปภาพที่อัปโหลดเสร็จแล้ว
          */
-        async function renderAndUploadPremiumImage(imagePath, uploadUrl, loadingText, reportUrl, type = 'square') {
+        async function renderAndUploadPremiumImage(imagePath, uploadUrl, loadingText, reportUrl, type = 'square', canvasW = 1200, canvasH = 1200) {
             if (!imagePath) {
                 return null;
             }
@@ -1662,7 +1662,7 @@
             // 1. เตรียม URL รูปวาดผ่าน Proxy
             const svgPath = imagePath.replace(/\.(png|jpg|jpeg|webp)$/i, '.svg');
             const svgUrl = `{{ route('admin.articles.get-svg-proxy') }}?path=${encodeURIComponent(svgPath)}`;
-            
+
             if (!svgUrl || !svgUrl.toLowerCase().includes('.svg')) {
                 return null; // ถ้าไม่มีไฟล์รูปวาด ให้ระบบเดิมทำงานต่อ
             }
@@ -1695,10 +1695,10 @@
                 const fontStyle = `<style>@font-face { font-family: 'Kanit'; src: url("${fontBase64}"); font-weight: 700; } @font-face { font-family: 'KanitCustom'; src: url("${fontBase64}"); font-weight: 700; }</style>`;
                 svgText = svgText.replace('<defs>', `<defs>${fontStyle}`);
 
-                canvas.width = 1200;
-                canvas.height = 1200;
+                canvas.width = canvasW;
+                canvas.height = canvasH;
                 ctx.fillStyle = "black";
-                ctx.fillRect(0, 0, 1200, 1200);
+                ctx.fillRect(0, 0, canvasW, canvasH);
 
                 // 5. เริ่มการวาดรูป
                 if (typeof canvgObj === 'function') {
@@ -1714,7 +1714,7 @@
                 // 6. แปลงเป็น PNG และอัปโหลด
                 const pngData = canvas.toDataURL('image/png', 0.9);
                 status.innerText = 'กำลังบันทึกรูปพรีเมียม...';
-                
+
                 const uploadRes = await fetch(uploadUrl, {
                     method: 'POST',
                     headers: {
@@ -1737,8 +1737,9 @@
 
         /**
          * ฟังก์ชันแปลงรูปและแชร์ไป Facebook Page
+         * squarePath = cover_image_square_path, landscapePath = cover_image_landscape_path
          */
-        window.renderAndShareSocial = async function(button, articleId, imagePath, uploadUrl, reportUrl, isComplete = 1) {
+        window.renderAndShareSocial = async function(button, articleId, squarePath, landscapePath, uploadUrl, reportUrl, isComplete = 1) {
             // ตรวจสอบกรณีเป็นหวยแต่ยังออกไม่ครบ
             if (isComplete === 0) {
                 alert('⚠️ หวยงวดนี้ยังออกไม่ครบ 100% กรุณารอให้ระบบอัปเดตผลรางวัลให้ครบถ้วนก่อนจึงจะแชร์ได้ครับ');
@@ -1757,23 +1758,28 @@
             button.innerText = 'กำลังทำงาน...';
 
             try {
-                if (imagePath && !imagePath.toLowerCase().endsWith('.svg')) {
-                    imageInput.value = imagePath;
-                    form.submit();
-                    return;
+                // [1] แปลง landscape SVG → PNG (1200×630) ถ้ายังเป็น SVG
+                if (landscapePath && landscapePath.toLowerCase().endsWith('.svg')) {
+                    status.innerText = 'กำลังแปลงรูป Landscape...';
+                    await renderAndUploadPremiumImage(landscapePath, uploadUrl, 'กำลังแปลงรูป Landscape (1200×630)...', reportUrl, 'landscape', 1200, 630);
                 }
 
-                const result = await renderAndUploadPremiumImage(imagePath, uploadUrl, 'กำลังแปลงรูปและเตรียมแชร์ Facebook...', reportUrl, 'square');
-
-                if (result) {
-                    imageInput.value = result.path;
-                    status.innerText = 'สำเร็จ! กำลังแชร์ไปที่ Facebook...';
-                    setTimeout(() => form.submit(), 1000);
+                // [2] แปลง square SVG → PNG (1200×1200) ถ้ายังเป็น SVG
+                if (squarePath && squarePath.toLowerCase().endsWith('.svg')) {
+                    const result = await renderAndUploadPremiumImage(squarePath, uploadUrl, 'กำลังแปลงรูปและเตรียมแชร์ Facebook...', reportUrl, 'square', 1200, 1200);
+                    if (result) {
+                        imageInput.value = result.path;
+                    } else {
+                        button.disabled = false;
+                        button.innerText = originalText;
+                        return;
+                    }
                 } else {
-                    console.log('Premium rendering failed, aborting social share.');
-                    button.disabled = false;
-                    button.innerText = originalText;
+                    imageInput.value = squarePath;
                 }
+
+                status.innerText = 'สำเร็จ! กำลังแชร์ไปที่ Facebook...';
+                setTimeout(() => form.submit(), 1000);
             } catch (err) {
                 console.error('Share social error:', err);
                 button.disabled = false;

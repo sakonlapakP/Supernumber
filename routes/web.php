@@ -3963,8 +3963,17 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 $filename = $articleDir . '/' . $article->slug . ($type === 'landscape' ? '_cover' : '') . '.png';
             }
 
+            $originalPath = $type === 'landscape'
+                ? $article->cover_image_landscape_path
+                : $article->cover_image_square_path;
+
             Storage::disk('public')->put($filename, $decoded);
-            
+
+            // ลบ SVG เก่าถ้าไฟล์ที่ save ใหม่เป็น PNG แทน
+            if ($originalPath && preg_match('/\.svg$/i', $originalPath) && $originalPath !== $filename) {
+                Storage::disk('public')->delete($originalPath);
+            }
+
             if ($type === 'landscape') {
                 $article->cover_image_landscape_path = $filename;
             } else {
