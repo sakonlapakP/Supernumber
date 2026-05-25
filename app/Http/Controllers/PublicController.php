@@ -316,7 +316,12 @@ class PublicController extends Controller
      */
     public function articles()
     {
-        $articlesQuery = Article::query()->published();
+        $pinnedArticles = Article::query()->published()
+            ->where('is_pinned', true)
+            ->orderByRaw('COALESCE(content_updated_at, published_at, created_at) DESC')
+            ->get();
+
+        $articlesQuery = Article::query()->published()->where('is_pinned', false);
 
         if (Schema::hasColumn('articles', 'content_updated_at')) {
             $articlesQuery->orderByRaw('COALESCE(content_updated_at, published_at) DESC');
@@ -328,7 +333,7 @@ class PublicController extends Controller
             ->latest('id')
             ->paginate(9);
 
-        return view('articles.index', compact('articles'));
+        return view('articles.index', compact('articles', 'pinnedArticles'));
     }
 
     /**

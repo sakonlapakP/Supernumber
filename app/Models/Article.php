@@ -29,6 +29,7 @@ class Article extends Model
         'keywords',
         'lsi_keywords',
         'is_published',
+        'is_pinned',
         'is_auto_post',
         'is_line_broadcasted',
         'published_at',
@@ -42,6 +43,7 @@ class Article extends Model
     {
         return [
             'is_published' => 'boolean',
+            'is_pinned' => 'boolean',
             'is_auto_post' => 'boolean',
             'is_line_broadcasted' => 'boolean',
             'image_guidelines' => 'array',

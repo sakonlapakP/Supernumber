@@ -811,6 +811,309 @@
         font-size: 19px;
       }
     }
+
+    /* Home Video & Education Section */
+    .home-video {
+      padding: 60px 0;
+      background: linear-gradient(180deg, #ffffff 0%, #faf8f5 100%);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .home-video__inner {
+      background: rgba(255, 255, 255, 0.65);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 32px;
+      padding: 48px;
+      border: 1px solid rgba(216, 163, 74, 0.15);
+      box-shadow: 0 15px 45px rgba(74, 62, 53, 0.05), 0 4px 12px rgba(216, 163, 74, 0.05);
+      display: grid;
+      grid-template-columns: 1fr 1.2fr;
+      gap: 40px;
+      align-items: center;
+    }
+
+    .home-video__content {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .home-video__badge {
+      align-self: flex-start;
+      background: rgba(216, 163, 74, 0.1);
+      color: #9a6f2e;
+      border: 1px solid rgba(216, 163, 74, 0.25);
+      font-size: 12px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      padding: 6px 14px;
+      border-radius: 20px;
+    }
+
+    .home-video__title {
+      font-size: 32px;
+      line-height: 1.3;
+      font-weight: 850;
+      color: #3b2f27;
+      margin: 0;
+    }
+
+    .home-video__title span {
+      background: linear-gradient(135deg, #b08236 0%, #d8a34a 50%, #9a6f2e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .home-video__desc {
+      font-size: 16px;
+      line-height: 1.6;
+      color: #5c4e43;
+      margin: 0;
+      font-weight: 500;
+    }
+
+    .home-video__features {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+      margin-top: 8px;
+    }
+
+    .home-video__feature-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #4a3e35;
+    }
+
+    .home-video__feature-icon {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: rgba(216, 163, 74, 0.12);
+      color: #d8a34a;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+    }
+
+    .home-video__action {
+      margin-top: 10px;
+      align-self: flex-start;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: linear-gradient(135deg, #e6bd73 0%, #d8a34a 100%);
+      color: #ffffff;
+      padding: 14px 28px;
+      border-radius: 14px;
+      font-weight: 700;
+      text-decoration: none;
+      box-shadow: 0 8px 24px rgba(216, 163, 74, 0.3);
+      transition: all 0.3s ease;
+    }
+
+    .home-video__action:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 28px rgba(216, 163, 74, 0.45);
+      color: #ffffff;
+      text-decoration: none;
+    }
+
+    /* Video Player Container */
+    .home-video__player-wrapper {
+      position: relative;
+      border-radius: 24px;
+      overflow: hidden;
+      aspect-ratio: 16 / 9;
+      background: #000;
+      box-shadow: 0 20px 40px rgba(58, 28, 19, 0.15), 0 0 0 1px rgba(216, 163, 74, 0.2);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    .home-video__player-wrapper:hover {
+      transform: scale(1.01);
+      box-shadow: 0 25px 50px rgba(58, 28, 19, 0.22), 0 0 15px rgba(216, 163, 74, 0.3);
+    }
+
+    .home-video__facade {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 5;
+    }
+
+    .home-video__thumbnail {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+    }
+
+    .home-video__facade:hover .home-video__thumbnail {
+      transform: scale(1.05);
+    }
+
+    .home-video__overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.1) 0%, rgba(0, 0, 0, 0.4) 100%);
+      transition: opacity 0.3s ease;
+    }
+
+    .home-video__facade:hover .home-video__overlay {
+      background: linear-gradient(180deg, rgba(0, 0, 0, 0.15) 0%, rgba(0, 0, 0, 0.5) 100%);
+    }
+
+    /* Glowing Pulsing Play Button */
+    .home-video__play-btn {
+      position: relative;
+      z-index: 10;
+      width: 76px;
+      height: 76px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #e6bd73 0%, #d8a34a 50%, #9a6f2e 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      font-size: 24px;
+      box-shadow: 0 10px 30px rgba(216, 163, 74, 0.5);
+      border: 3px solid rgba(255, 255, 255, 0.9);
+      transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .home-video__play-btn svg {
+      width: 24px;
+      height: 24px;
+      fill: currentColor;
+      transform: translateX(2px);
+      transition: transform 0.3s ease;
+    }
+
+    .home-video__play-btn::before {
+      content: '';
+      position: absolute;
+      top: -6px;
+      left: -6px;
+      right: -6px;
+      bottom: -6px;
+      border-radius: 50%;
+      border: 1.5px solid rgba(216, 163, 74, 0.5);
+      animation: homeVideoPulse 2s infinite;
+      opacity: 0.8;
+    }
+
+    .home-video__play-btn::after {
+      content: '';
+      position: absolute;
+      top: -12px;
+      left: -12px;
+      right: -12px;
+      bottom: -12px;
+      border-radius: 50%;
+      border: 1px solid rgba(216, 163, 74, 0.25);
+      animation: homeVideoPulse 2s infinite 0.6s;
+      opacity: 0.5;
+    }
+
+    .home-video__facade:hover .home-video__play-btn {
+      transform: scale(1.1);
+      box-shadow: 0 15px 40px rgba(216, 163, 74, 0.7);
+      background: linear-gradient(135deg, #ffffff 0%, #e6bd73 100%);
+      color: #9a6f2e;
+      border-color: #ffffff;
+    }
+
+    .home-video__facade:hover .home-video__play-btn svg {
+      transform: translateX(2px) scale(1.1);
+    }
+
+    .home-video__iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+
+    @keyframes homeVideoPulse {
+      0% {
+        transform: scale(1);
+        opacity: 0.8;
+      }
+      70% {
+        transform: scale(1.15);
+        opacity: 0;
+      }
+      100% {
+        transform: scale(1.15);
+        opacity: 0;
+      }
+    }
+
+    /* Responsive styling */
+    @media (max-width: 991px) {
+      .home-video__inner {
+        grid-template-columns: 1fr;
+        padding: 36px 24px;
+        gap: 30px;
+        border-radius: 24px;
+      }
+
+      .home-video__title {
+        font-size: 26px;
+      }
+    }
+
+    @media (max-width: 576px) {
+      .home-video {
+        padding: 40px 0;
+      }
+
+      .home-video__inner {
+        padding: 24px 16px;
+        gap: 24px;
+        border-radius: 20px;
+      }
+
+      .home-video__title {
+        font-size: 22px;
+      }
+
+      .home-video__desc {
+        font-size: 14.5px;
+      }
+
+      .home-video__features {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+
+      .home-video__play-btn {
+        width: 60px;
+        height: 60px;
+        font-size: 18px;
+      }
+      
+      .home-video__play-btn svg {
+        width: 18px;
+        height: 18px;
+      }
+    }
   </style>
 
   <!-- Hero Section -->
@@ -1233,6 +1536,82 @@
     </div>
   </section>
 
+  <!-- Educational Video Section -->
+  <section class="home-video" aria-labelledby="home-video-title">
+    <div class="container container--narrow">
+      <div class="home-video__inner">
+        <div class="home-video__content">
+          <span class="home-video__badge">Supernumber Original • EP.13</span>
+          <h2 class="home-video__title" id="home-video-title">
+            เมื่อ <span>"ก๊อตจิ เทยเที่ยวไทย"</span> บุกพิสูจน์พลังตัวเลขเปลี่ยนชีวิต!
+          </h2>
+          <p class="home-video__desc">
+            ร่วมฟังประสบการณ์จริงจาก "คุณก๊อตจิ-ทัชชกร" ที่บุกเข้ามาแชร์ความเชื่อในเรื่องศาสตร์ตัวเลขและการเปลี่ยนเบอร์มงคลกับ พี่จิมมี่ Supernumber เปลี่ยนแล้วชีวิตปัง การงานรุ่งเรือง และดวงชะตาเปลี่ยนไปในทิศทางที่ดีขึ้นอย่างไรบ้าง!
+          </p>
+          <div class="home-video__features">
+            <div class="home-video__feature-item">
+              <span class="home-video__feature-icon">✓</span>
+              <span>แชร์ประสบการณ์เปลี่ยนเบอร์จริง</span>
+            </div>
+            <div class="home-video__feature-item">
+              <span class="home-video__feature-icon">✓</span>
+              <span>ศาสตร์พลังตัวเลขจากพี่จิมมี่</span>
+            </div>
+            <div class="home-video__feature-item">
+              <span class="home-video__feature-icon">✓</span>
+              <span>เจาะลึกอิทธิพลตัวเลขส่งเสริมชีวิต</span>
+            </div>
+            <div class="home-video__feature-item">
+              <span class="home-video__feature-icon">✓</span>
+              <span>แนวทางการเลือกเบอร์ให้เหมาะกับคุณ</span>
+            </div>
+          </div>
+          <a class="home-video__action" href="#home-search-title">
+            <span>ค้นหาเบอร์มงคลของคุณ</span>
+            <span class="home-video__arrow">→</span>
+          </a>
+        </div>
+        <div class="home-video__player-container">
+          <div class="home-video__player-wrapper" id="youtube-player-wrapper">
+            <div class="home-video__facade" id="youtube-facade" data-video-id="kiJy2x8AdUA">
+              <picture>
+                <source srcset="https://img.youtube.com/vi/kiJy2x8AdUA/maxresdefault.jpg" type="image/jpeg">
+                <img class="home-video__thumbnail" src="https://img.youtube.com/vi/kiJy2x8AdUA/hqdefault.jpg" alt="วิดีโอสัมภาษณ์ ก๊อตจิ เทยเที่ยวไทย เปลี่ยนเบอร์มงคลกับ Supernumber" width="640" height="360" loading="lazy" />
+              </picture>
+              <div class="home-video__overlay"></div>
+              <button class="home-video__play-btn" aria-label="เล่นวิดีโอ">
+                <svg viewBox="0 0 24 24">
+                  <path d="M8 5v14l11-7z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Video Schema Markup for Google SEO Rich Snippets -->
+    <script type="application/ld+json">
+    {
+      "@@context": "https://schema.org",
+      "@@type": "VideoObject",
+      "name": "ก๊อตจิ เทยเที่ยวไทย บุกออฟฟิศมาเล่าถึงความเชื่อในเรื่องตัวเลขและประสบการณ์จริงกับพี่จิมมี่ - Supernumber EP.13",
+      "description": "รับชมเรื่องราวและประสบการณ์จริงการเปลี่ยนเบอร์มงคลของ คุณก๊อตจิ เทยเที่ยวไทย กับ พี่จิมมี่ Supernumber ที่ช่วยเสริมพลังอำนาจ บารมี การงาน และชีวิตให้ดีขึ้นอย่างเหลือเชื่อ",
+      "thumbnailUrl": [
+        "https://img.youtube.com/vi/kiJy2x8AdUA/maxresdefault.jpg",
+        "https://img.youtube.com/vi/kiJy2x8AdUA/hqdefault.jpg"
+      ],
+      "uploadDate": "2026-05-25T09:50:00+07:00",
+      "embedUrl": "https://www.youtube.com/embed/kiJy2x8AdUA",
+      "interactionStatistic": {
+        "@@type": "InteractionCounter",
+        "interactionType": { "@@type": "https://schema.org/WatchAction" },
+        "userInteractionCount": "10500"
+      }
+    }
+    </script>
+  </section>
+
   @if ($hasHomeNumbers)
     <script>
       (() => {
@@ -1406,6 +1785,32 @@
       })();
     </script>
   @endif
+
+  <script>
+    (() => {
+      const facade = document.getElementById("youtube-facade");
+      const wrapper = document.getElementById("youtube-player-wrapper");
+
+      if (!facade || !wrapper) return;
+
+      facade.addEventListener("click", () => {
+        const videoId = facade.dataset.videoId;
+        if (!videoId) return;
+
+        // Create the iframe dynamically
+        const iframe = document.createElement("iframe");
+        iframe.className = "home-video__iframe";
+        iframe.src = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1`;
+        iframe.title = "YouTube video player";
+        iframe.allow = "accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share";
+        iframe.allowFullscreen = true;
+
+        // Replace content of the wrapper with the iframe
+        wrapper.innerHTML = "";
+        wrapper.appendChild(iframe);
+      });
+    })();
+  </script>
 
   <script>
     (() => {

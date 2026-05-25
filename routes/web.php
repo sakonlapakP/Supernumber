@@ -4484,6 +4484,7 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 'meta_description' => trim((string) ($data['meta_description'] ?? '')) ?: null,
                 'is_published' => $isPublished,
                 'is_auto_post' => $request->boolean('is_auto_post'),
+                'is_pinned' => $request->boolean('is_pinned'),
                 'published_at' => $publishedAt,
                 'cover_image_path' => $coverImagePath,
             ];
@@ -5307,6 +5308,7 @@ Route::post('/direct-save-article/{article}', function (Request $request, Articl
         'meta_description' => trim((string)($data['meta_description'] ?? '')) ?: null,
         'is_published' => $isPublished,
         'is_auto_post' => $request->boolean('is_auto_post'),
+        'is_pinned' => $request->boolean('is_pinned'),
         'published_at' => $publishedAt,
     ];
 

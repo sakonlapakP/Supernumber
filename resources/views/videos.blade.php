@@ -11,39 +11,41 @@
 @push('styles')
 <style>
   .videos-hero {
-    background: linear-gradient(135deg, #2a2321 0%, #3d2e26 100%);
-    padding: 3rem 0 2.5rem;
-    text-align: center;
+    padding: 56px 0 38px;
+    background:
+      radial-gradient(circle at right top, rgba(216,163,74,.22), rgba(216,163,74,0) 45%),
+      linear-gradient(120deg, rgba(31,25,20,.9), rgba(52,38,28,.9));
+    color: #fff;
   }
   .videos-hero__kicker {
-    font-size: .85rem;
-    font-weight: 600;
-    letter-spacing: .12em;
+    color: #ffd68f;
+    letter-spacing: .18em;
     text-transform: uppercase;
-    color: #c9a96e;
-    margin-bottom: .5rem;
+    font-size: 13px;
   }
   .videos-hero__title {
-    font-size: clamp(1.6rem, 4vw, 2.4rem);
+    margin-top: 10px;
+    font-size: clamp(30px, 4vw, 42px);
+    line-height: 1.2;
     font-weight: 700;
-    color: #fff;
-    margin: 0 0 .75rem;
   }
   .videos-hero__sub {
-    color: rgba(255,255,255,.65);
+    margin-top: 12px;
+    max-width: 760px;
+    color: rgba(255,255,255,.86);
+    line-height: 1.7;
     font-size: .95rem;
-    max-width: 480px;
-    margin: 0 auto 1rem;
   }
   .videos-hero__badge {
     display: inline-block;
-    background: rgba(201,169,110,.18);
-    border: 1px solid rgba(201,169,110,.45);
-    color: #c9a96e;
-    font-size: .8rem;
+    margin-top: 14px;
+    background: rgba(255,214,143,.15);
+    border: 1px solid rgba(255,214,143,.35);
+    color: #ffd68f;
+    font-size: .78rem;
     font-weight: 700;
     letter-spacing: .1em;
-    padding: .3rem .85rem;
+    padding: .28rem .85rem;
     border-radius: 999px;
   }
 
@@ -240,7 +242,7 @@ $videos = [
 <section class="videos-hero">
   <div class="container">
     <p class="videos-hero__kicker">Supernumber Original Series</p>
-    <h1 class="videos-hero__title">สุดยอดพลังตัวเลข</h1>
+    <h1 class="videos-hero__title">วิดีโอสุดยอดพลังตัวเลข</h1>
     <p class="videos-hero__sub">เรื่องจริงจากคนที่เปลี่ยนเบอร์แล้วชีวิตเปลี่ยน</p>
     <span class="videos-hero__badge">{{ count($videos) }} EP</span>
   </div>
