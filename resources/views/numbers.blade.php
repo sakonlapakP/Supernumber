@@ -503,9 +503,17 @@
 
     body.numbers-scale-soft .numbers-catalog-grid[data-view=list] {
       display: grid !important;
-      grid-template-columns: 1fr !important;
+      grid-template-columns: repeat(2, 1fr) !important;
       gap: 12px !important;
       padding: 0 !important;
+    }
+    body.numbers-scale-soft .numbers-catalog-grid[data-view=list].is-default-split {
+      grid-template-columns: 1fr !important;
+    }
+    @media (max-width: 700px) {
+      body.numbers-scale-soft .numbers-catalog-grid[data-view=list] {
+        grid-template-columns: 1fr !important;
+      }
     }
     body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home {
       display: grid !important;
