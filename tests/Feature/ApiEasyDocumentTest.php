@@ -46,6 +46,59 @@ class ApiEasyDocumentTest extends TestCase
             ->assertForbidden();
     }
 
+    public function test_document_officer_can_access_easy_document_endpoints(): void
+    {
+        $token = $this->issueTokenForRole(User::ROLE_DOCUMENT_OFFICER);
+
+        BillingCustomer::create(['company_name' => 'DocOfficer Co', 'is_active' => true]);
+
+        $this->withHeader('Authorization', "Bearer {$token}")
+            ->getJson(route('api.admin.billing-customers.index'))
+            ->assertOk();
+    }
+
+    public function test_easy_document_create_retries_on_document_number_collision(): void
+    {
+        $token = $this->issueTokenForRole(User::ROLE_ADMIN);
+
+        $customer = BillingCustomer::create([
+            'company_name' => 'Collide Customer',
+            'is_active' => true,
+        ]);
+
+        // Pre-occupy the timestamp slot to force the retry path.
+        $timestamp = now('Asia/Bangkok')->format('YmdHis');
+        SalesDocument::create([
+            'document_type' => 'quotation',
+            'document_number' => 'QT-' . $timestamp,
+            'document_date' => now()->format('Y-m-d'),
+            'due_date' => now()->addDays(7)->format('Y-m-d'),
+            'customer_id' => $customer->id,
+            'customer_name' => $customer->company_name,
+            'file_name' => 'qt-collide-existing',
+            'status' => SalesDocument::STATUS_QUOTATION_DRAFT,
+            'is_draft' => true,
+            'is_active' => true,
+            'pdf_disk' => 'local',
+            'pdf_path' => '',
+            'payload' => [],
+        ]);
+
+        $response = $this->withHeader('Authorization', "Bearer {$token}")
+            ->postJson(route('api.admin.easy-documents.create'), [
+                'customerId' => $customer->id,
+                'documentType' => 'quotation',
+                'items' => [['name' => 'item', 'price' => 100, 'originalPrice' => 100, 'qty' => 1]],
+                'taxMethod' => 'customer-pays',
+                'paymentMethod' => 'bank',
+                'paymentCondition' => 'full',
+            ]);
+
+        $response->assertCreated();
+        // The created document should use the suffixed number, not collide.
+        $this->assertStringStartsWith('QT-' . $timestamp . '-', $response->json('document.document_number'));
+    }
+
     public function test_admin_can_create_customer_via_api(): void
     {
         $token = $this->issueTokenForRole(User::ROLE_ADMIN);

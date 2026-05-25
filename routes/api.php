@@ -19,7 +19,8 @@ Route::middleware(ApiTokenAuth::class)->group(function () {
         ->name('api.mobile-admin.session-link');
 
     // --- Easy Documents (Quotation / Invoice native wizard for Flutter app) ---
-    Route::middleware('role:admin,manager')->prefix('admin')->group(function (): void {
+    // Role list mirrors the web ensureDocumentOfficer() guard: admin, manager, document_officer.
+    Route::middleware('role:admin,manager,document_officer')->prefix('admin')->group(function (): void {
         Route::get('billing-customers', [EasyDocumentController::class, 'listCustomers'])
             ->name('api.admin.billing-customers.index');
         Route::post('billing-customers', [EasyDocumentController::class, 'storeCustomer'])
