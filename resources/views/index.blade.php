@@ -1115,6 +1115,59 @@
         height: 18px;
       }
     }
+
+    /* ===== HOME SECTION SLIDERS ===== */
+    .home-number-group__slider {
+      position: relative;
+      padding: 0 52px;
+    }
+
+    .home-slider__arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #fff;
+      border: 1.5px solid rgba(73, 61, 52, 0.15);
+      box-shadow: 0 4px 12px rgba(45, 33, 24, 0.12);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #3b2f27;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
+      padding: 0;
+    }
+
+    .home-slider__arrow--prev { left: 0; }
+    .home-slider__arrow--next { right: 0; }
+
+    .home-slider__arrow:hover:not(:disabled) {
+      background: #d8a34a;
+      color: #fff;
+      border-color: #d8a34a;
+      box-shadow: 0 6px 16px rgba(216, 163, 74, 0.35);
+      transform: translateY(-50%) scale(1.05);
+    }
+
+    .home-slider__arrow:disabled {
+      opacity: 0.25;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    @media (max-width: 768px) {
+      .home-number-group__slider {
+        padding: 0 38px;
+      }
+      .home-slider__arrow {
+        width: 32px;
+        height: 32px;
+      }
+    }
   </style>
 
   <!-- Hero Section -->
@@ -1369,8 +1422,7 @@
   <section class="numbers" aria-labelledby="numbers-title">
     @php
       $pageSize = 8;
-      $maxPages = 6;
-      $maxItems = $pageSize * $maxPages;
+      $maxItems = 80;
       $buildHomePayload = function ($numbers) use ($maxItems) {
           return $numbers->take($maxItems)->map(function ($number) {
               return [
@@ -1393,15 +1445,6 @@
       $initialPrepaidNumbers = $prepaidPayload->take($pageSize);
       $initialPostpaidNumbers = $postpaidPayload->take($pageSize);
       $hasHomeNumbers = $prepaidPayload->isNotEmpty() || $postpaidPayload->isNotEmpty();
-      $totalPages = max(
-          1,
-          (int) max(
-              ceil($prepaidPayload->count() / $pageSize),
-              ceil($postpaidPayload->count() / $pageSize)
-          )
-      );
-      $startPage = 1;
-      $endPage = min($totalPages, 3);
     @endphp
     <div class="container">
       <div class="section-title numbers-catalog-title">
@@ -1427,7 +1470,11 @@
                   <p class="home-number-group__hint">เบอร์เติมเงินสามารถย้ายค่ายได้</p>
                 </div>
               </div>
-              <div class="card-grid home-card-grid listing-card-grid" id="home-prepaid-grid" data-view="grid">
+              <div class="home-number-group__slider">
+                <button class="home-slider__arrow home-slider__arrow--prev" id="home-prepaid-prev" type="button" aria-label="ก่อนหน้า" disabled>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <div class="card-grid home-card-grid listing-card-grid" id="home-prepaid-grid" data-view="grid">
                 @foreach ($initialPrepaidNumbers as $number)
                   <article class="number-card number-card--listing number-card--home">
                     <div class="card-left-group">
@@ -1463,6 +1510,10 @@
                     <a class="card-btn card-btn--buy" href="{{ $number['good_number_url'] }}">สั่งซื้อ</a>
                   </article>
                 @endforeach
+                </div>
+                <button class="home-slider__arrow home-slider__arrow--next" id="home-prepaid-next" type="button" aria-label="ถัดไป">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
               </div>
             </section>
           @endif
@@ -1475,7 +1526,11 @@
                   <p class="home-number-group__hint"> สัญญา 12 เดือน</p>
                 </div>
               </div>
-              <div class="card-grid home-card-grid listing-card-grid" id="home-postpaid-grid" data-view="grid">
+              <div class="home-number-group__slider">
+                <button class="home-slider__arrow home-slider__arrow--prev" id="home-postpaid-prev" type="button" aria-label="ก่อนหน้า" disabled>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <div class="card-grid home-card-grid listing-card-grid" id="home-postpaid-grid" data-view="grid">
                 @foreach ($initialPostpaidNumbers as $number)
                   <article class="number-card number-card--listing number-card--home">
                     <div class="card-left-group">
@@ -1510,27 +1565,15 @@
                     <a class="card-btn card-btn--buy" href="{{ $number['good_number_url'] }}">สั่งซื้อ</a>
                   </article>
                 @endforeach
+                </div>
+                <button class="home-slider__arrow home-slider__arrow--next" id="home-postpaid-next" type="button" aria-label="ถัดไป">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
               </div>
             </section>
           @endif
         </div>
 
-        <nav class="numbers-pagination home-pagination" id="home-pagination" aria-label="เปลี่ยนหน้ารายการเบอร์" @if ($totalPages <= 1) hidden @endif>
-          <span class="numbers-pagination__link is-disabled">ก่อนหน้า</span>
-          @for ($page = $startPage; $page <= $endPage; $page++)
-            @if ($page === 1)
-              <span class="numbers-pagination__link is-active" aria-current="page">{{ $page }}</span>
-            @else
-              <button class="numbers-pagination__link" type="button" data-page="{{ $page }}">{{ $page }}</button>
-            @endif
-          @endfor
-
-          @if ($totalPages > 1)
-            <button class="numbers-pagination__link" type="button" data-action="next">ถัดไป</button>
-          @else
-            <span class="numbers-pagination__link is-disabled">ถัดไป</span>
-          @endif
-        </nav>
       @else
         <p class="numbers-empty">ยังไม่มีเบอร์พร้อมขายในระบบตอนนี้</p>
       @endif
@@ -1616,44 +1659,39 @@
   @if ($hasHomeNumbers)
     <script>
       (() => {
-        const prepaidNumbers = @json($prepaidPayload);
+        const prepaidNumbers  = @json($prepaidPayload);
         const postpaidNumbers = @json($postpaidPayload);
         const pageSize = {{ $pageSize }};
-        const totalPages = Math.max(
-          1,
-          Math.max(
-            Math.ceil(prepaidNumbers.length / pageSize),
-            Math.ceil(postpaidNumbers.length / pageSize)
-          )
-        );
 
-        const prepaidGrid = document.getElementById("home-prepaid-grid");
-        const prepaidSection = document.getElementById("home-prepaid-section");
-        const postpaidGrid = document.getElementById("home-postpaid-grid");
+        const prepaidGrid     = document.getElementById("home-prepaid-grid");
+        const prepaidSection  = document.getElementById("home-prepaid-section");
+        const postpaidGrid    = document.getElementById("home-postpaid-grid");
         const postpaidSection = document.getElementById("home-postpaid-section");
         const groups = document.getElementById("home-number-groups");
-        const pager = document.getElementById("home-pagination");
         const toggle = document.getElementById("home-view-toggle");
+
+        const prepaidPrevBtn  = document.getElementById("home-prepaid-prev");
+        const prepaidNextBtn  = document.getElementById("home-prepaid-next");
+        const postpaidPrevBtn = document.getElementById("home-postpaid-prev");
+        const postpaidNextBtn = document.getElementById("home-postpaid-next");
 
         if ((!prepaidGrid && !postpaidGrid) || !toggle) return;
 
-        let currentPage = 1;
+        const prepaidTotalPages  = Math.max(1, Math.ceil(prepaidNumbers.length / pageSize));
+        const postpaidTotalPages = Math.max(1, Math.ceil(postpaidNumbers.length / pageSize));
+
+        let prepaidPage  = 1;
+        let postpaidPage = 1;
 
         const escapeHtml = (value) =>
           String(value ?? "").replace(/[&<>"']/g, (char) => {
             switch (char) {
-              case "&":
-                return "&amp;";
-              case "<":
-                return "&lt;";
-              case ">":
-                return "&gt;";
-              case '"':
-                return "&quot;";
-              case "'":
-                return "&#39;";
-              default:
-                return char;
+              case "&": return "&amp;";
+              case "<": return "&lt;";
+              case ">": return "&gt;";
+              case '"': return "&quot;";
+              case "'": return "&#39;";
+              default:  return char;
             }
           });
 
@@ -1662,127 +1700,64 @@
             <div class="card-left-group">
               <div class="card-top">${escapeHtml(number.formatted_number)}</div>
               ${Array.isArray(number.supported_topic_icons) && number.supported_topic_icons.length
-                ? `<div class="card-topic-icons" aria-label="หมวดที่เบอร์ this helps">${number.supported_topic_icons.slice(0, 4).map((topic) => `<span class="card-topic-icon" title="${escapeHtml(topic.topic)}" aria-label="${escapeHtml(topic.topic)}">${escapeHtml(topic.icon)}</span>`).join("")}${number.supported_topic_icons.length > 4 ? `<span class="card-topic-icon card-topic-icon--more" aria-label="More categories">+</span>` : ""}</div>`
+                ? `<div class="card-topic-icons" aria-label="หมวดที่เบอร์นี้ช่วย">${number.supported_topic_icons.slice(0, 4).map((t) => `<span class="card-topic-icon" title="${escapeHtml(t.topic)}" aria-label="${escapeHtml(t.topic)}">${escapeHtml(t.icon)}</span>`).join("")}${number.supported_topic_icons.length > 4 ? `<span class="card-topic-icon card-topic-icon--more" aria-label="มีหมวดเพิ่มเติม">+</span>` : ""}</div>`
                 : ""}
             </div>
             <div class="card-body">
               <div class="card-meta-stack">
                 <span class="card-tier card-tier--network"><span class="card-network-main" data-network="${escapeHtml(String(number.network_code || "").toLowerCase())}">${escapeHtml(number.network_label)}</span><span class="card-network-suffix">${escapeHtml(number.service_type_label)}</span></span>
                 ${!number.is_postpaid ? `<span class="card-meta-plan">${escapeHtml(number.payment_label)}</span>` : ""}
-                ${number.is_postpaid ? `<span class="card-meta-price">${number.initial_payment_html}</span>` : ""}
+                ${number.is_postpaid  ? `<span class="card-meta-price">${number.initial_payment_html}</span>` : ""}
               </div>
             </div>
             <a class="card-btn card-btn--buy" href="${escapeHtml(number.good_number_url)}">สั่งซื้อ</a>
           </article>
         `;
 
-        const renderPager = () => {
-          if (!pager) return;
+        const renderSection = (grid, section, numbers, page, totalPages, prevBtn, nextBtn) => {
+          const p     = Math.min(totalPages, Math.max(1, page));
+          const start = (p - 1) * pageSize;
+          const items = numbers.slice(start, start + pageSize);
 
-          const startPage = Math.max(1, currentPage - 2);
-          const endPage = Math.min(totalPages, currentPage + 2);
-          const controls = [];
+          if (grid)    grid.innerHTML = items.map(renderCard).join("");
+          if (section) section.hidden = items.length === 0;
+          if (prevBtn) prevBtn.disabled = p <= 1;
+          if (nextBtn) nextBtn.disabled = p >= totalPages;
 
-          if (currentPage <= 1) {
-            controls.push('<span class="numbers-pagination__link is-disabled">ก่อนหน้า</span>');
-          } else {
-            controls.push('<button class="numbers-pagination__link" type="button" data-action="prev">ก่อนหน้า</button>');
-          }
-
-          for (let page = startPage; page <= endPage; page += 1) {
-            if (page === currentPage) {
-              controls.push(`<span class="numbers-pagination__link is-active" aria-current="page">${page}</span>`);
-            } else {
-              controls.push(`<button class="numbers-pagination__link" type="button" data-page="${page}">${page}</button>`);
-            }
-          }
-
-          if (currentPage >= totalPages) {
-            controls.push('<span class="numbers-pagination__link is-disabled">ถัดไป</span>');
-          } else {
-            controls.push('<button class="numbers-pagination__link" type="button" data-action="next">ถัดไป</button>');
-          }
-
-          pager.innerHTML = controls.join("");
+          return p;
         };
 
-        const renderPage = (page) => {
-          currentPage = Math.min(totalPages, Math.max(1, page));
-          const start = (currentPage - 1) * pageSize;
-          const prepaidItems = prepaidNumbers.slice(start, start + pageSize);
-          const postpaidItems = postpaidNumbers.slice(start, start + pageSize);
+        const renderPrepaid  = (page) => { prepaidPage  = renderSection(prepaidGrid,  prepaidSection,  prepaidNumbers,  page, prepaidTotalPages,  prepaidPrevBtn,  prepaidNextBtn);  };
+        const renderPostpaid = (page) => { postpaidPage = renderSection(postpaidGrid, postpaidSection, postpaidNumbers, page, postpaidTotalPages, postpaidPrevBtn, postpaidNextBtn); };
 
-          if (prepaidGrid) {
-            prepaidGrid.innerHTML = prepaidItems.map(renderCard).join("");
-          }
-
-          if (postpaidGrid) {
-            postpaidGrid.innerHTML = postpaidItems.map(renderCard).join("");
-          }
-
-          if (prepaidSection) {
-            prepaidSection.hidden = prepaidItems.length === 0;
-          }
-
-          if (postpaidSection) {
-            postpaidSection.hidden = postpaidItems.length === 0;
-          }
-
-          renderPager();
-        };
+        if (prepaidPrevBtn)  prepaidPrevBtn.addEventListener("click",  () => renderPrepaid(prepaidPage - 1));
+        if (prepaidNextBtn)  prepaidNextBtn.addEventListener("click",  () => renderPrepaid(prepaidPage + 1));
+        if (postpaidPrevBtn) postpaidPrevBtn.addEventListener("click", () => renderPostpaid(postpaidPage - 1));
+        if (postpaidNextBtn) postpaidNextBtn.addEventListener("click", () => renderPostpaid(postpaidPage + 1));
 
         const buttons = Array.from(toggle.querySelectorAll("[data-view]"));
-        const grids = [prepaidGrid, postpaidGrid].filter(Boolean);
+        const grids   = [prepaidGrid, postpaidGrid].filter(Boolean);
 
         const applyView = (view) => {
-          const normalizedView = view === "list" ? "list" : "grid";
-          if (groups) {
-            groups.dataset.view = normalizedView;
-          }
-
-          grids.forEach((grid) => {
-            grid.dataset.view = normalizedView;
-          });
-
-          buttons.forEach((button) => {
-            const isActive = button.dataset.view === normalizedView;
-            button.classList.toggle("is-active", isActive);
-            button.setAttribute("aria-pressed", isActive ? "true" : "false");
+          const v = view === "list" ? "list" : "grid";
+          if (groups) groups.dataset.view = v;
+          grids.forEach((g)   => { g.dataset.view = v; });
+          buttons.forEach((b) => {
+            const active = b.dataset.view === v;
+            b.classList.toggle("is-active", active);
+            b.setAttribute("aria-pressed", active ? "true" : "false");
           });
         };
 
         applyView("grid");
 
-        toggle.addEventListener("click", (event) => {
-          const target = event.target.closest("[data-view]");
-          if (!target) return;
-
-          applyView(target.dataset.view);
+        toggle.addEventListener("click", (e) => {
+          const t = e.target.closest("[data-view]");
+          if (t) applyView(t.dataset.view);
         });
 
-        if (pager) {
-          pager.addEventListener("click", (event) => {
-            const control = event.target.closest("[data-page], [data-action]");
-            if (!control) return;
-
-            const targetPage = Number.parseInt(control.dataset.page || "", 10);
-            if (Number.isFinite(targetPage)) {
-              renderPage(targetPage);
-              return;
-            }
-
-            if (control.dataset.action === "prev" && currentPage > 1) {
-              renderPage(currentPage - 1);
-              return;
-            }
-
-            if (control.dataset.action === "next" && currentPage < totalPages) {
-              renderPage(currentPage + 1);
-            }
-          });
-        }
-
-        renderPage(1);
+        renderPrepaid(1);
+        renderPostpaid(1);
       })();
     </script>
   @endif

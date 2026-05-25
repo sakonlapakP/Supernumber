@@ -34,7 +34,7 @@ class PublicController extends Controller
      */
     public function index()
     {
-        $homeNumbersLimitPerType = 48;
+        $homeNumbersLimitPerType = 80;
 
         $baseQuery = PhoneNumber::query()
             ->with('package')
