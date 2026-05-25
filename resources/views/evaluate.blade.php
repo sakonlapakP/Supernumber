@@ -169,7 +169,26 @@
     @media (max-width: 580px) {
       .theme-overview__grid,
       .pair-grid {
-        grid-template-columns: 1fr !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 10px !important;
+      }
+
+      .pair-card {
+        padding: 14px 10px !important;
+      }
+
+      .pair-card h4 {
+        font-size: 14px !important;
+      }
+
+      .pair-card p {
+        font-size: 12px !important;
+      }
+
+      .pair-score-item {
+        width: 42px !important;
+        height: 42px !important;
+        font-size: 16px !important;
       }
     }
 
