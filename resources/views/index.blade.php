@@ -308,13 +308,14 @@
         font-size: 14px;
       }
       .home-filter__footer-controls {
-        grid-template-columns: 1fr;
-        gap: 12px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
       }
       .home-filter__submit {
-        margin-top: 10px;
+        margin-top: 0;
         width: 100%;
-        height: 50px;
+        height: 48px;
+        align-self: end;
       }
       .home-filter__position-row {
         gap: 6px;

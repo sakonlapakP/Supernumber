@@ -279,13 +279,14 @@
         margin-bottom: 30px;
       }
       .home-filter__footer-controls {
-        grid-template-columns: 1fr;
-        gap: 12px;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 10px;
       }
       .home-filter__submit {
-        margin-top: 10px;
+        margin-top: 0;
         width: 100%;
-        height: 50px;
+        height: 48px;
+        align-self: end;
       }
       .home-filter__position-row {
         gap: 6px;
@@ -464,7 +465,7 @@
 
     @media (max-width: 820px) {
       .numbers-topics__grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
       }
     }
 
@@ -474,30 +475,33 @@
         border-radius: 20px;
       }
       .numbers-topics__grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 8px;
       }
       .numbers-topic-card {
-        padding: 12px 10px;
-        gap: 8px;
+        padding: 10px 8px;
+        gap: 6px;
       }
       .numbers-topic-card__icon {
-        width: 36px;
-        height: 36px;
-        font-size: 18px;
+        width: 30px;
+        height: 30px;
+        font-size: 16px;
       }
       .numbers-topic-card__name {
-        font-size: 12.5px;
+        font-size: 11.5px;
+      }
+      .numbers-topic-card__arrow {
+        display: none;
       }
     }
 
     @media (max-width: 560px) {
       .numbers-topics__grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 6px;
       }
       .numbers-topic-card__name {
-        font-size: 12px;
+        font-size: 11px;
       }
     }
 
