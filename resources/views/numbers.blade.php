@@ -532,7 +532,7 @@
       display: flex !important;
       flex-direction: column !important;
       align-items: flex-start !important;
-      gap: 4px !important;
+      gap: 2px !important;
       min-width: 130px !important;
     }
     body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-top {
@@ -554,9 +554,9 @@
       padding: 0 !important;
     }
     body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-topic-icon {
-      width: 16px !important;
-      height: 16px !important;
-      font-size: 9px !important;
+      width: 22px !important;
+      height: 22px !important;
+      font-size: 13px !important;
     }
     body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-body {
       flex: 1 !important;
