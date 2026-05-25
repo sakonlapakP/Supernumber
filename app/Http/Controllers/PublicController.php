@@ -84,7 +84,13 @@ class PublicController extends Controller
 
         $plans = collect($plansByServiceType['all']);
 
-        return view('index', compact('prepaidNumbers', 'postpaidNumbers', 'plans', 'plansByServiceType', 'search', 'selectedPlan', 'selectedServiceType'));
+        $homeArticles = Article::query()
+            ->published()
+            ->orderByDesc('published_at')
+            ->limit(6)
+            ->get(['id', 'title', 'slug', 'excerpt', 'cover_image_path', 'cover_image_landscape_path', 'published_at']);
+
+        return view('index', compact('prepaidNumbers', 'postpaidNumbers', 'plans', 'plansByServiceType', 'search', 'selectedPlan', 'selectedServiceType', 'homeArticles'));
     }
 
     /**
@@ -229,12 +235,9 @@ class PublicController extends Controller
         $defaultPostpaidNumbers = collect();
 
         if ($isDefaultSplitLayout) {
-            $perPage = 24;
-            $perColumn = (int) ceil($perPage / 2);
-            $currentPage = Paginator::resolveCurrentPage('page');
-            $columnOffset = max(0, ($currentPage - 1) * $perColumn);
+            $perColumn = 288;
 
-            // Default catalog pages intentionally balance prepaid and postpaid numbers side by side.
+            // Default catalog loads up to $perColumn of each type for the slider.
             $prepaidQuery = $applyCatalogFilters(
                 (clone $baseQuery)->prepaid()
             );
@@ -246,57 +249,21 @@ class PublicController extends Controller
             $postpaidTotal = (clone $postpaidQuery)->count();
 
             $prepaidNumbers = (clone $prepaidQuery)
-                ->offset($columnOffset)
                 ->limit($perColumn)
                 ->get();
 
             $postpaidNumbers = (clone $postpaidQuery)
-                ->offset($columnOffset)
                 ->limit($perColumn)
                 ->get();
 
             $defaultPrepaidNumbers = $prepaidNumbers->values();
             $defaultPostpaidNumbers = $postpaidNumbers->values();
 
-            $overflowNumbers = collect();
-            $remainingSlots = $perPage - ($prepaidNumbers->count() + $postpaidNumbers->count());
-
-            if ($remainingSlots > 0) {
-                if ($prepaidNumbers->count() < $perColumn) {
-                    $overflowNumbers = $overflowNumbers->concat(
-                        (clone $postpaidQuery)
-                            ->offset($columnOffset + $postpaidNumbers->count())
-                            ->limit($remainingSlots)
-                            ->get()
-                    );
-                } elseif ($postpaidNumbers->count() < $perColumn) {
-                    $overflowNumbers = $overflowNumbers->concat(
-                        (clone $prepaidQuery)
-                            ->offset($columnOffset + $prepaidNumbers->count())
-                            ->limit($remainingSlots)
-                            ->get()
-                    );
-                }
-            }
-
-            $rows = max($prepaidNumbers->count(), $postpaidNumbers->count());
-            $interleavedNumbers = collect();
-
-            for ($index = 0; $index < $rows; $index += 1) {
-                if ($prepaidNumbers->has($index)) {
-                    $interleavedNumbers->push($prepaidNumbers->get($index));
-                }
-
-                if ($postpaidNumbers->has($index)) {
-                    $interleavedNumbers->push($postpaidNumbers->get($index));
-                }
-            }
-
             $numbers = new LengthAwarePaginator(
-                $interleavedNumbers->concat($overflowNumbers)->values(),
+                $prepaidNumbers->concat($postpaidNumbers)->values(),
                 $prepaidTotal + $postpaidTotal,
-                $perPage,
-                $currentPage,
+                $perColumn * 2,
+                1,
                 [
                     'path' => $request->url(),
                     'query' => $request->query(),

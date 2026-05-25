@@ -20,6 +20,10 @@
 @section('preload_imagesizes', '100vw')
 @section('body_class', 'home-scale-soft')
 
+@push('styles')
+  <link rel="stylesheet" href="{{ asset('css/article.css') }}?v={{ substr(md5_file(public_path('css/article.css')), 0, 8) }}" />
+@endpush
+
 @section('seo_schema')
 <script type="application/ld+json">
 {
@@ -1168,6 +1172,197 @@
         height: 32px;
       }
     }
+
+    /* ===== HOME ARTICLES SECTION ===== */
+    .home-articles {
+      padding: 0 0 48px;
+    }
+
+    .home-articles__inner {
+      background: rgba(255, 255, 255, 0.75);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border-radius: 28px;
+      padding: 32px;
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 24px rgba(45, 33, 24, 0.08);
+    }
+
+    .home-articles__header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 24px;
+      gap: 16px;
+    }
+
+    .home-articles__header-left h2 {
+      font-size: 20px;
+      font-weight: 800;
+      color: #3b2f27;
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .home-articles__header-left h2::before {
+      content: '';
+      display: inline-block;
+      width: 4px;
+      height: 20px;
+      background: linear-gradient(to bottom, #d8a34a, #9a6f2e);
+      border-radius: 2px;
+      flex-shrink: 0;
+    }
+
+    .home-articles__header-left p {
+      font-size: 14px;
+      color: #8a7a6c;
+      padding-left: 12px;
+    }
+
+    .home-articles__view-all {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13.5px;
+      font-weight: 700;
+      color: #9a6f2e;
+      text-decoration: none;
+      border: 1.5px solid rgba(216, 163, 74, 0.35);
+      border-radius: 10px;
+      padding: 7px 14px;
+      white-space: nowrap;
+      flex-shrink: 0;
+      transition: all 0.2s ease;
+    }
+
+    .home-articles__view-all:hover {
+      background: rgba(216, 163, 74, 0.1);
+      border-color: #d8a34a;
+      color: #9a6f2e;
+      text-decoration: none;
+    }
+
+    .home-articles__grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+    }
+
+    .home-article-card {
+      display: flex;
+      flex-direction: column;
+      background: #fff;
+      border: 1.5px solid rgba(73, 61, 52, 0.08);
+      border-radius: 16px;
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
+    }
+
+    .home-article-card:hover {
+      border-color: rgba(216, 163, 74, 0.4);
+      box-shadow: 0 6px 20px rgba(216, 163, 74, 0.15);
+      transform: translateY(-2px);
+      text-decoration: none;
+      color: inherit;
+    }
+
+    .home-article-card__image {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      display: block;
+      background: #f3ede4;
+    }
+
+    .home-article-card__image-placeholder {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      background: linear-gradient(135deg, #f9f6f1, #f0e8db);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+    }
+
+    .home-article-card__body {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      padding: 16px;
+      gap: 6px;
+    }
+
+    .home-article-card__date {
+      font-size: 11.5px;
+      font-weight: 600;
+      color: #b09070;
+      letter-spacing: 0.02em;
+    }
+
+    .home-article-card__title {
+      font-size: 14.5px;
+      font-weight: 700;
+      color: #3b2f27;
+      line-height: 1.45;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+    }
+
+    .home-article-card__excerpt {
+      font-size: 13px;
+      color: #7a6c62;
+      line-height: 1.5;
+      display: -webkit-box;
+      -webkit-line-clamp: 2;
+      -webkit-box-orient: vertical;
+      overflow: hidden;
+      flex: 1;
+    }
+
+    .home-article-card__footer {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      margin-top: 6px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(73, 61, 52, 0.06);
+    }
+
+    .home-article-card__read-more {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #9a6f2e;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    @media (max-width: 900px) {
+      .home-articles__grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 600px) {
+      .home-articles {
+        padding-bottom: 32px;
+      }
+      .home-articles__inner {
+        padding: 20px 16px;
+        border-radius: 20px;
+      }
+      .home-articles__grid {
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+    }
   </style>
 
   <!-- Hero Section -->
@@ -1585,7 +1780,7 @@
     <div class="container container--narrow">
       <div class="home-video__inner">
         <div class="home-video__content">
-          <span class="home-video__badge">Supernumber Original • EP.13</span>
+          <span class="home-video__badge">SUPERNUMBER ORIGINAL</span>
           <h2 class="home-video__title" id="home-video-title">
             เมื่อ <span>"ก๊อตจิ เทยเที่ยวไทย"</span> บุกพิสูจน์พลังตัวเลขเปลี่ยนชีวิต!
           </h2>
@@ -1610,8 +1805,8 @@
               <span>แนวทางการเลือกเบอร์ให้เหมาะกับคุณ</span>
             </div>
           </div>
-          <a class="home-video__action" href="#home-search-title">
-            <span>ค้นหาเบอร์มงคลของคุณ</span>
+          <a class="home-video__action" href="{{ route('videos') }}">
+            <span>ดู SUPERNUMBER ORIGINAL ทั้งหมด</span>
             <span class="home-video__arrow">→</span>
           </a>
         </div>
@@ -1655,6 +1850,49 @@
     }
     </script>
   </section>
+
+  @if ($homeArticles->isNotEmpty())
+  <!-- Articles Preview Section -->
+  <section class="home-articles" aria-labelledby="home-articles-title">
+    <div class="container container--narrow">
+      <div class="home-articles__inner">
+        <div class="home-articles__header">
+          <div class="home-articles__header-left">
+            <h2 id="home-articles-title">บทความแนะนำ</h2>
+            <p>ความรู้เรื่องตัวเลข ดูดวง และเบอร์มงคล</p>
+          </div>
+          <a class="home-articles__view-all" href="{{ route('articles.index') }}">
+            ดูทั้งหมด <span>→</span>
+          </a>
+        </div>
+        <div class="article-grid">
+          @foreach ($homeArticles as $article)
+            @php
+              $listingCoverPath = $article->cover_image_landscape_path ?: null;
+            @endphp
+            <article class="article-card">
+              @if ($listingCoverPath)
+                <a href="{{ route('articles.show', $article->slug) }}" class="article-card__cover-link" aria-label="อ่านบทความ {{ $article->title }}">
+                  <img src="{{ asset('storage/' . $listingCoverPath) }}" alt="{{ $article->title }}" class="article-card__cover" loading="lazy" />
+                </a>
+              @endif
+              <div class="article-card__body">
+                <p class="article-card__meta">{{ optional(optional($article->published_at)->timezone('Asia/Bangkok'))->format('d/m/Y') }}</p>
+                <h3 class="article-card__title">
+                  <a href="{{ route('articles.show', $article->slug) }}">{{ $article->title }}</a>
+                </h3>
+                @if ($article->excerpt)
+                  <p class="article-card__excerpt">{{ $article->excerpt }}</p>
+                @endif
+                <a href="{{ route('articles.show', $article->slug) }}" class="article-card__link">อ่านต่อ</a>
+              </div>
+            </article>
+          @endforeach
+        </div>
+      </div>
+    </div>
+  </section>
+  @endif
 
   @if ($hasHomeNumbers)
     <script>

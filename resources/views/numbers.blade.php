@@ -628,6 +628,81 @@
       text-decoration: none !important;
       flex-shrink: 0 !important;
     }
+
+    /* ===== NUMBERS PAGE SLIDERS ===== */
+    .numbers-slider-sections {
+      display: flex;
+      flex-direction: column;
+      gap: 40px;
+      margin-bottom: 8px;
+    }
+
+    .numbers-slider-section .home-number-group__head {
+      margin-bottom: 20px;
+    }
+
+    .numbers-slider-section .home-number-group__title {
+      font-size: 22px;
+      color: #1a1612;
+      font-weight: 800;
+    }
+
+    .numbers-slider-section .home-number-group__hint {
+      font-size: 14px;
+      color: #7a6c62;
+    }
+
+    .home-number-group__slider {
+      position: relative;
+      padding: 0 52px;
+    }
+
+    .home-slider__arrow {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      z-index: 10;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #fff;
+      border: 1.5px solid rgba(73, 61, 52, 0.15);
+      box-shadow: 0 4px 12px rgba(45, 33, 24, 0.12);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #3b2f27;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s, transform 0.2s;
+      padding: 0;
+    }
+
+    .home-slider__arrow--prev { left: 0; }
+    .home-slider__arrow--next { right: 0; }
+
+    .home-slider__arrow:hover:not(:disabled) {
+      background: #d8a34a;
+      color: #fff;
+      border-color: #d8a34a;
+      box-shadow: 0 6px 16px rgba(216, 163, 74, 0.35);
+      transform: translateY(-50%) scale(1.05);
+    }
+
+    .home-slider__arrow:disabled {
+      opacity: 0.25;
+      cursor: default;
+      pointer-events: none;
+    }
+
+    @media (max-width: 768px) {
+      .home-number-group__slider {
+        padding: 0 38px;
+      }
+      .home-slider__arrow {
+        width: 32px;
+        height: 32px;
+      }
+    }
   </style>
   @php
     $selectedView = request('view') === 'list' ? 'list' : 'grid';
@@ -804,11 +879,15 @@
           @else
             <h2 id="numbers-catalog-title">เบอร์ทั้งหมด</h2>
           @endif
-          <p>
-            แสดง
-            {{ $numbers->count() ? $numbers->firstItem() . '-' . $numbers->lastItem() : '0' }}
-            จาก {{ number_format($numbers->total()) }} เบอร์
-          </p>
+          @if (!$isDefaultSplitLayout)
+            <p>
+              แสดง
+              {{ $numbers->count() ? $numbers->firstItem() . '-' . $numbers->lastItem() : '0' }}
+              จาก {{ number_format($numbers->total()) }} เบอร์
+            </p>
+          @else
+            <p>{{ number_format($numbers->total()) }} เบอร์พร้อมขาย</p>
+          @endif
         </div>
         <div class="numbers-view-toggle" id="numbers-view-toggle" role="group" aria-label="เลือกรูปแบบการแสดงผล">
           <button class="numbers-view-toggle__button {{ $selectedView === 'list' ? 'is-active' : '' }}" type="button" data-view="list" aria-pressed="{{ $selectedView === 'list' ? 'true' : 'false' }}">รายการ</button>
@@ -817,96 +896,120 @@
       </div>
 
       @if ($isDefaultSplitLayout)
-        <div class="numbers-default-columns" id="numbers-catalog-grid" data-view="{{ $selectedView }}">
-          <section class="numbers-default-column numbers-default-column--prepaid">
-            <div class="home-number-group__head" style="margin-bottom: 24px;">
-              <div class="home-number-group__copy">
-                <h3 class="home-number-group__title" style="font-size: 24px; color: #1a1612;">เบอร์เติมเงินพร้อมใช้</h3>
-                <p class="home-number-group__hint" style="font-size: 14px; color: #7a6c62;">เบอร์เติมเงินสามารถย้ายค่ายได้</p>
-              </div>
-            </div>
-            <div class="numbers-catalog-grid listing-card-grid is-default-split" data-view="{{ $selectedView }}">
-              @foreach ($defaultPrepaidNumbers as $number)
-                <article class="number-card number-card--listing number-card--home">
-                  <div class="card-left-group">
-                    <div class="card-top">{{ $number->formatted_number }}</div>
-                    @if ($number->supported_topic_icons !== [])
-                      @php
-                        $topicIcons = collect($number->supported_topic_icons);
-                        $visibleTopicIcons = $topicIcons->take(4);
-                        $hasMoreTopicIcons = $topicIcons->count() > 4;
-                      @endphp
-                      <div class="card-topic-icons" aria-label="หมวดที่เบอร์นี้ช่วย">
-                        @foreach ($visibleTopicIcons as $topic)
-                          <span class="card-topic-icon" title="{{ $topic['topic'] }}" aria-label="{{ $topic['topic'] }}">{{ $topic['icon'] }}</span>
-                        @endforeach
-                        @if ($hasMoreTopicIcons)
-                          <span class="card-topic-icon card-topic-icon--more" aria-label="มีหมวดที่ช่วยเพิ่มเติม">+</span>
-                        @endif
-                      </div>
-                    @endif
-                  </div>
-                  <div class="card-body">
-                    <div class="card-meta-stack">
-                      <span class="card-tier card-tier--network"><span class="card-network-main" data-network="{{ strtolower($number->network_code) }}">{{ $number->network_label }}</span><span class="card-network-suffix">{{ $number->service_type_label }}</span></span>
-                      @if ($number->is_prepaid)
-                        <span class="card-meta-plan">{{ $number->payment_label }}</span>
-                      @endif
-                      @if ($number->is_postpaid)
-                        <span class="card-meta-price">{!! $number->initial_payment_html !!}</span>
-                      @endif
-                    </div>
-                  </div>
-                  <a class="card-btn card-btn--buy" href="{{ route('evaluate', ['phone' => $number->phone_number]) }}">สั่งซื้อ</a>
-                </article>
-              @endforeach
-            </div>
-          </section>
+        <div class="numbers-slider-sections" id="numbers-catalog-grid" data-view="{{ $selectedView }}">
 
-          <section class="numbers-default-column numbers-default-column--postpaid">
-            <div class="home-number-group__head" style="margin-bottom: 24px;">
-              <div class="home-number-group__copy">
-                <h3 class="home-number-group__title" style="font-size: 24px; color: #1a1612;">เบอร์รายเดือนแนะนำ</h3>
-                <p class="home-number-group__hint" style="font-size: 14px; color: #7a6c62;"> สัญญา 12 เดือน</p>
+          {{-- Prepaid slider section --}}
+          @if ($defaultPrepaidNumbers->isNotEmpty())
+            <section class="numbers-slider-section" id="numbers-prepaid-section">
+              <div class="home-number-group__head">
+                <div class="home-number-group__copy">
+                  <h3 class="home-number-group__title">เบอร์เติมเงินพร้อมใช้</h3>
+                  <p class="home-number-group__hint">เบอร์เติมเงินสามารถย้ายค่ายได้</p>
+                </div>
               </div>
-            </div>
-            <div class="numbers-catalog-grid listing-card-grid is-default-split" data-view="{{ $selectedView }}">
-              @foreach ($defaultPostpaidNumbers as $number)
-                <article class="number-card number-card--listing number-card--home">
-                  <div class="card-left-group">
-                    <div class="card-top">{{ $number->formatted_number }}</div>
-                    @if ($number->supported_topic_icons !== [])
-                      @php
-                        $topicIcons = collect($number->supported_topic_icons);
-                        $visibleTopicIcons = $topicIcons->take(4);
-                        $hasMoreTopicIcons = $topicIcons->count() > 4;
-                      @endphp
-                      <div class="card-topic-icons" aria-label="หมวดที่เบอร์นี้ช่วย">
-                        @foreach ($visibleTopicIcons as $topic)
-                          <span class="card-topic-icon" title="{{ $topic['topic'] }}" aria-label="{{ $topic['topic'] }}">{{ $topic['icon'] }}</span>
-                        @endforeach
-                        @if ($hasMoreTopicIcons)
-                          <span class="card-topic-icon card-topic-icon--more" aria-label="มีหมวดที่ช่วยเพิ่มเติม">+</span>
+              <div class="home-number-group__slider">
+                <button class="home-slider__arrow home-slider__arrow--prev" id="numbers-prepaid-prev" type="button" aria-label="ก่อนหน้า" disabled>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <div class="numbers-catalog-grid listing-card-grid" id="numbers-prepaid-grid" data-view="{{ $selectedView }}">
+                  @foreach ($defaultPrepaidNumbers as $number)
+                    <article class="number-card number-card--listing number-card--home">
+                      <div class="card-left-group">
+                        <div class="card-top">{{ $number->formatted_number }}</div>
+                        @if ($number->supported_topic_icons !== [])
+                          @php
+                            $topicIcons = collect($number->supported_topic_icons);
+                            $visibleTopicIcons = $topicIcons->take(4);
+                            $hasMoreTopicIcons = $topicIcons->count() > 4;
+                          @endphp
+                          <div class="card-topic-icons" aria-label="หมวดที่เบอร์นี้ช่วย">
+                            @foreach ($visibleTopicIcons as $topic)
+                              <span class="card-topic-icon" title="{{ $topic['topic'] }}" aria-label="{{ $topic['topic'] }}">{{ $topic['icon'] }}</span>
+                            @endforeach
+                            @if ($hasMoreTopicIcons)
+                              <span class="card-topic-icon card-topic-icon--more" aria-label="มีหมวดที่ช่วยเพิ่มเติม">+</span>
+                            @endif
+                          </div>
                         @endif
                       </div>
-                    @endif
-                  </div>
-                  <div class="card-body">
-                    <div class="card-meta-stack">
-                      <span class="card-tier card-tier--network"><span class="card-network-main" data-network="{{ strtolower($number->network_code) }}">{{ $number->network_label }}</span><span class="card-network-suffix">{{ $number->service_type_label }}</span></span>
-                      @if ($number->is_prepaid)
-                        <span class="card-meta-plan">{{ $number->payment_label }}</span>
-                      @endif
-                      @if ($number->is_postpaid)
-                        <span class="card-meta-price">{!! $number->initial_payment_html !!}</span>
-                      @endif
-                    </div>
-                  </div>
-                  <a class="card-btn card-btn--buy" href="{{ route('evaluate', ['phone' => $number->phone_number]) }}">สั่งซื้อ</a>
-                </article>
-              @endforeach
-            </div>
-          </section>
+                      <div class="card-body">
+                        <div class="card-meta-stack">
+                          <span class="card-tier card-tier--network"><span class="card-network-main" data-network="{{ strtolower($number->network_code) }}">{{ $number->network_label }}</span><span class="card-network-suffix">{{ $number->service_type_label }}</span></span>
+                          @if ($number->is_prepaid)
+                            <span class="card-meta-plan">{{ $number->payment_label }}</span>
+                          @endif
+                          @if ($number->is_postpaid)
+                            <span class="card-meta-price">{!! $number->initial_payment_html !!}</span>
+                          @endif
+                        </div>
+                      </div>
+                      <a class="card-btn card-btn--buy" href="{{ route('evaluate', ['phone' => $number->phone_number]) }}">สั่งซื้อ</a>
+                    </article>
+                  @endforeach
+                </div>
+                <button class="home-slider__arrow home-slider__arrow--next" id="numbers-prepaid-next" type="button" aria-label="ถัดไป">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+              </div>
+            </section>
+          @endif
+
+          {{-- Postpaid slider section --}}
+          @if ($defaultPostpaidNumbers->isNotEmpty())
+            <section class="numbers-slider-section" id="numbers-postpaid-section">
+              <div class="home-number-group__head">
+                <div class="home-number-group__copy">
+                  <h3 class="home-number-group__title">เบอร์รายเดือนแนะนำ</h3>
+                  <p class="home-number-group__hint">สัญญา 12 เดือน</p>
+                </div>
+              </div>
+              <div class="home-number-group__slider">
+                <button class="home-slider__arrow home-slider__arrow--prev" id="numbers-postpaid-prev" type="button" aria-label="ก่อนหน้า" disabled>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
+                </button>
+                <div class="numbers-catalog-grid listing-card-grid" id="numbers-postpaid-grid" data-view="{{ $selectedView }}">
+                  @foreach ($defaultPostpaidNumbers as $number)
+                    <article class="number-card number-card--listing number-card--home">
+                      <div class="card-left-group">
+                        <div class="card-top">{{ $number->formatted_number }}</div>
+                        @if ($number->supported_topic_icons !== [])
+                          @php
+                            $topicIcons = collect($number->supported_topic_icons);
+                            $visibleTopicIcons = $topicIcons->take(4);
+                            $hasMoreTopicIcons = $topicIcons->count() > 4;
+                          @endphp
+                          <div class="card-topic-icons" aria-label="หมวดที่เบอร์นี้ช่วย">
+                            @foreach ($visibleTopicIcons as $topic)
+                              <span class="card-topic-icon" title="{{ $topic['topic'] }}" aria-label="{{ $topic['topic'] }}">{{ $topic['icon'] }}</span>
+                            @endforeach
+                            @if ($hasMoreTopicIcons)
+                              <span class="card-topic-icon card-topic-icon--more" aria-label="มีหมวดที่ช่วยเพิ่มเติม">+</span>
+                            @endif
+                          </div>
+                        @endif
+                      </div>
+                      <div class="card-body">
+                        <div class="card-meta-stack">
+                          <span class="card-tier card-tier--network"><span class="card-network-main" data-network="{{ strtolower($number->network_code) }}">{{ $number->network_label }}</span><span class="card-network-suffix">{{ $number->service_type_label }}</span></span>
+                          @if ($number->is_prepaid)
+                            <span class="card-meta-plan">{{ $number->payment_label }}</span>
+                          @endif
+                          @if ($number->is_postpaid)
+                            <span class="card-meta-price">{!! $number->initial_payment_html !!}</span>
+                          @endif
+                        </div>
+                      </div>
+                      <a class="card-btn card-btn--buy" href="{{ route('evaluate', ['phone' => $number->phone_number]) }}">สั่งซื้อ</a>
+                    </article>
+                  @endforeach
+                </div>
+                <button class="home-slider__arrow home-slider__arrow--next" id="numbers-postpaid-next" type="button" aria-label="ถัดไป">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+              </div>
+            </section>
+          @endif
+
         </div>
       @else
         <div class="numbers-catalog-grid listing-card-grid" id="numbers-catalog-grid" data-view="{{ $selectedView }}">
@@ -949,7 +1052,7 @@
         </div>
       @endif
 
-      @if ($numbers->hasPages())
+      @if ($numbers->hasPages() && !$isDefaultSplitLayout)
         @php
           $startPage = max(1, $numbers->currentPage() - 2);
           $endPage = min($numbers->lastPage(), $numbers->currentPage() + 2);
@@ -1199,6 +1302,40 @@
         applyView(target.dataset.view);
       });
     })();
+
+    @if ($isDefaultSplitLayout)
+    (() => {
+      const PAGE_SIZE = 16;
+
+      const setupSlider = (gridId, prevId, nextId) => {
+        const grid    = document.getElementById(gridId);
+        const prevBtn = document.getElementById(prevId);
+        const nextBtn = document.getElementById(nextId);
+        if (!grid) return;
+
+        const allCards   = Array.from(grid.querySelectorAll(".number-card"));
+        const totalPages = Math.max(1, Math.ceil(allCards.length / PAGE_SIZE));
+        let   page       = 1;
+
+        const render = (p) => {
+          page = Math.min(totalPages, Math.max(1, p));
+          const start = (page - 1) * PAGE_SIZE;
+          allCards.forEach((card, i) => {
+            card.hidden = i < start || i >= start + PAGE_SIZE;
+          });
+          if (prevBtn) prevBtn.disabled = page <= 1;
+          if (nextBtn) nextBtn.disabled = page >= totalPages;
+        };
+
+        render(1);
+        if (prevBtn) prevBtn.addEventListener("click", () => render(page - 1));
+        if (nextBtn) nextBtn.addEventListener("click", () => render(page + 1));
+      };
+
+      setupSlider("numbers-prepaid-grid",  "numbers-prepaid-prev",  "numbers-prepaid-next");
+      setupSlider("numbers-postpaid-grid", "numbers-postpaid-prev", "numbers-postpaid-next");
+    })();
+    @endif
   </script>
 @endsection
 
