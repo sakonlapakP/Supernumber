@@ -500,6 +500,122 @@
         font-size: 12px;
       }
     }
+
+    body.numbers-scale-soft .numbers-catalog-grid[data-view=list] {
+      display: grid !important;
+      grid-template-columns: 1fr !important;
+      gap: 12px !important;
+      padding: 0 !important;
+    }
+    body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home {
+      display: grid !important;
+      grid-template-columns: auto 1fr auto !important;
+      align-items: center !important;
+      padding: 11px 14px !important;
+      border-radius: 14px !important;
+      min-height: 72px !important;
+      height: auto !important;
+      background: #fff !important;
+      box-shadow: 0 10px 30px rgba(45, 33, 24, 0.08) !important;
+      border: 1px solid rgba(0, 0, 0, 0.02) !important;
+      margin: 0 !important;
+    }
+    body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-left-group {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: flex-start !important;
+      gap: 4px !important;
+      min-width: 130px !important;
+    }
+    body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-top {
+      font-size: 18px !important;
+      font-weight: 800 !important;
+      line-height: 1.2 !important;
+      margin: 0 !important;
+      padding: 0 !important;
+      background: none !important;
+      color: #1a1612 !important;
+      box-shadow: none !important;
+      white-space: nowrap !important;
+      border-radius: 0 !important;
+    }
+    body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-topic-icons {
+      margin: 0 !important;
+      gap: 5px !important;
+      display: flex !important;
+      padding: 0 !important;
+    }
+    body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-topic-icon {
+      width: 16px !important;
+      height: 16px !important;
+      font-size: 9px !important;
+    }
+    body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-body {
+      flex: 1 !important;
+      display: flex !important;
+      justify-content: center !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      min-width: 0 !important;
+    }
+    body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-meta-stack {
+      display: flex !important;
+      flex-direction: column !important;
+      align-items: center !important;
+      gap: 3px !important;
+      line-height: 1 !important;
+      white-space: nowrap !important;
+    }
+    body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-tier--network {
+      background: none !important;
+      border: none !important;
+      padding: 0 !important;
+      margin: 0 !important;
+      font-weight: 800 !important;
+      font-size: 13px !important;
+      line-height: 1.2 !important;
+      display: flex !important;
+      gap: 4px !important;
+    }
+    body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-network-main,
+    body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-network-suffix {
+      font-size: 13px !important;
+    }
+    body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-network-suffix {
+      color: #2c2521 !important;
+      -webkit-text-fill-color: #2c2521 !important;
+      margin-left: 3px !important;
+    }
+    body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-meta-plan,
+    body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-meta-price {
+      font-size: 13px !important;
+      font-weight: 400 !important;
+      color: #4b382a !important;
+      line-height: 1.2 !important;
+      margin: 1px 0 0 0 !important;
+    }
+    body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-meta-plan *,
+    body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-meta-price * {
+      font-weight: 400 !important;
+      font-size: 13px !important;
+    }
+    body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-btn {
+      width: 90px !important;
+      min-height: 32px !important;
+      height: 32px !important;
+      font-size: 13px !important;
+      font-weight: 800 !important;
+      border-radius: 999px !important;
+      background: #e1b155 !important;
+      color: #4b382a !important;
+      padding: 0 !important;
+      display: flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      margin: 0 !important;
+      text-decoration: none !important;
+      flex-shrink: 0 !important;
+    }
   </style>
   @php
     $selectedView = request('view') === 'list' ? 'list' : 'grid';
