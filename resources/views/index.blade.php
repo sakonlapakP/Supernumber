@@ -347,6 +347,33 @@
       .home-card-price {
         font-size: 13px !important;
       }
+
+      /* Dynamic Fluid Sizing using clamp() and vw for Number Cards on Mobile */
+      body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home {
+        min-height: unset !important;
+        padding: 10px 8px !important;
+      }
+      body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-top {
+        font-size: clamp(15px, 4.8vw, 18px) !important;
+        padding: 8px 6px !important;
+        letter-spacing: 0.02em !important;
+      }
+      body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-network-main,
+      body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-network-suffix {
+        font-size: clamp(10px, 3.2vw, 12px) !important;
+      }
+      body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-plan,
+      body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-price,
+      body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-plan *,
+      body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-price * {
+        font-size: clamp(11.5px, 3.5vw, 13.5px) !important;
+      }
+      body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-btn {
+        font-size: clamp(11.5px, 3.5vw, 13px) !important;
+        min-height: 32px !important;
+        padding: 0 8px !important;
+        border-radius: 10px !important;
+      }
     }
 
     @media (min-width: 986px) and (max-width: 1199px) {

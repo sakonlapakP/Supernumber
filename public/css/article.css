@@ -42,6 +42,8 @@
   background: rgba(255, 255, 255, 0.9);
   overflow: hidden;
   box-shadow: 0 14px 28px rgba(38, 29, 24, 0.09);
+  display: flex;
+  flex-direction: column;
 }
 
 .article-card__cover-link {
@@ -58,6 +60,9 @@
 
 .article-card__body {
   padding: 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
 }
 
 .article-card__meta {
@@ -83,8 +88,10 @@
 }
 
 .article-card__link {
-  margin-top: 12px;
+  margin-top: auto;
+  padding-top: 12px;
   display: inline-flex;
+  align-self: flex-end;
   color: #8b5a1f;
   text-decoration: none;
   font-weight: 600;

@@ -703,6 +703,12 @@
         height: 32px;
       }
     }
+
+    /* ซ่อน card ใน slider (specificity เทียบเท่า cardNumber.css จึง override !important ได้) */
+    body.numbers-scale-soft .numbers-catalog-grid .number-card--home.slider-hidden,
+    body.numbers-scale-soft .numbers-catalog-grid .number-card--listing.slider-hidden {
+      display: none !important;
+    }
   </style>
   @php
     $selectedView = request('view') === 'list' ? 'list' : 'grid';
@@ -1321,7 +1327,7 @@
           page = Math.min(totalPages, Math.max(1, p));
           const start = (page - 1) * PAGE_SIZE;
           allCards.forEach((card, i) => {
-            card.hidden = i < start || i >= start + PAGE_SIZE;
+            card.classList.toggle("slider-hidden", i < start || i >= start + PAGE_SIZE);
           });
           if (prevBtn) prevBtn.disabled = page <= 1;
           if (nextBtn) nextBtn.disabled = page >= totalPages;

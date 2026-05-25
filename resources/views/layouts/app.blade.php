@@ -156,6 +156,36 @@
             color: #8cc63f !important;
             font-weight: 800 !important;
         }
+
+        /* Responsive Cookie Consent for Mobile & iPhone */
+        @media (max-width: 480px) {
+            #sn-cookie-consent .cookie-consent__inner {
+                padding: 16px 14px !important;
+                gap: 12px !important;
+                border-radius: 20px !important;
+            }
+            #sn-cookie-consent .cookie-consent__copy {
+                gap: 4px !important;
+            }
+            #sn-cookie-consent .cookie-consent__title {
+                font-size: clamp(15px, 4.5vw, 17px) !important;
+                line-height: 1.3 !important;
+            }
+            #sn-cookie-consent .cookie-consent__text {
+                font-size: clamp(11.5px, 3.2vw, 12.5px) !important;
+                line-height: 1.45 !important;
+            }
+            #sn-cookie-consent .cookie-consent__actions {
+                gap: 8px !important;
+                margin-top: 4px !important;
+            }
+            #sn-cookie-consent .cookie-consent__button {
+                min-height: 38px !important;
+                padding: 8px 12px !important;
+                font-size: clamp(12px, 3.5vw, 13px) !important;
+                border-radius: 12px !important;
+            }
+        }
     </style>
     @yield('seo_schema')
   </head>
