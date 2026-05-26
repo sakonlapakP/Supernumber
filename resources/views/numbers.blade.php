@@ -312,23 +312,44 @@
       body.numbers-scale-soft .numbers-catalog-page .numbers-catalog-grid[data-view="grid"] .number-card--home,
       body.numbers-scale-soft .numbers-catalog-page .numbers-catalog-grid[data-view="grid"] .number-card--catalog {
         min-height: 165px !important;
-        padding: 12px 10px !important;
+        height: 100% !important;
+        padding: 10px !important;
+        border-radius: 12px !important;
+        background: #fff !important;
+        box-shadow: 0 8px 25px rgba(45, 33, 24, .08) !important;
+        border: 1px solid rgba(0, 0, 0, .04) !important;
+        display: flex !important;
+        flex-direction: column !important;
+        justify-content: flex-start !important;
+        align-items: stretch !important;
+        text-align: center !important;
+        overflow: hidden !important;
         width: 100% !important;
-        max-width: none !important;
+        max-width: 260px !important;
+        margin: 0 auto !important;
       }
       body.numbers-scale-soft .numbers-catalog-page .numbers-catalog-grid[data-view="grid"] .number-card--home .card-top,
       body.numbers-scale-soft .numbers-catalog-page .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-top {
-        font-size: 21px !important;
+        background: #1a1612 !important;
+        color: #fff !important;
         padding: 12px 10px !important;
-        letter-spacing: 0.04em !important;
+        border-radius: 12px !important;
+        font-size: 21px !important;
+        font-weight: 800 !important;
+        letter-spacing: 0.06em !important;
         margin: 0 !important;
+        display: block !important;
         line-height: 1 !important;
+        box-shadow: 0 4px 10px rgba(0, 0, 0, .1) !important;
+        flex-shrink: 0 !important;
       }
       body.numbers-scale-soft .numbers-catalog-page .numbers-catalog-grid[data-view="grid"] .number-card--home .card-network-main,
       body.numbers-scale-soft .numbers-catalog-page .numbers-catalog-grid[data-view="grid"] .number-card--home .card-network-suffix,
       body.numbers-scale-soft .numbers-catalog-page .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-network-main,
       body.numbers-scale-soft .numbers-catalog-page .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-network-suffix {
+        font-weight: 800 !important;
         font-size: 13px !important;
+        letter-spacing: 0.05em !important;
       }
       body.numbers-scale-soft .numbers-catalog-page .numbers-catalog-grid[data-view="grid"] .number-card--home .card-meta-plan,
       body.numbers-scale-soft .numbers-catalog-page .numbers-catalog-grid[data-view="grid"] .number-card--home .card-meta-price,
@@ -339,14 +360,26 @@
       body.numbers-scale-soft .numbers-catalog-page .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-meta-plan *,
       body.numbers-scale-soft .numbers-catalog-page .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-meta-price * {
         font-size: 16px !important;
+        font-weight: 400 !important;
+        color: #1a1612 !important;
+        margin-top: 0 !important;
+        line-height: 1.1 !important;
       }
       body.numbers-scale-soft .numbers-catalog-page .numbers-catalog-grid[data-view="grid"] .number-card--home .card-btn,
       body.numbers-scale-soft .numbers-catalog-page .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-btn {
-        font-size: 14px !important;
+        background: #e1b155 !important;
+        color: #4b382a !important;
         min-height: 36px !important;
         padding: 0 10px !important;
+        font-size: 14px !important;
+        font-weight: 800 !important;
         border-radius: 12px !important;
         margin-top: 6px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        flex-shrink: 0 !important;
+        box-shadow: 0 4px 12px rgba(225, 177, 85, .2) !important;
       }
     }
 
