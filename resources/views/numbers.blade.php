@@ -521,26 +521,58 @@
     }
     body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home {
       display: grid !important;
-      grid-template-columns: auto 1fr auto !important;
+      grid-template-columns: 1fr auto !important;
+      grid-template-areas: 
+        "left btn"
+        "body btn" !important;
       align-items: center !important;
-      padding: 11px 14px !important;
+      padding: 12px 16px !important;
       border-radius: 14px !important;
-      min-height: 72px !important;
+      min-height: unset !important;
       height: auto !important;
       background: #fff !important;
       box-shadow: 0 10px 30px rgba(45, 33, 24, 0.08) !important;
       border: 1px solid rgba(0, 0, 0, 0.02) !important;
       margin: 0 !important;
+      gap: 6px 16px !important;
     }
+    
+    /* If single column layout (large screens), allow full single-line layout */
+    @media (min-width: 769px) {
+      body.numbers-scale-soft .numbers-catalog-grid[data-view=list].is-default-split .number-card--home {
+        grid-template-columns: auto 1fr auto !important;
+        grid-template-areas: none !important;
+        gap: 16px !important;
+        padding: 14px 20px !important;
+      }
+      body.numbers-scale-soft .numbers-catalog-grid[data-view=list].is-default-split .number-card--home .card-left-group {
+        grid-area: auto !important;
+        min-width: 140px !important;
+      }
+      body.numbers-scale-soft .numbers-catalog-grid[data-view=list].is-default-split .number-card--home .card-body {
+        grid-area: auto !important;
+        justify-content: center !important;
+        align-items: center !important;
+      }
+      body.numbers-scale-soft .numbers-catalog-grid[data-view=list].is-default-split .number-card--home .card-meta-stack {
+        align-items: center !important;
+      }
+      body.numbers-scale-soft .numbers-catalog-grid[data-view=list].is-default-split .number-card--home .card-btn {
+        grid-area: auto !important;
+        width: 100px !important;
+      }
+    }
+    
     body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-left-group {
+      grid-area: left !important;
       display: flex !important;
       flex-direction: column !important;
       align-items: flex-start !important;
-      gap: 2px !important;
-      min-width: 130px !important;
+      gap: 4px !important;
+      min-width: unset !important;
     }
     body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-top {
-      font-size: 18px !important;
+      font-size: clamp(16px, 2.2vw, 19px) !important;
       font-weight: 800 !important;
       line-height: 1.2 !important;
       margin: 0 !important;
@@ -553,19 +585,20 @@
     }
     body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-topic-icons {
       margin: 0 !important;
-      gap: 5px !important;
+      gap: 6px !important;
       display: flex !important;
       padding: 0 !important;
     }
     body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-topic-icon {
-      width: 22px !important;
-      height: 22px !important;
-      font-size: 13px !important;
+      width: 20px !important;
+      height: 20px !important;
+      font-size: 11px !important;
     }
     body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-body {
-      flex: 1 !important;
+      grid-area: body !important;
       display: flex !important;
-      justify-content: center !important;
+      justify-content: flex-start !important;
+      align-items: flex-start !important;
       padding: 0 !important;
       margin: 0 !important;
       min-width: 0 !important;
@@ -573,10 +606,10 @@
     body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-meta-stack {
       display: flex !important;
       flex-direction: column !important;
-      align-items: center !important;
-      gap: 3px !important;
-      line-height: 1 !important;
-      white-space: nowrap !important;
+      align-items: flex-start !important;
+      gap: 2px !important;
+      line-height: 1.2 !important;
+      white-space: normal !important;
     }
     body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-tier--network {
       background: none !important;
@@ -584,38 +617,40 @@
       padding: 0 !important;
       margin: 0 !important;
       font-weight: 800 !important;
-      font-size: 13px !important;
+      font-size: clamp(12px, 1.8vw, 13.5px) !important;
       line-height: 1.2 !important;
       display: flex !important;
-      gap: 4px !important;
+      flex-wrap: wrap !important;
+      gap: 2px 6px !important;
     }
     body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-network-main,
     body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-network-suffix {
-      font-size: 13px !important;
+      font-size: clamp(12px, 1.8vw, 13.5px) !important;
     }
     body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-network-suffix {
       color: #2c2521 !important;
       -webkit-text-fill-color: #2c2521 !important;
-      margin-left: 3px !important;
+      margin-left: 0 !important;
     }
     body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-meta-plan,
     body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-meta-price {
-      font-size: 13px !important;
+      font-size: clamp(11px, 1.6vw, 12.5px) !important;
       font-weight: 400 !important;
       color: #4b382a !important;
       line-height: 1.2 !important;
-      margin: 1px 0 0 0 !important;
+      margin: 0 !important;
     }
     body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-meta-plan *,
     body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-meta-price * {
       font-weight: 400 !important;
-      font-size: 13px !important;
+      font-size: clamp(11px, 1.6vw, 12.5px) !important;
     }
     body.numbers-scale-soft .numbers-catalog-grid[data-view=list] .number-card--home .card-btn {
-      width: 90px !important;
-      min-height: 32px !important;
-      height: 32px !important;
-      font-size: 13px !important;
+      grid-area: btn !important;
+      width: 80px !important;
+      min-height: 34px !important;
+      height: 34px !important;
+      font-size: clamp(12px, 1.8vw, 13px) !important;
       font-weight: 800 !important;
       border-radius: 999px !important;
       background: #e1b155 !important;
