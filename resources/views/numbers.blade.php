@@ -332,9 +332,9 @@
       body.numbers-scale-soft .numbers-catalog-page .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-top {
         background: #1a1612 !important;
         color: #fff !important;
-        padding: 12px 10px !important;
+        padding: 10px 6px !important;
         border-radius: 12px !important;
-        font-size: clamp(17px, 5.2vw, 21px) !important;
+        font-size: clamp(15px, 4.5vw, 21px) !important;
         font-weight: 800 !important;
         letter-spacing: 0.06em !important;
         margin: 0 !important;
