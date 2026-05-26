@@ -299,6 +299,52 @@
         height: 50px;
         font-size: 16px;
       }
+
+      /* Match card number sizing and spacing to the Homepage layout */
+      .numbers-catalog-grid {
+        gap: 10px !important;
+        padding: 0 5px !important;
+      }
+
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--home,
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog {
+        min-height: unset !important;
+        padding: 10px 8px !important;
+        width: 100% !important;
+        max-width: none !important;
+      }
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--home .card-top,
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-top {
+        font-size: clamp(15px, 4.8vw, 18px) !important;
+        padding: 8px 6px !important;
+        letter-spacing: 0.02em !important;
+        margin: 0 !important;
+        line-height: 1 !important;
+      }
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--home .card-network-main,
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--home .card-network-suffix,
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-network-main,
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-network-suffix {
+        font-size: clamp(10px, 3.2vw, 12px) !important;
+      }
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--home .card-meta-plan,
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--home .card-meta-price,
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--home .card-meta-plan *,
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--home .card-meta-price *,
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-meta-plan,
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-meta-price,
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-meta-plan *,
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-meta-price * {
+        font-size: clamp(11.5px, 3.5vw, 13.5px) !important;
+      }
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--home .card-btn,
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-btn {
+        font-size: clamp(11.5px, 3.5vw, 13px) !important;
+        min-height: 32px !important;
+        padding: 0 8px !important;
+        border-radius: 10px !important;
+        margin-top: 6px !important;
+      }
     }
 
     .topic-active-badge {
