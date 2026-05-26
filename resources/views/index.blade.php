@@ -335,8 +335,8 @@
       
       /* Optimize Numbers Grid for Mobile */
       .home-card-grid {
-        gap: 10px !important;
-        padding: 0 5px !important;
+        gap: 16px 12px !important;
+        padding: 0 8px !important;
       }
       .home-card-item {
         padding: 12px !important;
@@ -350,29 +350,32 @@
 
       /* Dynamic Fluid Sizing using clamp() and vw for Number Cards on Mobile */
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home {
-        min-height: unset !important;
-        padding: 10px 6px !important;
+        min-height: 165px !important;
+        padding: 12px 10px !important;
       }
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-top {
-        font-size: clamp(16.5px, 5.2vw, 18.5px) !important;
-        padding: 8px 6px !important;
-        letter-spacing: 0.02em !important;
+        font-size: clamp(17px, 5.2vw, 21px) !important;
+        padding: 12px 10px !important;
+        letter-spacing: 0.04em !important;
+        margin: 0 !important;
+        line-height: 1 !important;
       }
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-network-main,
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-network-suffix {
-        font-size: clamp(11px, 3.4vw, 12.5px) !important;
+        font-size: clamp(12px, 3.4vw, 13px) !important;
       }
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-plan,
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-price,
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-plan *,
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-price * {
-        font-size: clamp(12px, 3.7vw, 13.8px) !important;
+        font-size: clamp(14px, 3.8vw, 16px) !important;
       }
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-btn {
-        font-size: clamp(12px, 3.7vw, 13.5px) !important;
-        min-height: 32px !important;
-        padding: 0 8px !important;
-        border-radius: 10px !important;
+        font-size: clamp(12px, 3.6vw, 14px) !important;
+        min-height: 36px !important;
+        padding: 0 10px !important;
+        border-radius: 12px !important;
+        margin-top: 6px !important;
       }
     }
 

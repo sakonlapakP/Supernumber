@@ -302,22 +302,22 @@
 
       /* Match card number sizing and spacing to the Homepage layout */
       .numbers-catalog-grid {
-        gap: 10px !important;
-        padding: 0 5px !important;
+        gap: 16px 12px !important;
+        padding: 0 8px !important;
       }
 
       body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--home,
       body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog {
-        min-height: unset !important;
-        padding: 10px 8px !important;
+        min-height: 165px !important;
+        padding: 12px 10px !important;
         width: 100% !important;
         max-width: none !important;
       }
       body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--home .card-top,
       body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-top {
-        font-size: clamp(15px, 4.8vw, 18px) !important;
-        padding: 8px 6px !important;
-        letter-spacing: 0.02em !important;
+        font-size: clamp(17px, 5.2vw, 21px) !important;
+        padding: 12px 10px !important;
+        letter-spacing: 0.04em !important;
         margin: 0 !important;
         line-height: 1 !important;
       }
@@ -325,7 +325,7 @@
       body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--home .card-network-suffix,
       body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-network-main,
       body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-network-suffix {
-        font-size: clamp(10px, 3.2vw, 12px) !important;
+        font-size: clamp(12px, 3.4vw, 13px) !important;
       }
       body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--home .card-meta-plan,
       body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--home .card-meta-price,
@@ -335,14 +335,14 @@
       body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-meta-price,
       body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-meta-plan *,
       body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-meta-price * {
-        font-size: clamp(11.5px, 3.5vw, 13.5px) !important;
+        font-size: clamp(14px, 3.8vw, 16px) !important;
       }
       body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--home .card-btn,
       body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-btn {
-        font-size: clamp(11.5px, 3.5vw, 13px) !important;
-        min-height: 32px !important;
-        padding: 0 8px !important;
-        border-radius: 10px !important;
+        font-size: clamp(12px, 3.6vw, 14px) !important;
+        min-height: 36px !important;
+        padding: 0 10px !important;
+        border-radius: 12px !important;
         margin-top: 6px !important;
       }
     }
