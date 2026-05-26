@@ -878,6 +878,11 @@
     body.numbers-scale-soft .numbers-catalog-grid .number-card--listing.slider-hidden {
       display: none !important;
     }
+    @media (max-width: 480px) {
+      .card-top__dash {
+        display: none !important;
+      }
+    }
   </style>
   @php
     $selectedView = request('view') === 'list' ? 'list' : 'grid';
@@ -1090,7 +1095,7 @@
                   @foreach ($defaultPrepaidNumbers as $number)
                     <article class="number-card number-card--listing number-card--home">
                       <div class="card-left-group">
-                        <div class="card-top">{{ $number->formatted_number }}</div>
+                        <div class="card-top">{!! str_replace('-', '<span class="card-top__dash">-</span>', e($number->formatted_number)) !!}</div>
                         @if ($number->supported_topic_icons !== [])
                           @php
                             $topicIcons = collect($number->supported_topic_icons);
@@ -1146,7 +1151,7 @@
                   @foreach ($defaultPostpaidNumbers as $number)
                     <article class="number-card number-card--listing number-card--home">
                       <div class="card-left-group">
-                        <div class="card-top">{{ $number->formatted_number }}</div>
+                        <div class="card-top">{!! str_replace('-', '<span class="card-top__dash">-</span>', e($number->formatted_number)) !!}</div>
                         @if ($number->supported_topic_icons !== [])
                           @php
                             $topicIcons = collect($number->supported_topic_icons);
@@ -1191,7 +1196,7 @@
           @forelse ($numbers as $number)
             <article class="number-card number-card--listing number-card--home">
               <div class="card-left-group">
-                <div class="card-top">{{ $number->formatted_number }}</div>
+                <div class="card-top">{!! str_replace('-', '<span class="card-top__dash">-</span>', e($number->formatted_number)) !!}</div>
                 @if ($number->supported_topic_icons !== [])
                   @php
                     $topicIcons = collect($number->supported_topic_icons);

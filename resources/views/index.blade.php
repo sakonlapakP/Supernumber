@@ -1716,7 +1716,7 @@
                 @foreach ($initialPrepaidNumbers as $number)
                   <article class="number-card number-card--listing number-card--home">
                     <div class="card-left-group">
-                      <div class="card-top">{{ $number['formatted_number'] }}</div>
+                      <div class="card-top">{!! str_replace('-', '<span class="card-top__dash">-</span>', e($number['formatted_number'])) !!}</div>
 
                     @if (! empty($number['supported_topic_icons']))
                       @php
@@ -1772,7 +1772,7 @@
                 @foreach ($initialPostpaidNumbers as $number)
                   <article class="number-card number-card--listing number-card--home">
                     <div class="card-left-group">
-                      <div class="card-top">{{ $number['formatted_number'] }}</div>
+                      <div class="card-top">{!! str_replace('-', '<span class="card-top__dash">-</span>', e($number['formatted_number'])) !!}</div>
                       @if (! empty($number['supported_topic_icons']))
                         @php
                           $topicIcons = collect($number['supported_topic_icons']);
@@ -1979,7 +1979,7 @@
         const renderCard = (number) => `
           <article class="number-card number-card--listing number-card--home">
             <div class="card-left-group">
-              <div class="card-top">${escapeHtml(number.formatted_number)}</div>
+              <div class="card-top">${escapeHtml(number.formatted_number).replace(/-/g, '<span class="card-top__dash">-</span>')}</div>
               ${Array.isArray(number.supported_topic_icons) && number.supported_topic_icons.length
                 ? `<div class="card-topic-icons" aria-label="หมวดที่เบอร์นี้ช่วย">${number.supported_topic_icons.slice(0, 4).map((t) => `<span class="card-topic-icon" title="${escapeHtml(t.topic)}" aria-label="${escapeHtml(t.topic)}">${escapeHtml(t.icon)}</span>`).join("")}${number.supported_topic_icons.length > 4 ? `<span class="card-topic-icon card-topic-icon--more" aria-label="มีหมวดเพิ่มเติม">+</span>` : ""}</div>`
                 : ""}

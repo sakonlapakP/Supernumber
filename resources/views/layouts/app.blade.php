@@ -103,6 +103,12 @@
             }
         }
 
+        @media (max-width: 480px) {
+            .card-top__dash {
+                display: none !important;
+            }
+        }
+
         /* Card Icon Spacing Fix */
         .card-topic-icons {
             display: flex;

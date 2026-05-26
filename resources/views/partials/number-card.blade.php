@@ -1,6 +1,6 @@
 <article class="number-card number-card--listing number-card--home">
   <div class="card-left-group">
-    <div class="card-top">{{ $number->formatted_number }}</div>
+    <div class="card-top">{!! str_replace('-', '<span class="card-top__dash">-</span>', e($number->formatted_number)) !!}</div>
 
     @if ($number->supported_topic_icons !== [])
       @php
