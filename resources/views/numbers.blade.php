@@ -250,7 +250,7 @@
       body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"]:not(.is-default-split) {
         grid-template-columns: repeat(4, 240px) !important;
         justify-content: center !important;
-        gap: 12px !important;
+        gap: 20px 16px !important;
       }
 
       body.numbers-scale-soft .numbers-hero__text {
@@ -301,17 +301,11 @@
       }
 
       /* Match card number sizing and spacing to the Homepage layout */
-      .numbers-catalog-grid {
-        gap: 10px !important;
-        padding: 0 5px !important;
-      }
-
       body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--home,
       body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog {
         min-height: unset !important;
         padding: 10px 8px !important;
         width: 100% !important;
-        max-width: none !important;
       }
       body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--home .card-top,
       body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-top {
@@ -344,6 +338,47 @@
         padding: 0 8px !important;
         border-radius: 10px !important;
         margin-top: 6px !important;
+      }
+    }
+
+    /* Unify Grid Columns, gaps, and max-widths for numbers page to match home page exactly */
+    @media (min-width: 1200px) {
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] {
+        grid-template-columns: repeat(4, 1fr) !important;
+        max-width: 1200px !important;
+        margin-inline: auto !important;
+        justify-content: center !important;
+        gap: 20px 16px !important;
+      }
+    }
+    @media (min-width: 992px) and (max-width: 1199px) {
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] {
+        grid-template-columns: repeat(4, 1fr) !important;
+        justify-content: center !important;
+        gap: 20px 16px !important;
+      }
+    }
+    @media (min-width: 681px) and (max-width: 991px) {
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] {
+        grid-template-columns: repeat(2, 240px) !important;
+        justify-content: center !important;
+        gap: 20px 16px !important;
+        margin-inline: auto !important;
+      }
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--home,
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog {
+        max-width: 240px !important;
+      }
+    }
+    @media (max-width: 680px) {
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+        padding: 0 5px !important;
+      }
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--home,
+      body.numbers-scale-soft .numbers-catalog-grid[data-view="grid"] .number-card--catalog {
+        max-width: none !important;
       }
     }
 
