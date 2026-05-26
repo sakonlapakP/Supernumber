@@ -334,7 +334,7 @@
         color: #fff !important;
         padding: 12px 10px !important;
         border-radius: 12px !important;
-        font-size: 21px !important;
+        font-size: clamp(17px, 5.2vw, 21px) !important;
         font-weight: 800 !important;
         letter-spacing: 0.06em !important;
         margin: 0 !important;
@@ -348,7 +348,7 @@
       body.numbers-scale-soft .numbers-catalog-page .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-network-main,
       body.numbers-scale-soft .numbers-catalog-page .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-network-suffix {
         font-weight: 800 !important;
-        font-size: 13px !important;
+        font-size: clamp(12px, 3.4vw, 13px) !important;
         letter-spacing: 0.05em !important;
       }
       body.numbers-scale-soft .numbers-catalog-page .numbers-catalog-grid[data-view="grid"] .number-card--home .card-meta-plan,
@@ -359,7 +359,7 @@
       body.numbers-scale-soft .numbers-catalog-page .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-meta-price,
       body.numbers-scale-soft .numbers-catalog-page .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-meta-plan *,
       body.numbers-scale-soft .numbers-catalog-page .numbers-catalog-grid[data-view="grid"] .number-card--catalog .card-meta-price * {
-        font-size: 16px !important;
+        font-size: clamp(14px, 3.8vw, 16px) !important;
         font-weight: 400 !important;
         color: #1a1612 !important;
         margin-top: 0 !important;
@@ -371,7 +371,7 @@
         color: #4b382a !important;
         min-height: 36px !important;
         padding: 0 10px !important;
-        font-size: 14px !important;
+        font-size: clamp(12px, 3.6vw, 14px) !important;
         font-weight: 800 !important;
         border-radius: 12px !important;
         margin-top: 6px !important;
