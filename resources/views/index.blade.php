@@ -63,7 +63,7 @@
       body.home-scale-soft .home-card-grid[data-view="grid"],
       body.home-scale-soft #home-prepaid-grid[data-view="grid"],
       body.home-scale-soft #home-postpaid-grid[data-view="grid"] {
-        grid-template-columns: repeat(4, 240px) !important;
+        grid-template-columns: repeat(3, 240px) !important;
         grid-auto-rows: auto !important;
         justify-content: center !important;
         align-items: stretch !important;
@@ -538,7 +538,7 @@
         border-radius: 20px;
       }
       .home-topics__grid {
-        grid-template-columns: repeat(2, 1fr);
+        grid-template-columns: repeat(3, 1fr);
         gap: 8px;
       }
       .home-topic-card {
