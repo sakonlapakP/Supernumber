@@ -1197,11 +1197,22 @@
 
     @media (max-width: 768px) {
       .home-number-group__slider {
-        padding: 0 38px;
+        padding: 0 12px;
       }
       .home-slider__arrow {
         width: 32px;
         height: 32px;
+        z-index: 100 !important;
+        background: rgba(255, 255, 255, 0.88) !important;
+        backdrop-filter: blur(6px) !important;
+        -webkit-backdrop-filter: blur(6px) !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+      }
+      .home-slider__arrow--prev {
+        left: -4px !important;
+      }
+      .home-slider__arrow--next {
+        right: -4px !important;
       }
     }
 
