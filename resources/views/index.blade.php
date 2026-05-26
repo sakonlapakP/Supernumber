@@ -356,11 +356,12 @@
         max-width: none !important;
       }
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-top {
-        font-size: clamp(17px, 5.2vw, 21px) !important;
+        font-size: clamp(14px, 4.2vw, 21px) !important;
         padding: 12px 10px !important;
-        letter-spacing: 0.04em !important;
+        letter-spacing: 0.02em !important;
         margin: 0 !important;
         line-height: 1 !important;
+        white-space: nowrap !important;
       }
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-network-main,
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-network-suffix {
