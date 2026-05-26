@@ -351,25 +351,25 @@
       /* Dynamic Fluid Sizing using clamp() and vw for Number Cards on Mobile */
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home {
         min-height: unset !important;
-        padding: 10px 8px !important;
+        padding: 10px 6px !important;
       }
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-top {
-        font-size: clamp(15px, 4.8vw, 18px) !important;
+        font-size: clamp(16.5px, 5.2vw, 18.5px) !important;
         padding: 8px 6px !important;
         letter-spacing: 0.02em !important;
       }
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-network-main,
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-network-suffix {
-        font-size: clamp(10px, 3.2vw, 12px) !important;
+        font-size: clamp(11px, 3.4vw, 12.5px) !important;
       }
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-plan,
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-price,
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-plan *,
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-meta-price * {
-        font-size: clamp(11.5px, 3.5vw, 13.5px) !important;
+        font-size: clamp(12px, 3.7vw, 13.8px) !important;
       }
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-btn {
-        font-size: clamp(11.5px, 3.5vw, 13px) !important;
+        font-size: clamp(12px, 3.7vw, 13.5px) !important;
         min-height: 32px !important;
         padding: 0 8px !important;
         border-radius: 10px !important;
