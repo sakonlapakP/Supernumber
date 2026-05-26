@@ -63,7 +63,7 @@
       body.home-scale-soft .home-card-grid[data-view="grid"],
       body.home-scale-soft #home-prepaid-grid[data-view="grid"],
       body.home-scale-soft #home-postpaid-grid[data-view="grid"] {
-        grid-template-columns: repeat(3, 240px) !important;
+        grid-template-columns: repeat(4, 240px) !important;
         grid-auto-rows: auto !important;
         justify-content: center !important;
         align-items: stretch !important;
@@ -534,24 +534,37 @@
 
     @media (max-width: 640px) {
       .home-topics__inner {
-        padding: 20px 16px;
+        padding: 16px 8px;
         border-radius: 20px;
       }
       .home-topics__grid {
         grid-template-columns: repeat(3, 1fr);
-        gap: 8px;
+        gap: 6px;
       }
       .home-topic-card {
-        padding: 12px 10px;
-        gap: 8px;
+        flex-direction: column !important;
+        align-items: center !important;
+        text-align: center !important;
+        padding: 12px 4px !important;
+        gap: 6px !important;
+        border-radius: 12px !important;
       }
       .home-topic-card__icon {
         width: 36px;
         height: 36px;
         font-size: 18px;
+        margin: 0 auto !important;
+      }
+      .home-topic-card__text {
+        text-align: center !important;
+        width: 100% !important;
       }
       .home-topic-card__name {
-        font-size: 12.5px;
+        font-size: 11px !important;
+        font-weight: 700 !important;
+        line-height: 1.25 !important;
+        word-break: break-word !important;
+        overflow-wrap: break-word !important;
       }
     }
 
