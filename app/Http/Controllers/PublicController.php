@@ -238,8 +238,9 @@ class PublicController extends Controller
             $perColumn = 288;
 
             // Default catalog loads up to $perColumn of each type for the slider.
+            // First section shows "All Numbers", so we do not filter by prepaid().
             $prepaidQuery = $applyCatalogFilters(
-                (clone $baseQuery)->prepaid()
+                clone $baseQuery
             );
             $postpaidQuery = $applyCatalogFilters(
                 (clone $baseQuery)->postpaid()
@@ -260,7 +261,7 @@ class PublicController extends Controller
             $defaultPostpaidNumbers = $postpaidNumbers->values();
 
             $numbers = new LengthAwarePaginator(
-                $prepaidNumbers->concat($postpaidNumbers)->values(),
+                $prepaidNumbers->concat($postpaidNumbers)->unique('phone_number')->values(),
                 $prepaidTotal + $postpaidTotal,
                 $perColumn * 2,
                 1,

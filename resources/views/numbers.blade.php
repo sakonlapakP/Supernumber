@@ -1083,8 +1083,8 @@
             <section class="numbers-slider-section" id="numbers-prepaid-section">
               <div class="home-number-group__head">
                 <div class="home-number-group__copy">
-                  <h3 class="home-number-group__title">เบอร์เติมเงินพร้อมใช้</h3>
-                  <p class="home-number-group__hint">เบอร์เติมเงินสามารถย้ายค่ายได้</p>
+                  <h3 class="home-number-group__title">เบอร์ทั้งหมด</h3>
+                  <p class="home-number-group__hint">เบอร์มงคลพร้อมใช้งานทั้งหมด</p>
                 </div>
               </div>
               <div class="home-number-group__slider">
@@ -1092,8 +1092,8 @@
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </button>
                 <div class="numbers-catalog-grid listing-card-grid" id="numbers-prepaid-grid" data-view="{{ $selectedView }}">
-                  @foreach ($defaultPrepaidNumbers as $number)
-                    <article class="number-card number-card--listing number-card--home">
+                  @foreach ($defaultPrepaidNumbers as $index => $number)
+                    <article class="number-card number-card--listing number-card--home {{ $index >= 8 ? 'slider-hidden' : '' }}">
                       <div class="card-left-group">
                         <div class="card-top">{!! str_replace('-', '<span class="card-top__dash">-</span>', e($number->formatted_number)) !!}</div>
                         @if ($number->supported_topic_icons !== [])
@@ -1148,8 +1148,8 @@
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg>
                 </button>
                 <div class="numbers-catalog-grid listing-card-grid" id="numbers-postpaid-grid" data-view="{{ $selectedView }}">
-                  @foreach ($defaultPostpaidNumbers as $number)
-                    <article class="number-card number-card--listing number-card--home">
+                  @foreach ($defaultPostpaidNumbers as $index => $number)
+                    <article class="number-card number-card--listing number-card--home {{ $index >= 8 ? 'slider-hidden' : '' }}">
                       <div class="card-left-group">
                         <div class="card-top">{!! str_replace('-', '<span class="card-top__dash">-</span>', e($number->formatted_number)) !!}</div>
                         @if ($number->supported_topic_icons !== [])
@@ -1485,7 +1485,7 @@
 
     @if ($isDefaultSplitLayout)
     (() => {
-      const PAGE_SIZE = 16;
+      const PAGE_SIZE = 8;
 
       const setupSlider = (gridId, prevId, nextId) => {
         const grid    = document.getElementById(gridId);

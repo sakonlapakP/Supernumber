@@ -534,37 +534,29 @@
 
     @media (max-width: 640px) {
       .home-topics__inner {
-        padding: 16px 8px;
+        padding: 20px 16px;
         border-radius: 20px;
       }
       .home-topics__grid {
         grid-template-columns: repeat(3, 1fr);
-        gap: 6px;
+        gap: 8px;
       }
       .home-topic-card {
-        flex-direction: column !important;
-        align-items: center !important;
-        text-align: center !important;
-        padding: 12px 4px !important;
-        gap: 6px !important;
-        border-radius: 12px !important;
+        padding: 12px 6px;
+        gap: 6px;
+        flex-direction: column;
+        text-align: center;
+        align-items: center;
       }
       .home-topic-card__icon {
         width: 36px;
         height: 36px;
         font-size: 18px;
-        margin: 0 auto !important;
-      }
-      .home-topic-card__text {
-        text-align: center !important;
-        width: 100% !important;
       }
       .home-topic-card__name {
-        font-size: 11px !important;
-        font-weight: 700 !important;
-        line-height: 1.25 !important;
-        word-break: break-word !important;
-        overflow-wrap: break-word !important;
+        font-size: 11px;
+        font-weight: 700;
+        line-height: 1.25;
       }
     }
 
