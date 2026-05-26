@@ -303,6 +303,9 @@
       /* Match card number sizing and spacing to the Homepage layout */
       .numbers-catalog-grid {
         gap: 16px 12px !important;
+        padding: 0 20px !important;
+      }
+      .home-number-group__slider .numbers-catalog-grid {
         padding: 0 8px !important;
       }
 
