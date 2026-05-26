@@ -352,6 +352,8 @@
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home {
         min-height: 165px !important;
         padding: 12px 10px !important;
+        width: 100% !important;
+        max-width: none !important;
       }
       body.home-scale-soft .home-card-grid[data-view="grid"] .number-card--home .card-top {
         font-size: clamp(17px, 5.2vw, 21px) !important;
