@@ -1051,6 +1051,12 @@
           const docTypeRadio = document.querySelector(`input[name="document-type"][value="${type}"]`);
           if (docTypeRadio) docTypeRadio.checked = true;
           wizardData.documentType = type;
+
+          // Reset tax-method radio inputs disabled state
+          document.querySelectorAll('input[name="tax-method"]').forEach(radio => {
+            radio.disabled = false;
+          });
+
           syncItemsForTaxMethod();
           showStep(1);
         });
@@ -1132,6 +1138,11 @@
           wizardData.taxMethod = taxMethod;
           const taxRadio = document.querySelector(`input[name="tax-method"][value="${taxMethod}"]`);
           if (taxRadio) taxRadio.checked = true;
+
+          // Lock tax-method radio inputs so they cannot be edited
+          document.querySelectorAll('input[name="tax-method"]').forEach(radio => {
+            radio.disabled = true;
+          });
           
           // 4. Pre-fill payment details
           const paymentMethod = payload.payment_method || 'bank';
@@ -1172,6 +1183,11 @@
           wizardData.taxMethod = 'customer-pays';
           const defaultTaxRadio = document.querySelector('input[name="tax-method"][value="customer-pays"]');
           if (defaultTaxRadio) defaultTaxRadio.checked = true;
+
+          // Unlock tax-method radio inputs
+          document.querySelectorAll('input[name="tax-method"]').forEach(radio => {
+            radio.disabled = false;
+          });
           
           wizardData.paymentMethod = 'bank';
           const defaultPaymentRadio = document.querySelector('input[name="payment-method"][value="bank"]');

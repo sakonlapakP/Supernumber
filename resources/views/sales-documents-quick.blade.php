@@ -960,6 +960,7 @@
         if (docNumberInput?.dataset.autonumber === 'true') {
           docNumberInput.value = generateDocNumber();
         }
+        syncCalculationModeUi();
       };
 
       const twoDigit = (n) => String(n).padStart(2, '0');
@@ -1072,8 +1073,22 @@
       const isReverseMode = () => calculationMode === 'reverse';
 
       const syncCalculationModeUi = () => {
+        const isInvoice = currentDocType === 'invoice';
+        const hasReference = refNumberInput && refNumberInput.value.trim() !== "";
+
         calculationModeButtons.forEach(button => {
           button.classList.toggle('is-active', button.dataset.qdocCalculationMode === calculationMode);
+          if (isInvoice && hasReference) {
+            button.style.pointerEvents = "none";
+            button.style.opacity = "0.6";
+            button.style.cursor = "not-allowed";
+            button.setAttribute("title", "ไม่สามารถแก้ไขโหมดภาษีของใบแจ้งหนี้ที่มีเลขอ้างอิงใบเสนอราคาได้");
+          } else {
+            button.style.pointerEvents = "";
+            button.style.opacity = "";
+            button.style.cursor = "";
+            button.removeAttribute("title");
+          }
         });
 
         if (calculationCaption) {
@@ -1092,11 +1107,20 @@
       };
 
       calculationModeButtons.forEach(button => button.addEventListener('click', () => {
+        const isInvoice = currentDocType === 'invoice';
+        const hasReference = refNumberInput && refNumberInput.value.trim() !== "";
+        if (isInvoice && hasReference) {
+          return;
+        }
         calculationMode = button.dataset.qdocCalculationMode === 'reverse' ? 'reverse' : 'standard';
         syncCalculationModeUi();
         syncTotals();
         showStatus(isReverseMode() ? 'คำนวณแบบ Reverse' : 'คำนวณแบบ Standard', 'info');
       }));
+
+      refNumberInput?.addEventListener('input', () => {
+        syncCalculationModeUi();
+      });
 
       const documentUnitPrice = (inputUnitPrice) => isReverseMode()
         ? inputUnitPrice / (1 - (WHT_RATE / 100))

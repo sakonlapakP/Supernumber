@@ -48,6 +48,35 @@ class EasyDocumentService
         $documentType = ($data['documentType'] ?? 'quotation') === 'invoice' ? 'invoice' : 'quotation';
         $prefix = $documentType === 'invoice' ? 'IV' : 'QT';
 
+        $isDirectInvoiceCreate = $documentType === 'invoice' && !empty($data['referenceNumber']);
+        $sourceQuotation = null;
+
+        if ($isDirectInvoiceCreate) {
+            // lockForUpdate prevents a concurrent request from passing the same
+            // exists() check between read and insert.
+            $sourceQuotation = SalesDocument::where('document_number', $data['referenceNumber'])
+                ->where('document_type', 'quotation')
+                ->lockForUpdate()
+                ->first();
+
+            if ($sourceQuotation) {
+                $alreadyHasInvoice = SalesDocument::where('source_quotation_id', $sourceQuotation->id)
+                    ->where('document_type', 'invoice')
+                    ->lockForUpdate()
+                    ->exists();
+
+                if ($alreadyHasInvoice) {
+                    throw new RuntimeException('ใบแจ้งหนี้สำหรับใบเสนอราคานี้มีอยู่แล้ว');
+                }
+
+                // Force the calculation method/tax method to match the quotation payload
+                $qtPayload = $sourceQuotation->payload ?? [];
+                if (isset($qtPayload['tax_method'])) {
+                    $data['taxMethod'] = $qtPayload['tax_method'];
+                }
+            }
+        }
+
         $calculationMode = ($data['taxMethod'] ?? 'customer-pays') === 'we-pay' ? 'reverse' : 'standard';
 
         $documentItems = collect($data['items'])->values()->map(function (array $item, int $index): array {
@@ -156,27 +185,7 @@ class EasyDocumentService
             'total' => $subtotal,
         ];
 
-        $isDirectInvoiceCreate = $documentType === 'invoice' && !empty($data['referenceNumber']);
-
         if ($isDirectInvoiceCreate) {
-            // lockForUpdate prevents a concurrent request from passing the same
-            // exists() check between read and insert.
-            $sourceQuotation = SalesDocument::where('document_number', $data['referenceNumber'])
-                ->where('document_type', 'quotation')
-                ->lockForUpdate()
-                ->first();
-
-            if ($sourceQuotation) {
-                $alreadyHasInvoice = SalesDocument::where('source_quotation_id', $sourceQuotation->id)
-                    ->where('document_type', 'invoice')
-                    ->lockForUpdate()
-                    ->exists();
-
-                if ($alreadyHasInvoice) {
-                    throw new RuntimeException('ใบแจ้งหนี้สำหรับใบเสนอราคานี้มีอยู่แล้ว');
-                }
-            }
-
             $document = $this->retryOnNumberCollision(
                 fn (string $number): SalesDocument => $this->createInvoiceDocument(
                     $payload,

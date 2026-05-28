@@ -641,6 +641,8 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
         if (documentNumberInput?.dataset.documentAutonumber === "true") {
           documentNumberInput.value = generateDocumentNumber();
         }
+
+        syncCalculationModeUi();
       };
 
       const buildDocumentFilename = () => {
@@ -1914,9 +1916,22 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
 
       const syncCalculationModeUi = () => {
         const modeMeta = currentCalculationModeMeta();
+        const isInvoice = root.dataset.documentType === "invoice";
+        const hasReference = referenceNumberInput && referenceNumberInput.value.trim() !== "";
 
         calculationModeButtons.forEach((button) => {
           button.classList.toggle("is-active", button.dataset.calculationMode === resolveCalculationMode(calculationMode));
+          if (isInvoice && hasReference) {
+            button.style.pointerEvents = "none";
+            button.style.opacity = "0.6";
+            button.style.cursor = "not-allowed";
+            button.setAttribute("title", "ไม่สามารถแก้ไขโหมดภาษีของใบแจ้งหนี้ที่มีเลขอ้างอิงใบเสนอราคาได้");
+          } else {
+            button.style.pointerEvents = "";
+            button.style.opacity = "";
+            button.style.cursor = "";
+            button.removeAttribute("title");
+          }
         });
 
         if (calculationCaption) {
@@ -1936,12 +1951,21 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
 
       calculationModeButtons.forEach((button) => {
         button.addEventListener("click", () => {
+          const isInvoice = root.dataset.documentType === "invoice";
+          const hasReference = referenceNumberInput && referenceNumberInput.value.trim() !== "";
+          if (isInvoice && hasReference) {
+            return;
+          }
           calculationMode = resolveCalculationMode(button.dataset.calculationMode);
           syncCalculationModeUi();
           syncUnitPricesForMode();
           syncTotals();
           showStatus(currentCalculationModeMeta().status, "success");
         });
+      });
+
+      referenceNumberInput?.addEventListener("input", () => {
+        syncCalculationModeUi();
       });
 
       numericFields.forEach((field) => {
