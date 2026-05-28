@@ -49,6 +49,11 @@ class CustomerOrder extends Model
         'appointment_time_slot',
         'payment_slip_path',
         'status',
+        'referral_code_used',
+        'seller_user_id',
+        'discount_applied',
+        'net_amount',
+        'sale_price',
     ];
 
     protected function casts(): array
@@ -69,6 +74,17 @@ class CustomerOrder extends Model
 
     protected static function booted(): void
     {
+        static::updated(function (self $order): void {
+            // Trigger commission calculation when order is first marked completed
+            if (
+                $order->wasChanged('status')
+                && $order->status === self::STATUS_COMPLETED
+                && $order->referral_code_used
+            ) {
+                app(\App\Services\CommissionService::class)->handleOrderCompleted($order);
+            }
+        });
+
         static::saving(function (self $order): void {
             $order->service_type = self::normalizeServiceType($order->service_type);
 
@@ -234,6 +250,16 @@ class CustomerOrder extends Model
     public function activityLogs(): \Illuminate\Database\Eloquent\Relations\HasMany
     {
         return $this->hasMany(CustomerOrderActivityLog::class);
+    }
+
+    public function seller(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'seller_user_id');
+    }
+
+    public function commissions(): \Illuminate\Database\Eloquent\Relations\HasMany
+    {
+        return $this->hasMany(\App\Models\Commission::class, 'order_id');
     }
 
     private static function normalizeServiceType(?string $serviceType): string

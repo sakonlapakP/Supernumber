@@ -56,7 +56,8 @@
 @section('content')
   <style>
     body.home-scale-soft .numbers {
-      padding-top: 20px !important;
+      padding-top: 40px !important;
+      padding-bottom: 40px !important;
     }
 
     @media (min-width: 992px) {
@@ -425,7 +426,7 @@
 
     /* ===== HOME TOPICS SECTION ===== */
     .home-topics {
-      padding: 32px 0 8px;
+      padding: 30px 0 0;
     }
 
     .home-topics__inner {
@@ -562,7 +563,7 @@
 
     /* ===== HOME LEGENDARY SECTION ===== */
     .home-legendary {
-      padding: 24px 0 16px;
+      padding: 40px 0 0;
     }
 
     .home-legendary__inner {
@@ -855,9 +856,8 @@
       }
     }
 
-    /* Home Video & Education Section */
     .home-video {
-      padding: 60px 0;
+      padding: 0 0 40px;
       background: linear-gradient(180deg, #ffffff 0%, #faf8f5 100%);
       position: relative;
       overflow: hidden;
@@ -1222,9 +1222,8 @@
       }
     }
 
-    /* ===== HOME ARTICLES SECTION ===== */
     .home-articles {
-      padding: 0 0 48px;
+      padding: 0 0 40px;
     }
 
     .home-articles__inner {
@@ -1861,18 +1860,12 @@
         </div>
         <div class="home-video__player-container">
           <div class="home-video__player-wrapper" id="youtube-player-wrapper">
-            <div class="home-video__facade" id="youtube-facade" data-video-id="kiJy2x8AdUA">
-              <picture>
-                <source srcset="https://img.youtube.com/vi/kiJy2x8AdUA/maxresdefault.jpg" type="image/jpeg">
-                <img class="home-video__thumbnail" src="https://img.youtube.com/vi/kiJy2x8AdUA/hqdefault.jpg" alt="วิดีโอสัมภาษณ์ ก๊อตจิ เทยเที่ยวไทย เปลี่ยนเบอร์มงคลกับ Supernumber" width="640" height="360" loading="lazy" />
-              </picture>
-              <div class="home-video__overlay"></div>
-              <button class="home-video__play-btn" aria-label="เล่นวิดีโอ">
-                <svg viewBox="0 0 24 24">
-                  <path d="M8 5v14l11-7z"/>
-                </svg>
-              </button>
-            </div>
+            <iframe class="home-video__iframe" 
+                src="https://www.youtube.com/embed/kiJy2x8AdUA?rel=0&modestbranding=1" 
+                title="YouTube video player" 
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
+                allowfullscreen>
+            </iframe>
           </div>
         </div>
       </div>

@@ -5636,3 +5636,68 @@ Route::get('/diagnose-postpaid', function (Request $request) use ($ensureAdmin) 
         . ($fix ? '' : "\n<a href='?fix=1' style='color:blue;'>▶ Run with --fix</a>")
         . "</pre>");
 });
+
+// ─── Sale Portal (public + authenticated) ─────────────────────────────────────
+use App\Http\Controllers\SaleController;
+use App\Http\Controllers\Admin\SaleManagementController;
+
+Route::prefix('sale')->name('sale.')->group(function () {
+    // Public (guest) routes
+    Route::get('/login',    [SaleController::class, 'showLogin'])->name('login');
+    Route::post('/login',   [SaleController::class, 'login'])->name('login.attempt');
+    Route::get('/register', [SaleController::class, 'showRegister'])->name('register');
+    Route::post('/register',[SaleController::class, 'register'])->name('register.submit');
+    Route::get('/pending',  [SaleController::class, 'pending'])->name('pending');
+
+    // Authenticated sale routes
+    Route::middleware('sale.auth')->group(function () {
+        Route::get('/dashboard', [SaleController::class, 'dashboard'])->name('dashboard');
+        Route::get('/logout',    [SaleController::class, 'logout'])->name('logout');
+    });
+});
+
+// ─── Admin: Sale Management ────────────────────────────────────────────────────
+Route::prefix('admin/sales')->name('admin.sales.')->group(function () use ($ensureAdmin) {
+    Route::get('/',                   function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) return $redirect;
+        return app(SaleManagementController::class)->index($request);
+    })->name('index');
+
+    Route::get('/{sale}',             function (Request $request, \App\Models\User $sale) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) return $redirect;
+        return app(SaleManagementController::class)->show($sale);
+    })->name('show');
+
+    Route::post('/{sale}/approve',    function (Request $request, \App\Models\User $sale) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) return $redirect;
+        return app(SaleManagementController::class)->approve($sale);
+    })->name('approve');
+
+    Route::post('/{sale}/reject',     function (Request $request, \App\Models\User $sale) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) return $redirect;
+        return app(SaleManagementController::class)->reject($request, $sale);
+    })->name('reject');
+
+    Route::get('/kyc/{doc}/download', function (\App\Models\SaleKycDocument $doc) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) return $redirect;
+        return app(SaleManagementController::class)->downloadKyc($doc);
+    })->name('kyc.download');
+});
+
+// ─── Admin: Commissions ───────────────────────────────────────────────────────
+Route::prefix('admin/commissions')->name('admin.commissions.')->group(function () use ($ensureAdmin) {
+    Route::get('/', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) return $redirect;
+        return app(SaleManagementController::class)->commissions($request);
+    })->name('index');
+
+    Route::post('/{commission}/approve', function (\App\Models\Commission $commission) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) return $redirect;
+        return app(SaleManagementController::class)->approveCommission($commission);
+    })->name('approve');
+
+    Route::post('/{commission}/reject',  function (Request $request, \App\Models\Commission $commission) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) return $redirect;
+        return app(SaleManagementController::class)->rejectCommission($request, $commission);
+    })->name('reject');
+});

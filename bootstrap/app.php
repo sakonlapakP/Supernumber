@@ -17,7 +17,8 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withCommands()
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
-            'role' => \App\Http\Middleware\CheckRole::class,
+            'role'      => \App\Http\Middleware\CheckRole::class,
+            'sale.auth' => \App\Http\Middleware\EnsureSaleAuthenticated::class,
         ]);
 
         $middleware->trustProxies(

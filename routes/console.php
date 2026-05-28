@@ -17,3 +17,10 @@ Schedule::command('lottery:fetch-latest')
 Schedule::command('articles:publish-scheduled')
     ->everyMinute()
     ->withoutOverlapping();
+
+// Process MLM commissions at 23:59 on the last day of each month (Bangkok time)
+Schedule::command('commissions:process-monthly')
+    ->lastDayOfMonth('23:59')
+    ->timezone('Asia/Bangkok')
+    ->withoutOverlapping()
+    ->runInBackground();
