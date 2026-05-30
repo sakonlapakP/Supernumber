@@ -67,7 +67,7 @@
       background-color: #f3f4f6;
       color: #111827;
     }
-    @media (min-width: 1024px) {
+    @media (min-width: 768px) {
       .admin-table-card {
         overflow: visible !important;
       }

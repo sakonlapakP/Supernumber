@@ -16,6 +16,10 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withCommands()
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->web(append: [
+            \App\Http\Middleware\CaptureReferral::class,
+        ]);
+
         $middleware->alias([
             'role'      => \App\Http\Middleware\CheckRole::class,
             'sale.auth' => \App\Http\Middleware\EnsureSaleAuthenticated::class,

@@ -7,7 +7,33 @@
     @if($user && $user->sale_status === 'rejected')
       <div style="font-size:3rem;margin-bottom:1rem;">❌</div>
       <div style="font-size:1.25rem;font-weight:700;color:#c53030;margin-bottom:.5rem;">ใบสมัครไม่ผ่านการอนุมัติ</div>
-      <p style="color:#666;font-size:.9rem;">กรุณาติดต่อทีมงานเพื่อสอบถามรายละเอียด</p>
+      
+      @php
+        $rejectionDoc = $user->kycDocuments->firstWhere('status', 'rejected');
+        $rejectionReason = $rejectionDoc?->rejection_reason ?? 'เอกสารหรือข้อมูลไม่ถูกต้อง';
+      @endphp
+      
+      <div style="background:#fff5f5;border-radius:10px;padding:1rem;text-align:left;font-size:.875rem;margin-bottom:1.5rem;border:1px solid #fed7d7;">
+        <div style="font-weight:600;margin-bottom:.35rem;color:#c53030;">เหตุผลที่ปฏิเสธ:</div>
+        <p style="margin:0;color:#9b2c2c;line-height:1.4;">{{ $rejectionReason }}</p>
+      </div>
+
+      <form action="{{ route('sale.reupload-kyc') }}" method="POST" enctype="multipart/form-data" style="text-align:left;background:#f8f9ff;border-radius:12px;padding:1.25rem;box-shadow:inset 0 1px 3px rgba(0,0,0,.02);border:1px solid #eef;">
+        @csrf
+        <div style="font-weight:600;margin-bottom:.75rem;color:#333;text-align:center;border-bottom:1px solid #e2e8f0;padding-bottom:.5rem;font-size:.9rem;">อัปโหลดเอกสารใหม่เพื่อแก้ไข</div>
+
+        <div class="form-group" style="margin-bottom:1rem;">
+          <label style="display:block;font-size:.82rem;font-weight:600;color:#555;margin-bottom:.35rem;">ภาพถ่ายบัตรประชาชน (JPG, PNG, PDF ไม่เกิน 5MB)</label>
+          <input type="file" name="id_card_file" required class="form-control" style="background:#fff;">
+        </div>
+
+        <div class="form-group" style="margin-bottom:1.25rem;">
+          <label style="display:block;font-size:.82rem;font-weight:600;color:#555;margin-bottom:.35rem;">ภาพถ่ายหน้าสมุดบัญชี (JPG, PNG, PDF ไม่เกิน 5MB)</label>
+          <input type="file" name="bank_book_file" required class="form-control" style="background:#fff;">
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-block">ส่งเอกสารใหม่เพื่อตรวจทาน</button>
+      </form>
     @else
       <div style="font-size:3rem;margin-bottom:1rem;">⏳</div>
       <div style="font-size:1.25rem;font-weight:700;color:#1a1a2e;margin-bottom:.5rem;">รอการตรวจสอบ</div>

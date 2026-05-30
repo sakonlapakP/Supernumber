@@ -23,6 +23,7 @@ class User extends Authenticatable
     public const ROLE_STAFF            = 'staff';
     public const ROLE_DOCUMENT_OFFICER = 'document_officer';
     public const ROLE_SALE             = 'sale';
+    public const ROLE_SUNTARAPORN      = 'suntaraporn';
 
     public const SALE_STATUS_PENDING  = 'pending';
     public const SALE_STATUS_APPROVED = 'approved';
@@ -115,6 +116,7 @@ class User extends Authenticatable
             self::ROLE_ADMIN,
             self::ROLE_STAFF,
             self::ROLE_DOCUMENT_OFFICER,
+            self::ROLE_SUNTARAPORN,
         ];
     }
 
@@ -169,6 +171,11 @@ class User extends Authenticatable
         return $this->role === self::ROLE_SALE;
     }
 
+    public function isSuntaraporn(): bool
+    {
+        return $this->role === self::ROLE_SUNTARAPORN;
+    }
+
     public function isSaleApproved(): bool
     {
         return $this->isSale() && $this->sale_status === self::SALE_STATUS_APPROVED;
@@ -194,6 +201,7 @@ class User extends Authenticatable
             self::ROLE_STAFF            => 'พนักงาน (Staff)',
             self::ROLE_DOCUMENT_OFFICER => 'เจ้าหน้าที่เอกสาร (Document Officer)',
             self::ROLE_SALE             => 'เซลล์ (Sale)',
+            self::ROLE_SUNTARAPORN      => 'สุนทราภรณ์ (Suntaraporn)',
         ];
     }
 

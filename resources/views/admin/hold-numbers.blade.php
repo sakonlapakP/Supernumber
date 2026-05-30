@@ -114,6 +114,9 @@
             <th>เครือข่าย</th>
             <th>แพ็กเกจ / ราคา</th>
             <th>ผู้จอง Number</th>
+            @if (session('admin_user_role') === \App\Models\User::ROLE_MANAGER)
+              <th>วันเวลาในการ hold</th>
+            @endif
             <th>จัดการ</th>
           </tr>
         </thead>
@@ -158,6 +161,11 @@
                 <td>
                   <div>{{ $reservedBy !== '' ? $reservedBy : '-' }}</div>
                 </td>
+                @if ($isManager)
+                  <td>
+                    <div>{{ $reservedAt ? \Carbon\Carbon::parse($reservedAt)->timezone('Asia/Bangkok')->format('d/m/Y H:i') : '-' }}</div>
+                  </td>
+                @endif
                 <td class="admin-action-cell">
                   <div class="admin-action-group">
                     <a href="{{ route('admin.numbers.edit', $number) }}" class="admin-button admin-button--muted admin-button--compact">แก้ไข</a>
@@ -171,11 +179,11 @@
               </tr>
             @endforeach
             <tr id="hold-numbers-empty-row" hidden>
-              <td colspan="5" class="admin-muted">ไม่พบเบอร์ที่ตรงกับคำค้นหา</td>
+              <td colspan="{{ session('admin_user_role') === \App\Models\User::ROLE_MANAGER ? 6 : 5 }}" class="admin-muted">ไม่พบเบอร์ที่ตรงกับคำค้นหา</td>
             </tr>
           @else
             <tr>
-              <td colspan="5" class="admin-muted">ยังไม่มีเบอร์ที่อยู่ในสถานะ hold</td>
+              <td colspan="{{ session('admin_user_role') === \App\Models\User::ROLE_MANAGER ? 6 : 5 }}" class="admin-muted">ยังไม่มีเบอร์ที่อยู่ในสถานะ hold</td>
             </tr>
           @endif
         </tbody>

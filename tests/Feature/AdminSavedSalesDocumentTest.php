@@ -511,6 +511,45 @@ class AdminSavedSalesDocumentTest extends TestCase
         $this->assertEquals(SalesDocument::STATUS_INVOICE_ISSUED, $invoice->refresh()->status);
     }
 
+    public function test_pdf_view_pads_items_to_eleven_items_if_fewer_than_eleven(): void
+    {
+        $document = SalesDocument::query()->create([
+            'document_type' => 'quotation',
+            'document_number' => 'QT-260403-005',
+            'document_date' => '2026-04-03',
+            'due_date' => '2026-04-10',
+            'customer_name' => 'บริษัท ทดสอบแพดดิ้ง จำกัด',
+            'file_name' => 'Quotation QT-260403-005',
+            'pdf_disk' => 'local',
+            'pdf_path' => 'quotation/2026/Quotation QT-260403-005.pdf',
+            'payload' => [],
+        ]);
+
+        $html = View::make('admin.sales-document-pdf', [
+            'document' => $document,
+            'payload' => [
+                'items' => [
+                    [
+                        'description' => 'เบอร์สวย 099-999-9999',
+                        'quantity' => 1,
+                        'unit' => 'เบอร์',
+                        'unit_price' => 5000,
+                        'amount' => 5000,
+                    ]
+                ],
+            ],
+            'logoUrl' => null,
+        ])->render();
+
+        // Should see indexes from 1. to 11.
+        for ($i = 1; $i <= 11; $i++) {
+            $this->assertStringContainsString("<td class=\"document-item-row__index\">{$i}.</td>", $html);
+        }
+
+        // Should not see index 12.
+        $this->assertStringNotContainsString("<td class=\"document-item-row__index\">12.</td>", $html);
+    }
+
     /**
      * @return array<string, mixed>
      */

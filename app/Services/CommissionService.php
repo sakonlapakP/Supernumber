@@ -95,6 +95,7 @@ class CommissionService
                 $personalSales = Commission::where('user_id', $userId)
                     ->where('tier_level', 1)
                     ->where('period', $period)
+                    ->where('status', '!=', Commission::STATUS_REJECTED)
                     ->count();
 
                 // Downline sales (tier 2 + 3) this period

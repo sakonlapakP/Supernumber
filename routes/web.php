@@ -52,7 +52,17 @@ use Illuminate\Support\Facades\URL;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\PublicController;
+use App\Http\Controllers\SuntarapornBandController;
 use Illuminate\Support\Facades\Route;
+
+// ─── Suntaraporn Band Concert Seating ────────────────────────────────────────
+Route::get('/SuntarapornBand/login', [SuntarapornBandController::class, 'showLogin'])->name('suntaraporn.login');
+Route::post('/SuntarapornBand/login', [SuntarapornBandController::class, 'doLogin'])->name('suntaraporn.login.post');
+Route::post('/SuntarapornBand/logout', [SuntarapornBandController::class, 'doLogout'])->name('suntaraporn.logout');
+Route::get('/SuntarapornBand', [SuntarapornBandController::class, 'index'])->name('suntaraporn.index');
+Route::post('/SuntarapornBand/book', [SuntarapornBandController::class, 'bookSeat'])->name('suntaraporn.book');
+Route::post('/SuntarapornBand/prices', [SuntarapornBandController::class, 'updatePrices'])->name('suntaraporn.prices');
+Route::post('/SuntarapornBand/reset', [SuntarapornBandController::class, 'resetSeats'])->name('suntaraporn.reset');
 
 // Image pre-upload endpoint — neutral URL path to avoid WAF pattern matching.
 // This is called via AJAX before the article form is submitted.
@@ -1035,6 +1045,31 @@ $normalizeOrderCustomerDetails = static function (array $data, string $currentPh
     ];
 };
 
+$applyReferralAndDiscount = function (CustomerOrder $order, array $packageSnapshot): void {
+    $refCode = session('captured_referral_code') ?? request()->cookie('captured_referral_code');
+    $initialPrice = (float) ($packageSnapshot['initial_payment_price'] ?? 0);
+
+    if ($refCode && ! $order->referral_code_used) {
+        $seller = User::where('role', User::ROLE_SALE)
+            ->where('sale_status', User::SALE_STATUS_APPROVED)
+            ->where('referral_code', $refCode)
+            ->first();
+
+        if ($seller) {
+            $order->referral_code_used = $refCode;
+            $order->seller_user_id = $seller->id;
+            $order->discount_applied = 100.00;
+            $order->net_amount = max(0.00, $initialPrice - 100.00);
+            return;
+        }
+    }
+
+    if (! $order->referral_code_used) {
+        $order->net_amount = $initialPrice;
+        $order->discount_applied = 0.00;
+    }
+};
+
 $validatePrepaidOrderCustomerDetails = static function (array $customerDetails): void {
     validator($customerDetails, [
         'title_prefix' => ['required', 'string', 'max:50'],
@@ -1104,7 +1139,7 @@ $buildOrderPackageSnapshot = static function (PhoneNumber $phoneNumber, string $
     ];
 };
 
-Route::post('/book/save-step2', function (Request $request) use ($defaultOrderStatus, $normalizeServiceType, $storeOrderPaymentSlip, $safelyRunLineNotification, $syncPhoneNumberStatusFromOrder, $normalizeOrderCustomerDetails, $validatePrepaidOrderCustomerDetails, $buildOrderPackageSnapshot) {
+Route::post('/book/save-step2', function (Request $request) use ($defaultOrderStatus, $normalizeServiceType, $storeOrderPaymentSlip, $safelyRunLineNotification, $syncPhoneNumberStatusFromOrder, $normalizeOrderCustomerDetails, $validatePrepaidOrderCustomerDetails, $buildOrderPackageSnapshot, $applyReferralAndDiscount) {
     $data = $request->validate([
         'saved_order_id' => ['nullable', 'integer'],
         'ordered_number' => ['required', 'string', 'max:20'],
@@ -1188,6 +1223,7 @@ Route::post('/book/save-step2', function (Request $request) use ($defaultOrderSt
         'payment_slip_path' => trim((string) $order->payment_slip_path) !== '' ? $order->payment_slip_path : '__pending__',
         'status' => $defaultOrderStatus($serviceType),
     ]);
+    $applyReferralAndDiscount($order, $packageSnapshot);
     $order->save();
     $order->payment_slip_path = $storeOrderPaymentSlip($order, $request->file('payment_slip'));
     $order->save();
@@ -1209,7 +1245,7 @@ Route::post('/book/save-step2', function (Request $request) use ($defaultOrderSt
     ]);
 })->name('book.save-step2');
 
-Route::post('/book', function (Request $request) use ($defaultOrderStatus, $normalizeServiceType, $storeOrderPaymentSlip, $safelyRunLineNotification, $syncPhoneNumberStatusFromOrder, $normalizeOrderCustomerDetails, $validatePrepaidOrderCustomerDetails, $buildOrderPackageSnapshot) {
+Route::post('/book', function (Request $request) use ($defaultOrderStatus, $normalizeServiceType, $storeOrderPaymentSlip, $safelyRunLineNotification, $syncPhoneNumberStatusFromOrder, $normalizeOrderCustomerDetails, $validatePrepaidOrderCustomerDetails, $buildOrderPackageSnapshot, $applyReferralAndDiscount) {
     $data = $request->validate([
         'saved_order_id' => ['nullable', 'integer'],
         'ordered_number' => ['required', 'string', 'max:20'],
@@ -1300,6 +1336,7 @@ Route::post('/book', function (Request $request) use ($defaultOrderStatus, $norm
         'payment_slip_path' => $slipPath ?: '__pending__',
         'status' => $defaultOrderStatus($serviceType),
     ]);
+    $applyReferralAndDiscount($order, $packageSnapshot);
     $order->save();
 
     if ($request->hasFile('payment_slip')) {
@@ -5652,6 +5689,7 @@ Route::prefix('sale')->name('sale.')->group(function () {
     // Authenticated sale routes
     Route::middleware('sale.auth')->group(function () {
         Route::get('/dashboard', [SaleController::class, 'dashboard'])->name('dashboard');
+        Route::post('/reupload-kyc', [SaleController::class, 'reuploadKyc'])->name('reupload-kyc');
         Route::get('/logout',    [SaleController::class, 'logout'])->name('logout');
     });
 });

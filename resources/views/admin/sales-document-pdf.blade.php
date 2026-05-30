@@ -1,5 +1,33 @@
 @php
-  $items = collect(data_get($payload, 'items', []));
+  $items = collect(data_get($payload, 'items', []))->map(function($item) {
+    $unitPrice = data_get($item, 'unit_price');
+    if (is_numeric($unitPrice)) {
+      $item['unit_price_display'] = number_format($unitPrice, 2);
+    } else {
+      $displayPrice = data_get($item, 'unit_price_display');
+      if (is_numeric($displayPrice)) {
+        $item['unit_price_display'] = number_format($displayPrice, 2);
+      }
+    }
+    return $item;
+  });
+  
+  $itemCount = $items->count();
+  if ($itemCount < 11) {
+    for ($i = $itemCount; $i < 11; $i++) {
+      $items->push([
+        'description' => '',
+        'quantity' => '',
+        'quantity_display' => '',
+        'unit' => '',
+        'unit_price' => '',
+        'unit_price_display' => '',
+        'amount' => '',
+        'amount_display' => '',
+        'is_padded' => true,
+      ]);
+    }
+  }
   $company = data_get($payload, 'company', []);
   $customer = data_get($payload, 'customer', []);
   $documentMeta = data_get($payload, 'document', []);
@@ -126,7 +154,15 @@
                 <td class="document-item-row__qty"><div class="print-value doc-input doc-input--align-right">{{ data_get($item, 'quantity_display', data_get($item, 'quantity')) }}</div></td>
                 <td class="document-item-row__unit"><div class="print-value doc-input doc-input--align-center">{{ data_get($item, 'unit') }}</div></td>
                 <td class="document-item-row__price"><div class="print-value doc-input doc-input--align-right">{{ data_get($item, 'unit_price_display', data_get($item, 'unit_price')) }}</div></td>
-                <td class="document-item-row__amount"><output>{{ data_get($item, 'amount_display', data_get($item, 'amount', '0.00')) }}</output></td>
+                <td class="document-item-row__amount">
+                  <output>
+                    @if (data_get($item, 'is_padded'))
+                      &nbsp;
+                    @else
+                      {{ data_get($item, 'amount_display', data_get($item, 'amount', '0.00')) }}
+                    @endif
+                  </output>
+                </td>
               </tr>
             @endforeach
           </tbody>

@@ -102,7 +102,7 @@
       </a>
 
       <div class="document-studio__controls">
-        <label class="document-studio__customer-picker">
+        <label class="document-studio__customer-picker" @if (request()->has('document')) style="display: none !important;" @endif>
           <span>ลูกค้า</span>
           <select data-customer-select>
             <option value="">เลือกลูกค้า</option>
@@ -111,8 +111,8 @@
             @endforeach
           </select>
         </label>
-        <button type="button" class="document-action-button document-action-button--save" data-customer-action>เพิ่มลูกค้า</button>
-        <button type="button" class="document-action-button document-action-button--ghost" data-save-draft>บันทึกร่าง</button>
+        <button type="button" class="document-action-button document-action-button--save" data-customer-action @if (request()->has('document')) style="display: none !important;" @endif>เพิ่มลูกค้า</button>
+        <button type="button" class="document-action-button document-action-button--ghost" data-save-draft @if (request()->has('document')) style="display: none !important;" @endif>บันทึกร่าง</button>
         <button type="button" class="document-action-button" data-load-draft hidden>โหลดร่าง</button>
         <div class="document-type-switch" role="group" aria-label="เลือกประเภทเอกสาร" style="display: none !important;">
           <button type="button" class="is-active" data-doc-switch="quotation">ใบเสนอราคา</button>
@@ -412,7 +412,7 @@ Tel. 096-323-2656 , 096-323-2665 E-Mail. superjimmy789@gmail.com</textarea>
       </article>
     </div>
 
-    <div class="document-studio__settings">
+    <div class="document-studio__settings" @if (request()->has('document')) style="display: none !important;" @endif>
       <div class="document-calculator">
         <div class="document-calculator__groups">
           <div class="document-calculator__modes" role="group" aria-label="รูปแบบการคำนวณภาษี" style="display: grid !important; gap: 8px !important; min-width: min(100%, 360px) !important; padding: 12px !important; background-color: #f5f5f5 !important; border-radius: 6px !important; border-left: 4px solid #3b82f6 !important;">

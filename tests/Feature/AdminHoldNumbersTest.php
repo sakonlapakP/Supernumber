@@ -110,21 +110,25 @@ class AdminHoldNumbersTest extends TestCase
             ])
             ->assertRedirect(route('admin.hold-numbers'));
 
-        // Manager should see the admin name and NOT see the dash
+        // Manager should see the admin name, the hold date/time, and NOT see the dash
         $this->withSession($this->adminSession($managerViewer))
             ->get(route('admin.hold-numbers'))
             ->assertOk()
             ->assertSee('064-999-8888')
             ->assertSee('Admin Hold Tester')
+            ->assertSee('วันเวลาในการ hold')
+            ->assertSee('20/05/2026 14:10')
             ->assertDontSee('<td>\n                  <div>-</div>\n                </td>', false);
 
-        // Admin viewer should see the dash and NOT see the admin name
+        // Admin viewer should see the dash and NOT see the admin name or hold date/time
         $this->withSession($this->adminSession($adminViewer))
             ->get(route('admin.hold-numbers'))
             ->assertOk()
             ->assertSee('064-999-8888')
             ->assertSee('<div>-</div>', false)
-            ->assertDontSee('Admin Hold Tester');
+            ->assertDontSee('Admin Hold Tester')
+            ->assertDontSee('วันเวลาในการ hold')
+            ->assertDontSee('20/05/2026 14:10');
     }
 
     public function test_admin_hold_numbers_are_listed_newest_hold_time_first(): void

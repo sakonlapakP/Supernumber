@@ -87,7 +87,12 @@ class SaleController extends Controller
                 ->where('role', User::ROLE_SALE)
                 ->where('sale_status', User::SALE_STATUS_APPROVED)
                 ->first();
-            $parentId = $parent?->id;
+            if (! $parent) {
+                throw \Illuminate\Validation\ValidationException::withMessages([
+                    'ref_code' => 'รหัสแนะนำนี้ไม่ถูกต้อง หรือยังไม่ผ่านการอนุมัติเป็นตัวแทนขาย',
+                ]);
+            }
+            $parentId = $parent->id;
         }
 
         $user = User::create([
@@ -183,6 +188,41 @@ class SaleController extends Controller
             'original_name' => $file->getClientOriginalName(),
             'status'        => SaleKycDocument::STATUS_PENDING,
         ]);
+    }
+
+    public function reuploadKyc(Request $request)
+    {
+        $userId = session('sale_user_id');
+        $user = $userId ? User::where('id', (int) $userId)->where('sale_status', User::SALE_STATUS_REJECTED)->first() : null;
+
+        if (! $user) {
+            return redirect()->route('sale.login');
+        }
+
+        $data = $request->validate([
+            'id_card_file'   => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'bank_book_file' => 'required|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ], [
+            'id_card_file.required'   => 'กรุณาอัปโหลดภาพถ่ายบัตรประชาชน',
+            'bank_book_file.required' => 'กรุณาอัปโหลดภาพถ่ายหน้าสมุดบัญชี',
+        ]);
+
+        // Delete old KYC files from disk and records from DB
+        foreach ($user->kycDocuments as $oldDoc) {
+            Storage::disk('local')->delete($oldDoc->file_path);
+            $oldDoc->delete();
+        }
+
+        // Store new KYC files
+        $this->storeKycFile($request, $user->id, 'id_card_file',   SaleKycDocument::TYPE_NATIONAL_ID);
+        $this->storeKycFile($request, $user->id, 'bank_book_file',  SaleKycDocument::TYPE_BANK_BOOK);
+
+        // Reset user status back to pending
+        $user->update([
+            'sale_status' => User::SALE_STATUS_PENDING,
+        ]);
+
+        return redirect()->route('sale.pending')->with('success', 'ส่งเอกสารใหม่เรียบร้อยแล้ว รอการอนุมัติจากทีมงาน');
     }
 
     private function availableMonths(): array
