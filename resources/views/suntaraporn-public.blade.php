@@ -23,7 +23,7 @@
     .z-green   { background: #66BB6A; color: #fff; border-color: #4caa50; }
     .z-purple  { background: #CE93D8; color: #1a1a1a; border-color: #ba68c8; }
     .z-vip     { background: #9E9E9E; color: #fff; border-color: #757575; }
-    .z-box_b   { background: #9E9E9E; color: #fff; border-color: #757575; }
+    .z-box_b   { background: #F48FB1; color: #1a1a1a; border-color: #e06090; }
     .z-wc      { background: #7EC8E3; color: #1a1a1a; border-color: #5ab5d5; opacity: 0.75; }
     .z-vvip-box { background: #fff; border: 2.5px solid #222; }
 
@@ -244,7 +244,7 @@
   $legend = [
     ['zone'=>'vvip',   'label'=>'VVIP',       'bg'=>'#fff',    'border'=>'#222'],
     ['zone'=>'vip',    'label'=>'VIP',         'bg'=>'#9E9E9E', 'border'=>'#757575'],
-    ['zone'=>'box_b',  'label'=>'BOX B',       'bg'=>'#9E9E9E', 'border'=>'#757575'],
+    ['zone'=>'box_b',  'label'=>'BOX B',       'bg'=>'#F48FB1', 'border'=>'#e06090'],
     ['zone'=>'purple', 'label'=>'ม่วง',        'bg'=>'#CE93D8', 'border'=>'#ba68c8'],
     ['zone'=>'green',  'label'=>'เขียว',       'bg'=>'#66BB6A', 'border'=>'#4caa50'],
     ['zone'=>'pink',   'label'=>'ชมพู',        'bg'=>'#F48FB1', 'border'=>'#e06090'],
