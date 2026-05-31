@@ -56,13 +56,19 @@ use App\Http\Controllers\SuntarapornBandController;
 use Illuminate\Support\Facades\Route;
 
 // ─── Suntaraporn Band Concert Seating ────────────────────────────────────────
+Route::get('/SuntarapornBand/view',  [SuntarapornBandController::class, 'publicView'])->name('suntaraporn.public');
 Route::get('/SuntarapornBand/login', [SuntarapornBandController::class, 'showLogin'])->name('suntaraporn.login');
 Route::post('/SuntarapornBand/login', [SuntarapornBandController::class, 'doLogin'])->name('suntaraporn.login.post');
 Route::post('/SuntarapornBand/logout', [SuntarapornBandController::class, 'doLogout'])->name('suntaraporn.logout');
 Route::get('/SuntarapornBand', [SuntarapornBandController::class, 'index'])->name('suntaraporn.index');
-Route::post('/SuntarapornBand/book', [SuntarapornBandController::class, 'bookSeat'])->name('suntaraporn.book');
+Route::post('/SuntarapornBand/book',     [SuntarapornBandController::class, 'bookSeat'])->name('suntaraporn.book');
+Route::post('/SuntarapornBand/select',   [SuntarapornBandController::class, 'selectSeat'])->name('suntaraporn.select');
+Route::post('/SuntarapornBand/deselect', [SuntarapornBandController::class, 'deselectSeat'])->name('suntaraporn.deselect');
 Route::post('/SuntarapornBand/prices', [SuntarapornBandController::class, 'updatePrices'])->name('suntaraporn.prices');
 Route::post('/SuntarapornBand/reset', [SuntarapornBandController::class, 'resetSeats'])->name('suntaraporn.reset');
+Route::get('/SuntarapornBand/booking-info/{seatKey}', [SuntarapornBandController::class, 'bookingInfo'])->name('suntaraporn.booking-info');
+Route::get('/SuntarapornBand/bookings', [SuntarapornBandController::class, 'bookingList'])->name('suntaraporn.bookings');
+Route::delete('/SuntarapornBand/booking/{id}', [SuntarapornBandController::class, 'cancelBooking'])->name('suntaraporn.cancel');
 
 // Image pre-upload endpoint — neutral URL path to avoid WAF pattern matching.
 // This is called via AJAX before the article form is submitted.
@@ -128,6 +134,11 @@ $ensureAdmin = function (?string $requiredRole = null) use ($currentAdmin) {
 
     if (! $user || !session('admin_authenticated')) {
         return redirect()->route('admin.login');
+    }
+
+    // suntaraporn role ไม่มีสิทธิ์เข้าหน้า admin ใดๆ — ส่งกลับไปหน้าจองตั๋ว
+    if ($user->role === User::ROLE_SUNTARAPORN) {
+        return redirect()->route('suntaraporn.index');
     }
 
     if ($requiredRole !== null) {
@@ -1510,7 +1521,11 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     })->name('mobile-handoff');
 
     Route::get('/login', function (Request $request) use ($currentAdmin) {
-        if ($currentAdmin()) {
+        if ($user = $currentAdmin()) {
+            // suntaraporn role ไม่มีสิทธิ์เข้า admin panel
+            if ($user->role === User::ROLE_SUNTARAPORN) {
+                return redirect()->route('suntaraporn.index');
+            }
             return redirect()->route('admin.dashboard');
         }
 
@@ -1554,6 +1569,12 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             'admin_user_role' => $user->role,
         ]);
 
+        // suntaraporn role → ส่งตรงไปหน้าจองตั๋ว ไม่ให้เข้า admin panel
+        if ($user->role === User::ROLE_SUNTARAPORN) {
+            $request->session()->put('suntaraporn_user_id', $user->id);
+            return redirect()->route('suntaraporn.index');
+        }
+
         if ($user->isDocumentOfficer()) {
             return redirect()->route('admin.saved-sales-documents.index');
         }
@@ -1574,7 +1595,11 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         return redirect()->route('admin.login');
     })->name('logout');
 
-    Route::get('/', function () {
+    Route::get('/', function () use ($currentAdmin) {
+        $user = $currentAdmin();
+        if ($user && $user->role === User::ROLE_SUNTARAPORN) {
+            return redirect()->route('suntaraporn.index');
+        }
         return redirect()->route('admin.dashboard');
     })->name('home');
 

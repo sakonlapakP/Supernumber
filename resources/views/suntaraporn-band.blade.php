@@ -44,7 +44,7 @@
       transition: transform .12s, box-shadow .12s, opacity .12s;
       position: relative;
     }
-    .seat:hover:not(.is-booked):not(.is-reserved):not(.is-selected) {
+    .seat:hover:not(.is-booked):not(.is-reserved):not(.is-selected):not(.is-selecting) {
       transform: scale(1.25);
       z-index: 10;
       box-shadow: 0 2px 8px rgba(0,0,0,.35);
@@ -64,6 +64,27 @@
     }
     .seat.is-reserved {
       cursor: default;
+    }
+    /* ─── กำลังถูกเลือกโดยผู้อื่น ─── */
+    .seat.is-selecting {
+      background: #FF8F00 !important;
+      border-color: #E65100 !important;
+      color: #fff !important;
+      cursor: not-allowed;
+      animation: pulse-selecting 1.4s ease-in-out infinite;
+    }
+    .seat.is-selecting::after {
+      content: '🔒';
+      position: absolute;
+      top: -6px;
+      right: -6px;
+      font-size: 10px;
+      line-height: 1;
+      pointer-events: none;
+    }
+    @keyframes pulse-selecting {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(255,143,0,.6); }
+      50%       { box-shadow: 0 0 0 4px rgba(255,143,0,0); }
     }
     .seat-gap  { width: 10px; flex-shrink: 0; }
     .seat-gap-center {
@@ -447,6 +468,47 @@
     .stat-num  { font-size: 20px; font-weight: 800; }
     .stat-lbl  { color: #777; font-size: 11px; }
 
+    /* Booking detail popup */
+    .detail-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 10px;
+      font-size: 14px;
+    }
+    .detail-label {
+      width: 110px;
+      font-weight: 600;
+      color: #666;
+      flex-shrink: 0;
+    }
+    .detail-val { color: #1a1a1a; word-break: break-all; }
+    .slip-img {
+      max-width: 100%;
+      max-height: 260px;
+      border-radius: 8px;
+      border: 1px solid #ddd;
+      margin-top: 6px;
+      cursor: zoom-in;
+    }
+    .seats-group {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+    }
+    .btn-cancel-booking {
+      background: #e53935;
+      color: #fff;
+      border: none;
+      border-radius: 7px;
+      padding: 8px 18px;
+      font-size: 14px;
+      font-weight: 600;
+      font-family: inherit;
+      cursor: pointer;
+    }
+    .btn-cancel-booking:hover { opacity: .85; }
+    .detail-divider { border: none; border-top: 1px solid #eee; margin: 12px 0; }
+
     /* Floating book button */
     .float-book-btn {
       display: none;
@@ -530,10 +592,6 @@
         <input type="tel" name="phone" id="inp-phone" placeholder="0812345678" required>
       </div>
       <div class="form-group">
-        <label>ชื่อผู้จอง <span style="color:#e53935">*</span></label>
-        <input type="text" name="booker_name" id="inp-booker" placeholder="ชื่อ-นามสกุล ผู้จอง" required>
-      </div>
-      <div class="form-group">
         <label>อัพโหลด Slip โอนเงิน</label>
         <input type="file" name="slip" id="inp-slip" accept="image/jpeg,image/png,application/pdf">
         <div style="font-size:12px;color:#999;margin-top:4px;">JPG / PNG / PDF ขนาดไม่เกิน 5 MB</div>
@@ -547,6 +605,55 @@
   </div>
 </div>
 
+{{-- ─── Booking Detail Modal ───────────────────────────────── --}}
+<div class="modal-backdrop" id="detailModal">
+  <div class="modal" style="width:460px;">
+    <h2>📋 ข้อมูลการจอง</h2>
+    <div id="detail-loading" style="text-align:center;padding:20px;color:#999;">กำลังโหลด...</div>
+    <div id="detail-body" style="display:none;">
+      <div class="detail-row">
+        <span class="detail-label">ที่นั่งทั้งหมด</span>
+        <span class="detail-val"><div class="seats-group" id="det-seats"></div></span>
+      </div>
+      <hr class="detail-divider">
+      <div class="detail-row">
+        <span class="detail-label">ชื่อ-นามสกุล</span>
+        <span class="detail-val" id="det-name"></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">เบอร์ติดต่อ</span>
+        <span class="detail-val" id="det-phone"></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">ผู้รับจอง</span>
+        <span class="detail-val" id="det-booker"></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">ยอดรวม</span>
+        <span class="detail-val" id="det-total"></span>
+      </div>
+      <div class="detail-row">
+        <span class="detail-label">วันที่จอง</span>
+        <span class="detail-val" id="det-date"></span>
+      </div>
+      <div id="det-slip-wrap">
+        <hr class="detail-divider">
+        <div style="font-size:13px;font-weight:600;color:#666;margin-bottom:6px;">Slip โอนเงิน</div>
+        <img id="det-slip-img" class="slip-img" src="" alt="slip" style="display:none;" onclick="window.open(this.src,'_blank')">
+        <a id="det-slip-link" href="#" target="_blank" style="font-size:13px;display:none;">📄 ดูไฟล์ Slip (PDF)</a>
+      </div>
+    </div>
+    <div class="modal-footer" style="justify-content:space-between;align-items:center;">
+      <div id="det-cancel-wrap" style="display:none;">
+        <button class="btn-cancel-booking" id="det-cancel-btn" onclick="cancelBooking()">🗑 ยกเลิกการจอง</button>
+      </div>
+      <div style="margin-left:auto;">
+        <button class="btn btn-outline" onclick="closeDetailModal()">ปิด</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 {{-- ─── Main Page ─────────────────────────────────────────── --}}
 <div class="page-header">
   <div>
@@ -554,6 +661,7 @@
     <div style="font-size:13px;color:#777;margin-top:2px;">สวัสดี, {{ $user->name }}</div>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+    <a href="{{ route('suntaraporn.bookings') }}" class="btn btn-outline">📋 รายการจอง</a>
     @if ($user->role === 'manager')
     <button class="btn btn-outline" onclick="if(confirm('รีเซ็ตที่นั่งทั้งหมด?')) resetAllSeats()">🔄 รีเซ็ต</button>
     <button class="btn btn-primary" onclick="openPriceModal()">✏️ แก้ไขราคา</button>
@@ -582,6 +690,10 @@
   <div class="stat-item">
     <span class="stat-num" id="stat-selected" style="color:#1a1a2e">0</span>
     <span class="stat-lbl">เลือกแล้ว</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num" id="stat-selecting" style="color:#FF8F00">0</span>
+    <span class="stat-lbl">🔒 ถูกถือ</span>
   </div>
 </div>
 
@@ -619,7 +731,11 @@
   </div>
   <div class="legend-item">
     <div class="legend-swatch" style="background:#1a1a2e;border-color:#000;"></div>
-    <span>เลือกอยู่</span>
+    <span>เลือกอยู่ (ฉัน)</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:#FF8F00;border-color:#E65100;display:flex;align-items:center;justify-content:center;font-size:11px;">🔒</div>
+    <span>กำลังถูกเลือกอยู่ (ผู้อื่น)</span>
   </div>
 </div>
 
@@ -825,10 +941,11 @@
 </button>
 
 <script>
-const CSRF   = document.querySelector('meta[name="csrf-token"]').content;
-const BOOKED = new Set(@json($bookedSeats));
-const PRICES = @json($prices);
-const SELECTED = new Map(); // key -> zone
+const CSRF             = document.querySelector('meta[name="csrf-token"]').content;
+const BOOKED           = new Set(@json($bookedSeats));
+const PRICES           = @json($prices);
+const SELECTED         = new Map(); // key → zone (ที่นั่งที่ฉันเลือก)
+const SELECTING_OTHERS = new Set(); // key (ที่นั่งที่ผู้อื่นกำลังเลือก)
 
 // ── Initialize ──────────────────────────────────────────────────
 function init() {
@@ -842,7 +959,12 @@ function init() {
 // ── Toggle Seat Selection ────────────────────────────────────────
 function toggleSeat(el) {
   if (el.classList.contains('is-reserved')) return;
-  if (el.classList.contains('is-booked')) return;
+  if (el.classList.contains('is-selecting')) return; // ถูกถือโดยผู้อื่น
+
+  if (el.classList.contains('is-booked')) {
+    openDetailModal(el.dataset.key);
+    return;
+  }
 
   const key  = el.dataset.key;
   const zone = el.dataset.zone;
@@ -850,15 +972,47 @@ function toggleSeat(el) {
   if (SELECTED.has(key)) {
     SELECTED.delete(key);
     el.classList.remove('is-selected');
+    broadcastDeselect([key]);
   } else {
     SELECTED.set(key, zone);
     el.classList.add('is-selected');
+    broadcastSelect([key]);
   }
 
   updateStats();
   updateSummary();
   updateFloatBtn();
 }
+
+// ── Broadcast select / deselect ──────────────────────────────────
+async function broadcastSelect(keys) {
+  try {
+    await fetch('/SuntarapornBand/select', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+      body: JSON.stringify({ seat_keys: keys })
+    });
+  } catch {}
+}
+
+async function broadcastDeselect(keys) {
+  try {
+    await fetch('/SuntarapornBand/deselect', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+      body: JSON.stringify({ seat_keys: keys })
+    });
+  } catch {}
+}
+
+// ── ปิด tab → deselect ที่นั่งทั้งหมดที่ถือไว้ ───────────────────
+window.addEventListener('beforeunload', function () {
+  if (SELECTED.size === 0) return;
+  const fd = new FormData();
+  fd.append('_token', CSRF);
+  [...SELECTED.keys()].forEach(k => fd.append('seat_keys[]', k));
+  navigator.sendBeacon('/SuntarapornBand/deselect', fd);
+});
 
 // ── Booking Modal ────────────────────────────────────────────────
 function openBookingModal() {
@@ -899,10 +1053,9 @@ async function confirmBooking() {
     fd.append('seat_keys[]', k);
     fd.append('zones[]', z);
   });
-  fd.append('first_name',  document.getElementById('inp-first-name').value.trim());
-  fd.append('last_name',   document.getElementById('inp-last-name').value.trim());
-  fd.append('phone',       document.getElementById('inp-phone').value.trim());
-  fd.append('booker_name', document.getElementById('inp-booker').value.trim());
+  fd.append('first_name', document.getElementById('inp-first-name').value.trim());
+  fd.append('last_name',  document.getElementById('inp-last-name').value.trim());
+  fd.append('phone',      document.getElementById('inp-phone').value.trim());
   const slipFile = document.getElementById('inp-slip').files[0];
   if (slipFile) fd.append('slip', slipFile);
 
@@ -933,6 +1086,104 @@ async function confirmBooking() {
   } finally {
     btn.disabled = false;
     btn.textContent = 'ยืนยันการจอง';
+  }
+}
+
+// ── Booking Detail Modal ─────────────────────────────────────────
+const IS_MANAGER = {{ $user->role === 'manager' ? 'true' : 'false' }};
+let currentBookingId = null;
+
+async function openDetailModal(seatKey) {
+  currentBookingId = null;
+  document.getElementById('detail-loading').style.display = 'block';
+  document.getElementById('detail-body').style.display    = 'none';
+  document.getElementById('detailModal').classList.add('open');
+
+  try {
+    const res  = await fetch(`/SuntarapornBand/booking-info/${encodeURIComponent(seatKey)}`);
+    const data = await res.json();
+    if (!data.success) { alert(data.error || 'ไม่พบข้อมูล'); closeDetailModal(); return; }
+
+    currentBookingId = data.booking_id;
+
+    // Seats chips
+    document.getElementById('det-seats').innerHTML = data.all_seats
+      .map(k => `<span class="seat-chip">${k}</span>`).join('');
+
+    document.getElementById('det-name').textContent   = `${data.first_name} ${data.last_name}`;
+    document.getElementById('det-phone').textContent  = data.phone;
+    document.getElementById('det-booker').textContent = data.booker_name;
+    document.getElementById('det-total').textContent  = '฿' + Number(data.total_price).toLocaleString('th-TH');
+    document.getElementById('det-date').textContent   = data.booked_at || '-';
+
+    // Slip
+    const slipImg  = document.getElementById('det-slip-img');
+    const slipLink = document.getElementById('det-slip-link');
+    const slipWrap = document.getElementById('det-slip-wrap');
+    slipImg.style.display  = 'none';
+    slipLink.style.display = 'none';
+
+    if (data.slip_url) {
+      const isPdf = data.slip_url.toLowerCase().endsWith('.pdf');
+      if (isPdf) {
+        slipLink.href = data.slip_url;
+        slipLink.style.display = 'inline';
+      } else {
+        slipImg.src = data.slip_url;
+        slipImg.style.display = 'block';
+      }
+      slipWrap.style.display = 'block';
+    } else {
+      slipWrap.style.display = 'none';
+    }
+
+    // Cancel button (manager only)
+    document.getElementById('det-cancel-wrap').style.display = IS_MANAGER ? 'block' : 'none';
+
+    document.getElementById('detail-loading').style.display = 'none';
+    document.getElementById('detail-body').style.display    = 'block';
+  } catch {
+    alert('เกิดข้อผิดพลาด');
+    closeDetailModal();
+  }
+}
+
+function closeDetailModal() {
+  document.getElementById('detailModal').classList.remove('open');
+  currentBookingId = null;
+}
+
+async function cancelBooking() {
+  if (!currentBookingId) return;
+  if (!confirm('ยืนยันยกเลิกการจองนี้? ที่นั่งทั้งหมดใน booking จะถูกปล่อยว่าง')) return;
+
+  const btn = document.getElementById('det-cancel-btn');
+  btn.disabled = true;
+  btn.textContent = 'กำลังยกเลิก...';
+
+  try {
+    const res  = await fetch(`/SuntarapornBand/booking/${currentBookingId}`, {
+      method: 'DELETE',
+      headers: { 'X-CSRF-TOKEN': CSRF }
+    });
+    const data = await res.json();
+    if (data.success) {
+      // Remove booked state from all seats in this booking
+      document.querySelectorAll('.seat.is-booked').forEach(el => {
+        // We need to find which seats belonged to this booking
+        // Easiest: reload page to refresh state
+      });
+      closeDetailModal();
+      alert('ยกเลิกการจองเรียบร้อย');
+      location.reload();
+    } else {
+      alert(data.error || 'เกิดข้อผิดพลาด');
+    }
+  } catch {
+    alert('เกิดข้อผิดพลาด');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🗑 ยกเลิกการจอง';
   }
 }
 
@@ -987,12 +1238,14 @@ async function resetAllSeats() {
 
 // ── Stats + Summary ─────────────────────────────────────────────
 function updateStats() {
-  const total    = 542;
-  const booked   = BOOKED.size;
-  const selected = SELECTED.size;
-  document.getElementById('stat-booked').textContent   = booked;
-  document.getElementById('stat-avail').textContent    = total - booked - selected;
-  document.getElementById('stat-selected').textContent = selected;
+  const total     = 542;
+  const booked    = BOOKED.size;
+  const selected  = SELECTED.size;
+  const selecting = SELECTING_OTHERS.size;
+  document.getElementById('stat-booked').textContent    = booked;
+  document.getElementById('stat-avail').textContent     = total - booked - selected - selecting;
+  document.getElementById('stat-selected').textContent  = selected;
+  document.getElementById('stat-selecting').textContent = selecting;
 }
 
 function updateSummary() {
@@ -1026,8 +1279,67 @@ document.getElementById('priceModal').addEventListener('click', function(e) {
 document.getElementById('bookingModal').addEventListener('click', function(e) {
   if (e.target === this) closeBookingModal();
 });
+document.getElementById('detailModal').addEventListener('click', function(e) {
+  if (e.target === this) closeDetailModal();
+});
 
 init();
+</script>
+
+{{-- ─── Pusher Real-time ──────────────────────────────────────── --}}
+<script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
+<script>
+(function () {
+  const pusher  = new Pusher('{{ env("PUSHER_APP_KEY") }}', { cluster: '{{ env("PUSHER_APP_CLUSTER") }}' });
+  const channel = pusher.subscribe('suntaraporn-concert');
+
+  channel.bind('seat-status-updated', function (data) {
+    // ที่นั่งถูกจองแล้ว
+    (data.booked_keys || []).forEach(function (key) {
+      SELECTED.delete(key);
+      SELECTING_OTHERS.delete(key);
+      BOOKED.add(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        el.classList.remove('is-selected', 'is-selecting');
+        el.classList.add('is-booked');
+        el.removeAttribute('title');
+      });
+    });
+
+    // ที่นั่งถูกปล่อยว่าง (ยกเลิกจอง)
+    (data.freed_keys || []).forEach(function (key) {
+      BOOKED.delete(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        el.classList.remove('is-booked');
+      });
+    });
+
+    // ที่นั่งกำลังถูกเลือกโดยผู้อื่น → สีส้ม 🔒
+    (data.selecting_keys || []).forEach(function (key) {
+      if (SELECTED.has(key) || BOOKED.has(key)) return; // ฉันเลือกอยู่ หรือจองแล้ว ไม่ต้องอัพเดท
+      SELECTING_OTHERS.add(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        el.classList.add('is-selecting');
+        el.setAttribute('title', 'กำลังถูกเลือกอยู่');
+      });
+    });
+
+    // ที่นั่งถูกปล่อยออก (deselect) → กลับว่าง
+    (data.deselecting_keys || []).forEach(function (key) {
+      SELECTING_OTHERS.delete(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        if (!BOOKED.has(key)) {
+          el.classList.remove('is-selecting');
+          el.removeAttribute('title');
+        }
+      });
+    });
+
+    updateStats();
+    updateSummary();
+    updateFloatBtn();
+  });
+})();
 </script>
 </body>
 </html>

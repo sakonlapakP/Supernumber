@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\SeatStatusUpdated;
 use App\Models\SuntarapornBooking;
 use App\Models\SuntarapornSeat;
 use App\Models\User;
@@ -72,6 +73,21 @@ class SuntarapornBandController extends Controller
         return redirect()->route('suntaraporn.login');
     }
 
+    // ── Public View (no auth required) ───────────────────────────
+
+    public function publicView(): View
+    {
+        $bookedSeats = SuntarapornSeat::where('is_booked', true)
+            ->pluck('seat_key')
+            ->all();
+
+        $prices = DB::table('suntaraporn_zone_prices')
+            ->pluck('price', 'zone')
+            ->all();
+
+        return view('suntaraporn-public', compact('bookedSeats', 'prices'));
+    }
+
     // ── Main Page ─────────────────────────────────────────────────
 
     public function index(): View|RedirectResponse
@@ -107,9 +123,11 @@ class SuntarapornBandController extends Controller
             'first_name'  => 'required|string|max:100',
             'last_name'   => 'required|string|max:100',
             'phone'       => 'required|string|max:20',
-            'booker_name' => 'required|string|max:200',
             'slip'        => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
+
+        // booker = admin ที่ login อยู่
+        $data['booker_name'] = $this->currentUser()->name;
 
         // Check none of the seats are already booked
         $alreadyBooked = SuntarapornSeat::whereIn('seat_key', $data['seat_keys'])
@@ -147,7 +165,7 @@ class SuntarapornBandController extends Controller
                 'total_price' => $totalPrice,
             ]);
 
-            foreach ($data['seat_keys'] as $i => $key) {
+            foreach ($data['seat_keys'] as $key) {
                 SuntarapornSeat::updateOrCreate(
                     ['seat_key' => $key],
                     [
@@ -158,6 +176,136 @@ class SuntarapornBandController extends Controller
                 );
             }
         });
+
+        // Broadcast real-time update ให้ทุก client ที่เปิดอยู่
+        broadcast(new SeatStatusUpdated(bookedKeys: $data['seat_keys']));
+
+        return response()->json(['success' => true]);
+    }
+
+    // ── Booking Info (for popup) ──────────────────────────────────
+
+    public function bookingInfo(string $seatKey): JsonResponse
+    {
+        if ($this->guardRedirect()) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
+        }
+
+        $seat = SuntarapornSeat::with('booking.seats')
+            ->where('seat_key', $seatKey)
+            ->where('is_booked', true)
+            ->first();
+
+        if (!$seat || !$seat->booking) {
+            return response()->json(['success' => false, 'error' => 'ไม่พบข้อมูลการจอง'], 404);
+        }
+
+        $booking = $seat->booking;
+
+        return response()->json([
+            'success'     => true,
+            'booking_id'  => $booking->id,
+            'first_name'  => $booking->first_name,
+            'last_name'   => $booking->last_name,
+            'phone'       => $booking->phone,
+            'booker_name' => $booking->booker_name,
+            'total_price' => $booking->total_price,
+            'booked_at'   => $seat->booked_at?->format('d/m/Y H:i'),
+            'slip_url'    => $booking->slip_path ? asset('storage/' . $booking->slip_path) : null,
+            'all_seats'   => $booking->seats->pluck('seat_key')->all(),
+        ]);
+    }
+
+    // ── Booking List (dashboard) ──────────────────────────────────
+
+    public function bookingList(): View|RedirectResponse
+    {
+        if ($redirect = $this->guardRedirect()) return $redirect;
+
+        $user = $this->currentUser();
+
+        $bookings = SuntarapornBooking::with('seats')
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('suntaraporn-bookings', compact('bookings', 'user'));
+    }
+
+    // ── Cancel Booking (manager only) ─────────────────────────────
+
+    public function cancelBooking(int $id): JsonResponse
+    {
+        if ($this->guardRedirect()) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
+        }
+
+        $user = $this->currentUser();
+        if ($user->role !== User::ROLE_MANAGER) {
+            return response()->json(['success' => false, 'error' => 'เฉพาะ Manager เท่านั้น'], 403);
+        }
+
+        $booking = SuntarapornBooking::with('seats')->findOrFail($id);
+
+        // เก็บ seat keys ก่อน delete เพื่อ broadcast
+        $freedKeys = $booking->seats->pluck('seat_key')->all();
+
+        DB::transaction(function () use ($booking) {
+            SuntarapornSeat::where('booking_id', $booking->id)
+                ->update(['is_booked' => false, 'booked_at' => null, 'booking_id' => null]);
+
+            if ($booking->slip_path) {
+                Storage::disk('public')->delete($booking->slip_path);
+            }
+
+            $booking->delete();
+        });
+
+        // Broadcast real-time — ที่นั่งกลับมาว่าง
+        broadcast(new SeatStatusUpdated(freedKeys: $freedKeys));
+
+        return response()->json(['success' => true]);
+    }
+
+    // ── Seat Selecting (real-time hover state) ────────────────────
+
+    public function selectSeat(Request $request): JsonResponse
+    {
+        if ($this->guardRedirect()) {
+            return response()->json(['success' => false], 401);
+        }
+
+        $data = $request->validate([
+            'seat_keys'   => 'required|array|min:1',
+            'seat_keys.*' => 'required|string|max:30',
+        ]);
+
+        // ไม่ broadcast ที่นั่งที่จองแล้ว
+        $alreadyBooked = SuntarapornSeat::whereIn('seat_key', $data['seat_keys'])
+            ->where('is_booked', true)
+            ->pluck('seat_key')
+            ->all();
+
+        $selectingKeys = array_values(array_diff($data['seat_keys'], $alreadyBooked));
+
+        if (!empty($selectingKeys)) {
+            broadcast(new SeatStatusUpdated(selectingKeys: $selectingKeys));
+        }
+
+        return response()->json(['success' => true]);
+    }
+
+    public function deselectSeat(Request $request): JsonResponse
+    {
+        if ($this->guardRedirect()) {
+            return response()->json(['success' => false], 401);
+        }
+
+        $data = $request->validate([
+            'seat_keys'   => 'required|array|min:1',
+            'seat_keys.*' => 'required|string|max:30',
+        ]);
+
+        broadcast(new SeatStatusUpdated(deselectingKeys: $data['seat_keys']));
 
         return response()->json(['success' => true]);
     }
