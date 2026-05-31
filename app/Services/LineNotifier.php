@@ -16,6 +16,7 @@ class LineNotifier
         'lottery_completed',
         'admin_article_ready',
         'lottery_unavailable_after_retry',
+        'article_published',
     ];
 
     public function isConfigured(?string $destinationKey = null): bool

@@ -692,6 +692,28 @@ class LineNotificationTest extends TestCase
         ]);
     }
 
+    public function test_whitelist_allows_article_published_event(): void
+    {
+        config()->set('services.line.channel_access_token', 'line-token');
+        config()->set('services.line.group_id', 'group-article');
+        config()->set('services.line.retry_sleep_ms', 0);
+
+        Http::fake([
+            'https://api.line.me/v2/bot/message/push' => Http::response([], 200),
+        ]);
+
+        $notifier = app(\App\Services\LineNotifier::class);
+        $result = $notifier->queueText('article_published', 'เผยแพร่บทความใหม่แล้ว');
+
+        $this->assertNotNull($result);
+        Http::assertSentCount(1);
+
+        $this->assertDatabaseHas('line_notification_logs', [
+            'event_type' => 'article_published',
+            'status' => \App\Models\LineNotificationLog::STATUS_SENT,
+        ]);
+    }
+
     public function test_queueMessages_also_blocks_non_whitelisted_event_types(): void
     {
         config()->set('services.line.channel_access_token', 'line-token');
