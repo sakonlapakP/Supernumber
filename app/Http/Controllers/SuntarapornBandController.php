@@ -177,8 +177,7 @@ class SuntarapornBandController extends Controller
             }
         });
 
-        // Broadcast real-time update ให้ทุก client ที่เปิดอยู่
-        broadcast(new SeatStatusUpdated(bookedKeys: $data['seat_keys']));
+        try { broadcast(new SeatStatusUpdated(bookedKeys: $data['seat_keys'])); } catch (\Throwable) {}
 
         return response()->json(['success' => true]);
     }
@@ -218,17 +217,28 @@ class SuntarapornBandController extends Controller
 
     // ── Booking List (dashboard) ──────────────────────────────────
 
-    public function bookingList(): View|RedirectResponse
+    public function bookingList(Request $request): View|RedirectResponse
     {
         if ($redirect = $this->guardRedirect()) return $redirect;
 
-        $user = $this->currentUser();
+        $user   = $this->currentUser();
+        $search = trim($request->input('search', ''));
 
-        $bookings = SuntarapornBooking::with('seats')
-            ->orderByDesc('created_at')
-            ->get();
+        $query = SuntarapornBooking::with('seats')->orderByDesc('created_at');
 
-        return view('suntaraporn-bookings', compact('bookings', 'user'));
+        if ($search !== '') {
+            $query->where(function ($q) use ($search) {
+                $like = '%' . $search . '%';
+                $q->where('first_name', 'LIKE', $like)
+                  ->orWhere('last_name', 'LIKE', $like)
+                  ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'LIKE', $like)
+                  ->orWhere('phone', 'LIKE', $like);
+            });
+        }
+
+        $bookings = $query->get();
+
+        return view('suntaraporn-bookings', compact('bookings', 'user', 'search'));
     }
 
     // ── Cancel Booking (manager only) ─────────────────────────────
@@ -260,8 +270,7 @@ class SuntarapornBandController extends Controller
             $booking->delete();
         });
 
-        // Broadcast real-time — ที่นั่งกลับมาว่าง
-        broadcast(new SeatStatusUpdated(freedKeys: $freedKeys));
+        try { broadcast(new SeatStatusUpdated(freedKeys: $freedKeys)); } catch (\Throwable) {}
 
         return response()->json(['success' => true]);
     }
@@ -288,7 +297,7 @@ class SuntarapornBandController extends Controller
         $selectingKeys = array_values(array_diff($data['seat_keys'], $alreadyBooked));
 
         if (!empty($selectingKeys)) {
-            broadcast(new SeatStatusUpdated(selectingKeys: $selectingKeys));
+            try { broadcast(new SeatStatusUpdated(selectingKeys: $selectingKeys)); } catch (\Throwable) {}
         }
 
         return response()->json(['success' => true]);
@@ -305,7 +314,7 @@ class SuntarapornBandController extends Controller
             'seat_keys.*' => 'required|string|max:30',
         ]);
 
-        broadcast(new SeatStatusUpdated(deselectingKeys: $data['seat_keys']));
+        try { broadcast(new SeatStatusUpdated(deselectingKeys: $data['seat_keys'])); } catch (\Throwable) {}
 
         return response()->json(['success' => true]);
     }

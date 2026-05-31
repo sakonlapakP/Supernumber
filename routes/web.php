@@ -5567,6 +5567,33 @@ Route::get('/cron/deploy/{secret}', function ($secret) {
     return implode("\n", $lines);
 })->name('cron.deploy');
 
+Route::get('/cron/composer-install/{secret}', function ($secret) {
+    $expectedSecret = config('app.cron_secret', env('CRON_SECRET', ''));
+    if ($expectedSecret === '' || !hash_equals($expectedSecret, $secret)) {
+        return response('Unauthorized', 403);
+    }
+
+    $basePath = base_path();
+
+    if (!function_exists('proc_open')) {
+        return 'proc_open is disabled on this server — run composer install manually via cPanel Terminal.';
+    }
+
+    $descriptor = [1 => ['pipe', 'w'], 2 => ['pipe', 'w']];
+    $process    = proc_open(
+        'composer install --no-dev --prefer-dist --no-interaction 2>&1',
+        $descriptor, $pipes, $basePath
+    );
+    $output  = is_resource($process) ? trim(stream_get_contents($pipes[1])) : 'proc_open failed';
+    $exitCode = is_resource($process) ? proc_close($process) : -1;
+
+    $ok = $exitCode === 0;
+    return '<h3>' . ($ok ? '✅ composer install สำเร็จ' : '❌ composer install มีปัญหา') . '</h3>'
+        . '<pre>' . htmlspecialchars($output) . '</pre>'
+        . '<b>Exit code:</b> ' . $exitCode
+        . '<br><br><a href="/SuntarapornBand/view">ทดสอบหน้า public view</a>';
+})->name('cron.composer-install');
+
 Route::get('/cron/fix-storage-link/{secret}', function ($secret) {
     $expectedSecret = config('app.cron_secret', env('CRON_SECRET', ''));
     if ($expectedSecret === '' || $secret !== $expectedSecret) return "Invalid Secret";
