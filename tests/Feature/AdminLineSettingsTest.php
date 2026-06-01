@@ -114,7 +114,7 @@ class AdminLineSettingsTest extends TestCase
             ->post(route('admin.lottery.fetch-force'));
 
         $response->assertRedirect(route('admin.line-settings'));
-        $response->assertSessionHas('status_message', 'สั่ง force เรียกหวยเรียบร้อยแล้ว');
+        $response->assertSessionHas('status_message', 'ดึงผลหวยเรียบร้อยแล้ว');
         $response->assertSessionHas('lottery_force_output');
     }
 

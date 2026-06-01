@@ -53,7 +53,23 @@ use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use App\Http\Controllers\PublicController;
 use App\Http\Controllers\SuntarapornBandController;
+use App\Http\Controllers\LikayLiveInTheaterController;
 use Illuminate\Support\Facades\Route;
+
+// ─── Likay Live In The Theater Seating ───────────────────────────────────────
+Route::get('/LikayLiveInTheater/view',  [LikayLiveInTheaterController::class, 'publicView'])->name('likay.public');
+Route::get('/LikayLiveInTheater/login', [LikayLiveInTheaterController::class, 'showLogin'])->name('likay.login');
+Route::post('/LikayLiveInTheater/login', [LikayLiveInTheaterController::class, 'doLogin'])->name('likay.login.post');
+Route::post('/LikayLiveInTheater/logout', [LikayLiveInTheaterController::class, 'doLogout'])->name('likay.logout');
+Route::get('/LikayLiveInTheater', [LikayLiveInTheaterController::class, 'index'])->name('likay.index');
+Route::post('/LikayLiveInTheater/book',     [LikayLiveInTheaterController::class, 'bookSeat'])->name('likay.book');
+Route::post('/LikayLiveInTheater/select',   [LikayLiveInTheaterController::class, 'selectSeat'])->name('likay.select');
+Route::post('/LikayLiveInTheater/deselect', [LikayLiveInTheaterController::class, 'deselectSeat'])->name('likay.deselect');
+Route::post('/LikayLiveInTheater/prices', [LikayLiveInTheaterController::class, 'updatePrices'])->name('likay.prices');
+Route::post('/LikayLiveInTheater/reset', [LikayLiveInTheaterController::class, 'resetSeats'])->name('likay.reset');
+Route::get('/LikayLiveInTheater/booking-info/{seatKey}', [LikayLiveInTheaterController::class, 'bookingInfo'])->name('likay.booking-info');
+Route::get('/LikayLiveInTheater/bookings', [LikayLiveInTheaterController::class, 'bookingList'])->name('likay.bookings');
+Route::delete('/LikayLiveInTheater/booking/{id}', [LikayLiveInTheaterController::class, 'cancelBooking'])->name('likay.cancel');
 
 // ─── Suntaraporn Band Concert Seating ────────────────────────────────────────
 Route::get('/SuntarapornBand/view',  [SuntarapornBandController::class, 'publicView'])->name('suntaraporn.public');
@@ -3443,9 +3459,15 @@ Route::prefix('admin')->name('admin.')->group(function () use (
                 ]);
             }
 
+            // Detect "Refused" = API hasn't updated yet — treat as warning, not success
+            $isRefused = str_contains($output, 'Refused:');
+            $statusMessage = $isRefused
+                ? '⚠️ API ของ กอล. ยังไม่อัปเดตผลหวยงวดนี้ กรุณารอสักครู่แล้วลองใหม่'
+                : 'ดึงผลหวยเรียบร้อยแล้ว';
+
             return redirect()
                 ->route('admin.line-settings')
-                ->with('status_message', 'สั่ง force เรียกหวยเรียบร้อยแล้ว')
+                ->with('status_message', $statusMessage)
                 ->with('lottery_force_output', $output);
         } catch (\Throwable $e) {
             Log::warning('Manual lottery force fetch failed.', [

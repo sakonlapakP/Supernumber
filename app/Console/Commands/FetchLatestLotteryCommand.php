@@ -91,6 +91,18 @@ class FetchLatestLotteryCommand extends Command
                     $this->line('Skipped: API returned different date: ' . ($sourceDateText ?? 'null'));
                     return self::SUCCESS;
                 }
+
+                // --force: refuse to store data from a completely different period (> 5 days away)
+                // This prevents May 16 data from being saved under June 1 when the API hasn't updated yet.
+                // When sourceDate is null (empty API response) we still proceed so retry-day tracking works.
+                if ($sourceDate !== null && abs($sourceDate->diffInDays($targetDate)) > 5) {
+                    $this->warn(sprintf(
+                        'Refused: API returned %s but target is %s — GLO API has not updated yet. Please try again later.',
+                        $sourceDateText,
+                        $targetDate->toDateString()
+                    ));
+                    return self::SUCCESS;
+                }
             }
 
             $prizeRows = $this->extractPrizes($payload);
