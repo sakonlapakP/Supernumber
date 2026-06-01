@@ -129,7 +129,7 @@ class LineLotteryImageService
 
     private function resolveArticleSlug(LotteryResult $result): string
     {
-        $drawDate = $result->source_draw_date ?? $result->draw_date ?? now('Asia/Bangkok');
+        $drawDate = $result->draw_date ?? now('Asia/Bangkok');
         $round = (int) $drawDate->format('j') <= 15 ? 'first' : 'second';
 
         return sprintf(
@@ -194,7 +194,7 @@ class LineLotteryImageService
 
             $this->drawTopBrand($image, $gold, $goldDark);
 
-            $drawDate = $result->source_draw_date ?? $result->draw_date ?? now('Asia/Bangkok');
+            $drawDate = $result->draw_date ?? now('Asia/Bangkok');
             $prizes = $result->prizes;
 
             $firstPrize = $this->pickFirstPrizeNumber($prizes, 'รางวัลที่ 1', '-');
@@ -699,7 +699,7 @@ class LineLotteryImageService
 
     public function generateSquareSvg(LotteryResult $result): string
     {
-        $drawDate = $result->source_draw_date ?? $result->draw_date ?? now('Asia/Bangkok');
+        $drawDate = $result->draw_date ?? now('Asia/Bangkok');
         $thaiDate = $this->toThaiDateLabel($drawDate->copy());
         
         $prizes = $result->prizes;
@@ -771,7 +771,7 @@ SVG;
 
     public function generateLandscapeSvg(LotteryResult $result): string
     {
-        $drawDate = $result->source_draw_date ?? $result->draw_date ?? now('Asia/Bangkok');
+        $drawDate = $result->draw_date ?? now('Asia/Bangkok');
         $thaiDate = $this->toThaiDateLabel($drawDate->copy());
 
         $fontData = $this->getFontBase64('Kanit-700.ttf');

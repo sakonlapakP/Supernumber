@@ -703,7 +703,7 @@ $resolveLotteryResultForArticle = function (Article $article): ?LotteryResult {
         ->whereMonth('draw_date', $month)
         ->get()
         ->first(function (LotteryResult $result) use ($round): bool {
-            $drawDate = $result->source_draw_date ?? $result->draw_date;
+            $drawDate = $result->draw_date;
 
             if ($drawDate === null) {
                 return false;

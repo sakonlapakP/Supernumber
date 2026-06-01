@@ -1245,7 +1245,7 @@
               if ($isLotteryArticle) {
                   $year = $matches[1]; $month = $matches[2]; $round = $matches[3];
                   $lotteryResult = \App\Models\LotteryResult::whereYear('draw_date', $year)->whereMonth('draw_date', $month)->get()->first(function($r) use ($round) {
-                      $d = $r->source_draw_date ?? $r->draw_date;
+                      $d = $r->draw_date;
                       return $round === 'first' ? (int)$d->format('j') <= 15 : (int)$d->format('j') > 15;
                   });
                   $lotteryIsComplete = $lotteryResult ? $lotteryResult->is_complete : false;
