@@ -236,6 +236,8 @@ class FetchLatestLotteryCommand extends Command
         $pathBase = "articles/{$drawDate->year}/{$article->slug}";
 
         // 1. Generate and Save SVG (Primary)
+        // Force-reload prizes to avoid stale relation cache after delete+recreate
+        $result->load('prizes');
         $squareSvg = $service->generateSquareSvg($result);
         $landscapeSvg = $service->generateLandscapeSvg($result);
         
