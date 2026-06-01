@@ -11,6 +11,7 @@ jobs:
   web-deploy:
     name: 🎉 Deploying to Production
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
     - name: 🚚 Get latest code
       uses: actions/checkout@v4
@@ -31,18 +32,6 @@ jobs:
         curl -s -X POST "https://miscellaneous-terminal-helped-reflections.trycloudflare.com/announce" \
         -H "Content-Type: application/json" \
         -d "{\"project\": \"Supernumber\", \"message\": \"กำลังเริ่ม Deploy เว็บไซต์ซูเปอร์นัมเบอร์ครับพี่อั้ม\", \"apiKey\": \"efaum-secret-key-789\"}"
-      continue-on-error: true
-
-    - name: 🗑 Delete stale FTP sync state (force full sync)
-      env:
-        FTP_SERVER: ${{ secrets.FTP_SERVER }}
-        FTP_USERNAME: ${{ secrets.FTP_USERNAME }}
-        FTP_PASSWORD: ${{ secrets.FTP_PASSWORD }}
-      run: |
-        curl -s -u "${FTP_USERNAME}:${FTP_PASSWORD}" \
-          "ftp://${FTP_SERVER}/domains/supernumber.co.th/public_html/.ftp-deploy-sync-state.json" \
-          -Q "DELE /domains/supernumber.co.th/public_html/.ftp-deploy-sync-state.json" || true
-        echo "State file deleted (or did not exist) — FTP will do full sync."
       continue-on-error: true
 
     - name: 📂 Sync to public_html
@@ -71,9 +60,9 @@ jobs:
         key: ${{ secrets.PROD_SSH_KEY }}
         script: |
           cd domains/supernumber.co.th/public_html
-          php artisan optimize:clear
-          php artisan cache:clear
-          php artisan config:clear
+          php -d memory_limit=512M artisan optimize:clear
+          php -d memory_limit=512M artisan cache:clear
+          php -d memory_limit=512M artisan config:clear
 
     - name: 🌐 Run Web-Trigger Cache Clear (Alternative)
       env:
