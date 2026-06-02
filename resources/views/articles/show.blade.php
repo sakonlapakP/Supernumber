@@ -14,9 +14,11 @@
   $detailCoverCandidate = $article->cover_image_square_path ?: $article->cover_image_path;
   $ogImagePath = asset('images/home_banner.jpg');
   $ogIsSquare = (bool) $article->cover_image_square_path;
+  // Cache-bust SVG covers using updated_at so browsers always fetch the latest version after a re-generate
+  $coverCacheBuster = $article->updated_at ? '?v=' . $article->updated_at->timestamp : '';
 
   if ($detailCoverCandidate) {
-      $ogImagePath = asset('storage/' . ltrim((string) $detailCoverCandidate, '/'));
+      $ogImagePath = asset('storage/' . ltrim((string) $detailCoverCandidate, '/')) . $coverCacheBuster;
   }
 @endphp
 @section('og_image', $ogImagePath)
@@ -214,7 +216,7 @@
         <div class="article-detail__lottery-cover-media" data-lottery-cover-media>
           <figure class="article-detail__cover-wrap article-detail__cover-wrap--media">
             <img
-              src="{{ asset('storage/' . $detailCoverPath) }}"
+              src="{{ asset('storage/' . $detailCoverPath) . $coverCacheBuster }}"
               alt="{{ $article->title }}"
               class="article-detail__cover"
               loading="lazy"
@@ -228,7 +230,7 @@
         </div>
       @elseif ($detailCoverPath)
         <figure class="article-detail__cover-wrap">
-          <img src="{{ asset('storage/' . $detailCoverPath) }}" alt="{{ $article->title }}" class="article-detail__cover" loading="lazy" decoding="async" />
+          <img src="{{ asset('storage/' . $detailCoverPath) . $coverCacheBuster }}" alt="{{ $article->title }}" class="article-detail__cover" loading="lazy" decoding="async" />
         </figure>
       @elseif (! empty($lotteryResult))
         @include('articles.partials.lottery-cover-fallback', ['lotteryResult' => $lotteryResult])
