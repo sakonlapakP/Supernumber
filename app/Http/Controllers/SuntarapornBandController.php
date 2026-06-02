@@ -6,6 +6,7 @@ use App\Events\SeatStatusUpdated;
 use App\Models\SuntarapornBooking;
 use App\Models\SuntarapornSeat;
 use App\Models\User;
+use App\Services\SuntarapornSeatMap;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
+use RuntimeException;
 
 class SuntarapornBandController extends Controller
 {
@@ -24,7 +26,7 @@ class SuntarapornBandController extends Controller
     private function currentUser(): ?User
     {
         $id = session(self::SESSION_KEY);
-        return $id ? User::find($id) : null;
+        return $id ? User::where('is_active', true)->find($id) : null;
     }
 
     private function guardRedirect(): ?RedirectResponse
@@ -40,7 +42,8 @@ class SuntarapornBandController extends Controller
 
     public function showLogin(): View|RedirectResponse
     {
-        if ($this->currentUser()) {
+        $user = $this->currentUser();
+        if ($user && in_array($user->role, self::ALLOWED_ROLES, true)) {
             return redirect()->route('suntaraporn.index');
         }
         return view('suntaraporn-login');
@@ -62,6 +65,7 @@ class SuntarapornBandController extends Controller
             return back()->withErrors(['username' => 'ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง'])->withInput();
         }
 
+        $request->session()->regenerate();
         session([self::SESSION_KEY => $user->id]);
 
         return redirect()->route('suntaraporn.index');
@@ -70,6 +74,7 @@ class SuntarapornBandController extends Controller
     public function doLogout(Request $request): RedirectResponse
     {
         $request->session()->forget(self::SESSION_KEY);
+        $request->session()->regenerateToken();
         return redirect()->route('suntaraporn.login');
     }
 
@@ -84,8 +89,9 @@ class SuntarapornBandController extends Controller
         $prices = DB::table('suntaraporn_zone_prices')
             ->pluck('price', 'zone')
             ->all();
+        $totalSeats = SuntarapornSeatMap::totalSeats();
 
-        return view('suntaraporn-public', compact('bookedSeats', 'prices'));
+        return view('suntaraporn-public', compact('bookedSeats', 'prices', 'totalSeats'));
     }
 
     // ── Main Page ─────────────────────────────────────────────────
@@ -103,8 +109,9 @@ class SuntarapornBandController extends Controller
         $prices = DB::table('suntaraporn_zone_prices')
             ->pluck('price', 'zone')
             ->all();
+        $totalSeats = SuntarapornSeatMap::totalSeats();
 
-        return view('suntaraporn-band', compact('bookedSeats', 'prices', 'user'));
+        return view('suntaraporn-band', compact('bookedSeats', 'prices', 'user', 'totalSeats'));
     }
 
     // ── Book Seat(s) ──────────────────────────────────────────────
@@ -117,9 +124,7 @@ class SuntarapornBandController extends Controller
 
         $data = $request->validate([
             'seat_keys'   => 'required|array|min:1',
-            'seat_keys.*' => 'required|string|max:30',
-            'zones'       => 'required|array|min:1',
-            'zones.*'     => 'required|string|max:20',
+            'seat_keys.*' => 'required|string|max:30|distinct',
             'first_name'  => 'required|string|max:100',
             'last_name'   => 'required|string|max:100',
             'phone'       => 'required|string|max:20',
@@ -128,24 +133,21 @@ class SuntarapornBandController extends Controller
 
         // booker = admin ที่ login อยู่
         $data['booker_name'] = $this->currentUser()->name;
+        $seatKeys = array_values($data['seat_keys']);
+        $seatZones = SuntarapornSeatMap::zonesFor($seatKeys);
 
-        // Check none of the seats are already booked
-        $alreadyBooked = SuntarapornSeat::whereIn('seat_key', $data['seat_keys'])
-            ->where('is_booked', true)
-            ->pluck('seat_key')
-            ->all();
-
-        if (!empty($alreadyBooked)) {
+        $invalidSeats = array_values(array_diff($seatKeys, array_keys($seatZones)));
+        if (!empty($invalidSeats)) {
             return response()->json([
                 'success' => false,
-                'error'   => 'ที่นั่ง ' . implode(', ', $alreadyBooked) . ' ถูกจองไปแล้ว',
-            ], 409);
+                'error'   => 'รหัสที่นั่งไม่ถูกต้อง: ' . implode(', ', $invalidSeats),
+            ], 422);
         }
 
-        // Calculate total price
+        // Calculate total price from the trusted server-side seat map.
         $prices    = DB::table('suntaraporn_zone_prices')->pluck('price', 'zone')->all();
         $totalPrice = 0;
-        foreach ($data['zones'] as $zone) {
+        foreach ($seatZones as $zone) {
             $totalPrice += $prices[$zone] ?? 0;
         }
 
@@ -155,29 +157,68 @@ class SuntarapornBandController extends Controller
             $slipPath = $request->file('slip')->store('suntaraporn-slips', 'public');
         }
 
-        DB::transaction(function () use ($data, $slipPath, $totalPrice) {
-            $booking = SuntarapornBooking::create([
-                'first_name'  => $data['first_name'],
-                'last_name'   => $data['last_name'],
-                'phone'       => $data['phone'],
-                'booker_name' => $data['booker_name'],
-                'slip_path'   => $slipPath,
-                'total_price' => $totalPrice,
-            ]);
+        $now = now();
+        DB::table('suntaraporn_seats')->insertOrIgnore(array_map(
+            fn (string $key) => [
+                'seat_key'   => $key,
+                'is_booked'  => false,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            $seatKeys
+        ));
 
-            foreach ($data['seat_keys'] as $key) {
-                SuntarapornSeat::updateOrCreate(
-                    ['seat_key' => $key],
-                    [
+        $alreadyBooked = [];
+
+        try {
+            DB::transaction(function () use ($data, $seatKeys, $slipPath, $totalPrice, &$alreadyBooked) {
+                $seats = SuntarapornSeat::whereIn('seat_key', $seatKeys)
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('seat_key');
+
+                $alreadyBooked = $seats
+                    ->filter(fn (SuntarapornSeat $seat) => $seat->is_booked)
+                    ->keys()
+                    ->all();
+
+                if (!empty($alreadyBooked)) {
+                    throw new RuntimeException('suntaraporn-seats-already-booked');
+                }
+
+                $booking = SuntarapornBooking::create([
+                    'first_name'  => $data['first_name'],
+                    'last_name'   => $data['last_name'],
+                    'phone'       => $data['phone'],
+                    'booker_name' => $data['booker_name'],
+                    'slip_path'   => $slipPath,
+                    'total_price' => $totalPrice,
+                ]);
+
+                foreach ($seatKeys as $key) {
+                    $seats[$key]->update([
                         'is_booked'  => true,
                         'booked_at'  => now(),
                         'booking_id' => $booking->id,
-                    ]
-                );
+                    ]);
+                }
+            });
+        } catch (RuntimeException $e) {
+            if ($e->getMessage() !== 'suntaraporn-seats-already-booked') {
+                throw $e;
             }
-        });
 
-        try { broadcast(new SeatStatusUpdated(bookedKeys: $data['seat_keys'])); } catch (\Throwable) {}
+            if ($slipPath) {
+                Storage::disk('public')->delete($slipPath);
+            }
+
+            return response()->json([
+                'success' => false,
+                'error'   => 'ที่นั่ง ' . implode(', ', $alreadyBooked) . ' ถูกจองไปแล้ว',
+            ], 409);
+        }
+
+        try { broadcast(new SeatStatusUpdated(bookedKeys: $seatKeys)); } catch (\Throwable) {}
 
         return response()->json(['success' => true]);
     }
@@ -334,8 +375,7 @@ class SuntarapornBandController extends Controller
 
         $data = $request->validate([
             'vvip'   => 'required|integer|min:0',
-            'vip'    => 'required|integer|min:0',
-            'box_b'  => 'required|integer|min:0',
+            'box'    => 'required|integer|min:0',
             'yellow' => 'required|integer|min:0',
             'blue'   => 'required|integer|min:0',
             'pink'   => 'required|integer|min:0',
@@ -365,12 +405,33 @@ class SuntarapornBandController extends Controller
             return response()->json(['success' => false, 'error' => 'Forbidden'], 403);
         }
 
-        SuntarapornSeat::query()->update([
-            'is_booked'  => false,
-            'booked_at'  => null,
-            'booking_id' => null,
-        ]);
+        $freedKeys = SuntarapornSeat::where('is_booked', true)
+            ->pluck('seat_key')
+            ->all();
+
+        $slipPaths = SuntarapornBooking::whereNotNull('slip_path')
+            ->pluck('slip_path')
+            ->all();
+
+        DB::transaction(function () {
+            SuntarapornSeat::query()->update([
+                'is_booked'  => false,
+                'booked_at'  => null,
+                'booking_id' => null,
+            ]);
+
+            SuntarapornBooking::query()->delete();
+        });
+
+        foreach ($slipPaths as $path) {
+            Storage::disk('public')->delete($path);
+        }
+
+        if (!empty($freedKeys)) {
+            try { broadcast(new SeatStatusUpdated(freedKeys: $freedKeys)); } catch (\Throwable) {}
+        }
 
         return response()->json(['success' => true]);
     }
+
 }

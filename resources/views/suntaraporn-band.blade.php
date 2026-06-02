@@ -19,13 +19,14 @@
 
     /* ─── Zone colors ─── */
     .z-yellow  { background: #FFEE32; color: #333; border-color: #e6d400; }
-    .z-blue    { background: #7EC8E3; color: #1a1a1a; border-color: #5ab5d5; }
-    .z-pink    { background: #F48FB1; color: #1a1a1a; border-color: #e06090; }
-    .z-green   { background: #66BB6A; color: #fff; border-color: #4caa50; }
-    .z-purple  { background: #CE93D8; color: #1a1a1a; border-color: #ba68c8; }
-    .z-vip     { background: #9E9E9E; color: #fff; border-color: #757575; }
-    .z-box_b   { background: #F48FB1; color: #1a1a1a; border-color: #e06090; }
-    .z-wc      { background: #7EC8E3; color: #1a1a1a; border-color: #5ab5d5; cursor: default !important; opacity: 0.75; }
+    .z-blue    { background: #29B6F6; color: #1a1a1a; border-color: #039BE5; }
+    .z-pink    { background: #F48FB1; color: #333; border-color: #EC407A; }
+    .z-green   { background: #66BB6A; color: #fff; border-color: #4CAF50; }
+    .z-purple  { background: #CE93D8; color: #333; border-color: #AB47BC; }
+    .z-vip     { background: #e5e5e5; color: #333; border-color: #cccccc; }
+    .z-box_b   { background: #e5e5e5; color: #333; border-color: #cccccc; }
+    .z-box     { background: #e5e5e5; color: #333; border-color: #cccccc; }
+    .z-wc      { background: #9E9E9E; color: #fff; border-color: #757575; cursor: default !important; opacity: 0.75; }
     .z-vvip-box { background: #fff; border: 2.5px solid #222; }
 
     /* ─── Seat ─── */
@@ -87,6 +88,7 @@
       50%       { box-shadow: 0 0 0 4px rgba(255,143,0,0); }
     }
     .seat-gap  { width: 10px; flex-shrink: 0; }
+    .seats-line { display: flex; align-items: center; gap: 1.5px; }
     .seat-gap-center {
       width: 14px;
       flex-shrink: 0;
@@ -538,14 +540,13 @@
     <h2>✏️ แก้ไขราคาบัตร</h2>
     @php
       $zoneLabels = [
-        'vvip'   => ['VVIP',          '#fff',    '#222', '#222'],
-        'vip'    => ['VIP',           '#9E9E9E', '#fff', '#757575'],
-        'box_b'  => ['BOX B',         '#F48FB1', '#1a1a1a', '#e06090'],
-        'purple' => ['ม่วง 3,500',     '#CE93D8', '#1a1a1a', '#ba68c8'],
-        'green'  => ['เขียว 3,000',    '#66BB6A', '#fff', '#4caa50'],
-        'pink'   => ['ชมพู 2,500',     '#F48FB1', '#1a1a1a', '#e06090'],
-        'blue'   => ['ฟ้า 2,000',      '#7EC8E3', '#1a1a1a', '#5ab5d5'],
-        'yellow' => ['เหลือง 1,500',   '#FFEE32', '#333', '#e6d400'],
+        'vvip'   => ['Control',  '#fff',    '#222',    '#222'],
+        'purple' => ['ม่วง',   '#CE93D8', '#333',    '#AB47BC'],
+        'green'  => ['แดง',    '#66BB6A', '#fff',    '#4CAF50'],
+        'pink'   => ['ฟ้าอ่อน','#F48FB1', '#333',    '#EC407A'],
+        'blue'   => ['เขียว',  '#29B6F6', '#1a1a1a', '#039BE5'],
+        'box'    => ['BOX A-F', '#e5e5e5', '#333',    '#cccccc'],
+        'yellow' => ['เหลือง', '#FFEE32', '#333',    '#e6d400'],
       ];
     @endphp
     @foreach ($zoneLabels as $key => [$label, $bg, $fg, $border])
@@ -676,7 +677,7 @@
 {{-- Stats bar --}}
 <div class="stats-bar">
   <div class="stat-item">
-    <span class="stat-num" id="stat-total">542</span>
+    <span class="stat-num" id="stat-total">{{ $totalSeats }}</span>
     <span class="stat-lbl">ที่นั่งทั้งหมด</span>
   </div>
   <div class="stat-item">
@@ -684,7 +685,7 @@
     <span class="stat-lbl">จองแล้ว</span>
   </div>
   <div class="stat-item">
-    <span class="stat-num" id="stat-avail" style="color:#2e7d32">542</span>
+    <span class="stat-num" id="stat-avail" style="color:#2e7d32">{{ $totalSeats }}</span>
     <span class="stat-lbl">ว่าง</span>
   </div>
   <div class="stat-item">
@@ -700,15 +701,14 @@
 {{-- Legend --}}
 @php
   $legend = [
-    ['zone'=>'vvip',   'label'=>'VVIP',        'bg'=>'#fff',    'border'=>'#222'],
-    ['zone'=>'vip',    'label'=>'VIP',          'bg'=>'#9E9E9E', 'border'=>'#757575'],
-    ['zone'=>'box_b',  'label'=>'BOX B',        'bg'=>'#F48FB1', 'border'=>'#e06090'],
-    ['zone'=>'purple', 'label'=>'ม่วง',         'bg'=>'#CE93D8', 'border'=>'#ba68c8'],
-    ['zone'=>'green',  'label'=>'เขียว',        'bg'=>'#66BB6A', 'border'=>'#4caa50'],
-    ['zone'=>'pink',   'label'=>'ชมพู',         'bg'=>'#F48FB1', 'border'=>'#e06090'],
-    ['zone'=>'blue',   'label'=>'ฟ้า',          'bg'=>'#7EC8E3', 'border'=>'#5ab5d5'],
-    ['zone'=>'yellow', 'label'=>'เหลือง',       'bg'=>'#FFEE32', 'border'=>'#e6d400'],
-    ['zone'=>'wc',     'label'=>'♿ ผู้พิการ',   'bg'=>'#7EC8E3', 'border'=>'#5ab5d5'],
+    ['zone'=>'vvip',   'label'=>'Control',   'bg'=>'#fff',    'border'=>'#222'],
+    ['zone'=>'vip',    'label'=>'VIP (V-W)', 'bg'=>'#e5e5e5', 'border'=>'#cccccc'],
+    ['zone'=>'purple', 'label'=>'ม่วง',    'bg'=>'#CE93D8', 'border'=>'#AB47BC'],
+    ['zone'=>'green',  'label'=>'แดง',     'bg'=>'#66BB6A', 'border'=>'#4CAF50'],
+    ['zone'=>'pink',   'label'=>'ฟ้าอ่อน','bg'=>'#F48FB1', 'border'=>'#EC407A'],
+    ['zone'=>'blue',   'label'=>'เขียว',   'bg'=>'#29B6F6', 'border'=>'#039BE5'],
+    ['zone'=>'box',    'label'=>'BOX A-F', 'bg'=>'#e5e5e5', 'border'=>'#cccccc'],
+    ['zone'=>'yellow', 'label'=>'เหลือง',  'bg'=>'#FFEE32', 'border'=>'#e6d400'],
   ];
 @endphp
 <div class="legend">
@@ -717,10 +717,8 @@
     <div class="legend-swatch" style="background:{{ $item['bg'] }};border-color:{{ $item['border'] }}"></div>
     <span>
       {{ $item['label'] }}
-      @if ($item['zone'] !== 'wc')
+      @if (!in_array($item['zone'], ['vvip', 'vip']))
         — <strong id="legend_{{ $item['zone'] }}">฿{{ number_format($prices[$item['zone']] ?? 0) }}</strong>
-      @else
-        (reserved)
       @endif
     </span>
   </div>
@@ -744,40 +742,52 @@
   <div class="chart-scroll">
     <div class="chart">
 
-      {{-- VVIP + VIP --}}
-      <div class="vip-area">
-        {{-- VIP Left --}}
-        <div class="vip-block">
-          <div class="row-label-top">VIP</div>
-          <div class="seats-line">
-            @foreach (range(9,17) as $n)
-              <div class="seat z-vip" data-key="VL_{{ $n }}" data-zone="vip" onclick="toggleSeat(this)">{{ $n }}</div>
-            @endforeach
+      {{-- Control + VIP V/W --}}
+      <div style="display:flex;align-items:stretch;justify-content:center;gap:8px;margin-bottom:8px;padding:8px 0;">
+
+        {{-- Row W/V Left --}}
+        <div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end;">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <span class="row-label">W</span>
+            <div class="seats-line">
+              @foreach (range(1,9) as $n)
+                <div class="seat z-vip" data-key="W_{{ $n }}" data-zone="vip" onclick="toggleSeat(this)">{{ $n }}</div>
+              @endforeach
+            </div>
           </div>
-          <div class="seats-line">
-            @foreach (range(1,8) as $n)
-              <div class="seat z-vip" data-key="VL_{{ $n }}" data-zone="vip" onclick="toggleSeat(this)">{{ $n }}</div>
-            @endforeach
+          <div style="display:flex;align-items:center;gap:4px;">
+            <span class="row-label">V</span>
+            <div class="seats-line">
+              @foreach (range(1,8) as $n)
+                <div class="seat z-vip" data-key="V_{{ $n }}" data-zone="vip" onclick="toggleSeat(this)">{{ $n }}</div>
+              @endforeach
+            </div>
           </div>
         </div>
 
-        {{-- VVIP Box --}}
-        <div class="vvip-box">VVIP</div>
+        {{-- Control --}}
+        <div class="vvip-box" style="height:auto;align-self:stretch;">Control</div>
 
-        {{-- VIP Right --}}
-        <div class="vip-block">
-          <div class="row-label-top">VIP</div>
-          <div class="seats-line">
-            @foreach (range(26,34) as $n)
-              <div class="seat z-vip" data-key="VR_{{ $n }}" data-zone="vip" onclick="toggleSeat(this)">{{ $n }}</div>
-            @endforeach
+        {{-- Row W/V Right --}}
+        <div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start;">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <div class="seats-line">
+              @foreach (range(10,18) as $n)
+                <div class="seat z-vip" data-key="W_{{ $n }}" data-zone="vip" onclick="toggleSeat(this)">{{ $n }}</div>
+              @endforeach
+            </div>
+            <span class="row-label">W</span>
           </div>
-          <div class="seats-line">
-            @foreach (range(18,25) as $n)
-              <div class="seat z-vip" data-key="VR_{{ $n }}" data-zone="vip" onclick="toggleSeat(this)">{{ $n }}</div>
-            @endforeach
+          <div style="display:flex;align-items:center;gap:4px;">
+            <div class="seats-line">
+              @foreach (range(9,16) as $n)
+                <div class="seat z-vip" data-key="V_{{ $n }}" data-zone="vip" onclick="toggleSeat(this)">{{ $n }}</div>
+              @endforeach
+            </div>
+            <span class="row-label">V</span>
           </div>
         </div>
+
       </div>
 
       {{-- ─── Main Rows ─── --}}
@@ -786,21 +796,21 @@
         $rows = [
           ['U','yellow', [],      $r(1,6),   $r(7,13),  [],        null,                              null],
           ['T','yellow', [],      $r(1,11),  $r(12,23), [],        null,                              null],
-          ['S','yellow', [],      $r(1,10),  $r(11,21), [],        ['k'=>'BOXC_14','n'=>14,'z'=>'wc'], ['k'=>'BOXF_15','n'=>15,'z'=>'wc']],
-          ['R','blue',   [],      $r(1,10),  $r(11,21), [],        ['k'=>'BOXC_13','n'=>13,'z'=>'wc'], ['k'=>'BOXF_16','n'=>16,'z'=>'wc']],
-          ['Q','blue',   $r(1,4), $r(5,14),  $r(15,24), $r(25,28), ['k'=>'BOXC_12','n'=>12,'z'=>'wc'], ['k'=>'BOXF_17','n'=>17,'z'=>'wc']],
-          ['P','blue',   $r(1,5), $r(6,15),  $r(16,24), $r(25,29), ['k'=>'BOXC_11','n'=>11,'z'=>'wc'], ['k'=>'BOXF_18','n'=>18,'z'=>'wc']],
-          ['N','pink',   $r(1,6), $r(7,15),  $r(16,24), $r(25,30), ['k'=>'BOXC_10','n'=>10,'z'=>'wc'], ['k'=>'BOXF_19','n'=>19,'z'=>'wc']],
-          ['M','pink',   $r(1,6), $r(7,14),  $r(15,23), $r(24,29), ['k'=>'BOXB_9', 'n'=>9, 'z'=>'box_b'],['k'=>'BOXE_20','n'=>20,'z'=>'pink']],
-          ['L','pink',   $r(1,7), $r(8,16),  $r(17,24), $r(25,31), ['k'=>'BOXB_8', 'n'=>8, 'z'=>'box_b'],['k'=>'BOXE_21','n'=>21,'z'=>'pink']],
-          ['K','pink',   $r(1,8), $r(9,16),  $r(17,24), $r(25,32), ['k'=>'BOXB_7', 'n'=>7, 'z'=>'box_b'],['k'=>'BOXE_22','n'=>22,'z'=>'pink']],
-          ['J','green',  $r(1,8), $r(9,16),  $r(17,24), $r(25,32), ['k'=>'BOXB_6', 'n'=>6, 'z'=>'box_b'],['k'=>'BOXE_23','n'=>23,'z'=>'pink']],
-          ['H','green',  $r(1,8), $r(9,15),  $r(16,23), $r(24,31), null,                              null],
-          ['G','green',  $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_5','n'=>5,'z'=>'green'],['k'=>'BOXD_24','n'=>24,'z'=>'green']],
-          ['F','green',  $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_4','n'=>4,'z'=>'green'],['k'=>'BOXD_25','n'=>25,'z'=>'green']],
-          ['E','purple', $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_3','n'=>3,'z'=>'green'],['k'=>'BOXD_26','n'=>26,'z'=>'green']],
-          ['D','purple', $r(1,7), $r(8,14),  $r(15,22), $r(23,29), ['k'=>'BOXA_2','n'=>2,'z'=>'green'],['k'=>'BOXD_27','n'=>27,'z'=>'green']],
-          ['C','purple', $r(1,7), $r(8,14),  $r(15,22), $r(23,29), ['k'=>'BOXA_1','n'=>1,'z'=>'green'],['k'=>'BOXD_28','n'=>28,'z'=>'green']],
+          ['S','yellow', [],      $r(1,10),  $r(11,21), [],        ['k'=>'BOXC_14','n'=>14,'z'=>'box'], ['k'=>'BOXF_15','n'=>15,'z'=>'blue']],
+          ['R','blue',   [],      $r(1,10),  $r(11,21), [],        ['k'=>'BOXC_13','n'=>13,'z'=>'box'], ['k'=>'BOXF_16','n'=>16,'z'=>'blue']],
+          ['Q','blue',   $r(1,4), $r(5,14),  $r(15,24), $r(25,28), ['k'=>'BOXC_12','n'=>12,'z'=>'box'], ['k'=>'BOXF_17','n'=>17,'z'=>'blue']],
+          ['P','blue',   $r(1,5), $r(6,15),  $r(16,24), $r(25,29), ['k'=>'BOXC_11','n'=>11,'z'=>'box'], ['k'=>'BOXF_18','n'=>18,'z'=>'blue']],
+          ['N','pink',   $r(1,6), $r(7,15),  $r(16,24), $r(25,30), ['k'=>'BOXC_10','n'=>10,'z'=>'box'], ['k'=>'BOXF_19','n'=>19,'z'=>'blue']],
+          ['M','pink',   $r(1,6), $r(7,14),  $r(15,23), $r(24,29), ['k'=>'BOXB_9', 'n'=>9, 'z'=>'box'], ['k'=>'BOXE_20','n'=>20,'z'=>'pink']],
+          ['L','pink',   $r(1,7), $r(8,16),  $r(17,24), $r(25,31), ['k'=>'BOXB_8', 'n'=>8, 'z'=>'box'], ['k'=>'BOXE_21','n'=>21,'z'=>'pink']],
+          ['K','pink',   $r(1,8), $r(9,16),  $r(17,24), $r(25,32), ['k'=>'BOXB_7', 'n'=>7, 'z'=>'box'], ['k'=>'BOXE_22','n'=>22,'z'=>'pink']],
+          ['J','green',  $r(1,8), $r(9,16),  $r(17,24), $r(25,32), ['k'=>'BOXB_6', 'n'=>6, 'z'=>'box'], ['k'=>'BOXE_23','n'=>23,'z'=>'pink']],
+          ['H','green',  $r(1,8), $r(9,15),  $r(16,23), $r(24,31), null,                               null],
+          ['G','green',  $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_5','n'=>5,'z'=>'green'], ['k'=>'BOXD_24','n'=>24,'z'=>'green']],
+          ['F','green',  $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_4','n'=>4,'z'=>'green'], ['k'=>'BOXD_25','n'=>25,'z'=>'green']],
+          ['E','purple', $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_3','n'=>3,'z'=>'green'], ['k'=>'BOXD_26','n'=>26,'z'=>'green']],
+          ['D','purple', $r(1,7), $r(8,14),  $r(15,22), $r(23,29), ['k'=>'BOXA_2','n'=>2,'z'=>'green'], ['k'=>'BOXD_27','n'=>27,'z'=>'green']],
+          ['C','purple', $r(1,7), $r(8,14),  $r(15,22), $r(23,29), ['k'=>'BOXA_1','n'=>1,'z'=>'green'], ['k'=>'BOXD_28','n'=>28,'z'=>'green']],
           ['B','purple', $r(1,6), $r(7,13),  $r(14,21), $r(22,27), null,                              null],
           ['A','purple', $r(1,5), $r(6,12),  $r(13,20), $r(21,25), null,                              null],
         ];
@@ -1168,11 +1178,6 @@ async function cancelBooking() {
     });
     const data = await res.json();
     if (data.success) {
-      // Remove booked state from all seats in this booking
-      document.querySelectorAll('.seat.is-booked').forEach(el => {
-        // We need to find which seats belonged to this booking
-        // Easiest: reload page to refresh state
-      });
       closeDetailModal();
       alert('ยกเลิกการจองเรียบร้อย');
       location.reload();
@@ -1192,7 +1197,7 @@ function openPriceModal()  { document.getElementById('priceModal').classList.add
 function closePriceModal() { document.getElementById('priceModal').classList.remove('open'); }
 
 async function savePrices() {
-  const zones = ['vvip','vip','box_b','yellow','blue','pink','green','purple'];
+  const zones = ['vvip','box','yellow','blue','pink','green','purple'];
   const data  = {};
   zones.forEach(z => { data[z] = parseInt(document.getElementById('price_'+z).value) || 0; });
 
@@ -1220,10 +1225,12 @@ async function savePrices() {
 // ── Reset ───────────────────────────────────────────────────────
 async function resetAllSeats() {
   try {
-    await fetch('/SuntarapornBand/reset', {
+    const res  = await fetch('/SuntarapornBand/reset', {
       method: 'POST',
       headers: { 'X-CSRF-TOKEN': CSRF }
     });
+    const data = await res.json();
+    if (!data.success) { alert(data.error || 'เกิดข้อผิดพลาด'); return; }
     BOOKED.clear();
     SELECTED.clear();
     document.querySelectorAll('.seat.is-booked').forEach(el => el.classList.remove('is-booked'));
@@ -1238,12 +1245,12 @@ async function resetAllSeats() {
 
 // ── Stats + Summary ─────────────────────────────────────────────
 function updateStats() {
-  const total     = 542;
+  const total     = @json($totalSeats);
   const booked    = BOOKED.size;
   const selected  = SELECTED.size;
   const selecting = SELECTING_OTHERS.size;
   document.getElementById('stat-booked').textContent    = booked;
-  document.getElementById('stat-avail').textContent     = total - booked - selected - selecting;
+  document.getElementById('stat-avail').textContent     = Math.max(0, total - booked - selected - selecting);
   document.getElementById('stat-selected').textContent  = selected;
   document.getElementById('stat-selecting').textContent = selecting;
 }
@@ -1290,7 +1297,7 @@ init();
 <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
 <script>
 (function () {
-  const pusher  = new Pusher('{{ env("PUSHER_APP_KEY") }}', { cluster: '{{ env("PUSHER_APP_CLUSTER") }}' });
+  const pusher  = new Pusher('{{ config("broadcasting.connections.pusher.key") }}', { cluster: '{{ config("broadcasting.connections.pusher.options.cluster") }}' });
   const channel = pusher.subscribe('suntaraporn-concert');
 
   channel.bind('seat-status-updated', function (data) {

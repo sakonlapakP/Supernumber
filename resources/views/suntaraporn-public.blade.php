@@ -18,13 +18,14 @@
 
     /* ─── Zone colors ─── */
     .z-yellow  { background: #FFEE32; color: #333; border-color: #e6d400; }
-    .z-blue    { background: #7EC8E3; color: #1a1a1a; border-color: #5ab5d5; }
-    .z-pink    { background: #F48FB1; color: #1a1a1a; border-color: #e06090; }
-    .z-green   { background: #66BB6A; color: #fff; border-color: #4caa50; }
-    .z-purple  { background: #CE93D8; color: #1a1a1a; border-color: #ba68c8; }
-    .z-vip     { background: #9E9E9E; color: #fff; border-color: #757575; }
-    .z-box_b   { background: #F48FB1; color: #1a1a1a; border-color: #e06090; }
-    .z-wc      { background: #7EC8E3; color: #1a1a1a; border-color: #5ab5d5; opacity: 0.75; }
+    .z-blue    { background: #29B6F6; color: #1a1a1a; border-color: #039BE5; }
+    .z-pink    { background: #F48FB1; color: #333; border-color: #EC407A; }
+    .z-green   { background: #66BB6A; color: #fff; border-color: #4CAF50; }
+    .z-purple  { background: #CE93D8; color: #333; border-color: #AB47BC; }
+    .z-vip     { background: #e5e5e5; color: #333; border-color: #cccccc; }
+    .z-box_b   { background: #e5e5e5; color: #333; border-color: #cccccc; }
+    .z-box     { background: #e5e5e5; color: #333; border-color: #cccccc; }
+    .z-wc      { background: #9E9E9E; color: #fff; border-color: #757575; opacity: 0.75; }
     .z-vvip-box { background: #fff; border: 2.5px solid #222; }
 
     /* ─── Seat ─── */
@@ -189,6 +190,107 @@
     .progress-bar   { height:8px; border-radius:4px; background:#eee; overflow:hidden; }
     .progress-fill  { height:100%; border-radius:4px; background:#e53935; transition:width .5s ease; }
 
+    .supernumber-ad-container {
+      max-width: 1140px;
+      margin: 24px auto 12px auto;
+    }
+    .supernumber-ad-link {
+      text-decoration: none;
+      display: block;
+    }
+    .supernumber-ad-card {
+      background-image: url('{{ asset('images/supernumber_ads.jpg') }}');
+      background-size: cover;
+      background-position: right 30% center;
+      border: 1px solid rgba(212, 175, 55, 0.35);
+      border-radius: 12px;
+      overflow: hidden;
+      display: flex;
+      min-height: 180px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
+      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+      position: relative;
+    }
+    .supernumber-ad-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(212, 175, 55, 0.85);
+      box-shadow: 0 15px 30px rgba(212, 175, 55, 0.25);
+    }
+    .supernumber-ad-overlay {
+      width: 60%;
+      padding: 16px 20px;
+      background: linear-gradient(90deg, rgba(13, 12, 10, 0.96) 0%, rgba(13, 12, 10, 0.75) 65%, rgba(13, 12, 10, 0) 100%);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      text-align: left;
+      z-index: 2;
+    }
+    .supernumber-ad-title {
+      font-size: 15px;
+      font-weight: 800;
+      color: #fff;
+      margin-bottom: 4px;
+      line-height: 1.25;
+      letter-spacing: 0.5px;
+    }
+    .supernumber-ad-subtitle {
+      font-size: 12.5px;
+      font-weight: 700;
+      color: #d4af37;
+      margin-bottom: 8px;
+      line-height: 1.25;
+    }
+    .supernumber-ad-desc {
+      display: none;
+    }
+    .supernumber-ad-btn {
+      background: linear-gradient(90deg, #d4af37 0%, #aa7c11 100%);
+      color: #000;
+      font-weight: 700;
+      font-size: 11px;
+      padding: 6px 16px;
+      border-radius: 20px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 10px rgba(212, 175, 55, 0.2);
+    }
+    .supernumber-ad-card:hover .supernumber-ad-btn {
+      background: linear-gradient(90deg, #f3e5ab 0%, #d4af37 100%);
+      box-shadow: 0 6px 15px rgba(212, 175, 55, 0.4);
+      transform: scale(1.03);
+    }
+
+    @media (min-width: 768px) {
+      .supernumber-ad-card {
+        min-height: 240px;
+        background-position: right center;
+      }
+      .supernumber-ad-overlay {
+        padding: 32px 40px;
+      }
+      .supernumber-ad-title {
+        font-size: 24px;
+        margin-bottom: 4px;
+      }
+      .supernumber-ad-subtitle {
+        font-size: 16px;
+        margin-bottom: 12px;
+      }
+      .supernumber-ad-desc {
+        display: block;
+        font-size: 13px;
+        color: #e0e0e0;
+        margin-bottom: 18px;
+        line-height: 1.5;
+        max-width: 500px;
+      }
+      .supernumber-ad-btn {
+        font-size: 13px;
+        padding: 8px 24px;
+      }
+    }
+
     @media (max-width: 640px) {
       body { padding: 8px; }
       .page-title { font-size: 18px; }
@@ -213,7 +315,7 @@
 {{-- ─── Stats bar ─────────────────────────────────────────────── --}}
 <div class="stats-bar">
   <div class="stat-item">
-    <span class="stat-num" id="stat-total">542</span>
+    <span class="stat-num" id="stat-total">{{ $totalSeats }}</span>
     <span class="stat-lbl">ที่นั่งทั้งหมด</span>
   </div>
   <div class="stat-item">
@@ -225,7 +327,7 @@
     <span class="stat-lbl">🔒 กำลังถูกถือ</span>
   </div>
   <div class="stat-item">
-    <span class="stat-num" id="stat-avail" style="color:#2e7d32">542</span>
+    <span class="stat-num" id="stat-avail" style="color:#2e7d32">{{ $totalSeats }}</span>
     <span class="stat-lbl">ว่าง</span>
   </div>
 </div>
@@ -242,15 +344,14 @@
 {{-- ─── Legend ─────────────────────────────────────────────────── --}}
 @php
   $legend = [
-    ['zone'=>'vvip',   'label'=>'VVIP',       'bg'=>'#fff',    'border'=>'#222'],
-    ['zone'=>'vip',    'label'=>'VIP',         'bg'=>'#9E9E9E', 'border'=>'#757575'],
-    ['zone'=>'box_b',  'label'=>'BOX B',       'bg'=>'#F48FB1', 'border'=>'#e06090'],
-    ['zone'=>'purple', 'label'=>'ม่วง',        'bg'=>'#CE93D8', 'border'=>'#ba68c8'],
-    ['zone'=>'green',  'label'=>'เขียว',       'bg'=>'#66BB6A', 'border'=>'#4caa50'],
-    ['zone'=>'pink',   'label'=>'ชมพู',        'bg'=>'#F48FB1', 'border'=>'#e06090'],
-    ['zone'=>'blue',   'label'=>'ฟ้า',         'bg'=>'#7EC8E3', 'border'=>'#5ab5d5'],
-    ['zone'=>'yellow', 'label'=>'เหลือง',      'bg'=>'#FFEE32', 'border'=>'#e6d400'],
-    ['zone'=>'wc',     'label'=>'♿ ผู้พิการ', 'bg'=>'#7EC8E3', 'border'=>'#5ab5d5'],
+    ['zone'=>'vvip',   'label'=>'Control',   'bg'=>'#fff',    'border'=>'#222'],
+    ['zone'=>'vip',    'label'=>'VIP (V-W)', 'bg'=>'#e5e5e5', 'border'=>'#cccccc'],
+    ['zone'=>'purple', 'label'=>'ม่วง',     'bg'=>'#CE93D8', 'border'=>'#AB47BC'],
+    ['zone'=>'green',  'label'=>'แดง',      'bg'=>'#66BB6A', 'border'=>'#4CAF50'],
+    ['zone'=>'pink',   'label'=>'ฟ้าอ่อน', 'bg'=>'#F48FB1', 'border'=>'#EC407A'],
+    ['zone'=>'blue',   'label'=>'เขียว',    'bg'=>'#29B6F6', 'border'=>'#039BE5'],
+    ['zone'=>'box',    'label'=>'BOX A-F',  'bg'=>'#e5e5e5', 'border'=>'#cccccc'],
+    ['zone'=>'yellow', 'label'=>'เหลือง',   'bg'=>'#FFEE32', 'border'=>'#e6d400'],
   ];
 @endphp
 <div class="legend">
@@ -259,10 +360,8 @@
     <div class="legend-swatch" style="background:{{ $item['bg'] }};border-color:{{ $item['border'] }}"></div>
     <span>
       {{ $item['label'] }}
-      @if ($item['zone'] !== 'wc')
+      @if (!in_array($item['zone'], ['vvip', 'vip']))
         — <strong>฿{{ number_format($prices[$item['zone']] ?? 0) }}</strong>
-      @else
-        (reserved)
       @endif
     </span>
   </div>
@@ -282,40 +381,52 @@
   <div class="chart-scroll">
     <div class="chart">
 
-      {{-- VVIP + VIP --}}
-      <div class="vip-area">
-        {{-- VIP Left --}}
-        <div class="vip-block">
-          <div class="row-label-top">VIP</div>
-          <div class="seats-line">
-            @foreach (range(9,17) as $n)
-              <div class="seat z-vip" data-key="VL_{{ $n }}">{{ $n }}</div>
-            @endforeach
+      {{-- Row W/V Left + Control + Right --}}
+      <div style="display:flex;align-items:stretch;justify-content:center;gap:8px;margin-bottom:8px;padding:8px 0;">
+
+        {{-- Row W/V Left --}}
+        <div style="display:flex;flex-direction:column;gap:2px;align-items:flex-end;">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <span class="row-label">W</span>
+            <div class="seats-line">
+              @foreach (range(1,9) as $n)
+                <div class="seat z-vip" data-key="W_{{ $n }}">{{ $n }}</div>
+              @endforeach
+            </div>
           </div>
-          <div class="seats-line">
-            @foreach (range(1,8) as $n)
-              <div class="seat z-vip" data-key="VL_{{ $n }}">{{ $n }}</div>
-            @endforeach
+          <div style="display:flex;align-items:center;gap:4px;">
+            <span class="row-label">V</span>
+            <div class="seats-line">
+              @foreach (range(1,8) as $n)
+                <div class="seat z-vip" data-key="V_{{ $n }}">{{ $n }}</div>
+              @endforeach
+            </div>
           </div>
         </div>
 
-        {{-- VVIP --}}
-        <div class="vvip-box">VVIP</div>
+        {{-- Control --}}
+        <div class="vvip-box" style="height:auto;align-self:stretch;">Control</div>
 
-        {{-- VIP Right --}}
-        <div class="vip-block">
-          <div class="row-label-top">VIP</div>
-          <div class="seats-line">
-            @foreach (range(26,34) as $n)
-              <div class="seat z-vip" data-key="VR_{{ $n }}">{{ $n }}</div>
-            @endforeach
+        {{-- Row W/V Right --}}
+        <div style="display:flex;flex-direction:column;gap:2px;align-items:flex-start;">
+          <div style="display:flex;align-items:center;gap:4px;">
+            <div class="seats-line">
+              @foreach (range(10,18) as $n)
+                <div class="seat z-vip" data-key="W_{{ $n }}">{{ $n }}</div>
+              @endforeach
+            </div>
+            <span class="row-label">W</span>
           </div>
-          <div class="seats-line">
-            @foreach (range(18,25) as $n)
-              <div class="seat z-vip" data-key="VR_{{ $n }}">{{ $n }}</div>
-            @endforeach
+          <div style="display:flex;align-items:center;gap:4px;">
+            <div class="seats-line">
+              @foreach (range(9,16) as $n)
+                <div class="seat z-vip" data-key="V_{{ $n }}">{{ $n }}</div>
+              @endforeach
+            </div>
+            <span class="row-label">V</span>
           </div>
         </div>
+
       </div>
 
       {{-- ─── Main Rows ─── --}}
@@ -324,21 +435,21 @@
         $rows = [
           ['U','yellow', [],      $r(1,6),   $r(7,13),  [],        null,                              null],
           ['T','yellow', [],      $r(1,11),  $r(12,23), [],        null,                              null],
-          ['S','yellow', [],      $r(1,10),  $r(11,21), [],        ['k'=>'BOXC_14','n'=>14,'z'=>'wc'], ['k'=>'BOXF_15','n'=>15,'z'=>'wc']],
-          ['R','blue',   [],      $r(1,10),  $r(11,21), [],        ['k'=>'BOXC_13','n'=>13,'z'=>'wc'], ['k'=>'BOXF_16','n'=>16,'z'=>'wc']],
-          ['Q','blue',   $r(1,4), $r(5,14),  $r(15,24), $r(25,28), ['k'=>'BOXC_12','n'=>12,'z'=>'wc'], ['k'=>'BOXF_17','n'=>17,'z'=>'wc']],
-          ['P','blue',   $r(1,5), $r(6,15),  $r(16,24), $r(25,29), ['k'=>'BOXC_11','n'=>11,'z'=>'wc'], ['k'=>'BOXF_18','n'=>18,'z'=>'wc']],
-          ['N','pink',   $r(1,6), $r(7,15),  $r(16,24), $r(25,30), ['k'=>'BOXC_10','n'=>10,'z'=>'wc'], ['k'=>'BOXF_19','n'=>19,'z'=>'wc']],
-          ['M','pink',   $r(1,6), $r(7,14),  $r(15,23), $r(24,29), ['k'=>'BOXB_9', 'n'=>9, 'z'=>'box_b'],['k'=>'BOXE_20','n'=>20,'z'=>'pink']],
-          ['L','pink',   $r(1,7), $r(8,16),  $r(17,24), $r(25,31), ['k'=>'BOXB_8', 'n'=>8, 'z'=>'box_b'],['k'=>'BOXE_21','n'=>21,'z'=>'pink']],
-          ['K','pink',   $r(1,8), $r(9,16),  $r(17,24), $r(25,32), ['k'=>'BOXB_7', 'n'=>7, 'z'=>'box_b'],['k'=>'BOXE_22','n'=>22,'z'=>'pink']],
-          ['J','green',  $r(1,8), $r(9,16),  $r(17,24), $r(25,32), ['k'=>'BOXB_6', 'n'=>6, 'z'=>'box_b'],['k'=>'BOXE_23','n'=>23,'z'=>'pink']],
-          ['H','green',  $r(1,8), $r(9,15),  $r(16,23), $r(24,31), null,                              null],
-          ['G','green',  $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_5','n'=>5,'z'=>'green'],['k'=>'BOXD_24','n'=>24,'z'=>'green']],
-          ['F','green',  $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_4','n'=>4,'z'=>'green'],['k'=>'BOXD_25','n'=>25,'z'=>'green']],
-          ['E','purple', $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_3','n'=>3,'z'=>'green'],['k'=>'BOXD_26','n'=>26,'z'=>'green']],
-          ['D','purple', $r(1,7), $r(8,14),  $r(15,22), $r(23,29), ['k'=>'BOXA_2','n'=>2,'z'=>'green'],['k'=>'BOXD_27','n'=>27,'z'=>'green']],
-          ['C','purple', $r(1,7), $r(8,14),  $r(15,22), $r(23,29), ['k'=>'BOXA_1','n'=>1,'z'=>'green'],['k'=>'BOXD_28','n'=>28,'z'=>'green']],
+          ['S','yellow', [],      $r(1,10),  $r(11,21), [],        ['k'=>'BOXC_14','n'=>14,'z'=>'box'], ['k'=>'BOXF_15','n'=>15,'z'=>'blue']],
+          ['R','blue',   [],      $r(1,10),  $r(11,21), [],        ['k'=>'BOXC_13','n'=>13,'z'=>'box'], ['k'=>'BOXF_16','n'=>16,'z'=>'blue']],
+          ['Q','blue',   $r(1,4), $r(5,14),  $r(15,24), $r(25,28), ['k'=>'BOXC_12','n'=>12,'z'=>'box'], ['k'=>'BOXF_17','n'=>17,'z'=>'blue']],
+          ['P','blue',   $r(1,5), $r(6,15),  $r(16,24), $r(25,29), ['k'=>'BOXC_11','n'=>11,'z'=>'box'], ['k'=>'BOXF_18','n'=>18,'z'=>'blue']],
+          ['N','pink',   $r(1,6), $r(7,15),  $r(16,24), $r(25,30), ['k'=>'BOXC_10','n'=>10,'z'=>'box'], ['k'=>'BOXF_19','n'=>19,'z'=>'blue']],
+          ['M','pink',   $r(1,6), $r(7,14),  $r(15,23), $r(24,29), ['k'=>'BOXB_9', 'n'=>9, 'z'=>'box'], ['k'=>'BOXE_20','n'=>20,'z'=>'pink']],
+          ['L','pink',   $r(1,7), $r(8,16),  $r(17,24), $r(25,31), ['k'=>'BOXB_8', 'n'=>8, 'z'=>'box'], ['k'=>'BOXE_21','n'=>21,'z'=>'pink']],
+          ['K','pink',   $r(1,8), $r(9,16),  $r(17,24), $r(25,32), ['k'=>'BOXB_7', 'n'=>7, 'z'=>'box'], ['k'=>'BOXE_22','n'=>22,'z'=>'pink']],
+          ['J','green',  $r(1,8), $r(9,16),  $r(17,24), $r(25,32), ['k'=>'BOXB_6', 'n'=>6, 'z'=>'box'], ['k'=>'BOXE_23','n'=>23,'z'=>'pink']],
+          ['H','green',  $r(1,8), $r(9,15),  $r(16,23), $r(24,31), null,                               null],
+          ['G','green',  $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_5','n'=>5,'z'=>'green'], ['k'=>'BOXD_24','n'=>24,'z'=>'green']],
+          ['F','green',  $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_4','n'=>4,'z'=>'green'], ['k'=>'BOXD_25','n'=>25,'z'=>'green']],
+          ['E','purple', $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_3','n'=>3,'z'=>'green'], ['k'=>'BOXD_26','n'=>26,'z'=>'green']],
+          ['D','purple', $r(1,7), $r(8,14),  $r(15,22), $r(23,29), ['k'=>'BOXA_2','n'=>2,'z'=>'green'], ['k'=>'BOXD_27','n'=>27,'z'=>'green']],
+          ['C','purple', $r(1,7), $r(8,14),  $r(15,22), $r(23,29), ['k'=>'BOXA_1','n'=>1,'z'=>'green'], ['k'=>'BOXD_28','n'=>28,'z'=>'green']],
           ['B','purple', $r(1,6), $r(7,13),  $r(14,21), $r(22,27), null,                              null],
           ['A','purple', $r(1,5), $r(6,12),  $r(13,20), $r(21,25), null,                              null],
         ];
@@ -435,6 +546,20 @@
   </div>{{-- .chart-scroll --}}
 </div>{{-- .chart-card --}}
 
+{{-- ─── Supernumber Ad Banner ─── --}}
+<div class="supernumber-ad-container">
+  <a href="/" class="supernumber-ad-link">
+    <div class="supernumber-ad-card">
+      <div class="supernumber-ad-overlay">
+        <div class="supernumber-ad-title">Supernumber ศูนย์รวมเบอร์มงคลอันดับ 1</div>
+        <div class="supernumber-ad-subtitle">แค่นี้เปลี่ยนเบอร์ชีวิตคุณก็เปลี่ยน</div>
+        <div class="supernumber-ad-desc">วิเคราะห์เบอร์มือถือฟรี ช่วยเสริมพลังให้ทุกก้าวสำคัญเพิ่มโอกาสและปลดล็อกเส้นทางสำเร็จ</div>
+        <div class="supernumber-ad-btn">ค้นหาเบอร์มงคลของคุณ ➔</div>
+      </div>
+    </div>
+  </a>
+</div>
+
 <div style="text-align:center;color:#bbb;font-size:11px;margin-top:12px;padding-bottom:20px;">
   ข้อมูลนี้อัพเดทแบบ real-time · ไม่สามารถจองผ่านหน้านี้ได้
 </div>
@@ -442,7 +567,7 @@
 <script>
 const BOOKED    = new Set(@json($bookedSeats));
 const SELECTING = new Set();
-const TOTAL     = 542;
+const TOTAL     = @json($totalSeats);
 
 // ── Init ─────────────────────────────────────────────────────────
 function init() {
@@ -481,7 +606,7 @@ init();
 <script src="https://js.pusher.com/8.4.0/pusher.min.js"></script>
 <script>
 (function () {
-  const pusher  = new Pusher('{{ env("PUSHER_APP_KEY") }}', { cluster: '{{ env("PUSHER_APP_CLUSTER") }}' });
+  const pusher  = new Pusher('{{ config("broadcasting.connections.pusher.key") }}', { cluster: '{{ config("broadcasting.connections.pusher.options.cluster") }}' });
   const channel = pusher.subscribe('suntaraporn-concert');
 
   pusher.connection.bind('connected', function () {
