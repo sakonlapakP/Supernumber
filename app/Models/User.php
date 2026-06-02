@@ -24,6 +24,7 @@ class User extends Authenticatable
     public const ROLE_DOCUMENT_OFFICER = 'document_officer';
     public const ROLE_SALE             = 'sale';
     public const ROLE_SUNTARAPORN      = 'suntaraporn';
+    public const ROLE_LIKAY            = 'likay';
 
     public const SALE_STATUS_PENDING  = 'pending';
     public const SALE_STATUS_APPROVED = 'approved';
@@ -117,6 +118,7 @@ class User extends Authenticatable
             self::ROLE_STAFF,
             self::ROLE_DOCUMENT_OFFICER,
             self::ROLE_SUNTARAPORN,
+            self::ROLE_LIKAY,
         ];
     }
 
@@ -202,6 +204,7 @@ class User extends Authenticatable
             self::ROLE_DOCUMENT_OFFICER => 'เจ้าหน้าที่เอกสาร (Document Officer)',
             self::ROLE_SALE             => 'เซลล์ (Sale)',
             self::ROLE_SUNTARAPORN      => 'สุนทราภรณ์ (Suntaraporn)',
+            self::ROLE_LIKAY            => 'ลิเก (Likay)',
         ];
     }
 

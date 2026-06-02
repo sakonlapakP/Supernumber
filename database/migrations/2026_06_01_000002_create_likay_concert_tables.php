@@ -1,0 +1,59 @@
+<?php
+
+use Illuminate\Database\Migrations\Migration;
+use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
+
+return new class extends Migration
+{
+    public function up(): void
+    {
+        Schema::create('likay_seats', function (Blueprint $table) {
+            $table->id();
+            $table->string('seat_key', 30)->unique();
+            $table->boolean('is_booked')->default(false);
+            $table->timestamp('booked_at')->nullable();
+            $table->unsignedBigInteger('booking_id')->nullable()->index();
+            $table->timestamps();
+        });
+
+        Schema::create('likay_bookings', function (Blueprint $table) {
+            $table->id();
+            $table->string('first_name', 100);
+            $table->string('last_name', 100);
+            $table->string('phone', 20);
+            $table->string('booker_name', 100);
+            $table->string('slip_path')->nullable();
+            $table->unsignedInteger('total_price')->default(0);
+            $table->timestamps();
+        });
+
+        Schema::create('likay_zone_prices', function (Blueprint $table) {
+            $table->id();
+            $table->string('zone', 20)->unique();
+            $table->unsignedInteger('price');
+            $table->timestamps();
+        });
+
+        $now = now();
+        DB::table('likay_zone_prices')->insert([
+            ['zone' => 'vvip',   'price' => 8000,  'created_at' => $now, 'updated_at' => $now],
+            ['zone' => 'vip',    'price' => 8000,  'created_at' => $now, 'updated_at' => $now],
+            ['zone' => 'box_b',  'price' => 8000,  'created_at' => $now, 'updated_at' => $now],
+            ['zone' => 'yellow', 'price' => 1000,  'created_at' => $now, 'updated_at' => $now],
+            ['zone' => 'blue',   'price' => 1500,  'created_at' => $now, 'updated_at' => $now],
+            ['zone' => 'pink',   'price' => 2000,  'created_at' => $now, 'updated_at' => $now],
+            ['zone' => 'green',  'price' => 2500,  'created_at' => $now, 'updated_at' => $now],
+            ['zone' => 'purple', 'price' => 5000,  'created_at' => $now, 'updated_at' => $now],
+            ['zone' => 'box',    'price' => 1500,  'created_at' => $now, 'updated_at' => $now],
+        ]);
+    }
+
+    public function down(): void
+    {
+        Schema::dropIfExists('likay_zone_prices');
+        Schema::dropIfExists('likay_bookings');
+        Schema::dropIfExists('likay_seats');
+    }
+};

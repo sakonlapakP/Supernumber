@@ -1,0 +1,40 @@
+<?php
+
+namespace App\Events;
+
+use Illuminate\Broadcasting\Channel;
+use Illuminate\Broadcasting\InteractsWithSockets;
+use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
+use Illuminate\Foundation\Events\Dispatchable;
+
+class LikaySeatStatusUpdated implements ShouldBroadcastNow
+{
+    use Dispatchable, InteractsWithSockets;
+
+    public function __construct(
+        public readonly array $bookedKeys      = [],
+        public readonly array $freedKeys       = [],
+        public readonly array $selectingKeys   = [],
+        public readonly array $deselectingKeys = [],
+    ) {}
+
+    public function broadcastOn(): Channel
+    {
+        return new Channel('likay-concert');
+    }
+
+    public function broadcastAs(): string
+    {
+        return 'seat-status-updated';
+    }
+
+    public function broadcastWith(): array
+    {
+        return [
+            'booked_keys'      => $this->bookedKeys,
+            'freed_keys'       => $this->freedKeys,
+            'selecting_keys'   => $this->selectingKeys,
+            'deselecting_keys' => $this->deselectingKeys,
+        ];
+    }
+}

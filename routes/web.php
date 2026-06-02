@@ -69,6 +69,7 @@ Route::post('/LikayLiveInTheater/prices', [LikayLiveInTheaterController::class, 
 Route::post('/LikayLiveInTheater/reset', [LikayLiveInTheaterController::class, 'resetSeats'])->name('likay.reset');
 Route::get('/LikayLiveInTheater/booking-info/{seatKey}', [LikayLiveInTheaterController::class, 'bookingInfo'])->name('likay.booking-info');
 Route::get('/LikayLiveInTheater/bookings', [LikayLiveInTheaterController::class, 'bookingList'])->name('likay.bookings');
+Route::get('/LikayLiveInTheater/export',   [LikayLiveInTheaterController::class, 'exportBookings'])->name('likay.export');
 Route::delete('/LikayLiveInTheater/booking/{id}', [LikayLiveInTheaterController::class, 'cancelBooking'])->name('likay.cancel');
 
 // ─── Suntaraporn Band Concert Seating ────────────────────────────────────────
