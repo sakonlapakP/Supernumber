@@ -711,6 +711,13 @@ class LineLotteryImageService
         while (count($frontThree) < 2) $frontThree[] = '-';
         while (count($backThree) < 2) $backThree[] = '-';
 
+        // Escape all dynamic values before embedding them in SVG/XML markup.
+        $thaiDate = $this->escapeSvgText($thaiDate);
+        $firstPrize = $this->escapeSvgText($firstPrize);
+        $lastTwo = $this->escapeSvgText($lastTwo);
+        $frontThree = array_map(fn ($v) => $this->escapeSvgText((string) $v), $frontThree);
+        $backThree = array_map(fn ($v) => $this->escapeSvgText((string) $v), $backThree);
+
         $fontData = $this->getFontBase64('Kanit-700.ttf');
         $fontMediumData = $this->getFontBase64('Kanit-500.ttf');
 
@@ -772,7 +779,7 @@ SVG;
     public function generateLandscapeSvg(LotteryResult $result): string
     {
         $drawDate = $result->draw_date ?? now('Asia/Bangkok');
-        $thaiDate = $this->toThaiDateLabel($drawDate->copy());
+        $thaiDate = $this->escapeSvgText($this->toThaiDateLabel($drawDate->copy()));
 
         $fontData = $this->getFontBase64('Kanit-700.ttf');
 
@@ -825,5 +832,10 @@ SVG;
             return base64_encode(file_get_contents($path));
         }
         return '';
+    }
+
+    private function escapeSvgText(string $value): string
+    {
+        return htmlspecialchars($value, ENT_QUOTES | ENT_XML1, 'UTF-8');
     }
 }

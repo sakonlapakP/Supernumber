@@ -436,6 +436,66 @@ class FetchLatestLotteryCommandTest extends TestCase
         ];
     }
 
+    public function test_it_preserves_manually_edited_article_title_and_content_on_resync(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 4, 1, 16, 0, 0, 'Asia/Bangkok'));
+
+        Http::fake([
+            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response($this->completePrizePayload(), 200),
+        ]);
+
+        $customTitle = 'พาดหัวที่แอดมินเขียนเอง';
+        $customContent = '<p>เนื้อหาที่แอดมินแก้ไขเอง ไม่ควรถูกเขียนทับ</p>';
+
+        $article = Article::query()->create([
+            'title' => $customTitle,
+            'slug' => 'thai-goverment-lottery-202604first',
+            'content' => $customContent,
+            'is_published' => true,
+            'published_at' => Carbon::create(2026, 4, 1, 16, 0, 0, 'Asia/Bangkok'),
+        ]);
+
+        $this->artisan('lottery:fetch-latest', ['--force' => true])
+            ->assertExitCode(0);
+
+        $article->refresh();
+
+        // Manual edits survive the resync; prizes still come from the relation.
+        $this->assertSame($customTitle, $article->title);
+        $this->assertSame($customContent, $article->content);
+        $this->assertSame(6, LotteryResult::query()
+            ->where('draw_date', '2026-04-01')
+            ->firstOrFail()
+            ->prizes()
+            ->count());
+    }
+
+    public function test_it_refreshes_auto_generated_article_content_on_resync(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 4, 1, 16, 0, 0, 'Asia/Bangkok'));
+
+        Http::fake([
+            'https://www.glo.or.th/api/lottery/getLatestLottery' => Http::response($this->completePrizePayload(), 200),
+        ]);
+
+        // Auto-generated bodies start with this prefix and remain refreshable.
+        $article = Article::query()->create([
+            'title' => 'ชื่อเดิม',
+            'slug' => 'thai-goverment-lottery-202604first',
+            'content' => 'รายงานผลสลากกินแบ่งรัฐบาล งวดวันที่ 01/04/2026<br>(ยังไม่มีผล)<br>',
+            'is_published' => true,
+            'published_at' => Carbon::create(2026, 4, 1, 16, 0, 0, 'Asia/Bangkok'),
+        ]);
+
+        $this->artisan('lottery:fetch-latest', ['--force' => true])
+            ->assertExitCode(0);
+
+        $article->refresh();
+
+        $this->assertStringContainsString('รางวัลที่ 1: <strong>123456</strong>', (string) $article->content);
+        $this->assertSame('ตรวจหวยรัฐบาล งวดประจำวันที่ 1 เมษายน 2569 ผลสลากกินแบ่งรัฐบาล', $article->title);
+    }
+
     private function completePrizeObjectPayload(string $date = '01/04/2569'): array
     {
         return [

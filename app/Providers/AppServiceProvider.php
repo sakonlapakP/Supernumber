@@ -53,6 +53,24 @@ class AppServiceProvider extends ServiceProvider
             ];
         });
 
+        RateLimiter::for('article-comments', function (Request $request): array {
+            $ip = (string) ($request->ip() ?? 'unknown');
+            $userAgent = substr((string) $request->userAgent(), 0, 120);
+            $signature = $ip . '|' . $userAgent;
+
+            $tooManyAttemptsResponse = static function (Request $request, array $headers = []) {
+                return redirect()
+                    ->back()
+                    ->withInput($request->except('_token', 'website'))
+                    ->with('comment_status_message', 'ส่งคอมเมนต์ถี่เกินไป กรุณารอสักครู่แล้วลองใหม่อีกครั้ง');
+            };
+
+            return [
+                Limit::perMinute(3)->by($signature)->response($tooManyAttemptsResponse),
+                Limit::perHour(15)->by($signature)->response($tooManyAttemptsResponse),
+            ];
+        });
+
         RateLimiter::for('estimate-leads', function (Request $request): array {
             $ip = (string) ($request->ip() ?? 'unknown');
             $userAgent = substr((string) $request->userAgent(), 0, 120);

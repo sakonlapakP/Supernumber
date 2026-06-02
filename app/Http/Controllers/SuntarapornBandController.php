@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Events\SeatStatusUpdated;
+use App\Exports\SuntarapornBookingsExport;
 use App\Models\SuntarapornBooking;
+use Maatwebsite\Excel\Facades\Excel;
 use App\Models\SuntarapornSeat;
 use App\Models\User;
 use App\Services\SuntarapornSeatMap;
@@ -434,4 +436,14 @@ class SuntarapornBandController extends Controller
         return response()->json(['success' => true]);
     }
 
+    // ── Export Excel ──────────────────────────────────────────────
+
+    public function exportBookings(): \Symfony\Component\HttpFoundation\BinaryFileResponse|RedirectResponse
+    {
+        if ($redirect = $this->guardRedirect()) return $redirect;
+
+        $filename = 'suntaraporn-bookings-' . now()->format('Y-m-d') . '.xlsx';
+
+        return Excel::download(new SuntarapornBookingsExport(), $filename);
+    }
 }

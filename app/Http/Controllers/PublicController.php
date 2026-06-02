@@ -309,8 +309,11 @@ class PublicController extends Controller
      */
     public function showArticle(string $slug)
     {
-        // EMERGENCY CACHE CLEAR BYPASS
-        if (request()->query('force_clear') == '1') {
+        // EMERGENCY CACHE CLEAR BYPASS — admin only.
+        // Without the auth gate any visitor could spam ?force_clear=1 to wipe
+        // the framework caches on every request (DoS / view recompilation).
+        if (request()->query('force_clear') == '1'
+            && auth()->check() && auth()->user()->isAtLeastAdmin()) {
             \Illuminate\Support\Facades\Artisan::call('view:clear');
             \Illuminate\Support\Facades\Artisan::call('route:clear');
             \Illuminate\Support\Facades\Artisan::call('cache:clear');
@@ -351,6 +354,13 @@ class PublicController extends Controller
             ->published()
             ->where('slug', $slug)
             ->firstOrFail();
+
+        // Honeypot: bots fill the hidden "website" field. Pretend success without storing.
+        if (trim((string) $request->input('website', '')) !== '') {
+            return redirect()
+                ->route('articles.show', $article->slug)
+                ->with('comment_status_message', 'ส่งคอมเมนต์แล้ว รอแอดมินอนุมัติก่อนแสดงบนหน้าเว็บ');
+        }
 
         $data = $request->validate([
             'commenter_name' => ['required', 'string', 'max:120'],

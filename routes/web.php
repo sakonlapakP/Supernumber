@@ -85,6 +85,7 @@ Route::post('/SuntarapornBand/prices', [SuntarapornBandController::class, 'updat
 Route::post('/SuntarapornBand/reset', [SuntarapornBandController::class, 'resetSeats'])->name('suntaraporn.reset');
 Route::get('/SuntarapornBand/booking-info/{seatKey}', [SuntarapornBandController::class, 'bookingInfo'])->name('suntaraporn.booking-info');
 Route::get('/SuntarapornBand/bookings', [SuntarapornBandController::class, 'bookingList'])->name('suntaraporn.bookings');
+Route::get('/SuntarapornBand/export',   [SuntarapornBandController::class, 'exportBookings'])->name('suntaraporn.export');
 Route::delete('/SuntarapornBand/booking/{id}', [SuntarapornBandController::class, 'cancelBooking'])->name('suntaraporn.cancel');
 
 // Image pre-upload endpoint — neutral URL path to avoid WAF pattern matching.
@@ -855,14 +856,16 @@ Route::get('/articles/preview/{article}', function (Request $request, Article $a
 
 Route::get('/articles/{slug}', [PublicController::class, 'showArticle'])->name('articles.show');
 
-Route::post('/articles/{slug}/comments', [PublicController::class, 'storeArticleComment'])->name('articles.comments.store');
+Route::post('/articles/{slug}/comments', [PublicController::class, 'storeArticleComment'])
+    ->middleware('throttle:article-comments')
+    ->name('articles.comments.store');
 
 Route::post('/articles/{slug}/track-share', function (Request $request, string $slug) {
     $validated = $request->validate(['platform' => 'required|in:facebook,twitter,line,whatsapp,copy']);
     $article = \App\Models\Article::where('slug', $slug)->firstOrFail();
     \App\Models\ArticleShare::create(['article_id' => $article->id, 'platform' => $validated['platform']]);
     return response()->json(['success' => true]);
-})->name('articles.track-share');
+})->middleware('throttle:60,1')->name('articles.track-share');
 
 Route::get('/evaluate', [PublicController::class, 'evaluate'])->name('evaluate');
 
@@ -4074,7 +4077,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     })->name('articles.upload-rendered-image');
 
     // ระบบ Proxy ดึงรูปวาด (SVG): เพื่อแก้ปัญหา Nginx บล็อกการเข้าถึงไฟล์ .svg (403 Forbidden)
-    Route::get('/articles/get-svg-proxy', function (Illuminate\Http\Request $request) {
+    Route::get('/articles/get-svg-proxy', function (Illuminate\Http\Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
         $path = $request->query('path');
         if (!$path || !\Illuminate\Support\Facades\Storage::disk('public')->exists($path)) {
             abort(404);
@@ -4084,7 +4090,10 @@ Route::prefix('admin')->name('admin.')->group(function () use (
     })->name('articles.get-svg-proxy');
 
     // ระบบรับรูปภาพที่วาดเสร็จจาก Browser: รับ PNG (Base64) มาเก็บไว้ที่ temp_lottery ชั่วคราวเพื่อส่งให้ LINE/FB
-    Route::post('/articles/upload-temp-image', function (Illuminate\Http\Request $request) {
+    Route::post('/articles/upload-temp-image', function (Illuminate\Http\Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
         $data = $request->input('image');
         if (!$data) return response()->json(['success' => false, 'error' => 'No data']);
         

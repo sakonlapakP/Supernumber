@@ -154,6 +154,27 @@
       line-height: 1;
     }
 
+    /* Search bar */
+    .search-bar {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 14px;
+      flex-wrap: wrap;
+    }
+    .search-input {
+      flex: 1;
+      min-width: 200px;
+      padding: 9px 14px;
+      border: 1.5px solid #ddd;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      outline: none;
+      transition: border-color .15s;
+    }
+    .search-input:focus { border-color: #1a1a2e; }
+    .search-result-note { font-size: 13px; color: #777; align-self: center; }
+
     @media (max-width: 640px) {
       body { padding: 8px; }
       .page-title { font-size: 18px; }
@@ -175,6 +196,7 @@
     <div class="page-sub">สวัสดี, {{ $user->name }}</div>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+    <a href="{{ route('suntaraporn.export') }}" class="btn" style="background:#1b5e20;color:#fff;">📥 Export Excel</a>
     <a href="{{ route('suntaraporn.index') }}" class="btn btn-outline">← ผังที่นั่ง</a>
     <form method="POST" action="{{ route('suntaraporn.logout') }}" style="margin:0;">
       @csrf
@@ -182,6 +204,22 @@
     </form>
   </div>
 </div>
+
+{{-- Search --}}
+<form method="GET" action="{{ route('suntaraporn.bookings') }}" class="search-bar">
+  <input
+    type="text"
+    name="search"
+    class="search-input"
+    placeholder="🔍 ค้นหาชื่อหรือเบอร์โทร..."
+    value="{{ $search }}"
+    autocomplete="off"
+  >
+  @if ($search)
+    <a href="{{ route('suntaraporn.bookings') }}" class="btn btn-outline">✕ ล้าง</a>
+  @endif
+  <button type="submit" class="btn btn-primary">ค้นหา</button>
+</form>
 
 {{-- Stats --}}
 @php
@@ -208,7 +246,11 @@
   @if ($bookings->isEmpty())
     <div class="empty-state">
       <div class="icon">🎟️</div>
-      <p>ยังไม่มีรายการจอง</p>
+      @if ($search)
+        <p>ไม่พบรายการที่ตรงกับ "<strong>{{ $search }}</strong>"</p>
+      @else
+        <p>ยังไม่มีรายการจอง</p>
+      @endif
     </div>
   @else
     <table>

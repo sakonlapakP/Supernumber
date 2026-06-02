@@ -36,14 +36,19 @@ return Application::configure(basePath: dirname(__DIR__))
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->render(function (HttpException $exception, Request $request) {
-            if (
-                $request->is('admin/login')
-                && $exception->getStatusCode() === 419
-                && $exception->getPrevious() instanceof TokenMismatchException
-            ) {
-                return redirect()
-                    ->route('admin.login')
-                    ->withErrors(['username' => 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง']);
+            if ($exception->getStatusCode() === 419 && $exception->getPrevious() instanceof TokenMismatchException) {
+                if ($request->is('admin/login')) {
+                    return redirect()->route('admin.login')
+                        ->withErrors(['username' => 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง']);
+                }
+                if ($request->is('SuntarapornBand/login')) {
+                    return redirect()->route('suntaraporn.login')
+                        ->withErrors(['username' => 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง']);
+                }
+                if ($request->is('LikayLiveInTheater/login')) {
+                    return redirect()->route('likay.login')
+                        ->withErrors(['username' => 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง']);
+                }
             }
 
             return null;

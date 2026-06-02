@@ -485,6 +485,9 @@
 
         <form action="{{ route('articles.comments.store', $article->slug) }}" method="post" class="article-comments__form">
           @csrf
+          <div style="position:absolute;left:-9999px;" aria-hidden="true">
+            <label>Website<input type="text" name="website" tabindex="-1" autocomplete="off" /></label>
+          </div>
           <label>
             <span>ชื่อ *</span>
             <input type="text" name="commenter_name" value="{{ old('commenter_name') }}" required />
