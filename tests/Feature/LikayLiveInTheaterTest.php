@@ -3,6 +3,8 @@
 namespace Tests\Feature;
 
 use App\Models\User;
+use App\Models\LikayBooking;
+use App\Models\LikaySeat;
 use App\Services\LikaySeatMap;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -32,6 +34,28 @@ class LikayLiveInTheaterTest extends TestCase
             ->assertSee('id="stat-total">586', false)
             ->assertSee('const total     = 586;', false)
             ->assertSee('data-key="L_32"', false);
+    }
+
+    public function test_purple_zone_is_booked_for_king_power_by_migration(): void
+    {
+        $purpleSeats = array_keys(array_filter(
+            LikaySeatMap::seats(),
+            fn (string $zone): bool => $zone === 'purple'
+        ));
+
+        $this->assertCount(81, $purpleSeats);
+
+        $booking = LikayBooking::where('first_name', 'king power')
+            ->where('last_name', '-')
+            ->where('phone', '0646323915')
+            ->firstOrFail();
+
+        $this->assertSame(405000, $booking->total_price);
+        $this->assertNull($booking->slip_path);
+        $this->assertSame(81, LikaySeat::whereIn('seat_key', $purpleSeats)
+            ->where('is_booked', true)
+            ->where('booking_id', $booking->id)
+            ->count());
     }
 
     private function likaySession(User $user): array
