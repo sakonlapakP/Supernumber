@@ -153,12 +153,6 @@ class SuntarapornBandController extends Controller
             $totalPrice += $prices[$zone] ?? 0;
         }
 
-        // Handle slip upload
-        $slipPath = null;
-        if ($request->hasFile('slip')) {
-            $slipPath = $request->file('slip')->store('suntaraporn-slips', 'public');
-        }
-
         $now = now();
         DB::table('suntaraporn_seats')->insertOrIgnore(array_map(
             fn (string $key) => [
@@ -171,9 +165,12 @@ class SuntarapornBandController extends Controller
         ));
 
         $alreadyBooked = [];
+        // Slip is stored INSIDE the transaction so any DB failure rolls back cleanly.
+        // On collision the uploaded file is deleted before returning 409.
+        $slipPath = null;
 
         try {
-            DB::transaction(function () use ($data, $seatKeys, $slipPath, $totalPrice, &$alreadyBooked) {
+            DB::transaction(function () use ($request, $data, $seatKeys, $totalPrice, &$alreadyBooked, &$slipPath) {
                 $seats = SuntarapornSeat::whereIn('seat_key', $seatKeys)
                     ->lockForUpdate()
                     ->get()
@@ -186,6 +183,10 @@ class SuntarapornBandController extends Controller
 
                 if (!empty($alreadyBooked)) {
                     throw new RuntimeException('suntaraporn-seats-already-booked');
+                }
+
+                if ($request->hasFile('slip')) {
+                    $slipPath = $request->file('slip')->store('suntaraporn-slips', 'public');
                 }
 
                 $booking = SuntarapornBooking::create([
@@ -270,8 +271,10 @@ class SuntarapornBandController extends Controller
         $query = SuntarapornBooking::with('seats')->orderByDesc('created_at');
 
         if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $like = '%' . $search . '%';
+            // Escape MySQL LIKE wildcards so '%' or '_' in input don't match unintended rows.
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
+            $like    = '%' . $escaped . '%';
+            $query->where(function ($q) use ($like) {
                 $q->where('first_name', 'LIKE', $like)
                   ->orWhere('last_name', 'LIKE', $like)
                   ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'LIKE', $like)
@@ -375,8 +378,9 @@ class SuntarapornBandController extends Controller
             return response()->json(['success' => false, 'error' => 'Forbidden'], 403);
         }
 
+        // zone keys must match SuntarapornSeatMap: V_/W_ rows = 'vip' (not 'vvip')
         $data = $request->validate([
-            'vvip'   => 'required|integer|min:0',
+            'vip'    => 'required|integer|min:0',
             'box'    => 'required|integer|min:0',
             'yellow' => 'required|integer|min:0',
             'blue'   => 'required|integer|min:0',
@@ -411,11 +415,15 @@ class SuntarapornBandController extends Controller
             ->pluck('seat_key')
             ->all();
 
-        $slipPaths = SuntarapornBooking::whereNotNull('slip_path')
-            ->pluck('slip_path')
-            ->all();
+        // Collect slip paths INSIDE the transaction so concurrent bookings that
+        // commit just before the delete are included and their slips are cleaned up.
+        $slipPaths = [];
 
-        DB::transaction(function () {
+        DB::transaction(function () use (&$slipPaths) {
+            $slipPaths = SuntarapornBooking::whereNotNull('slip_path')
+                ->pluck('slip_path')
+                ->all();
+
             SuntarapornSeat::query()->update([
                 'is_booked'  => false,
                 'booked_at'  => null,

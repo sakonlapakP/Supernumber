@@ -151,11 +151,6 @@ class LikayLiveInTheaterController extends Controller
             $totalPrice += $prices[$zone] ?? 0;
         }
 
-        $slipPath = null;
-        if ($request->hasFile('slip')) {
-            $slipPath = $request->file('slip')->store('likay-slips', 'public');
-        }
-
         $now = now();
         DB::table('likay_seats')->insertOrIgnore(array_map(
             fn (string $key) => [
@@ -168,9 +163,12 @@ class LikayLiveInTheaterController extends Controller
         ));
 
         $alreadyBooked = [];
+        // Slip is stored INSIDE the transaction so any DB failure rolls back cleanly.
+        // On collision the uploaded file is deleted before returning 409.
+        $slipPath = null;
 
         try {
-            DB::transaction(function () use ($data, $seatKeys, $slipPath, $totalPrice, &$alreadyBooked) {
+            DB::transaction(function () use ($request, $data, $seatKeys, $totalPrice, &$alreadyBooked, &$slipPath) {
                 $seats = LikaySeat::whereIn('seat_key', $seatKeys)
                     ->lockForUpdate()
                     ->get()
@@ -183,6 +181,10 @@ class LikayLiveInTheaterController extends Controller
 
                 if (!empty($alreadyBooked)) {
                     throw new RuntimeException('likay-seats-already-booked');
+                }
+
+                if ($request->hasFile('slip')) {
+                    $slipPath = $request->file('slip')->store('likay-slips', 'public');
                 }
 
                 $booking = LikayBooking::create([
@@ -267,8 +269,10 @@ class LikayLiveInTheaterController extends Controller
         $query = LikayBooking::with('seats')->orderByDesc('created_at');
 
         if ($search !== '') {
-            $query->where(function ($q) use ($search) {
-                $like = '%' . $search . '%';
+            // Escape MySQL LIKE wildcards so '%' or '_' in input don't match unintended rows.
+            $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
+            $like    = '%' . $escaped . '%';
+            $query->where(function ($q) use ($like) {
                 $q->where('first_name', 'LIKE', $like)
                   ->orWhere('last_name', 'LIKE', $like)
                   ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'LIKE', $like)
@@ -406,11 +410,15 @@ class LikayLiveInTheaterController extends Controller
             ->pluck('seat_key')
             ->all();
 
-        $slipPaths = LikayBooking::whereNotNull('slip_path')
-            ->pluck('slip_path')
-            ->all();
+        // Collect slip paths INSIDE the transaction so concurrent bookings that
+        // commit just before the delete are included and their slips are cleaned up.
+        $slipPaths = [];
 
-        DB::transaction(function () {
+        DB::transaction(function () use (&$slipPaths) {
+            $slipPaths = LikayBooking::whereNotNull('slip_path')
+                ->pluck('slip_path')
+                ->all();
+
             LikaySeat::query()->update([
                 'is_booked'  => false,
                 'booked_at'  => null,

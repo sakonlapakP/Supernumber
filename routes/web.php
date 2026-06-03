@@ -59,7 +59,7 @@ use Illuminate\Support\Facades\Route;
 // ─── Likay Live In The Theater Seating ───────────────────────────────────────
 Route::get('/LikayLiveInTheater/view',  [LikayLiveInTheaterController::class, 'publicView'])->name('likay.public');
 Route::get('/LikayLiveInTheater/login', [LikayLiveInTheaterController::class, 'showLogin'])->name('likay.login');
-Route::post('/LikayLiveInTheater/login', [LikayLiveInTheaterController::class, 'doLogin'])->name('likay.login.post');
+Route::post('/LikayLiveInTheater/login', [LikayLiveInTheaterController::class, 'doLogin'])->middleware('throttle:5,1')->name('likay.login.post');
 Route::post('/LikayLiveInTheater/logout', [LikayLiveInTheaterController::class, 'doLogout'])->name('likay.logout');
 Route::get('/LikayLiveInTheater', [LikayLiveInTheaterController::class, 'index'])->name('likay.index');
 Route::post('/LikayLiveInTheater/book',     [LikayLiveInTheaterController::class, 'bookSeat'])->name('likay.book');
@@ -75,7 +75,7 @@ Route::delete('/LikayLiveInTheater/booking/{id}', [LikayLiveInTheaterController:
 // ─── Suntaraporn Band Concert Seating ────────────────────────────────────────
 Route::get('/SuntarapornBand/view',  [SuntarapornBandController::class, 'publicView'])->name('suntaraporn.public');
 Route::get('/SuntarapornBand/login', [SuntarapornBandController::class, 'showLogin'])->name('suntaraporn.login');
-Route::post('/SuntarapornBand/login', [SuntarapornBandController::class, 'doLogin'])->name('suntaraporn.login.post');
+Route::post('/SuntarapornBand/login', [SuntarapornBandController::class, 'doLogin'])->middleware('throttle:5,1')->name('suntaraporn.login.post');
 Route::post('/SuntarapornBand/logout', [SuntarapornBandController::class, 'doLogout'])->name('suntaraporn.logout');
 Route::get('/SuntarapornBand', [SuntarapornBandController::class, 'index'])->name('suntaraporn.index');
 Route::post('/SuntarapornBand/book',     [SuntarapornBandController::class, 'bookSeat'])->name('suntaraporn.book');
