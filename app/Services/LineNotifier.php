@@ -17,6 +17,7 @@ class LineNotifier
         'admin_article_ready',
         'lottery_unavailable_after_retry',
         'article_published',
+        'article_shared',   // manual "แชร์ LINE" button on article edit page
     ];
 
     public function isConfigured(?string $destinationKey = null): bool
