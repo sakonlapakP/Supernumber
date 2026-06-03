@@ -412,6 +412,30 @@ class AdminArticleMediaTest extends TestCase
         $this->assertSame('fake-rendered-png', Storage::disk('public')->get((string) $article->cover_image_square_path));
     }
 
+    public function test_lottery_article_uses_landscape_cover_for_social_preview(): void
+    {
+        Carbon::setTestNow(Carbon::create(2026, 5, 1, 12, 0, 0));
+
+        $article = Article::query()->create([
+            'title' => 'Lottery Social Preview',
+            'slug' => 'thai-goverment-lottery-202605first',
+            'excerpt' => 'Excerpt',
+            'content' => '<p>Lottery content</p>',
+            'is_published' => true,
+            'published_at' => now(),
+            'cover_image_path' => 'articles/2026/thai-goverment-lottery-202605first/square.png',
+            'cover_image_square_path' => 'articles/2026/thai-goverment-lottery-202605first/square.png',
+            'cover_image_landscape_path' => 'articles/2026/thai-goverment-lottery-202605first/landscape.png',
+        ]);
+
+        $response = $this->get(route('articles.show', $article->slug));
+
+        $response->assertOk();
+        $response->assertSee('property="og:image" content="' . asset('storage/articles/2026/thai-goverment-lottery-202605first/landscape.png') . '?v=' . now()->timestamp . '"', false);
+        $response->assertSee('property="og:image:height" content="630"', false);
+        $response->assertSee('"image": "' . asset('storage/articles/2026/thai-goverment-lottery-202605first/landscape.png') . '"', false);
+    }
+
     /**
      * @return array<string, mixed>
      */

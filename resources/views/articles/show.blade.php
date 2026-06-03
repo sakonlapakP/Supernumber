@@ -11,14 +11,18 @@
 @section('og_url', route('articles.show', $article->slug))
 @php
   $detailCoverPath = $article->cover_image_square_path ?: ($article->cover_image_path ?: $article->cover_image_landscape_path);
+  $isLotteryArticle = (bool) preg_match('/^thai-goverment-lottery-\d{6}(first|second)$/', (string) $article->slug);
   $detailCoverCandidate = $article->cover_image_square_path ?: $article->cover_image_path;
+  $ogCoverCandidate = $isLotteryArticle
+      ? ($article->cover_image_landscape_path ?: ($article->cover_image_path ?: $article->cover_image_square_path))
+      : ($article->cover_image_square_path ?: ($article->cover_image_path ?: $article->cover_image_landscape_path));
   $ogImagePath = asset('images/home_banner.jpg');
-  $ogIsSquare = (bool) $article->cover_image_square_path;
+  $ogIsSquare = $ogCoverCandidate && $ogCoverCandidate === $article->cover_image_square_path;
   // Cache-bust SVG covers using updated_at so browsers always fetch the latest version after a re-generate
   $coverCacheBuster = $article->updated_at ? '?v=' . $article->updated_at->timestamp : '';
 
-  if ($detailCoverCandidate) {
-      $ogImagePath = asset('storage/' . ltrim((string) $detailCoverCandidate, '/')) . $coverCacheBuster;
+  if ($ogCoverCandidate) {
+      $ogImagePath = asset('storage/' . ltrim((string) $ogCoverCandidate, '/')) . $coverCacheBuster;
   }
 @endphp
 @section('og_image', $ogImagePath)
@@ -44,8 +48,8 @@
     "@type": "Organization",
     "name": "Supernumber",
     "url": "{{ url('/') }}"
-  }@if($detailCoverCandidate),
-  "image": "{{ asset('storage/' . ltrim((string)$detailCoverCandidate, '/')) }}"@endif
+  }@if($ogCoverCandidate),
+  "image": "{{ asset('storage/' . ltrim((string)$ogCoverCandidate, '/')) }}"@endif
 }
 </script>
 @endsection
@@ -237,7 +241,73 @@
       @endif
 
       @if ($hasHtml && ! $usePatternBlocks)
-        <div class="article-detail__content article-detail__content--html">{!! $contentRaw !!}</div>
+        @if (!empty($lotteryResult) && (\Illuminate\Support\Str::startsWith(trim((string)$contentRaw), 'รายงานผลสลากกินแบ่งรัฐบาล') || \Illuminate\Support\Str::startsWith(trim(strip_tags((string)$contentRaw)), 'รายงานผลสลากกินแบ่งรัฐบาล')))
+          <div class="article-detail__content">
+            @php
+              $prizes = $lotteryResult->relationLoaded('prizes') ? $lotteryResult->prizes : $lotteryResult->prizes()->get();
+              $firstPrize = $prizes->first(fn ($item) => str_contains((string) data_get($item, 'prize_name', ''), 'รางวัลที่ 1'));
+              $firstPrizeNumber = $firstPrize ? trim((string) $firstPrize->prize_number) : '-';
+
+              $frontThree = $prizes->filter(fn ($item) => str_contains((string) data_get($item, 'prize_name', ''), 'เลขหน้า 3 ตัว'))->pluck('prize_number')->map(fn($num) => trim((string)$num))->all();
+              $backThree = $prizes->filter(fn ($item) => str_contains((string) data_get($item, 'prize_name', ''), 'เลขท้าย 3 ตัว'))->pluck('prize_number')->map(fn($num) => trim((string)$num))->all();
+              
+              $lastTwo = $prizes->first(fn ($item) => str_contains((string) data_get($item, 'prize_name', ''), 'เลขท้าย 2 ตัว'));
+              $lastTwoNumber = $lastTwo ? trim((string) $lastTwo->prize_number) : '-';
+
+              $drawDate = $lotteryResult->source_draw_date ?? $lotteryResult->draw_date;
+              $thaiMonths = [
+                  1 => 'มกราคม', 2 => 'กุมภาพันธ์', 3 => 'มีนาคม', 4 => 'เมษายน',
+                  5 => 'พฤษภาคม', 6 => 'มิถุนายน', 7 => 'กรกฎาคม', 8 => 'สิงหาคม',
+                  9 => 'กันยายน', 10 => 'ตุลาคม', 11 => 'พฤศจิกายน', 12 => 'ธันวาคม'
+              ];
+              $thaiDateLabel = $drawDate
+                  ? $drawDate->format('j') . ' ' . ($thaiMonths[(int) $drawDate->format('n')] ?? $drawDate->format('m')) . ' ' . ((int) $drawDate->format('Y') + 543)
+                  : '-';
+            @endphp
+            <section class="article-lottery" style="margin-top: 0;">
+              <div class="article-lottery__header">
+                <div>
+                  <h2>ผลสลากกินแบ่งรัฐบาล</h2>
+                  <p class="article-lottery__draw-date">งวดประจำวันที่ {{ $thaiDateLabel }}</p>
+                </div>
+                <div class="article-lottery__status {{ $lotteryResult->is_complete ? 'is-complete' : '' }}">
+                  {{ $lotteryResult->is_complete ? 'ข้อมูลครบแล้ว' : 'ผลรางวัลยังอัปเดตอยู่' }}
+                </div>
+              </div>
+              @if($lotteryResult->fetched_at)
+                <p class="article-lottery__updated-at">อัปเดตเมื่อ: {{ $lotteryResult->fetched_at->timezone('Asia/Bangkok')->format('d/m/Y H:i') }} น.</p>
+              @endif
+
+              <div class="article-lottery__grid">
+                <div class="article-lottery__card is-top-prize">
+                  <h3 class="article-lottery__prize-name">รางวัลที่ 1</h3>
+                  <div class="article-lottery__prize-number">{{ $firstPrizeNumber }}</div>
+                </div>
+                
+                <div class="article-lottery__card">
+                  <h3 class="article-lottery__prize-name">เลขหน้า 3 ตัว</h3>
+                  <div class="article-lottery__prize-number" style="font-size: 28px; letter-spacing: 0.1em;">
+                    {{ implode(' , ', $frontThree) ?: '-' }}
+                  </div>
+                </div>
+                
+                <div class="article-lottery__card">
+                  <h3 class="article-lottery__prize-name">เลขท้าย 3 ตัว</h3>
+                  <div class="article-lottery__prize-number" style="font-size: 28px; letter-spacing: 0.1em;">
+                    {{ implode(' , ', $backThree) ?: '-' }}
+                  </div>
+                </div>
+                
+                <div class="article-lottery__card" style="grid-column: span 2;">
+                  <h3 class="article-lottery__prize-name">เลขท้าย 2 ตัว</h3>
+                  <div class="article-lottery__prize-number">{{ $lastTwoNumber }}</div>
+                </div>
+              </div>
+            </section>
+          </div>
+        @else
+          <div class="article-detail__content article-detail__content--html">{!! $contentRaw !!}</div>
+        @endif
       @else
         <div class="article-detail__content">
           @foreach ($paragraphs as $paragraph)

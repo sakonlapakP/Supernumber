@@ -1758,15 +1758,21 @@
             button.innerText = 'กำลังทำงาน...';
 
             try {
-                // [1] แปลง landscape SVG → PNG (1200×630) ถ้ายังเป็น SVG
-                if (landscapePath && landscapePath.toLowerCase().endsWith('.svg')) {
-                    status.innerText = 'กำลังแปลงรูป Landscape...';
-                    await renderAndUploadPremiumImage(landscapePath, uploadUrl, 'กำลังแปลงรูป Landscape (1200×630)...', reportUrl, 'landscape', 1200, 630);
-                }
+                const facebookImagePath = landscapePath || squarePath;
+                const facebookImageType = landscapePath ? 'landscape' : 'square';
+                const facebookImageWidth = landscapePath ? 1200 : 1200;
+                const facebookImageHeight = landscapePath ? 630 : 1200;
 
-                // [2] แปลง square SVG → PNG (1200×1200) ถ้ายังเป็น SVG
-                if (squarePath && squarePath.toLowerCase().endsWith('.svg')) {
-                    const result = await renderAndUploadPremiumImage(squarePath, uploadUrl, 'กำลังแปลงรูปและเตรียมแชร์ Facebook...', reportUrl, 'square', 1200, 1200);
+                if (facebookImagePath && facebookImagePath.toLowerCase().endsWith('.svg')) {
+                    const result = await renderAndUploadPremiumImage(
+                        facebookImagePath,
+                        uploadUrl,
+                        landscapePath ? 'กำลังแปลงรูป Landscape (1200×630)...' : 'กำลังแปลงรูปและเตรียมแชร์ Facebook...',
+                        reportUrl,
+                        facebookImageType,
+                        facebookImageWidth,
+                        facebookImageHeight
+                    );
                     if (result) {
                         imageInput.value = result.path;
                     } else {
@@ -1775,7 +1781,7 @@
                         return;
                     }
                 } else {
-                    imageInput.value = squarePath;
+                    imageInput.value = facebookImagePath;
                 }
 
                 status.innerText = 'สำเร็จ! กำลังแชร์ไปที่ Facebook...';
