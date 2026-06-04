@@ -1292,5 +1292,69 @@ init();
   });
 })();
 </script>
+
+{{-- ─── Polling Fallback (ถ้า Pusher ไม่ deliver) ──────────────── --}}
+<script>
+(function () {
+  function applyState(data) {
+    var newBooked     = new Set(data.booked    || []);
+    var newSelecting  = new Set(data.selecting || []);
+
+    // sync BOOKED
+    newBooked.forEach(function (key) {
+      if (BOOKED.has(key)) return;
+      SELECTED.delete(key);
+      SELECTING_OTHERS.delete(key);
+      BOOKED.add(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        el.classList.remove('is-selected', 'is-selecting');
+        el.classList.add('is-booked');
+        el.removeAttribute('title');
+      });
+    });
+    BOOKED.forEach(function (key) {
+      if (newBooked.has(key)) return;
+      BOOKED.delete(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        el.classList.remove('is-booked');
+      });
+    });
+
+    // sync SELECTING_OTHERS (ไม่แตะ SELECTED ของตัวเอง)
+    newSelecting.forEach(function (key) {
+      if (SELECTED.has(key) || BOOKED.has(key) || SELECTING_OTHERS.has(key)) return;
+      SELECTING_OTHERS.add(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        el.classList.add('is-selecting');
+        el.setAttribute('title', 'กำลังถูกเลือกอยู่');
+      });
+    });
+    SELECTING_OTHERS.forEach(function (key) {
+      if (newSelecting.has(key)) return;
+      SELECTING_OTHERS.delete(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        if (!BOOKED.has(key) && !SELECTED.has(key)) {
+          el.classList.remove('is-selecting');
+          el.removeAttribute('title');
+        }
+      });
+    });
+
+    updateStats();
+    updateSummary();
+    updateFloatBtn();
+  }
+
+  function poll() {
+    fetch('/LikayLiveInTheater/live-state')
+      .then(function (r) { return r.json(); })
+      .then(applyState)
+      .catch(function () {});
+  }
+
+  // Poll ทุก 5 วิ
+  setInterval(poll, 5000);
+})();
+</script>
 </body>
 </html>

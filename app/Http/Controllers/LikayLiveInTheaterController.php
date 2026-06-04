@@ -462,6 +462,16 @@ class LikayLiveInTheaterController extends Controller
         return response()->json(['success' => true]);
     }
 
+    // ── Live State (polling fallback) ─────────────────────────────
+
+    public function liveState(): JsonResponse
+    {
+        return response()->json([
+            'booked'     => LikaySeat::where('is_booked', true)->pluck('seat_key')->all(),
+            'selecting'  => Cache::get(self::SELECTING_CACHE, []),
+        ]);
+    }
+
     // ── Export Excel ──────────────────────────────────────────────
 
     public function exportBookings(): \Symfony\Component\HttpFoundation\BinaryFileResponse|RedirectResponse
