@@ -21,15 +21,10 @@
       padding: 16px;
     }
 
-    /* ─── Zone colors (Likay) ─── */
-    .z-yellow  { background: #FFEE32; color: #333; border-color: #e6d400; }
-    .z-blue    { background: #4CAF50; color: #fff; border-color: #388E3C; }
-    .z-pink    { background: #29B6F6; color: #1a1a1a; border-color: #039BE5; }
-    .z-green   { background: #EF5350; color: #fff; border-color: #e53935; }
-    .z-purple  { background: #AB47BC; color: #fff; border-color: #9C27B0; }
-    .z-vip     { background: #FFEE32; color: #333; border-color: #e6d400; }
-    .z-box_b   { background: #26C6DA; color: #1a1a1a; border-color: #00ACC1; }
-    .z-box     { background: #4CAF50; color: #fff; border-color: #388E3C; }
+    /* ─── Zone colors (dynamic) ─── */
+    @foreach($zones as $zone)
+    .z-{{ $zone->slug }} { background: {{ $zone->color }}; color: {{ $zone->text_color }}; border-color: {{ $zone->border_color }}; }
+    @endforeach
     .z-wc      { background: #9E9E9E; color: #fff; border-color: #757575; opacity: 0.75; }
     .z-vvip-box { background: #fff; border: 2.5px solid #222; }
 
@@ -344,27 +339,15 @@
 </div>
 
 {{-- ─── Legend ─────────────────────────────────────────────────── --}}
-@php
-  $legend = [
-    ['zone'=>'vvip',   'label'=>'Control',  'bg'=>'#fff',    'border'=>'#222'],
-    ['zone'=>'yellow', 'label'=>'เหลือง',   'bg'=>'#FFEE32', 'border'=>'#e6d400'],
-    ['zone'=>'blue',   'label'=>'เขียว',    'bg'=>'#4CAF50', 'border'=>'#388E3C'],
-    ['zone'=>'pink',   'label'=>'ฟ้า',      'bg'=>'#29B6F6', 'border'=>'#039BE5'],
-    ['zone'=>'green',  'label'=>'แดง',      'bg'=>'#EF5350', 'border'=>'#e53935'],
-    ['zone'=>'purple', 'label'=>'ม่วง',     'bg'=>'#AB47BC', 'border'=>'#9C27B0'],
-    ['zone'=>'box',    'label'=>'BOX A-F',  'bg'=>'#4CAF50', 'border'=>'#388E3C'],
-  ];
-@endphp
-<div class="legend">
-  @foreach ($legend as $item)
+<div class="legend" id="legend-bar">
   <div class="legend-item">
-    <div class="legend-swatch" style="background:{{ $item['bg'] }};border-color:{{ $item['border'] }}"></div>
-    <span>
-      {{ $item['label'] }}
-      @if ($item['zone'] !== 'vvip')
-        — <strong>฿{{ number_format($prices[$item['zone']] ?? 0) }}</strong>
-      @endif
-    </span>
+    <div class="legend-swatch" style="background:#fff;border-color:#222;border-width:2px;"></div>
+    <span>Control</span>
+  </div>
+  @foreach ($zones as $z)
+  <div class="legend-item" id="legend-item-{{ $z->slug }}">
+    <div class="legend-swatch" style="background:{{ $z->color }};border-color:{{ $z->border_color }}"></div>
+    <span>{{ $z->label }} — <strong id="legend_{{ $z->slug }}">฿{{ number_format($prices[$z->slug] ?? 0) }}</strong></span>
   </div>
   @endforeach
   <div class="legend-item">
@@ -392,7 +375,7 @@
             <span class="row-label" style="width:auto;min-width:24px;padding:0 4px;">W</span>
             <div class="seats-line" style="display:flex;align-items:center;gap:1.5px;">
               @foreach (range(1,9) as $n)
-                <div class="seat z-yellow" data-key="W_{{ $n }}">{{ $n }}</div>
+                <div class="seat z-{{ $rowZones['W'] ?? 'yellow' }}" data-key="W_{{ $n }}">{{ $n }}</div>
               @endforeach
             </div>
           </div>
@@ -400,7 +383,7 @@
             <span class="row-label" style="width:auto;min-width:24px;padding:0 4px;">V</span>
             <div class="seats-line" style="display:flex;align-items:center;gap:1.5px;">
               @foreach (range(1,8) as $n)
-                <div class="seat z-yellow" data-key="V_{{ $n }}">{{ $n }}</div>
+                <div class="seat z-{{ $rowZones['V'] ?? 'yellow' }}" data-key="V_{{ $n }}">{{ $n }}</div>
               @endforeach
             </div>
           </div>
@@ -418,7 +401,7 @@
           <div style="display:flex;align-items:center;gap:4px;">
             <div class="seats-line" style="display:flex;align-items:center;gap:1.5px;">
               @foreach (range(10,18) as $n)
-                <div class="seat z-yellow" data-key="W_{{ $n }}">{{ $n }}</div>
+                <div class="seat z-{{ $rowZones['W'] ?? 'yellow' }}" data-key="W_{{ $n }}">{{ $n }}</div>
               @endforeach
             </div>
             <span class="row-label" style="width:auto;min-width:24px;padding:0 4px;">W</span>
@@ -426,7 +409,7 @@
           <div style="display:flex;align-items:center;gap:4px;">
             <div class="seats-line" style="display:flex;align-items:center;gap:1.5px;">
               @foreach (range(9,16) as $n)
-                <div class="seat z-yellow" data-key="V_{{ $n }}">{{ $n }}</div>
+                <div class="seat z-{{ $rowZones['V'] ?? 'yellow' }}" data-key="V_{{ $n }}">{{ $n }}</div>
               @endforeach
             </div>
             <span class="row-label" style="width:auto;min-width:24px;padding:0 4px;">V</span>
@@ -438,26 +421,28 @@
       {{-- ─── Main Rows ─── --}}
       @php
         $r = fn($s,$e) => range($s,$e);
+        $rz = fn(string $key) => $rowZones[$key] ?? 'yellow';
+        $bz = fn(string $box) => $rowZones[$box] ?? 'box';
         $rows = [
-          ['U','yellow', [],      $r(1,6),   $r(7,13),  [],        null,                               null],
-          ['T','yellow', [],      $r(1,11),  $r(12,23), [],        null,                               null],
-          ['S','blue',   [],      $r(1,10),  $r(11,21), [],        ['k'=>'BOXC_14','n'=>14,'z'=>'box'], ['k'=>'BOXF_15','n'=>15,'z'=>'box']],
-          ['R','blue',   [],      $r(1,10),  $r(11,21), [],        ['k'=>'BOXC_13','n'=>13,'z'=>'box'], ['k'=>'BOXF_16','n'=>16,'z'=>'box']],
-          ['Q','blue',   $r(1,4), $r(5,14),  $r(15,24), $r(25,28), ['k'=>'BOXC_12','n'=>12,'z'=>'box'], ['k'=>'BOXF_17','n'=>17,'z'=>'box']],
-          ['P','blue',   $r(1,5), $r(6,15),  $r(16,24), $r(25,29), ['k'=>'BOXC_11','n'=>11,'z'=>'box'], ['k'=>'BOXF_18','n'=>18,'z'=>'box']],
-          ['N','pink',   $r(1,6), $r(7,15),  $r(16,24), $r(25,30), ['k'=>'BOXC_10','n'=>10,'z'=>'box'], ['k'=>'BOXF_19','n'=>19,'z'=>'box']],
-          ['M','pink',   $r(1,6), $r(7,14),  $r(15,23), $r(24,29), ['k'=>'BOXB_9', 'n'=>9, 'z'=>'box'], ['k'=>'BOXE_20','n'=>20,'z'=>'box']],
-          ['L','pink',   $r(1,7), $r(8,16),  $r(17,24), $r(25,31), ['k'=>'BOXB_8', 'n'=>8, 'z'=>'box'], ['k'=>'BOXE_21','n'=>21,'z'=>'box']],
-          ['K','pink',   $r(1,8), $r(9,16),  $r(17,24), $r(25,32), ['k'=>'BOXB_7', 'n'=>7, 'z'=>'box'], ['k'=>'BOXE_22','n'=>22,'z'=>'box']],
-          ['J','pink',   $r(1,8), $r(9,16),  $r(17,24), $r(25,32), ['k'=>'BOXB_6', 'n'=>6, 'z'=>'box'], ['k'=>'BOXE_23','n'=>23,'z'=>'box']],
-          ['H','green',  $r(1,8), $r(9,15),  $r(16,23), $r(24,31), null,                               null],
-          ['G','green',  $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_5','n'=>5,'z'=>'box'],  ['k'=>'BOXD_24','n'=>24,'z'=>'box']],
-          ['F','green',  $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_4','n'=>4,'z'=>'box'],  ['k'=>'BOXD_25','n'=>25,'z'=>'box']],
-          ['E','green',  $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_3','n'=>3,'z'=>'box'],  ['k'=>'BOXD_26','n'=>26,'z'=>'box']],
-          ['D','green',  $r(1,7), $r(8,14),  $r(15,22), $r(23,29), ['k'=>'BOXA_2','n'=>2,'z'=>'box'],  ['k'=>'BOXD_27','n'=>27,'z'=>'box']],
-          ['C','purple', $r(1,7), $r(8,14),  $r(15,22), $r(23,29), ['k'=>'BOXA_1','n'=>1,'z'=>'box'],  ['k'=>'BOXD_28','n'=>28,'z'=>'box']],
-          ['B','purple', $r(1,6), $r(7,13),  $r(14,21), $r(22,27), null,                               null],
-          ['A','purple', $r(1,5), $r(6,12),  $r(13,20), $r(21,25), null,                               null],
+          ['U', $rz('U'), [],      $r(1,6),   $r(7,13),  [],        null,                               null],
+          ['T', $rz('T'), [],      $r(1,11),  $r(12,23), [],        null,                               null],
+          ['S', $rz('S'), [],      $r(1,10),  $r(11,21), [],        ['k'=>'BOXC_14','n'=>14,'z'=>$bz('BOXC')], ['k'=>'BOXF_15','n'=>15,'z'=>$bz('BOXF')]],
+          ['R', $rz('R'), [],      $r(1,10),  $r(11,21), [],        ['k'=>'BOXC_13','n'=>13,'z'=>$bz('BOXC')], ['k'=>'BOXF_16','n'=>16,'z'=>$bz('BOXF')]],
+          ['Q', $rz('Q'), $r(1,4), $r(5,14),  $r(15,24), $r(25,28), ['k'=>'BOXC_12','n'=>12,'z'=>$bz('BOXC')], ['k'=>'BOXF_17','n'=>17,'z'=>$bz('BOXF')]],
+          ['P', $rz('P'), $r(1,5), $r(6,15),  $r(16,24), $r(25,29), ['k'=>'BOXC_11','n'=>11,'z'=>$bz('BOXC')], ['k'=>'BOXF_18','n'=>18,'z'=>$bz('BOXF')]],
+          ['N', $rz('N'), $r(1,6), $r(7,15),  $r(16,24), $r(25,30), ['k'=>'BOXC_10','n'=>10,'z'=>$bz('BOXC')], ['k'=>'BOXF_19','n'=>19,'z'=>$bz('BOXF')]],
+          ['M', $rz('M'), $r(1,6), $r(7,14),  $r(15,23), $r(24,29), ['k'=>'BOXB_9', 'n'=>9, 'z'=>$bz('BOXB')], ['k'=>'BOXE_20','n'=>20,'z'=>$bz('BOXE')]],
+          ['L', $rz('L'), $r(1,7), $r(8,16),  $r(17,24), $r(25,31), ['k'=>'BOXB_8', 'n'=>8, 'z'=>$bz('BOXB')], ['k'=>'BOXE_21','n'=>21,'z'=>$bz('BOXE')]],
+          ['K', $rz('K'), $r(1,8), $r(9,16),  $r(17,24), $r(25,32), ['k'=>'BOXB_7', 'n'=>7, 'z'=>$bz('BOXB')], ['k'=>'BOXE_22','n'=>22,'z'=>$bz('BOXE')]],
+          ['J', $rz('J'), $r(1,8), $r(9,16),  $r(17,24), $r(25,32), ['k'=>'BOXB_6', 'n'=>6, 'z'=>$bz('BOXB')], ['k'=>'BOXE_23','n'=>23,'z'=>$bz('BOXE')]],
+          ['H', $rz('H'), $r(1,8), $r(9,15),  $r(16,23), $r(24,31), null,                               null],
+          ['G', $rz('G'), $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_5','n'=>5,'z'=>$bz('BOXA')],  ['k'=>'BOXD_24','n'=>24,'z'=>$bz('BOXD')]],
+          ['F', $rz('F'), $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_4','n'=>4,'z'=>$bz('BOXA')],  ['k'=>'BOXD_25','n'=>25,'z'=>$bz('BOXD')]],
+          ['E', $rz('E'), $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_3','n'=>3,'z'=>$bz('BOXA')],  ['k'=>'BOXD_26','n'=>26,'z'=>$bz('BOXD')]],
+          ['D', $rz('D'), $r(1,7), $r(8,14),  $r(15,22), $r(23,29), ['k'=>'BOXA_2','n'=>2,'z'=>$bz('BOXA')],  ['k'=>'BOXD_27','n'=>27,'z'=>$bz('BOXD')]],
+          ['C', $rz('C'), $r(1,7), $r(8,14),  $r(15,22), $r(23,29), ['k'=>'BOXA_1','n'=>1,'z'=>$bz('BOXA')],  ['k'=>'BOXD_28','n'=>28,'z'=>$bz('BOXD')]],
+          ['B', $rz('B'), $r(1,6), $r(7,13),  $r(14,21), $r(22,27), null,                               null],
+          ['A', $rz('A'), $r(1,5), $r(6,12),  $r(13,20), $r(21,25), null,                               null],
         ];
 
         $bookedSet = array_flip($bookedSeats);
@@ -622,6 +607,25 @@ init();
   const channel = pusher.subscribe('likay-concert');
 
   pusher.connection.bind('connected', function () {
+    markLastUpdated();
+  });
+
+  channel.bind('zone-config-updated', function (data) {
+    if (data.zones) {
+      var css = '';
+      data.zones.forEach(function (z) {
+        css += '.z-' + z.slug + ' { background: ' + z.color + '; color: ' + z.text_color + '; border-color: ' + z.border_color + '; }\n';
+        var legendEl = document.getElementById('legend_' + z.slug);
+        if (legendEl) legendEl.textContent = '฿' + Number(z.price).toLocaleString('th-TH');
+      });
+      var styleEl = document.getElementById('zone-dynamic-style');
+      if (!styleEl) {
+        styleEl = document.createElement('style');
+        styleEl.id = 'zone-dynamic-style';
+        document.head.appendChild(styleEl);
+      }
+      styleEl.textContent = css;
+    }
     markLastUpdated();
   });
 

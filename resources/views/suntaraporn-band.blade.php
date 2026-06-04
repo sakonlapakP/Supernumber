@@ -17,15 +17,10 @@
       padding: 16px;
     }
 
-    /* ─── Zone colors ─── */
-    .z-yellow  { background: #FFEE32; color: #333; border-color: #e6d400; }
-    .z-blue    { background: #29B6F6; color: #1a1a1a; border-color: #039BE5; }
-    .z-pink    { background: #F48FB1; color: #333; border-color: #EC407A; }
-    .z-green   { background: #66BB6A; color: #fff; border-color: #4CAF50; }
-    .z-purple  { background: #CE93D8; color: #333; border-color: #AB47BC; }
-    .z-vip     { background: #e5e5e5; color: #333; border-color: #cccccc; }
-    .z-box_b   { background: #e5e5e5; color: #333; border-color: #cccccc; }
-    .z-box     { background: #e5e5e5; color: #333; border-color: #cccccc; }
+    /* ─── Zone colors (dynamic) ─── */
+    @foreach($zones as $zone)
+    .z-{{ $zone->slug }} { background: {{ $zone->color }}; color: {{ $zone->text_color }}; border-color: {{ $zone->border_color }}; }
+    @endforeach
     .z-wc      { background: #9E9E9E; color: #fff; border-color: #757575; cursor: default !important; opacity: 0.75; }
     .z-vvip-box { background: #fff; border: 2.5px solid #222; }
 
@@ -534,33 +529,81 @@
 </head>
 <body>
 
-{{-- ─── Price Edit Modal ─────────────────────────────────── --}}
+{{-- ─── Zone Management Modal ─────────────────────────────── --}}
 <div class="modal-backdrop" id="priceModal">
-  <div class="modal">
-    <h2>✏️ แก้ไขราคาบัตร</h2>
-    @php
-      $zoneLabels = [
-        'vvip'   => ['Control',  '#fff',    '#222',    '#222'],
-        'purple' => ['ม่วง',   '#CE93D8', '#333',    '#AB47BC'],
-        'green'  => ['แดง',    '#66BB6A', '#fff',    '#4CAF50'],
-        'pink'   => ['ฟ้าอ่อน','#F48FB1', '#333',    '#EC407A'],
-        'blue'   => ['เขียว',  '#29B6F6', '#1a1a1a', '#039BE5'],
-        'box'    => ['BOX A-F', '#e5e5e5', '#333',    '#cccccc'],
-        'yellow' => ['เหลือง', '#FFEE32', '#333',    '#e6d400'],
-      ];
-    @endphp
-    @foreach ($zoneLabels as $key => [$label, $bg, $fg, $border])
-    <div class="price-row">
-      <label>
-        <span class="legend-swatch" style="background:{{ $bg }};border-color:{{ $border }}"></span>
-        {{ $label }}
-      </label>
-      <input type="number" id="price_{{ $key }}" value="{{ $prices[$key] ?? 0 }}" min="0" step="100">
+  <div class="modal" style="width:560px;max-width:98vw;">
+    <h2>🎨 จัดการ Zone</h2>
+
+    {{-- Section A: Zone list --}}
+    <div style="margin-bottom:18px;">
+      <div style="font-size:14px;font-weight:700;margin-bottom:8px;color:#444;">Zone ทั้งหมด</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px;" id="zone-table">
+        <thead>
+          <tr style="background:#f5f5f5;">
+            <th style="padding:6px 8px;text-align:left;font-weight:600;color:#555;">สี</th>
+            <th style="padding:6px 8px;text-align:left;font-weight:600;color:#555;">ชื่อ Zone</th>
+            <th style="padding:6px 8px;text-align:right;font-weight:600;color:#555;">ราคา (บาท)</th>
+            <th style="padding:6px 8px;text-align:center;font-weight:600;color:#555;">จัดการ</th>
+          </tr>
+        </thead>
+        <tbody id="zone-table-body">
+          @foreach($zones as $zone)
+          <tr data-zone-id="{{ $zone->id }}" data-zone-slug="{{ $zone->slug }}">
+            <td style="padding:5px 8px;">
+              <input type="color" value="{{ $zone->color }}" class="zone-color-input" data-zone-id="{{ $zone->id }}" style="width:36px;height:26px;padding:1px;border:1px solid #ddd;border-radius:4px;cursor:pointer;">
+            </td>
+            <td style="padding:5px 8px;">
+              <input type="text" value="{{ $zone->label }}" class="zone-label-input" data-zone-id="{{ $zone->id }}" style="border:1px solid #ddd;border-radius:4px;padding:4px 7px;font-size:13px;width:100%;">
+            </td>
+            <td style="padding:5px 8px;">
+              <input type="number" value="{{ $zone->price }}" class="zone-price-input" data-zone-id="{{ $zone->id }}" min="0" step="100" style="border:1px solid #ddd;border-radius:4px;padding:4px 7px;font-size:13px;width:90px;text-align:right;">
+            </td>
+            <td style="padding:5px 8px;text-align:center;white-space:nowrap;">
+              <button onclick="saveZone({{ $zone->id }})" style="background:#1a1a2e;color:#fff;border:none;border-radius:5px;padding:4px 10px;font-size:12px;cursor:pointer;margin-right:4px;">บันทึก</button>
+              <button onclick="deleteZone({{ $zone->id }},'{{ $zone->label }}')" style="background:#e53935;color:#fff;border:none;border-radius:5px;padding:4px 10px;font-size:12px;cursor:pointer;">ลบ</button>
+            </td>
+          </tr>
+          @endforeach
+        </tbody>
+      </table>
+      <button onclick="addNewZoneRow()" style="margin-top:8px;background:#2e7d32;color:#fff;border:none;border-radius:6px;padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit;">+ เพิ่ม Zone ใหม่</button>
     </div>
-    @endforeach
-    <div class="modal-footer">
-      <button class="btn btn-outline" onclick="closePriceModal()">ยกเลิก</button>
-      <button class="btn btn-primary" onclick="savePrices()">บันทึก</button>
+
+    {{-- Section B: Row assignment --}}
+    <div>
+      <div style="font-size:14px;font-weight:700;margin-bottom:8px;color:#444;">กำหนด Zone ให้แต่ละแถว</div>
+      <div style="max-height:280px;overflow-y:auto;border:1px solid #eee;border-radius:6px;">
+        <table style="width:100%;border-collapse:collapse;font-size:13px;">
+          <thead>
+            <tr style="background:#f5f5f5;position:sticky;top:0;">
+              <th style="padding:6px 10px;text-align:left;font-weight:600;color:#555;">แถว</th>
+              <th style="padding:6px 10px;text-align:left;font-weight:600;color:#555;">Zone</th>
+            </tr>
+          </thead>
+          <tbody>
+            @php
+              $allRowKeys = ['V','W','U','T','S','R','Q','P','N','M','L','K','J','H','G','F','E','D','C','B','A','BOXA','BOXB','BOXC','BOXD','BOXE','BOXF'];
+            @endphp
+            @foreach($allRowKeys as $rowKey)
+            <tr style="border-bottom:1px solid #f0f0f0;">
+              <td style="padding:5px 10px;font-weight:600;color:#333;">{{ $rowKey }}</td>
+              <td style="padding:5px 10px;">
+                <select class="row-zone-select" data-row-key="{{ $rowKey }}" style="border:1px solid #ddd;border-radius:4px;padding:4px 8px;font-size:13px;font-family:inherit;width:100%;">
+                  @foreach($zones as $z)
+                    <option value="{{ $z->id }}" {{ ($rowZones[$rowKey] ?? '') === $z->slug ? 'selected' : '' }}>{{ $z->label }} ({{ $z->slug }})</option>
+                  @endforeach
+                </select>
+              </td>
+            </tr>
+            @endforeach
+          </tbody>
+        </table>
+      </div>
+      <button onclick="saveRowZones()" style="margin-top:8px;background:#1a1a2e;color:#fff;border:none;border-radius:6px;padding:8px 18px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;">บันทึกการกำหนดแถว</button>
+    </div>
+
+    <div class="modal-footer" style="margin-top:12px;">
+      <button class="btn btn-outline" onclick="closePriceModal()">ปิด</button>
     </div>
   </div>
 </div>
@@ -700,26 +743,24 @@
 
 {{-- Legend --}}
 @php
-  $legend = [
-    ['zone'=>'vvip',   'label'=>'Control',   'bg'=>'#fff',    'border'=>'#222'],
-    ['zone'=>'vip',    'label'=>'VIP (V-W)', 'bg'=>'#e5e5e5', 'border'=>'#cccccc'],
-    ['zone'=>'purple', 'label'=>'ม่วง',    'bg'=>'#CE93D8', 'border'=>'#AB47BC'],
-    ['zone'=>'green',  'label'=>'แดง',     'bg'=>'#66BB6A', 'border'=>'#4CAF50'],
-    ['zone'=>'pink',   'label'=>'ฟ้าอ่อน','bg'=>'#F48FB1', 'border'=>'#EC407A'],
-    ['zone'=>'blue',   'label'=>'เขียว',   'bg'=>'#29B6F6', 'border'=>'#039BE5'],
-    ['zone'=>'box',    'label'=>'BOX A-F', 'bg'=>'#e5e5e5', 'border'=>'#cccccc'],
-    ['zone'=>'yellow', 'label'=>'เหลือง',  'bg'=>'#FFEE32', 'border'=>'#e6d400'],
-  ];
+  $legend = $zones->map(fn($z) => [
+    'zone'   => $z->slug,
+    'label'  => $z->label,
+    'bg'     => $z->color,
+    'border' => $z->border_color,
+  ])->all();
 @endphp
-<div class="legend">
-  @foreach ($legend as $item)
+<div class="legend" id="legend-bar">
   <div class="legend-item">
+    <div class="legend-swatch" style="background:#fff;border-color:#222;border-width:2px;"></div>
+    <span>Control</span>
+  </div>
+  @foreach ($legend as $item)
+  <div class="legend-item" id="legend-item-{{ $item['zone'] }}">
     <div class="legend-swatch" style="background:{{ $item['bg'] }};border-color:{{ $item['border'] }}"></div>
     <span>
       {{ $item['label'] }}
-      @if (!in_array($item['zone'], ['vvip', 'vip']))
-        — <strong id="legend_{{ $item['zone'] }}">฿{{ number_format($prices[$item['zone']] ?? 0) }}</strong>
-      @endif
+      — <strong id="legend_{{ $item['zone'] }}">฿{{ number_format($prices[$item['zone']] ?? 0) }}</strong>
     </span>
   </div>
   @endforeach
@@ -751,7 +792,7 @@
             <span class="row-label">W</span>
             <div class="seats-line">
               @foreach (range(1,9) as $n)
-                <div class="seat z-vip" data-key="W_{{ $n }}" data-zone="vip" onclick="toggleSeat(this)">{{ $n }}</div>
+                <div class="seat z-{{ $rowZones['W'] ?? 'vip' }}" data-key="W_{{ $n }}" data-zone="{{ $rowZones['W'] ?? 'vip' }}" onclick="toggleSeat(this)">{{ $n }}</div>
               @endforeach
             </div>
           </div>
@@ -759,7 +800,7 @@
             <span class="row-label">V</span>
             <div class="seats-line">
               @foreach (range(1,8) as $n)
-                <div class="seat z-vip" data-key="V_{{ $n }}" data-zone="vip" onclick="toggleSeat(this)">{{ $n }}</div>
+                <div class="seat z-{{ $rowZones['V'] ?? 'vip' }}" data-key="V_{{ $n }}" data-zone="{{ $rowZones['V'] ?? 'vip' }}" onclick="toggleSeat(this)">{{ $n }}</div>
               @endforeach
             </div>
           </div>
@@ -773,7 +814,7 @@
           <div style="display:flex;align-items:center;gap:4px;">
             <div class="seats-line">
               @foreach (range(10,18) as $n)
-                <div class="seat z-vip" data-key="W_{{ $n }}" data-zone="vip" onclick="toggleSeat(this)">{{ $n }}</div>
+                <div class="seat z-{{ $rowZones['W'] ?? 'vip' }}" data-key="W_{{ $n }}" data-zone="{{ $rowZones['W'] ?? 'vip' }}" onclick="toggleSeat(this)">{{ $n }}</div>
               @endforeach
             </div>
             <span class="row-label">W</span>
@@ -781,7 +822,7 @@
           <div style="display:flex;align-items:center;gap:4px;">
             <div class="seats-line">
               @foreach (range(9,16) as $n)
-                <div class="seat z-vip" data-key="V_{{ $n }}" data-zone="vip" onclick="toggleSeat(this)">{{ $n }}</div>
+                <div class="seat z-{{ $rowZones['V'] ?? 'vip' }}" data-key="V_{{ $n }}" data-zone="{{ $rowZones['V'] ?? 'vip' }}" onclick="toggleSeat(this)">{{ $n }}</div>
               @endforeach
             </div>
             <span class="row-label">V</span>
@@ -793,26 +834,28 @@
       {{-- ─── Main Rows ─── --}}
       @php
         $r = fn($s,$e) => range($s,$e);
+        $rz = fn(string $key) => $rowZones[$key] ?? 'yellow';
+        $bz = fn(string $box) => $rowZones[$box] ?? 'box';
         $rows = [
-          ['U','yellow', [],      $r(1,6),   $r(7,13),  [],        null,                              null],
-          ['T','yellow', [],      $r(1,11),  $r(12,23), [],        null,                              null],
-          ['S','yellow', [],      $r(1,10),  $r(11,21), [],        ['k'=>'BOXC_14','n'=>14,'z'=>'box'], ['k'=>'BOXF_15','n'=>15,'z'=>'blue']],
-          ['R','blue',   [],      $r(1,10),  $r(11,21), [],        ['k'=>'BOXC_13','n'=>13,'z'=>'box'], ['k'=>'BOXF_16','n'=>16,'z'=>'blue']],
-          ['Q','blue',   $r(1,4), $r(5,14),  $r(15,24), $r(25,28), ['k'=>'BOXC_12','n'=>12,'z'=>'box'], ['k'=>'BOXF_17','n'=>17,'z'=>'blue']],
-          ['P','blue',   $r(1,5), $r(6,15),  $r(16,24), $r(25,29), ['k'=>'BOXC_11','n'=>11,'z'=>'box'], ['k'=>'BOXF_18','n'=>18,'z'=>'blue']],
-          ['N','pink',   $r(1,6), $r(7,15),  $r(16,24), $r(25,30), ['k'=>'BOXC_10','n'=>10,'z'=>'box'], ['k'=>'BOXF_19','n'=>19,'z'=>'blue']],
-          ['M','pink',   $r(1,6), $r(7,14),  $r(15,23), $r(24,29), ['k'=>'BOXB_9', 'n'=>9, 'z'=>'box'], ['k'=>'BOXE_20','n'=>20,'z'=>'pink']],
-          ['L','pink',   $r(1,7), $r(8,16),  $r(17,24), $r(25,31), ['k'=>'BOXB_8', 'n'=>8, 'z'=>'box'], ['k'=>'BOXE_21','n'=>21,'z'=>'pink']],
-          ['K','pink',   $r(1,8), $r(9,16),  $r(17,24), $r(25,32), ['k'=>'BOXB_7', 'n'=>7, 'z'=>'box'], ['k'=>'BOXE_22','n'=>22,'z'=>'pink']],
-          ['J','green',  $r(1,8), $r(9,16),  $r(17,24), $r(25,32), ['k'=>'BOXB_6', 'n'=>6, 'z'=>'box'], ['k'=>'BOXE_23','n'=>23,'z'=>'pink']],
-          ['H','green',  $r(1,8), $r(9,15),  $r(16,23), $r(24,31), null,                               null],
-          ['G','green',  $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_5','n'=>5,'z'=>'green'], ['k'=>'BOXD_24','n'=>24,'z'=>'green']],
-          ['F','green',  $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_4','n'=>4,'z'=>'green'], ['k'=>'BOXD_25','n'=>25,'z'=>'green']],
-          ['E','purple', $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_3','n'=>3,'z'=>'green'], ['k'=>'BOXD_26','n'=>26,'z'=>'green']],
-          ['D','purple', $r(1,7), $r(8,14),  $r(15,22), $r(23,29), ['k'=>'BOXA_2','n'=>2,'z'=>'green'], ['k'=>'BOXD_27','n'=>27,'z'=>'green']],
-          ['C','purple', $r(1,7), $r(8,14),  $r(15,22), $r(23,29), ['k'=>'BOXA_1','n'=>1,'z'=>'green'], ['k'=>'BOXD_28','n'=>28,'z'=>'green']],
-          ['B','purple', $r(1,6), $r(7,13),  $r(14,21), $r(22,27), null,                              null],
-          ['A','purple', $r(1,5), $r(6,12),  $r(13,20), $r(21,25), null,                              null],
+          ['U', $rz('U'), [],      $r(1,6),   $r(7,13),  [],        null,                              null],
+          ['T', $rz('T'), [],      $r(1,11),  $r(12,23), [],        null,                              null],
+          ['S', $rz('S'), [],      $r(1,10),  $r(11,21), [],        ['k'=>'BOXC_14','n'=>14,'z'=>$bz('BOXC')], ['k'=>'BOXF_15','n'=>15,'z'=>$bz('BOXF')]],
+          ['R', $rz('R'), [],      $r(1,10),  $r(11,21), [],        ['k'=>'BOXC_13','n'=>13,'z'=>$bz('BOXC')], ['k'=>'BOXF_16','n'=>16,'z'=>$bz('BOXF')]],
+          ['Q', $rz('Q'), $r(1,4), $r(5,14),  $r(15,24), $r(25,28), ['k'=>'BOXC_12','n'=>12,'z'=>$bz('BOXC')], ['k'=>'BOXF_17','n'=>17,'z'=>$bz('BOXF')]],
+          ['P', $rz('P'), $r(1,5), $r(6,15),  $r(16,24), $r(25,29), ['k'=>'BOXC_11','n'=>11,'z'=>$bz('BOXC')], ['k'=>'BOXF_18','n'=>18,'z'=>$bz('BOXF')]],
+          ['N', $rz('N'), $r(1,6), $r(7,15),  $r(16,24), $r(25,30), ['k'=>'BOXC_10','n'=>10,'z'=>$bz('BOXC')], ['k'=>'BOXF_19','n'=>19,'z'=>$bz('BOXF')]],
+          ['M', $rz('M'), $r(1,6), $r(7,14),  $r(15,23), $r(24,29), ['k'=>'BOXB_9', 'n'=>9, 'z'=>$bz('BOXB')], ['k'=>'BOXE_20','n'=>20,'z'=>$bz('BOXE')]],
+          ['L', $rz('L'), $r(1,7), $r(8,16),  $r(17,24), $r(25,31), ['k'=>'BOXB_8', 'n'=>8, 'z'=>$bz('BOXB')], ['k'=>'BOXE_21','n'=>21,'z'=>$bz('BOXE')]],
+          ['K', $rz('K'), $r(1,8), $r(9,16),  $r(17,24), $r(25,32), ['k'=>'BOXB_7', 'n'=>7, 'z'=>$bz('BOXB')], ['k'=>'BOXE_22','n'=>22,'z'=>$bz('BOXE')]],
+          ['J', $rz('J'), $r(1,8), $r(9,16),  $r(17,24), $r(25,32), ['k'=>'BOXB_6', 'n'=>6, 'z'=>$bz('BOXB')], ['k'=>'BOXE_23','n'=>23,'z'=>$bz('BOXE')]],
+          ['H', $rz('H'), $r(1,8), $r(9,15),  $r(16,23), $r(24,31), null,                               null],
+          ['G', $rz('G'), $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_5','n'=>5,'z'=>$bz('BOXA')], ['k'=>'BOXD_24','n'=>24,'z'=>$bz('BOXD')]],
+          ['F', $rz('F'), $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_4','n'=>4,'z'=>$bz('BOXA')], ['k'=>'BOXD_25','n'=>25,'z'=>$bz('BOXD')]],
+          ['E', $rz('E'), $r(1,8), $r(9,15),  $r(16,23), $r(24,31), ['k'=>'BOXA_3','n'=>3,'z'=>$bz('BOXA')], ['k'=>'BOXD_26','n'=>26,'z'=>$bz('BOXD')]],
+          ['D', $rz('D'), $r(1,7), $r(8,14),  $r(15,22), $r(23,29), ['k'=>'BOXA_2','n'=>2,'z'=>$bz('BOXA')], ['k'=>'BOXD_27','n'=>27,'z'=>$bz('BOXD')]],
+          ['C', $rz('C'), $r(1,7), $r(8,14),  $r(15,22), $r(23,29), ['k'=>'BOXA_1','n'=>1,'z'=>$bz('BOXA')], ['k'=>'BOXD_28','n'=>28,'z'=>$bz('BOXD')]],
+          ['B', $rz('B'), $r(1,6), $r(7,13),  $r(14,21), $r(22,27), null,                              null],
+          ['A', $rz('A'), $r(1,5), $r(6,12),  $r(13,20), $r(21,25), null,                              null],
         ];
 
         $bookedSet = array_flip($bookedSeats);
@@ -1196,30 +1239,115 @@ async function cancelBooking() {
 function openPriceModal()  { document.getElementById('priceModal').classList.add('open'); }
 function closePriceModal() { document.getElementById('priceModal').classList.remove('open'); }
 
-async function savePrices() {
-  const zones = ['vvip','box','yellow','blue','pink','green','purple'];
-  const data  = {};
-  zones.forEach(z => { data[z] = parseInt(document.getElementById('price_'+z).value) || 0; });
-
+async function saveZone(zoneId) {
+  const row = document.querySelector(`tr[data-zone-id="${zoneId}"]`);
+  if (!row) return;
+  const label = row.querySelector('.zone-label-input').value.trim();
+  const color = row.querySelector('.zone-color-input').value;
+  const price = parseInt(row.querySelector('.zone-price-input').value) || 0;
   try {
-    const res  = await fetch('/SuntarapornBand/prices', {
+    const res = await fetch(`/SuntarapornBand/zones/${zoneId}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+      body: JSON.stringify({ label, color, price })
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert('บันทึกสำเร็จ');
+    } else {
+      alert(data.error || 'เกิดข้อผิดพลาด');
+    }
+  } catch { alert('บันทึกไม่สำเร็จ'); }
+}
+
+async function deleteZone(zoneId, label) {
+  if (!confirm(`ลบ Zone "${label}"?`)) return;
+  try {
+    const res = await fetch(`/SuntarapornBand/zones/${zoneId}`, {
+      method: 'DELETE',
+      headers: { 'X-CSRF-TOKEN': CSRF }
+    });
+    const data = await res.json();
+    if (data.success) {
+      location.reload();
+    } else {
+      alert(data.error || 'เกิดข้อผิดพลาด');
+    }
+  } catch { alert('ลบไม่สำเร็จ'); }
+}
+
+function addNewZoneRow() {
+  const tbody = document.getElementById('zone-table-body');
+  const row = document.createElement('tr');
+  row.setAttribute('data-zone-id', 'new');
+  row.innerHTML = `
+    <td style="padding:5px 8px;"><input type="color" value="#4CAF50" class="zone-color-input" data-zone-id="new" style="width:36px;height:26px;padding:1px;border:1px solid #ddd;border-radius:4px;cursor:pointer;"></td>
+    <td style="padding:5px 8px;"><input type="text" placeholder="ชื่อ Zone" class="zone-label-input" data-zone-id="new" style="border:1px solid #ddd;border-radius:4px;padding:4px 7px;font-size:13px;width:100%;"></td>
+    <td style="padding:5px 8px;"><input type="number" value="0" class="zone-price-input" data-zone-id="new" min="0" step="100" style="border:1px solid #ddd;border-radius:4px;padding:4px 7px;font-size:13px;width:90px;text-align:right;"></td>
+    <td style="padding:5px 8px;text-align:center;"><input type="text" placeholder="slug (e.g. vip)" class="zone-slug-input" style="border:1px solid #ddd;border-radius:4px;padding:4px 7px;font-size:12px;width:80px;margin-right:4px;"><button onclick="createZone(this.closest('tr'))" style="background:#2e7d32;color:#fff;border:none;border-radius:5px;padding:4px 10px;font-size:12px;cursor:pointer;">สร้าง</button></td>
+  `;
+  tbody.appendChild(row);
+}
+
+async function createZone(row) {
+  const label = row.querySelector('.zone-label-input').value.trim();
+  const color = row.querySelector('.zone-color-input').value;
+  const price = parseInt(row.querySelector('.zone-price-input').value) || 0;
+  const slug  = row.querySelector('.zone-slug-input').value.trim().toLowerCase();
+  if (!slug || !label) { alert('กรุณากรอกชื่อและ slug'); return; }
+  try {
+    const res = await fetch('/SuntarapornBand/zones', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-      body: JSON.stringify(data)
+      body: JSON.stringify({ slug, label, color, price })
     });
-    const json = await res.json();
-    if (json.success) {
-      Object.assign(PRICES, data);
-      zones.forEach(z => {
-        const el = document.getElementById('legend_'+z);
-        if (el) el.textContent = '฿'+data[z].toLocaleString('th-TH');
-      });
-      updateSummary();
-      closePriceModal();
+    const data = await res.json();
+    if (data.success) {
+      location.reload();
+    } else {
+      alert(data.error || 'เกิดข้อผิดพลาด');
     }
-  } catch {
-    alert('บันทึกไม่สำเร็จ');
+  } catch { alert('สร้างไม่สำเร็จ'); }
+}
+
+async function saveRowZones() {
+  const selects = document.querySelectorAll('.row-zone-select');
+  const assignments = {};
+  selects.forEach(sel => {
+    assignments[sel.dataset.rowKey] = parseInt(sel.value);
+  });
+  try {
+    const res = await fetch('/SuntarapornBand/row-zones', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+      body: JSON.stringify({ assignments })
+    });
+    const data = await res.json();
+    if (data.success) {
+      alert('บันทึกการกำหนดแถวสำเร็จ — รีโหลดหน้าเพื่อดูการเปลี่ยนแปลง');
+      location.reload();
+    } else {
+      alert(data.error || 'เกิดข้อผิดพลาด');
+    }
+  } catch { alert('บันทึกไม่สำเร็จ'); }
+}
+
+function applyZoneConfig(zonesArr, rowZonesMap) {
+  var css = '';
+  zonesArr.forEach(function (z) {
+    css += '.z-' + z.slug + ' { background: ' + z.color + '; color: ' + z.text_color + '; border-color: ' + z.border_color + '; }\n';
+    PRICES[z.slug] = z.price;
+    var legendEl = document.getElementById('legend_' + z.slug);
+    if (legendEl) legendEl.textContent = '฿' + Number(z.price).toLocaleString('th-TH');
+  });
+  var styleEl = document.getElementById('zone-dynamic-style');
+  if (!styleEl) {
+    styleEl = document.createElement('style');
+    styleEl.id = 'zone-dynamic-style';
+    document.head.appendChild(styleEl);
   }
+  styleEl.textContent = css;
+  updateSummary();
 }
 
 // ── Reset ───────────────────────────────────────────────────────
@@ -1299,6 +1427,12 @@ init();
 (function () {
   const pusher  = new Pusher('{{ config("broadcasting.connections.pusher.key") }}', { cluster: '{{ config("broadcasting.connections.pusher.options.cluster") }}' });
   const channel = pusher.subscribe('suntaraporn-concert');
+
+  channel.bind('zone-config-updated', function (data) {
+    if (data.zones && data.row_zones) {
+      applyZoneConfig(data.zones, data.row_zones);
+    }
+  });
 
   channel.bind('seat-status-updated', function (data) {
     // ที่นั่งถูกจองแล้ว

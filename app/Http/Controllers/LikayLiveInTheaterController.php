@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\LikaySeatStatusUpdated;
 use App\Exports\LikayBookingsExport;
 use App\Models\LikayBooking;
+use App\Models\LikayZone;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\LikaySeat;
 use App\Models\User;
@@ -91,13 +92,17 @@ class LikayLiveInTheaterController extends Controller
             ->pluck('seat_key')
             ->all();
 
-        $prices = DB::table('likay_zone_prices')
-            ->pluck('price', 'zone')
+        $zones = LikayZone::orderBy('sort_order')->get();
+        $prices = $zones->pluck('price', 'slug')->all();
+        $rowZones = DB::table('likay_row_zones')
+            ->join('likay_zones', 'likay_row_zones.zone_id', '=', 'likay_zones.id')
+            ->pluck('likay_zones.slug', 'likay_row_zones.row_key')
             ->all();
+
         $totalSeats     = LikaySeatMap::totalSeats();
         $selectingSeats = Cache::get(self::SELECTING_CACHE, []);
 
-        return view('likay-public', compact('bookedSeats', 'prices', 'totalSeats', 'selectingSeats'));
+        return view('likay-public', compact('bookedSeats', 'prices', 'totalSeats', 'selectingSeats', 'zones', 'rowZones'));
     }
 
     // ── Main Page ─────────────────────────────────────────────────
@@ -112,9 +117,13 @@ class LikayLiveInTheaterController extends Controller
             ->pluck('seat_key')
             ->all();
 
-        $prices = DB::table('likay_zone_prices')
-            ->pluck('price', 'zone')
+        $zones = LikayZone::orderBy('sort_order')->get();
+        $prices = $zones->pluck('price', 'slug')->all();
+        $rowZones = DB::table('likay_row_zones')
+            ->join('likay_zones', 'likay_row_zones.zone_id', '=', 'likay_zones.id')
+            ->pluck('likay_zones.slug', 'likay_row_zones.row_key')
             ->all();
+
         $totalSeats = LikaySeatMap::totalSeats();
 
         $allSeats = LikaySeatMap::seats();
@@ -126,7 +135,9 @@ class LikayLiveInTheaterController extends Controller
             $allSeats
         ));
 
-        return view('likay-band', compact('bookedSeats', 'prices', 'user', 'totalSeats', 'potentialRevenue', 'bookedRevenue'));
+        $selectingSeats = Cache::get(self::SELECTING_CACHE, []);
+
+        return view('likay-band', compact('bookedSeats', 'prices', 'user', 'totalSeats', 'potentialRevenue', 'bookedRevenue', 'zones', 'rowZones', 'selectingSeats'));
     }
 
     // ── Book Seat(s) ──────────────────────────────────────────────
@@ -158,7 +169,7 @@ class LikayLiveInTheaterController extends Controller
             ], 422);
         }
 
-        $prices    = DB::table('likay_zone_prices')->pluck('price', 'zone')->all();
+        $prices    = LikayZone::pluck('price', 'slug')->all();
         $totalPrice = 0;
         foreach ($seatZones as $zone) {
             $totalPrice += $prices[$zone] ?? 0;
@@ -382,9 +393,34 @@ class LikayLiveInTheaterController extends Controller
         return response()->json(['success' => true]);
     }
 
-    // ── Update Prices (manager only) ──────────────────────────────
+    // ── Zone Management (manager only) ────────────────────────────
 
-    public function updatePrices(Request $request): JsonResponse
+    public function listZones(): JsonResponse
+    {
+        if ($this->guardRedirect()) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
+        }
+
+        $zones = LikayZone::orderBy('sort_order')->get()->map(fn ($z) => [
+            'id'           => $z->id,
+            'slug'         => $z->slug,
+            'label'        => $z->label,
+            'color'        => $z->color,
+            'text_color'   => $z->text_color,
+            'border_color' => $z->border_color,
+            'price'        => $z->price,
+            'sort_order'   => $z->sort_order,
+        ])->values();
+
+        $rowZones = DB::table('likay_row_zones')
+            ->join('likay_zones', 'likay_row_zones.zone_id', '=', 'likay_zones.id')
+            ->pluck('likay_zones.slug', 'likay_row_zones.row_key')
+            ->all();
+
+        return response()->json(['success' => true, 'zones' => $zones, 'row_zones' => $rowZones]);
+    }
+
+    public function createZone(Request $request): JsonResponse
     {
         if ($this->guardRedirect()) {
             return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
@@ -396,20 +432,133 @@ class LikayLiveInTheaterController extends Controller
         }
 
         $data = $request->validate([
-            'vvip'   => 'required|integer|min:0',
-            'box'    => 'required|integer|min:0',
-            'yellow' => 'required|integer|min:0',
-            'blue'   => 'required|integer|min:0',
-            'pink'   => 'required|integer|min:0',
-            'green'  => 'required|integer|min:0',
-            'purple' => 'required|integer|min:0',
+            'slug'       => ['required', 'string', 'max:30', 'regex:/^[a-z0-9\-]+$/', 'unique:likay_zones,slug'],
+            'label'      => 'required|string|max:50',
+            'color'      => ['required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'price'      => 'required|integer|min:0',
+            'sort_order' => 'nullable|integer|min:0',
         ]);
 
-        foreach ($data as $zone => $price) {
-            DB::table('likay_zone_prices')
-                ->where('zone', $zone)
-                ->update(['price' => $price, 'updated_at' => now()]);
+        $zone = LikayZone::create([
+            'slug'       => $data['slug'],
+            'label'      => $data['label'],
+            'color'      => $data['color'],
+            'price'      => $data['price'],
+            'sort_order' => $data['sort_order'] ?? 0,
+        ]);
+
+        LikaySeatMap::flushCache();
+        $this->broadcastZoneUpdate();
+
+        return response()->json(['success' => true, 'zone' => [
+            'id'           => $zone->id,
+            'slug'         => $zone->slug,
+            'label'        => $zone->label,
+            'color'        => $zone->color,
+            'text_color'   => $zone->text_color,
+            'border_color' => $zone->border_color,
+            'price'        => $zone->price,
+            'sort_order'   => $zone->sort_order,
+        ]]);
+    }
+
+    public function updateZone(Request $request, int $id): JsonResponse
+    {
+        if ($this->guardRedirect()) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
         }
+
+        $user = $this->currentUser();
+        if ($user->role !== User::ROLE_MANAGER) {
+            return response()->json(['success' => false, 'error' => 'Forbidden'], 403);
+        }
+
+        $zone = LikayZone::findOrFail($id);
+
+        $data = $request->validate([
+            'label'      => 'required|string|max:50',
+            'color'      => ['required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'price'      => 'required|integer|min:0',
+            'sort_order' => 'nullable|integer|min:0',
+        ]);
+
+        $zone->update([
+            'label'      => $data['label'],
+            'color'      => $data['color'],
+            'price'      => $data['price'],
+            'sort_order' => $data['sort_order'] ?? $zone->sort_order,
+        ]);
+
+        LikaySeatMap::flushCache();
+        $this->broadcastZoneUpdate();
+
+        return response()->json(['success' => true, 'zone' => [
+            'id'           => $zone->id,
+            'slug'         => $zone->slug,
+            'label'        => $zone->label,
+            'color'        => $zone->color,
+            'text_color'   => $zone->text_color,
+            'border_color' => $zone->border_color,
+            'price'        => $zone->price,
+            'sort_order'   => $zone->sort_order,
+        ]]);
+    }
+
+    public function deleteZone(int $id): JsonResponse
+    {
+        if ($this->guardRedirect()) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
+        }
+
+        $user = $this->currentUser();
+        if ($user->role !== User::ROLE_MANAGER) {
+            return response()->json(['success' => false, 'error' => 'Forbidden'], 403);
+        }
+
+        $zone = LikayZone::findOrFail($id);
+
+        // Check if any rows are assigned to this zone
+        $rowCount = DB::table('likay_row_zones')->where('zone_id', $id)->count();
+        if ($rowCount > 0) {
+            return response()->json([
+                'success' => false,
+                'error'   => 'ไม่สามารถลบ Zone ที่มีแถวที่นั่งอยู่ กรุณาย้ายแถวทั้งหมดออกก่อน',
+            ], 422);
+        }
+
+        $zone->delete();
+
+        LikaySeatMap::flushCache();
+        $this->broadcastZoneUpdate();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function updateRowZones(Request $request): JsonResponse
+    {
+        if ($this->guardRedirect()) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
+        }
+
+        $user = $this->currentUser();
+        if ($user->role !== User::ROLE_MANAGER) {
+            return response()->json(['success' => false, 'error' => 'Forbidden'], 403);
+        }
+
+        $data = $request->validate([
+            'assignments'   => 'required|array',
+            'assignments.*' => 'required|integer|exists:likay_zones,id',
+        ]);
+
+        $now = now();
+        foreach ($data['assignments'] as $rowKey => $zoneId) {
+            DB::table('likay_row_zones')
+                ->where('row_key', $rowKey)
+                ->update(['zone_id' => $zoneId, 'updated_at' => $now]);
+        }
+
+        LikaySeatMap::flushCache();
+        $this->broadcastZoneUpdate();
 
         return response()->json(['success' => true]);
     }
@@ -481,5 +630,36 @@ class LikayLiveInTheaterController extends Controller
         $filename = 'likay-bookings-' . now()->format('Y-m-d') . '.xlsx';
 
         return Excel::download(new LikayBookingsExport(), $filename);
+    }
+
+    // ── Broadcast Zone Update ─────────────────────────────────────
+
+    private function broadcastZoneUpdate(): void
+    {
+        try {
+            $zones = LikayZone::orderBy('sort_order')->get()->map(fn ($z) => [
+                'id'           => $z->id,
+                'slug'         => $z->slug,
+                'label'        => $z->label,
+                'color'        => $z->color,
+                'text_color'   => $z->text_color,
+                'border_color' => $z->border_color,
+                'price'        => $z->price,
+            ])->all();
+
+            $rowZones = DB::table('likay_row_zones')
+                ->join('likay_zones', 'likay_row_zones.zone_id', '=', 'likay_zones.id')
+                ->pluck('likay_zones.slug', 'likay_row_zones.row_key')
+                ->all();
+
+            $pusher = new \Pusher\Pusher(
+                config('broadcasting.connections.pusher.key'),
+                config('broadcasting.connections.pusher.secret'),
+                config('broadcasting.connections.pusher.app_id'),
+                ['cluster' => config('broadcasting.connections.pusher.options.cluster'), 'useTLS' => true]
+            );
+
+            $pusher->trigger('likay-concert', 'zone-config-updated', compact('zones', 'rowZones'));
+        } catch (\Throwable) {}
     }
 }

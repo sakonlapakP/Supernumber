@@ -3,8 +3,8 @@
 namespace App\Exports;
 
 use App\Models\LikaySeat;
+use App\Models\LikayZone;
 use App\Services\LikaySeatMap;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
@@ -24,7 +24,7 @@ class LikayZoneSheet implements FromArray, WithHeadings, WithTitle, WithStyles
 
     public function array(): array
     {
-        $prices      = DB::table('likay_zone_prices')->pluck('price', 'zone')->all();
+        $prices      = LikayZone::pluck('price', 'slug')->all();
         $allSeats    = LikaySeatMap::seats();
 
         $totalPerZone = [];

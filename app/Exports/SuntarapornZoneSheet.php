@@ -3,8 +3,8 @@
 namespace App\Exports;
 
 use App\Models\SuntarapornSeat;
+use App\Models\SuntarapornZone;
 use App\Services\SuntarapornSeatMap;
-use Illuminate\Support\Facades\DB;
 use Maatwebsite\Excel\Concerns\FromArray;
 use Maatwebsite\Excel\Concerns\WithHeadings;
 use Maatwebsite\Excel\Concerns\WithStyles;
@@ -25,7 +25,7 @@ class SuntarapornZoneSheet implements FromArray, WithHeadings, WithTitle, WithSt
 
     public function array(): array
     {
-        $prices      = DB::table('suntaraporn_zone_prices')->pluck('price', 'zone')->all();
+        $prices      = SuntarapornZone::pluck('price', 'slug')->all();
         $allSeats    = SuntarapornSeatMap::seats();
 
         // count total seats per zone

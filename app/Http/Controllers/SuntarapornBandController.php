@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Events\SeatStatusUpdated;
 use App\Exports\SuntarapornBookingsExport;
 use App\Models\SuntarapornBooking;
+use App\Models\SuntarapornZone;
 use Maatwebsite\Excel\Facades\Excel;
 use App\Models\SuntarapornSeat;
 use App\Models\User;
@@ -88,12 +89,16 @@ class SuntarapornBandController extends Controller
             ->pluck('seat_key')
             ->all();
 
-        $prices = DB::table('suntaraporn_zone_prices')
-            ->pluck('price', 'zone')
+        $zones = SuntarapornZone::orderBy('sort_order')->get();
+        $prices = $zones->pluck('price', 'slug')->all();
+        $rowZones = DB::table('suntaraporn_row_zones')
+            ->join('suntaraporn_zones', 'suntaraporn_row_zones.zone_id', '=', 'suntaraporn_zones.id')
+            ->pluck('suntaraporn_zones.slug', 'suntaraporn_row_zones.row_key')
             ->all();
+
         $totalSeats = SuntarapornSeatMap::totalSeats();
 
-        return view('suntaraporn-public', compact('bookedSeats', 'prices', 'totalSeats'));
+        return view('suntaraporn-public', compact('bookedSeats', 'prices', 'totalSeats', 'zones', 'rowZones'));
     }
 
     // ── Main Page ─────────────────────────────────────────────────
@@ -108,12 +113,16 @@ class SuntarapornBandController extends Controller
             ->pluck('seat_key')
             ->all();
 
-        $prices = DB::table('suntaraporn_zone_prices')
-            ->pluck('price', 'zone')
+        $zones = SuntarapornZone::orderBy('sort_order')->get();
+        $prices = $zones->pluck('price', 'slug')->all();
+        $rowZones = DB::table('suntaraporn_row_zones')
+            ->join('suntaraporn_zones', 'suntaraporn_row_zones.zone_id', '=', 'suntaraporn_zones.id')
+            ->pluck('suntaraporn_zones.slug', 'suntaraporn_row_zones.row_key')
             ->all();
+
         $totalSeats = SuntarapornSeatMap::totalSeats();
 
-        return view('suntaraporn-band', compact('bookedSeats', 'prices', 'user', 'totalSeats'));
+        return view('suntaraporn-band', compact('bookedSeats', 'prices', 'user', 'totalSeats', 'zones', 'rowZones'));
     }
 
     // ── Book Seat(s) ──────────────────────────────────────────────
@@ -147,7 +156,7 @@ class SuntarapornBandController extends Controller
         }
 
         // Calculate total price from the trusted server-side seat map.
-        $prices    = DB::table('suntaraporn_zone_prices')->pluck('price', 'zone')->all();
+        $prices    = SuntarapornZone::pluck('price', 'slug')->all();
         $totalPrice = 0;
         foreach ($seatZones as $zone) {
             $totalPrice += $prices[$zone] ?? 0;
@@ -365,9 +374,34 @@ class SuntarapornBandController extends Controller
         return response()->json(['success' => true]);
     }
 
-    // ── Update Prices (manager only) ──────────────────────────────
+    // ── Zone Management (manager only) ────────────────────────────
 
-    public function updatePrices(Request $request): JsonResponse
+    public function listZones(): JsonResponse
+    {
+        if ($this->guardRedirect()) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
+        }
+
+        $zones = SuntarapornZone::orderBy('sort_order')->get()->map(fn ($z) => [
+            'id'           => $z->id,
+            'slug'         => $z->slug,
+            'label'        => $z->label,
+            'color'        => $z->color,
+            'text_color'   => $z->text_color,
+            'border_color' => $z->border_color,
+            'price'        => $z->price,
+            'sort_order'   => $z->sort_order,
+        ])->values();
+
+        $rowZones = DB::table('suntaraporn_row_zones')
+            ->join('suntaraporn_zones', 'suntaraporn_row_zones.zone_id', '=', 'suntaraporn_zones.id')
+            ->pluck('suntaraporn_zones.slug', 'suntaraporn_row_zones.row_key')
+            ->all();
+
+        return response()->json(['success' => true, 'zones' => $zones, 'row_zones' => $rowZones]);
+    }
+
+    public function createZone(Request $request): JsonResponse
     {
         if ($this->guardRedirect()) {
             return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
@@ -378,22 +412,134 @@ class SuntarapornBandController extends Controller
             return response()->json(['success' => false, 'error' => 'Forbidden'], 403);
         }
 
-        // zone keys must match SuntarapornSeatMap: V_/W_ rows = 'vip' (not 'vvip')
         $data = $request->validate([
-            'vip'    => 'required|integer|min:0',
-            'box'    => 'required|integer|min:0',
-            'yellow' => 'required|integer|min:0',
-            'blue'   => 'required|integer|min:0',
-            'pink'   => 'required|integer|min:0',
-            'green'  => 'required|integer|min:0',
-            'purple' => 'required|integer|min:0',
+            'slug'       => ['required', 'string', 'max:30', 'regex:/^[a-z0-9\-]+$/', 'unique:suntaraporn_zones,slug'],
+            'label'      => 'required|string|max:50',
+            'color'      => ['required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'price'      => 'required|integer|min:0',
+            'sort_order' => 'nullable|integer|min:0',
         ]);
 
-        foreach ($data as $zone => $price) {
-            DB::table('suntaraporn_zone_prices')
-                ->where('zone', $zone)
-                ->update(['price' => $price, 'updated_at' => now()]);
+        $zone = SuntarapornZone::create([
+            'slug'       => $data['slug'],
+            'label'      => $data['label'],
+            'color'      => $data['color'],
+            'price'      => $data['price'],
+            'sort_order' => $data['sort_order'] ?? 0,
+        ]);
+
+        SuntarapornSeatMap::flushCache();
+        $this->broadcastZoneUpdate();
+
+        return response()->json(['success' => true, 'zone' => [
+            'id'           => $zone->id,
+            'slug'         => $zone->slug,
+            'label'        => $zone->label,
+            'color'        => $zone->color,
+            'text_color'   => $zone->text_color,
+            'border_color' => $zone->border_color,
+            'price'        => $zone->price,
+            'sort_order'   => $zone->sort_order,
+        ]]);
+    }
+
+    public function updateZone(Request $request, int $id): JsonResponse
+    {
+        if ($this->guardRedirect()) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
         }
+
+        $user = $this->currentUser();
+        if ($user->role !== User::ROLE_MANAGER) {
+            return response()->json(['success' => false, 'error' => 'Forbidden'], 403);
+        }
+
+        $zone = SuntarapornZone::findOrFail($id);
+
+        $data = $request->validate([
+            'label'      => 'required|string|max:50',
+            'color'      => ['required', 'string', 'regex:/^#[0-9a-fA-F]{6}$/'],
+            'price'      => 'required|integer|min:0',
+            'sort_order' => 'nullable|integer|min:0',
+        ]);
+
+        $zone->update([
+            'label'      => $data['label'],
+            'color'      => $data['color'],
+            'price'      => $data['price'],
+            'sort_order' => $data['sort_order'] ?? $zone->sort_order,
+        ]);
+
+        SuntarapornSeatMap::flushCache();
+        $this->broadcastZoneUpdate();
+
+        return response()->json(['success' => true, 'zone' => [
+            'id'           => $zone->id,
+            'slug'         => $zone->slug,
+            'label'        => $zone->label,
+            'color'        => $zone->color,
+            'text_color'   => $zone->text_color,
+            'border_color' => $zone->border_color,
+            'price'        => $zone->price,
+            'sort_order'   => $zone->sort_order,
+        ]]);
+    }
+
+    public function deleteZone(int $id): JsonResponse
+    {
+        if ($this->guardRedirect()) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
+        }
+
+        $user = $this->currentUser();
+        if ($user->role !== User::ROLE_MANAGER) {
+            return response()->json(['success' => false, 'error' => 'Forbidden'], 403);
+        }
+
+        $zone = SuntarapornZone::findOrFail($id);
+
+        // Check if any rows are assigned to this zone
+        $rowCount = DB::table('suntaraporn_row_zones')->where('zone_id', $id)->count();
+        if ($rowCount > 0) {
+            return response()->json([
+                'success' => false,
+                'error'   => 'ไม่สามารถลบ Zone ที่มีแถวที่นั่งอยู่ กรุณาย้ายแถวทั้งหมดออกก่อน',
+            ], 422);
+        }
+
+        $zone->delete();
+
+        SuntarapornSeatMap::flushCache();
+        $this->broadcastZoneUpdate();
+
+        return response()->json(['success' => true]);
+    }
+
+    public function updateRowZones(Request $request): JsonResponse
+    {
+        if ($this->guardRedirect()) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
+        }
+
+        $user = $this->currentUser();
+        if ($user->role !== User::ROLE_MANAGER) {
+            return response()->json(['success' => false, 'error' => 'Forbidden'], 403);
+        }
+
+        $data = $request->validate([
+            'assignments'   => 'required|array',
+            'assignments.*' => 'required|integer|exists:suntaraporn_zones,id',
+        ]);
+
+        $now = now();
+        foreach ($data['assignments'] as $rowKey => $zoneId) {
+            DB::table('suntaraporn_row_zones')
+                ->where('row_key', $rowKey)
+                ->update(['zone_id' => $zoneId, 'updated_at' => $now]);
+        }
+
+        SuntarapornSeatMap::flushCache();
+        $this->broadcastZoneUpdate();
 
         return response()->json(['success' => true]);
     }
@@ -453,5 +599,36 @@ class SuntarapornBandController extends Controller
         $filename = 'suntaraporn-bookings-' . now()->format('Y-m-d') . '.xlsx';
 
         return Excel::download(new SuntarapornBookingsExport(), $filename);
+    }
+
+    // ── Broadcast Zone Update ─────────────────────────────────────
+
+    private function broadcastZoneUpdate(): void
+    {
+        try {
+            $zones = SuntarapornZone::orderBy('sort_order')->get()->map(fn ($z) => [
+                'id'           => $z->id,
+                'slug'         => $z->slug,
+                'label'        => $z->label,
+                'color'        => $z->color,
+                'text_color'   => $z->text_color,
+                'border_color' => $z->border_color,
+                'price'        => $z->price,
+            ])->all();
+
+            $rowZones = DB::table('suntaraporn_row_zones')
+                ->join('suntaraporn_zones', 'suntaraporn_row_zones.zone_id', '=', 'suntaraporn_zones.id')
+                ->pluck('suntaraporn_zones.slug', 'suntaraporn_row_zones.row_key')
+                ->all();
+
+            $pusher = new \Pusher\Pusher(
+                config('broadcasting.connections.pusher.key'),
+                config('broadcasting.connections.pusher.secret'),
+                config('broadcasting.connections.pusher.app_id'),
+                ['cluster' => config('broadcasting.connections.pusher.options.cluster'), 'useTLS' => true]
+            );
+
+            $pusher->trigger('suntaraporn-concert', 'zone-config-updated', compact('zones', 'rowZones'));
+        } catch (\Throwable) {}
     }
 }

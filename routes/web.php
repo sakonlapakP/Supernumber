@@ -65,8 +65,12 @@ Route::get('/LikayLiveInTheater', [LikayLiveInTheaterController::class, 'index']
 Route::post('/LikayLiveInTheater/book',     [LikayLiveInTheaterController::class, 'bookSeat'])->name('likay.book');
 Route::post('/LikayLiveInTheater/select',   [LikayLiveInTheaterController::class, 'selectSeat'])->name('likay.select');
 Route::post('/LikayLiveInTheater/deselect', [LikayLiveInTheaterController::class, 'deselectSeat'])->name('likay.deselect');
-Route::post('/LikayLiveInTheater/prices', [LikayLiveInTheaterController::class, 'updatePrices'])->name('likay.prices');
 Route::post('/LikayLiveInTheater/reset', [LikayLiveInTheaterController::class, 'resetSeats'])->name('likay.reset');
+Route::get('/LikayLiveInTheater/zones', [LikayLiveInTheaterController::class, 'listZones'])->name('likay.zones.list');
+Route::post('/LikayLiveInTheater/zones', [LikayLiveInTheaterController::class, 'createZone'])->name('likay.zones.create');
+Route::put('/LikayLiveInTheater/zones/{id}', [LikayLiveInTheaterController::class, 'updateZone'])->name('likay.zones.update');
+Route::delete('/LikayLiveInTheater/zones/{id}', [LikayLiveInTheaterController::class, 'deleteZone'])->name('likay.zones.delete');
+Route::put('/LikayLiveInTheater/row-zones', [LikayLiveInTheaterController::class, 'updateRowZones'])->name('likay.row-zones.update');
 Route::get('/LikayLiveInTheater/booking-info/{seatKey}', [LikayLiveInTheaterController::class, 'bookingInfo'])->name('likay.booking-info');
 Route::get('/LikayLiveInTheater/bookings', [LikayLiveInTheaterController::class, 'bookingList'])->name('likay.bookings');
 Route::get('/LikayLiveInTheater/export',   [LikayLiveInTheaterController::class, 'exportBookings'])->name('likay.export');
@@ -82,8 +86,12 @@ Route::get('/SuntarapornBand', [SuntarapornBandController::class, 'index'])->nam
 Route::post('/SuntarapornBand/book',     [SuntarapornBandController::class, 'bookSeat'])->name('suntaraporn.book');
 Route::post('/SuntarapornBand/select',   [SuntarapornBandController::class, 'selectSeat'])->name('suntaraporn.select');
 Route::post('/SuntarapornBand/deselect', [SuntarapornBandController::class, 'deselectSeat'])->name('suntaraporn.deselect');
-Route::post('/SuntarapornBand/prices', [SuntarapornBandController::class, 'updatePrices'])->name('suntaraporn.prices');
 Route::post('/SuntarapornBand/reset', [SuntarapornBandController::class, 'resetSeats'])->name('suntaraporn.reset');
+Route::get('/SuntarapornBand/zones', [SuntarapornBandController::class, 'listZones'])->name('suntaraporn.zones.list');
+Route::post('/SuntarapornBand/zones', [SuntarapornBandController::class, 'createZone'])->name('suntaraporn.zones.create');
+Route::put('/SuntarapornBand/zones/{id}', [SuntarapornBandController::class, 'updateZone'])->name('suntaraporn.zones.update');
+Route::delete('/SuntarapornBand/zones/{id}', [SuntarapornBandController::class, 'deleteZone'])->name('suntaraporn.zones.delete');
+Route::put('/SuntarapornBand/row-zones', [SuntarapornBandController::class, 'updateRowZones'])->name('suntaraporn.row-zones.update');
 Route::get('/SuntarapornBand/booking-info/{seatKey}', [SuntarapornBandController::class, 'bookingInfo'])->name('suntaraporn.booking-info');
 Route::get('/SuntarapornBand/bookings', [SuntarapornBandController::class, 'bookingList'])->name('suntaraporn.bookings');
 Route::get('/SuntarapornBand/export',   [SuntarapornBandController::class, 'exportBookings'])->name('suntaraporn.export');
