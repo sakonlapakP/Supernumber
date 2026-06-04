@@ -100,6 +100,7 @@
 
 | ประเภท (Method) | เส้นทาง (URI Pattern) | ชื่อเส้นทาง (Route Name) | หน้าที่รับผิดชอบ (Responsibility) | สิทธิ์การเข้าถึง (Access Level) |
 | :--- | :--- | :--- | :--- | :--- |
+| **GET** | `/SuntarapornBand/live-state` | `suntaraporn.live-state` | คืนค่า booked + selecting ปัจจุบัน (JSON) สำหรับ polling fallback | **ทุกคน (Public)** |
 | **GET** | `/SuntarapornBand/view` | `suntaraporn.public` | แสดงผังที่นั่งเรียลไทม์เวอร์ชันสาธารณะ | **ทุกคน (Public)** |
 | **GET** | `/SuntarapornBand/login` | `suntaraporn.login` | แสดงหน้าล็อกอินเข้าสู่ระบบ | ทุกคน (ถ้าล็อกอินแล้วจะไปหน้าผัง) |
 | **POST** | `/SuntarapornBand/login` | `suntaraporn.login.post` | ประมวลผลและสร้าง Session เจ้าหน้าที่ | ทุกคน |
@@ -135,7 +136,12 @@
    - เมื่อจองสำเร็จจะทำการส่งกระจายข้อมูลสถานะที่นั่งใหม่ (Broadcasting) ผ่าน Pusher ไปยังผู้ใช้ทุกคนทันที
 5. **`selectSeat()` / `deselectSeat()`**
    - จัดการส่งสัญญาณเรียลไทม์เพื่อแจ้งผู้ใช้อื่นว่าเก้าอี้นี้กำลังมีเจ้าหน้าที่อีกคนกำลังกดเลือกอยู่ (ช่วยลดโอกาสจองชนกันก่อนกรอกฟอร์ม)
-6. **`updatePrices(Request $request)`**
+   - **`selectSeat()`** บันทึก `selectingKeys` ลงใน Laravel Cache (`suntaraporn_selecting_keys`, TTL 600 วิ) เพิ่มเติมจาก Pusher Broadcast
+   - **`deselectSeat()`** / **`bookSeat()`** / **`resetSeats()`** ลบ keys ที่เกี่ยวข้องออกจาก Cache ทันทีเพื่อให้ข้อมูล polling สอดคล้องกับสถานะจริง
+6. **`liveState()`**
+   - endpoint JSON สาธารณะ (`GET /SuntarapornBand/live-state`) คืนค่า `booked` (จาก DB) และ `selecting` (จาก Cache) ในรูปแบบ key array
+   - ใช้โดย polling fallback script ในหน้า public view
+7. **`updatePrices(Request $request)`**
    - เปิดให้เฉพาะผู้จัดการเป็นผู้อัปเดตราคาโซน ทั้งหมดถูก Validate ให้เป็นตัวเลขที่มีค่าตั้งแต่ 0 ขึ้นไป
 7. **`resetSeats()`**
    - เปิดให้เฉพาะผู้จัดการล้างข้อมูลเก้าอี้ทั้งหมด พร้อมทั้งทำการตรวจสอบและลบไฟล์สลิปการจองที่ผูกอยู่ทั้งหมดออกจากระบบ Storage เพื่อลดขยะข้อมูล
@@ -154,6 +160,10 @@
 - **เครื่องมือหลัก:** ใช้บริการ **Pusher** ร่วมกับ Laravel Event Broadcasting
 - **ช่องทางส่งสัญญาณ (Channel):** `suntaraporn-concert` (ช่องสัญญาณแบบสาธารณะเพื่อลด overhead ในการโหลด)
 - **ประเภทของสัญญาณที่ส่ง (Broadcasting Event):** `SeatStatusUpdated` (บรรจุโครงสร้างข้อมูลคีย์เก้าอี้และสถานะ เช่น จองแล้ว ว่าง หรือกำลังเลือกอยู่)
+- **Polling Fallback (สำรองกรณี Pusher ไม่ deliver):**
+  - หน้า public view มี JavaScript script ที่ `fetch('/SuntarapornBand/live-state')` ทุก **8 วินาที** เพื่อ sync สถานะ booked + selecting ให้ตรงกับ Server เสมอ
+  - logic ของ polling จะ diff สถานะเก่ากับใหม่ก่อน apply เพื่อไม่ให้ re-render ที่นั่งที่ไม่มีการเปลี่ยนแปลง
+  - ทำงานควบคู่กับ Pusher — ถ้า Pusher ส่งมาก่อนก็ไม่มีผล (idempotent)
 - **สถานะที่นั่งบน UI:**
   - `ว่าง`: แสดงสีตามโซนปกติ (ชมพู, ฟ้า, เหลือง, เขียว, ม่วง)
   - `🔒 กำลังเลือกชั่วคราว`: แสดงสีส้มกะพริบสดใส (เมื่อมีเจ้าหน้าที่ท่านอื่นกำลังคลิกเลือกไว้ และอยู่ในขั้นตอนกรอกข้อมูลใบจอง)
@@ -174,7 +184,7 @@
 
 ## 🧪 การทดสอบระบบและการตรวจสอบคุณภาพ (Testing)
 
-ระบบ Suntaraporn Band มีการเขียน Unit และ Feature Test เพื่อความปลอดภัยและความเสถียรของฟังก์ชันการจอง โดยมีเคสทดสอบที่ผ่านกระบวนการตรวจสอบทั้งหมด 5 เคส (20 Assertions):
+ระบบ Suntaraporn Band มีการเขียน Unit และ Feature Test เพื่อความปลอดภัยและความเสถียรของฟังก์ชันการจอง โดยมีเคสทดสอบที่ผ่านกระบวนการตรวจสอบทั้งหมด **10 เคส (133 Assertions)**:
 
 ### วิธีการรันการทดสอบ
 เปิดโปรแกรม Terminal ในระบบแล้วรันคำสั่งดังต่อไปนี้:

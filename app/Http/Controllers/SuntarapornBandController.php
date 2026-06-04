@@ -25,7 +25,7 @@ class SuntarapornBandController extends Controller
     private const ALLOWED_ROLES    = [User::ROLE_SUNTARAPORN, User::ROLE_MANAGER];
     private const SESSION_KEY      = 'suntaraporn_user_id';
     private const SELECTING_CACHE  = 'suntaraporn_selecting_keys';
-    private const SELECTING_TTL    = 600; // seconds
+    private const SELECTING_TTL    = 180; // seconds
 
     // ── Auth helpers ─────────────────────────────────────────────
 
@@ -99,9 +99,10 @@ class SuntarapornBandController extends Controller
             ->pluck('suntaraporn_zones.slug', 'suntaraporn_row_zones.row_key')
             ->all();
 
-        $totalSeats = SuntarapornSeatMap::totalSeats();
+        $totalSeats     = SuntarapornSeatMap::totalSeats();
+        $selectingSeats = Cache::get(self::SELECTING_CACHE, []);
 
-        return view('suntaraporn-public', compact('bookedSeats', 'prices', 'totalSeats', 'zones', 'rowZones'));
+        return view('suntaraporn-public', compact('bookedSeats', 'prices', 'totalSeats', 'selectingSeats', 'zones', 'rowZones'));
     }
 
     // ── Main Page ─────────────────────────────────────────────────
@@ -123,9 +124,10 @@ class SuntarapornBandController extends Controller
             ->pluck('suntaraporn_zones.slug', 'suntaraporn_row_zones.row_key')
             ->all();
 
-        $totalSeats = SuntarapornSeatMap::totalSeats();
+        $totalSeats     = SuntarapornSeatMap::totalSeats();
+        $selectingSeats = Cache::get(self::SELECTING_CACHE, []);
 
-        return view('suntaraporn-band', compact('bookedSeats', 'prices', 'user', 'totalSeats', 'zones', 'rowZones'));
+        return view('suntaraporn-band', compact('bookedSeats', 'prices', 'user', 'totalSeats', 'selectingSeats', 'zones', 'rowZones'));
     }
 
     // ── Book Seat(s) ──────────────────────────────────────────────
@@ -330,6 +332,8 @@ class SuntarapornBandController extends Controller
             $booking->delete();
         });
 
+        $existing = Cache::get(self::SELECTING_CACHE, []);
+        Cache::put(self::SELECTING_CACHE, array_values(array_diff($existing, $freedKeys)), self::SELECTING_TTL);
         try { broadcast(new SeatStatusUpdated(freedKeys: $freedKeys)); } catch (\Throwable) {}
 
         return response()->json(['success' => true]);

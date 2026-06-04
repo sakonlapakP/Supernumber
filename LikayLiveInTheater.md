@@ -105,6 +105,9 @@
 
 ```php
 // ─── Likay Live In The Theater Seating ───────────────────────────────────────
+// คืนค่า booked + selecting ปัจจุบัน (JSON) สำหรับ polling fallback
+Route::get('/LikayLiveInTheater/live-state', [LikayLiveInTheaterController::class, 'liveState'])->name('likay.live-state');
+
 // หน้าสาธารณะสำหรับผู้ชมทั่วไป (อัปเดตแบบเรียลไทม์ / Read-Only)
 Route::get('/LikayLiveInTheater/view',  [LikayLiveInTheaterController::class, 'publicView'])->name('likay.public');
 
@@ -162,6 +165,14 @@ Route::post('/LikayLiveInTheater/reset', [LikayLiveInTheaterController::class, '
 ### 4. ระบบบรอดแคสต์สถานะเรียลไทม์ (Broadcasting Events)
 - ทุกๆ การดำเนินการที่สำเร็จ ไม่ว่าจะเป็นการบันทึกการจองสำเร็จ (`bookSeat`), การยกเลิกการจอง (`cancelBooking`), การกำลังเลือกเก้าอี้ (`selectSeat`) หรือการปล่อยมือ (`deselectSeat`) จะมีการยิง Event ชื่อ `LikaySeatStatusUpdated` ไปทางช่องสัญญาณ `likay-concert`
 - ทำให้แอดมินคนอื่นๆ และหน้าสาธารณะ (Public Monitor) ได้รับทราบความเปลี่ยนแปลงทันทีโดยไม่ต้องรีเฟรชหน้าเว็บ
+
+### 5. Selecting Cache และ Polling Fallback
+- Controller เก็บ selecting keys ไว้ใน Laravel Cache (`likay_selecting_keys`, TTL 600 วิ) เพื่อให้ endpoint `liveState()` คืนค่าที่ถูกต้องได้
+  - **`selectSeat()`** — เพิ่ม keys เข้า cache
+  - **`deselectSeat()`** / **`bookSeat()`** / **`cancelBooking()`** — ลบ keys ที่เกี่ยวข้องออกจาก cache
+  - **`resetSeats()`** — `Cache::forget()` ล้างทั้งหมด
+- หน้า public view (`likay-public.blade.php`) มี JavaScript polling fallback ที่ `fetch('/LikayLiveInTheater/live-state')` ทุก **8 วินาที** — sync สถานะ booked + selecting ให้ตรงกับ Server เสมอ แม้ Pusher จะไม่ deliver
+- Polling และ Pusher ทำงานควบคู่กัน (idempotent) — ถ้า Pusher ส่งก่อนก็ไม่มีผลเสีย
 
 ---
 

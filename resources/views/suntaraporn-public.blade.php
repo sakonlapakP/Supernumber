@@ -550,13 +550,19 @@
 
 <script>
 const BOOKED    = new Set(@json($bookedSeats));
-const SELECTING = new Set();
+const SELECTING = new Set(@json($selectingSeats));
 const TOTAL     = @json($totalSeats);
 
 // ── Init ─────────────────────────────────────────────────────────
 function init() {
   document.querySelectorAll('[data-key]').forEach(el => {
-    if (BOOKED.has(el.dataset.key)) el.classList.add('is-booked');
+    const key = el.dataset.key;
+    if (BOOKED.has(key)) {
+      el.classList.add('is-booked');
+    } else if (SELECTING.has(key)) {
+      el.classList.add('is-selecting');
+      el.setAttribute('title', 'กำลังถูกเลือกอยู่');
+    }
   });
   updateStats();
 }
