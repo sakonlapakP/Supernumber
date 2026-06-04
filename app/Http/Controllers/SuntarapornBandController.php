@@ -14,6 +14,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
@@ -21,8 +22,10 @@ use RuntimeException;
 
 class SuntarapornBandController extends Controller
 {
-    private const ALLOWED_ROLES = [User::ROLE_SUNTARAPORN, User::ROLE_MANAGER];
-    private const SESSION_KEY   = 'suntaraporn_user_id';
+    private const ALLOWED_ROLES    = [User::ROLE_SUNTARAPORN, User::ROLE_MANAGER];
+    private const SESSION_KEY      = 'suntaraporn_user_id';
+    private const SELECTING_CACHE  = 'suntaraporn_selecting_keys';
+    private const SELECTING_TTL    = 600; // seconds
 
     // ── Auth helpers ─────────────────────────────────────────────
 
@@ -230,6 +233,8 @@ class SuntarapornBandController extends Controller
             ], 409);
         }
 
+        $existing = Cache::get(self::SELECTING_CACHE, []);
+        Cache::put(self::SELECTING_CACHE, array_values(array_diff($existing, $seatKeys)), self::SELECTING_TTL);
         try { broadcast(new SeatStatusUpdated(bookedKeys: $seatKeys)); } catch (\Throwable) {}
 
         return response()->json(['success' => true]);
@@ -352,6 +357,8 @@ class SuntarapornBandController extends Controller
         $selectingKeys = array_values(array_diff($data['seat_keys'], $alreadyBooked));
 
         if (!empty($selectingKeys)) {
+            $existing = Cache::get(self::SELECTING_CACHE, []);
+            Cache::put(self::SELECTING_CACHE, array_values(array_unique(array_merge($existing, $selectingKeys))), self::SELECTING_TTL);
             try { broadcast(new SeatStatusUpdated(selectingKeys: $selectingKeys)); } catch (\Throwable) {}
         }
 
@@ -369,6 +376,8 @@ class SuntarapornBandController extends Controller
             'seat_keys.*' => 'required|string|max:30',
         ]);
 
+        $existing = Cache::get(self::SELECTING_CACHE, []);
+        Cache::put(self::SELECTING_CACHE, array_values(array_diff($existing, $data['seat_keys'])), self::SELECTING_TTL);
         try { broadcast(new SeatStatusUpdated(deselectingKeys: $data['seat_keys'])); } catch (\Throwable) {}
 
         return response()->json(['success' => true]);
@@ -583,11 +592,23 @@ class SuntarapornBandController extends Controller
             Storage::disk('public')->delete($path);
         }
 
+        Cache::forget(self::SELECTING_CACHE);
+
         if (!empty($freedKeys)) {
             try { broadcast(new SeatStatusUpdated(freedKeys: $freedKeys)); } catch (\Throwable) {}
         }
 
         return response()->json(['success' => true]);
+    }
+
+    // ── Live State (polling fallback) ─────────────────────────────
+
+    public function liveState(): JsonResponse
+    {
+        return response()->json([
+            'booked'    => SuntarapornSeat::where('is_booked', true)->pluck('seat_key')->all(),
+            'selecting' => Cache::get(self::SELECTING_CACHE, []),
+        ]);
     }
 
     // ── Export Excel ──────────────────────────────────────────────

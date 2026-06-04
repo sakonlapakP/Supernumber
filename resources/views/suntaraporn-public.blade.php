@@ -662,5 +662,67 @@ init();
   });
 })();
 </script>
+
+{{-- ─── Polling Fallback (ถ้า Pusher ไม่ deliver) ──────────────── --}}
+<script>
+(function () {
+  function applyState(data) {
+    var newBooked    = new Set(data.booked    || []);
+    var newSelecting = new Set(data.selecting || []);
+
+    // sync BOOKED
+    newBooked.forEach(function (key) {
+      if (BOOKED.has(key)) return;
+      BOOKED.add(key);
+      SELECTING.delete(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        el.classList.remove('is-selecting');
+        el.classList.add('is-booked');
+        el.removeAttribute('title');
+      });
+    });
+    BOOKED.forEach(function (key) {
+      if (newBooked.has(key)) return;
+      BOOKED.delete(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        el.classList.remove('is-booked');
+      });
+    });
+
+    // sync SELECTING
+    newSelecting.forEach(function (key) {
+      if (SELECTING.has(key) || BOOKED.has(key)) return;
+      SELECTING.add(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        el.classList.add('is-selecting');
+        el.setAttribute('title', 'กำลังถูกเลือกอยู่');
+      });
+    });
+    SELECTING.forEach(function (key) {
+      if (newSelecting.has(key)) return;
+      SELECTING.delete(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        if (!BOOKED.has(key)) {
+          el.classList.remove('is-selecting');
+          el.removeAttribute('title');
+        }
+      });
+    });
+
+    updateStats();
+    markLastUpdated();
+  }
+
+  function poll() {
+    fetch('/SuntarapornBand/live-state')
+      .then(function (r) { return r.json(); })
+      .then(applyState)
+      .catch(function () {});
+  }
+
+  // Poll ทุก 8 วิ
+  setInterval(poll, 8000);
+})();
+</script>
 </body>
 </html>

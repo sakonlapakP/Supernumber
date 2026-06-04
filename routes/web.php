@@ -78,6 +78,7 @@ Route::delete('/LikayLiveInTheater/booking/{id}', [LikayLiveInTheaterController:
 Route::get('/LikayLiveInTheater/live-state',   [LikayLiveInTheaterController::class, 'liveState'])->name('likay.live-state');
 
 // ─── Suntaraporn Band Concert Seating ────────────────────────────────────────
+Route::get('/SuntarapornBand/live-state', [SuntarapornBandController::class, 'liveState'])->name('suntaraporn.live-state');
 Route::get('/SuntarapornBand/view',  [SuntarapornBandController::class, 'publicView'])->name('suntaraporn.public');
 Route::get('/SuntarapornBand/login', [SuntarapornBandController::class, 'showLogin'])->name('suntaraporn.login');
 Route::post('/SuntarapornBand/login', [SuntarapornBandController::class, 'doLogin'])->middleware('throttle:5,1')->name('suntaraporn.login.post');
