@@ -12,6 +12,7 @@ use App\Services\LikaySeatMap;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
@@ -20,8 +21,10 @@ use RuntimeException;
 
 class LikayLiveInTheaterController extends Controller
 {
-    private const ALLOWED_ROLES = [User::ROLE_LIKAY, User::ROLE_MANAGER];
-    private const SESSION_KEY   = 'likay_user_id';
+    private const ALLOWED_ROLES   = [User::ROLE_LIKAY, User::ROLE_MANAGER];
+    private const SESSION_KEY     = 'likay_user_id';
+    private const SELECTING_CACHE = 'likay_selecting_keys';
+    private const SELECTING_TTL   = 180; // seconds
 
     // ── Auth helpers ─────────────────────────────────────────────
 
@@ -91,9 +94,10 @@ class LikayLiveInTheaterController extends Controller
         $prices = DB::table('likay_zone_prices')
             ->pluck('price', 'zone')
             ->all();
-        $totalSeats = LikaySeatMap::totalSeats();
+        $totalSeats     = LikaySeatMap::totalSeats();
+        $selectingSeats = Cache::get(self::SELECTING_CACHE, []);
 
-        return view('likay-public', compact('bookedSeats', 'prices', 'totalSeats'));
+        return view('likay-public', compact('bookedSeats', 'prices', 'totalSeats', 'selectingSeats'));
     }
 
     // ── Main Page ─────────────────────────────────────────────────
@@ -228,6 +232,8 @@ class LikayLiveInTheaterController extends Controller
             ], 409);
         }
 
+        $existing = Cache::get(self::SELECTING_CACHE, []);
+        Cache::put(self::SELECTING_CACHE, array_values(array_diff($existing, $seatKeys)), self::SELECTING_TTL);
         try { broadcast(new LikaySeatStatusUpdated(bookedKeys: $seatKeys)); } catch (\Throwable) {}
 
         return response()->json(['success' => true]);
@@ -322,6 +328,8 @@ class LikayLiveInTheaterController extends Controller
             $booking->delete();
         });
 
+        $existing = Cache::get(self::SELECTING_CACHE, []);
+        Cache::put(self::SELECTING_CACHE, array_values(array_diff($existing, $freedKeys)), self::SELECTING_TTL);
         try { broadcast(new LikaySeatStatusUpdated(freedKeys: $freedKeys)); } catch (\Throwable) {}
 
         return response()->json(['success' => true]);
@@ -348,6 +356,8 @@ class LikayLiveInTheaterController extends Controller
         $selectingKeys = array_values(array_diff($data['seat_keys'], $alreadyBooked));
 
         if (!empty($selectingKeys)) {
+            $existing = Cache::get(self::SELECTING_CACHE, []);
+            Cache::put(self::SELECTING_CACHE, array_values(array_unique(array_merge($existing, $selectingKeys))), self::SELECTING_TTL);
             try { broadcast(new LikaySeatStatusUpdated(selectingKeys: $selectingKeys)); } catch (\Throwable) {}
         }
 
@@ -365,6 +375,8 @@ class LikayLiveInTheaterController extends Controller
             'seat_keys.*' => 'required|string|max:30',
         ]);
 
+        $existing = Cache::get(self::SELECTING_CACHE, []);
+        Cache::put(self::SELECTING_CACHE, array_values(array_diff($existing, $data['seat_keys'])), self::SELECTING_TTL);
         try { broadcast(new LikaySeatStatusUpdated(deselectingKeys: $data['seat_keys'])); } catch (\Throwable) {}
 
         return response()->json(['success' => true]);
@@ -440,6 +452,8 @@ class LikayLiveInTheaterController extends Controller
         foreach ($slipPaths as $path) {
             Storage::disk('public')->delete($path);
         }
+
+        Cache::forget(self::SELECTING_CACHE);
 
         if (!empty($freedKeys)) {
             try { broadcast(new LikaySeatStatusUpdated(freedKeys: $freedKeys)); } catch (\Throwable) {}
