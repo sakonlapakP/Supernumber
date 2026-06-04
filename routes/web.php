@@ -855,6 +855,7 @@ Route::get('/articles/preview/{article}', function (Request $request, Article $a
 })->name('articles.signed-preview');
 
 Route::get('/articles/{slug}', [PublicController::class, 'showArticle'])->name('articles.show');
+Route::post('/lottery/check', [PublicController::class, 'checkLottery'])->name('lottery.check');
 
 Route::post('/articles/{slug}/comments', [PublicController::class, 'storeArticleComment'])
     ->middleware('throttle:article-comments')

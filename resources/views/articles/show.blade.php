@@ -11,18 +11,14 @@
 @section('og_url', route('articles.show', $article->slug))
 @php
   $detailCoverPath = $article->cover_image_square_path ?: ($article->cover_image_path ?: $article->cover_image_landscape_path);
-  $isLotteryArticle = (bool) preg_match('/^thai-goverment-lottery-\d{6}(first|second)$/', (string) $article->slug);
   $detailCoverCandidate = $article->cover_image_square_path ?: $article->cover_image_path;
-  $ogCoverCandidate = $isLotteryArticle
-      ? ($article->cover_image_landscape_path ?: ($article->cover_image_path ?: $article->cover_image_square_path))
-      : ($article->cover_image_square_path ?: ($article->cover_image_path ?: $article->cover_image_landscape_path));
   $ogImagePath = asset('images/home_banner.jpg');
-  $ogIsSquare = $ogCoverCandidate && $ogCoverCandidate === $article->cover_image_square_path;
+  $ogIsSquare = (bool) $article->cover_image_square_path;
   // Cache-bust SVG covers using updated_at so browsers always fetch the latest version after a re-generate
   $coverCacheBuster = $article->updated_at ? '?v=' . $article->updated_at->timestamp : '';
 
-  if ($ogCoverCandidate) {
-      $ogImagePath = asset('storage/' . ltrim((string) $ogCoverCandidate, '/')) . $coverCacheBuster;
+  if ($detailCoverCandidate) {
+      $ogImagePath = asset('storage/' . ltrim((string) $detailCoverCandidate, '/')) . $coverCacheBuster;
   }
 @endphp
 @section('og_image', $ogImagePath)
@@ -48,8 +44,8 @@
     "@type": "Organization",
     "name": "Supernumber",
     "url": "{{ url('/') }}"
-  }@if($ogCoverCandidate),
-  "image": "{{ asset('storage/' . ltrim((string)$ogCoverCandidate, '/')) }}"@endif
+  }@if($detailCoverCandidate),
+  "image": "{{ asset('storage/' . ltrim((string)$detailCoverCandidate, '/')) }}"@endif
 }
 </script>
 @endsection
@@ -241,19 +237,15 @@
       @endif
 
       @if ($hasHtml && ! $usePatternBlocks)
-        @if (!empty($lotteryResult) && (\Illuminate\Support\Str::startsWith(trim((string)$contentRaw), 'รายงานผลสลากกินแบ่งรัฐบาล') || \Illuminate\Support\Str::startsWith(trim(strip_tags((string)$contentRaw)), 'รายงานผลสลากกินแบ่งรัฐบาล')))
+        @if (!empty($lotteryResult) && (\Illuminate\Support\Str::contains(strip_tags((string)$contentRaw), 'รายงานผลสลากกินแบ่งรัฐบาล') || \Illuminate\Support\Str::contains((string)$contentRaw, 'รายงานผลสลากกินแบ่งรัฐบาล')))
           <div class="article-detail__content">
             @php
               $prizes = $lotteryResult->relationLoaded('prizes') ? $lotteryResult->prizes : $lotteryResult->prizes()->get();
-              $firstPrize = $prizes->first(fn ($item) => str_contains((string) data_get($item, 'prize_name', ''), 'รางวัลที่ 1'));
-              $firstPrizeNumber = $firstPrize ? trim((string) $firstPrize->prize_number) : '-';
-
-              $frontThree = $prizes->filter(fn ($item) => str_contains((string) data_get($item, 'prize_name', ''), 'เลขหน้า 3 ตัว'))->pluck('prize_number')->map(fn($num) => trim((string)$num))->all();
-              $backThree = $prizes->filter(fn ($item) => str_contains((string) data_get($item, 'prize_name', ''), 'เลขท้าย 3 ตัว'))->pluck('prize_number')->map(fn($num) => trim((string)$num))->all();
+              $firstPrize = $prizes->filter(fn ($item) => str_contains((string) data_get($item, 'prize_name', ''), 'รางวัลที่ 1'))->pluck('prize_number')->first() ?? '-';
+              $frontThree = $prizes->filter(fn ($item) => str_contains((string) data_get($item, 'prize_name', ''), 'เลขหน้า 3 ตัว'))->pluck('prize_number')->all();
+              $backThree = $prizes->filter(fn ($item) => str_contains((string) data_get($item, 'prize_name', ''), 'เลขท้าย 3 ตัว'))->pluck('prize_number')->all();
+              $lastTwo = $prizes->filter(fn ($item) => str_contains((string) data_get($item, 'prize_name', ''), 'เลขท้าย 2 ตัว'))->pluck('prize_number')->first() ?? '-';
               
-              $lastTwo = $prizes->first(fn ($item) => str_contains((string) data_get($item, 'prize_name', ''), 'เลขท้าย 2 ตัว'));
-              $lastTwoNumber = $lastTwo ? trim((string) $lastTwo->prize_number) : '-';
-
               $drawDate = $lotteryResult->source_draw_date ?? $lotteryResult->draw_date;
               $thaiMonths = [
                   1 => 'มกราคม', 2 => 'กุมภาพันธ์', 3 => 'มีนาคม', 4 => 'เมษายน',
@@ -264,6 +256,7 @@
                   ? $drawDate->format('j') . ' ' . ($thaiMonths[(int) $drawDate->format('n')] ?? $drawDate->format('m')) . ' ' . ((int) $drawDate->format('Y') + 543)
                   : '-';
             @endphp
+
             <section class="article-lottery" style="margin-top: 0;">
               <div class="article-lottery__header">
                 <div>
@@ -281,7 +274,7 @@
               <div class="article-lottery__grid">
                 <div class="article-lottery__card is-top-prize">
                   <h3 class="article-lottery__prize-name">รางวัลที่ 1</h3>
-                  <div class="article-lottery__prize-number">{{ $firstPrizeNumber }}</div>
+                  <div class="article-lottery__prize-number">{{ $firstPrize }}</div>
                 </div>
                 
                 <div class="article-lottery__card">
@@ -300,10 +293,114 @@
                 
                 <div class="article-lottery__card" style="grid-column: span 2;">
                   <h3 class="article-lottery__prize-name">เลขท้าย 2 ตัว</h3>
-                  <div class="article-lottery__prize-number">{{ $lastTwoNumber }}</div>
+                  <div class="article-lottery__prize-number">{{ $lastTwo }}</div>
                 </div>
               </div>
             </section>
+
+            <section class="lottery-checker">
+              <h2 class="lottery-checker__title">ตรวจผลสลากกินแบ่งรัฐบาล</h2>
+              <p class="lottery-checker__subtitle">กรอกเลขสลาก 6 หลัก เพื่อตรวจรางวัลในงวดนี้</p>
+              
+              <form id="lottery-checker-form" class="lottery-checker__form" onsubmit="event.preventDefault(); checkTicket();">
+                <div class="lottery-checker__input-wrapper">
+                  <input 
+                    type="text" 
+                    id="lottery-ticket-number" 
+                    class="lottery-checker__input" 
+                    placeholder="******" 
+                    maxlength="6" 
+                    inputmode="numeric" 
+                    pattern="[0-9]*"
+                    required
+                  />
+                </div>
+                <button type="submit" id="lottery-checker-btn" class="lottery-checker__btn">
+                  <span class="lottery-checker__loading-spinner" id="lottery-checker-spinner"></span>
+                  <span>ตรวจรางวัล</span>
+                </button>
+              </form>
+
+              <div id="lottery-checker-result" class="lottery-checker__result">
+                <!-- Result will be inserted here dynamically -->
+              </div>
+            </section>
+
+            <script>
+              async function checkTicket() {
+                const inputEl = document.getElementById('lottery-ticket-number');
+                const btnEl = document.getElementById('lottery-checker-btn');
+                const spinnerEl = document.getElementById('lottery-checker-spinner');
+                const resultEl = document.getElementById('lottery-checker-result');
+                const ticketNumber = inputEl.value.trim();
+
+                if (!/^[0-9]{6}$/.test(ticketNumber)) {
+                  alert('กรุณากรอกตัวเลขให้ครบ 6 หลัก');
+                  return;
+                }
+
+                // Show loading
+                btnEl.disabled = true;
+                spinnerEl.style.display = 'inline-block';
+                resultEl.style.display = 'none';
+                resultEl.className = 'lottery-checker__result';
+
+                try {
+                  const response = await fetch('{{ route('lottery.check') }}', {
+                    method: 'POST',
+                    headers: {
+                      'Content-Type': 'application/json',
+                      'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({
+                      number: ticketNumber,
+                      lottery_result_id: {{ $lotteryResult->id }}
+                    })
+                  });
+
+                  if (!response.ok) {
+                    throw new Error('เกิดข้อผิดพลาดในการเชื่อมต่อเซิร์ฟเวอร์');
+                  }
+
+                  const data = await response.json();
+
+                  if (data.won) {
+                    resultEl.classList.add('is-won');
+                    let prizeHtml = '';
+                    data.results.forEach(prize => {
+                      prizeHtml += `
+                        <div class="lottery-checker__result-prize">
+                          ยินดีด้วย! คุณถูก <span class="lottery-checker__result-prize-won">${prize.name}</span>
+                          <div style="font-size: 14px; color: #15803d; margin-top: 4px;">มูลค่ารางวัลโดยประมาณ: ${prize.reward}</div>
+                        </div>
+                      `;
+                    });
+                    resultEl.innerHTML = `
+                      <h3 class="lottery-checker__result-title">🎉 ยินดีด้วยค่ะ! คุณถูกรางวัล</h3>
+                      <div class="lottery-checker__result-detail">${prizeHtml}</div>
+                    `;
+                  } else {
+                    resultEl.classList.add('is-lost');
+                    resultEl.innerHTML = `
+                      <h3 class="lottery-checker__result-title">💸 เสียใจด้วยค่ะ</h3>
+                      <p class="lottery-checker__result-detail">คุณไม่ถูกรางวัลในงวดนี้ พยายามใหม่อีกครั้งในงวดหน้าคู่กับเบอร์มงคลนะคะ</p>
+                    `;
+                  }
+                  
+                  resultEl.style.display = 'block';
+                } catch (error) {
+                  resultEl.classList.add('is-lost');
+                  resultEl.innerHTML = `
+                    <h3 class="lottery-checker__result-title" style="color: #b91c1c;">เกิดข้อผิดพลาด</h3>
+                    <p class="lottery-checker__result-detail">${error.message || 'กรุณาลองใหม่อีกครั้งภายหลัง'}</p>
+                  `;
+                  resultEl.style.display = 'block';
+                } finally {
+                  btnEl.disabled = false;
+                  spinnerEl.style.display = 'none';
+                }
+              }
+            </script>
           </div>
         @else
           <div class="article-detail__content article-detail__content--html">{!! $contentRaw !!}</div>

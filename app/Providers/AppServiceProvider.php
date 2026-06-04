@@ -35,6 +35,12 @@ class AppServiceProvider extends ServiceProvider
             return Limit::perMinute(12)->by($ip . '|' . $userAgent);
         });
 
+        RateLimiter::for('number-analyze', function (Request $request): Limit {
+            $ip = (string) ($request->ip() ?? 'unknown');
+
+            return Limit::perMinute(60)->by($ip);
+        });
+
         RateLimiter::for('contact-messages', function (Request $request): array {
             $ip = (string) ($request->ip() ?? 'unknown');
             $userAgent = substr((string) $request->userAgent(), 0, 120);

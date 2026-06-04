@@ -586,6 +586,89 @@ class PublicController extends Controller
     }
 
     /**
+     * Check if a 6-digit lottery number won any prize in a draw.
+     */
+    public function checkLottery(Request $request)
+    {
+        $request->validate([
+            'number' => ['required', 'string', 'size:6', 'regex:/^[0-9]+$/'],
+            'lottery_result_id' => ['required', 'integer', 'exists:lottery_results,id'],
+        ], [
+            'number.required' => 'กรุณากรอกเลขสลาก 6 หลัก',
+            'number.size' => 'กรุณากรอกเลขสลากให้ครบ 6 หลัก',
+            'number.regex' => 'กรุณากรอกเฉพาะตัวเลขเท่านั้น',
+            'lottery_result_id.required' => 'ไม่พบข้อมูลการออกรางวัล',
+            'lottery_result_id.exists' => 'ไม่พบข้อมูลการออกรางวัลในระบบ',
+        ]);
+
+        $number = $request->input('number');
+        $result = LotteryResult::with('prizes')->findOrFail($request->input('lottery_result_id'));
+
+        $prizes = $result->prizes;
+        $matchedPrizes = [];
+
+        // 1. รางวัลที่ 1
+        $firstPrizeObj = $prizes->first(fn($p) => str_contains($p->prize_name, 'รางวัลที่ 1'));
+        $firstPrize = $firstPrizeObj ? trim($firstPrizeObj->prize_number) : null;
+        if ($firstPrize && $number === $firstPrize) {
+            $matchedPrizes[] = [
+                'name' => 'รางวัลที่ 1',
+                'reward' => '6,000,000 บาท',
+            ];
+        }
+
+        // 2. ข้างเคียงรางวัลที่ 1
+        if ($firstPrize && strlen($firstPrize) === 6 && is_numeric($firstPrize)) {
+            $firstInt = (int)$firstPrize;
+            $near1 = str_pad($firstInt - 1, 6, '0', STR_PAD_LEFT);
+            $near2 = str_pad($firstInt + 1, 6, '0', STR_PAD_LEFT);
+            if ($number === $near1 || $number === $near2) {
+                $matchedPrizes[] = [
+                    'name' => 'รางวัลข้างเคียงรางวัลที่ 1',
+                    'reward' => '100,000 บาท',
+                ];
+            }
+        }
+
+        // 3. เลขหน้า 3 ตัว
+        $frontThree = $prizes->filter(fn($p) => str_contains($p->prize_name, 'เลขหน้า 3 ตัว'))->pluck('prize_number')->map(fn($num) => trim($num))->all();
+        $inputFrontThree = substr($number, 0, 3);
+        if (in_array($inputFrontThree, $frontThree, true)) {
+            $matchedPrizes[] = [
+                'name' => 'รางวัลเลขหน้า 3 ตัว',
+                'reward' => '4,000 บาท',
+            ];
+        }
+
+        // 4. เลขท้าย 3 ตัว
+        $backThree = $prizes->filter(fn($p) => str_contains($p->prize_name, 'เลขท้าย 3 ตัว'))->pluck('prize_number')->map(fn($num) => trim($num))->all();
+        $inputBackThree = substr($number, 3, 3);
+        if (in_array($inputBackThree, $backThree, true)) {
+            $matchedPrizes[] = [
+                'name' => 'รางวัลเลขท้าย 3 ตัว',
+                'reward' => '4,000 บาท',
+            ];
+        }
+
+        // 5. เลขท้าย 2 ตัว
+        $lastTwoObj = $prizes->first(fn($p) => str_contains($p->prize_name, 'เลขท้าย 2 ตัว'));
+        $lastTwo = $lastTwoObj ? trim($lastTwoObj->prize_number) : null;
+        $inputLastTwo = substr($number, 4, 2);
+        if ($lastTwo && $inputLastTwo === $lastTwo) {
+            $matchedPrizes[] = [
+                'name' => 'รางวัลเลขท้าย 2 ตัว',
+                'reward' => '2,000 บาท',
+            ];
+        }
+
+        return response()->json([
+            'number' => $number,
+            'won' => count($matchedPrizes) > 0,
+            'results' => $matchedPrizes,
+        ]);
+    }
+
+    /**
      * Helper to resolve analysis phone
      */
     protected function resolveAnalysisPhone(Request $request): array

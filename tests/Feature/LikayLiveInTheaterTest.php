@@ -20,20 +20,20 @@ class LikayLiveInTheaterTest extends TestCase
             'is_active' => true,
         ]);
 
-        $this->assertSame(586, LikaySeatMap::totalSeats());
+        $this->assertSame(585, LikaySeatMap::totalSeats());
 
         $this->get(route('likay.public'))
             ->assertOk()
-            ->assertSee('id="stat-total">586', false)
-            ->assertSee('const TOTAL     = 586;', false)
-            ->assertSee('data-key="L_32"', false);
+            ->assertSee('id="stat-total">585', false)
+            ->assertSee('const TOTAL     = 585;', false)
+            ->assertDontSee('data-key="L_32"', false);
 
         $this->withSession($this->likaySession($manager))
             ->get(route('likay.index'))
             ->assertOk()
-            ->assertSee('id="stat-total">586', false)
-            ->assertSee('const total     = 586;', false)
-            ->assertSee('data-key="L_32"', false);
+            ->assertSee('id="stat-total">585', false)
+            ->assertSee('const total     = 585;', false)
+            ->assertDontSee('data-key="L_32"', false);
     }
 
     public function test_purple_zone_is_booked_for_king_power_by_migration(): void

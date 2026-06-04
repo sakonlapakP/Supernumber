@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\TarotReadingController;
+use App\Http\Controllers\Api\NumberAnalysisController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\ArticleController;
 use App\Http\Controllers\Api\ArticlePlanController;
@@ -67,4 +68,9 @@ Route::middleware(ApiTokenAuth::class)->group(function () {
 
 Route::middleware('throttle:tarot-ai')->group(function (): void {
     Route::post('/tarot/reading', TarotReadingController::class);
+});
+
+// Public numerology — analyze any phone number (powers Phayakorn "เบอร์มงคล").
+Route::middleware('throttle:number-analyze')->group(function (): void {
+    Route::post('/number/analyze', NumberAnalysisController::class)->name('api.number.analyze');
 });
