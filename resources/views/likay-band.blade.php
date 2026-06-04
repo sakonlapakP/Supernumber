@@ -660,6 +660,14 @@
     <span class="stat-num" id="stat-selecting" style="color:#FF8F00">0</span>
     <span class="stat-lbl">🔒 ถูกถือ</span>
   </div>
+  <div class="stat-item" style="border-left:2px solid #eee;padding-left:16px;margin-left:4px;">
+    <span class="stat-num" id="stat-booked-revenue" style="color:#e53935;font-size:16px;">฿{{ number_format($bookedRevenue) }}</span>
+    <span class="stat-lbl">รายได้จองแล้ว</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num" style="color:#aaa;font-size:16px;">฿{{ number_format($potentialRevenue) }}</span>
+    <span class="stat-lbl">ถ้าขายหมด</span>
+  </div>
 </div>
 
 @php
@@ -1188,6 +1196,13 @@ function updateStats() {
   document.getElementById('stat-avail').textContent     = Math.max(0, total - booked - selected - selecting);
   document.getElementById('stat-selected').textContent  = selected;
   document.getElementById('stat-selecting').textContent = selecting;
+
+  let bookedRevenue = 0;
+  BOOKED.forEach(key => {
+    const el = document.querySelector('[data-key="' + key + '"]');
+    if (el) bookedRevenue += PRICES[el.dataset.zone] || 0;
+  });
+  document.getElementById('stat-booked-revenue').textContent = '฿' + bookedRevenue.toLocaleString('th-TH');
 }
 
 function updateSummary() {

@@ -113,7 +113,16 @@ class LikayLiveInTheaterController extends Controller
             ->all();
         $totalSeats = LikaySeatMap::totalSeats();
 
-        return view('likay-band', compact('bookedSeats', 'prices', 'user', 'totalSeats'));
+        $allSeats = LikaySeatMap::seats();
+        $potentialRevenue = array_sum(array_map(fn ($zone) => $prices[$zone] ?? 0, $allSeats));
+        $bookedSet = array_flip($bookedSeats);
+        $bookedRevenue = array_sum(array_map(
+            fn ($key, $zone) => isset($bookedSet[$key]) ? ($prices[$zone] ?? 0) : 0,
+            array_keys($allSeats),
+            $allSeats
+        ));
+
+        return view('likay-band', compact('bookedSeats', 'prices', 'user', 'totalSeats', 'potentialRevenue', 'bookedRevenue'));
     }
 
     // ── Book Seat(s) ──────────────────────────────────────────────
