@@ -338,15 +338,13 @@
 
 {{-- ─── Legend ─────────────────────────────────────────────────── --}}
 <div class="legend" id="legend-bar">
-  <div class="legend-item">
-    <div class="legend-swatch" style="background:#fff;border-color:#222;border-width:2px;"></div>
-    <span>Control</span>
-  </div>
   @foreach ($zones as $z)
+  @if ($z->slug !== 'box')
   <div class="legend-item" id="legend-item-{{ $z->slug }}">
     <div class="legend-swatch" style="background:{{ $z->color }};border-color:{{ $z->border_color }}"></div>
     <span>{{ $z->label }} — <strong id="legend_{{ $z->slug }}">฿{{ number_format($prices[$z->slug] ?? 0) }}</strong></span>
   </div>
+  @endif
   @endforeach
   <div class="legend-item">
     <div class="legend-swatch" style="background:#555;border-color:#333;"></div>
