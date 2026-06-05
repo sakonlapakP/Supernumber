@@ -705,9 +705,9 @@
     <div style="font-size:13px;color:#777;margin-top:2px;">สวัสดี, {{ $user->name }}</div>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-    <a href="{{ route('suntaraporn.bookings') }}" class="btn btn-outline">📋 รายการจอง</a>
+    <a href="{{ route('suntaraporn.bookings', ['date' => $showDate]) }}" class="btn btn-outline">📋 รายการจอง</a>
     @if ($user->role === 'manager')
-    <button class="btn btn-outline" onclick="if(confirm('รีเซ็ตที่นั่งทั้งหมด?')) resetAllSeats()">🔄 รีเซ็ต</button>
+    <button class="btn btn-outline" onclick="if(confirm('รีเซ็ตที่นั่งทั้งหมดของรอบนี้?')) resetAllSeats()">🔄 รีเซ็ต</button>
     <button class="btn btn-primary" onclick="openPriceModal()">✏️ แก้ไขราคา</button>
     @endif
     <form method="POST" action="{{ route('suntaraporn.logout') }}" style="margin:0;">
@@ -715,6 +715,17 @@
       <button type="submit" class="btn btn-outline">ออกจากระบบ</button>
     </form>
   </div>
+</div>
+
+{{-- Show date selector --}}
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin:0 0 12px;padding:10px 14px;background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);">
+  <span style="font-size:13px;font-weight:700;color:#555;">🗓️ รอบการแสดง:</span>
+  @foreach ($showDates as $date => $label)
+  <a href="{{ route('suntaraporn.index', ['date' => $date]) }}"
+     style="padding:7px 16px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;border:1.5px solid {{ $showDate === $date ? '#1a1a2e' : '#ddd' }};background:{{ $showDate === $date ? '#1a1a2e' : '#fff' }};color:{{ $showDate === $date ? '#fff' : '#555' }};">
+    {{ $label }}
+  </a>
+  @endforeach
 </div>
 
 {{-- Stats bar --}}
@@ -995,6 +1006,7 @@
 
 <script>
 const CSRF             = document.querySelector('meta[name="csrf-token"]').content;
+const SHOW_DATE        = @json($showDate);
 const BOOKED           = new Set(@json($bookedSeats));
 const PRICES           = @json($prices);
 const SELECTED         = new Map(); // key → zone (ที่นั่งที่ฉันเลือก)
@@ -1043,7 +1055,7 @@ async function broadcastSelect(keys) {
     await fetch('/SuntarapornBand/select', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-      body: JSON.stringify({ seat_keys: keys })
+      body: JSON.stringify({ seat_keys: keys, date: SHOW_DATE })
     });
   } catch {}
 }
@@ -1053,7 +1065,7 @@ async function broadcastDeselect(keys) {
     await fetch('/SuntarapornBand/deselect', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
-      body: JSON.stringify({ seat_keys: keys })
+      body: JSON.stringify({ seat_keys: keys, date: SHOW_DATE })
     });
   } catch {}
 }
@@ -1063,6 +1075,7 @@ window.addEventListener('beforeunload', function () {
   if (SELECTED.size === 0) return;
   const fd = new FormData();
   fd.append('_token', CSRF);
+  fd.append('date', SHOW_DATE);
   [...SELECTED.keys()].forEach(k => fd.append('seat_keys[]', k));
   navigator.sendBeacon('/SuntarapornBand/deselect', fd);
 });
@@ -1102,6 +1115,7 @@ async function confirmBooking() {
 
   const fd = new FormData();
   fd.append('_token', CSRF);
+  fd.append('date', SHOW_DATE);
   [...SELECTED.entries()].forEach(([k, z], i) => {
     fd.append('seat_keys[]', k);
     fd.append('zones[]', z);
@@ -1153,7 +1167,7 @@ async function openDetailModal(seatKey) {
   document.getElementById('detailModal').classList.add('open');
 
   try {
-    const res  = await fetch(`/SuntarapornBand/booking-info/${encodeURIComponent(seatKey)}`);
+    const res  = await fetch(`/SuntarapornBand/booking-info/${encodeURIComponent(seatKey)}?date=${encodeURIComponent(SHOW_DATE)}`);
     const data = await res.json();
     if (!data.success) { alert(data.error || 'ไม่พบข้อมูล'); closeDetailModal(); return; }
 
@@ -1353,7 +1367,7 @@ function applyZoneConfig(zonesArr, rowZonesMap) {
 // ── Reset ───────────────────────────────────────────────────────
 async function resetAllSeats() {
   try {
-    const res  = await fetch('/SuntarapornBand/reset', {
+    const res  = await fetch(`/SuntarapornBand/reset?date=${encodeURIComponent(SHOW_DATE)}`, {
       method: 'POST',
       headers: { 'X-CSRF-TOKEN': CSRF }
     });
@@ -1426,7 +1440,7 @@ init();
 <script>
 (function () {
   const pusher  = new Pusher('{{ config("broadcasting.connections.pusher.key") }}', { cluster: '{{ config("broadcasting.connections.pusher.options.cluster") }}' });
-  const channel = pusher.subscribe('suntaraporn-concert');
+  const channel = pusher.subscribe('suntaraporn-concert-' + SHOW_DATE);
 
   channel.bind('zone-config-updated', function (data) {
     if (data.zones && data.row_zones) {

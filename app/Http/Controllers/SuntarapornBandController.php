@@ -27,6 +27,26 @@ class SuntarapornBandController extends Controller
     private const SELECTING_CACHE  = 'suntaraporn_selecting_keys';
     private const SELECTING_TTL    = 180; // seconds
 
+    // ── Show dates ───────────────────────────────────────────────
+    // รอบการแสดง 2 วัน — เก้าอี้ผังเดียวกันแต่จองแยกกันได้คนละวัน
+    public const SHOW_DATES = [
+        '2026-10-31' => '31 ต.ค. 2569',
+        '2026-11-01' => '1 พ.ย. 2569',
+    ];
+
+    /** วันแสดงที่กำลังดูอยู่ — อ่านจาก ?date=YYYY-MM-DD, ถ้าไม่ถูกต้องใช้วันแรก */
+    private function resolveShowDate(Request $request): string
+    {
+        $date = (string) $request->input('date', '');
+        return isset(self::SHOW_DATES[$date]) ? $date : array_key_first(self::SHOW_DATES);
+    }
+
+    /** Cache key ของ selecting keys แยกตามวันแสดง */
+    private function selectingCacheKey(string $showDate): string
+    {
+        return self::SELECTING_CACHE . '_' . $showDate;
+    }
+
     // ── Auth helpers ─────────────────────────────────────────────
 
     private function currentUser(): ?User
@@ -86,9 +106,13 @@ class SuntarapornBandController extends Controller
 
     // ── Public View (no auth required) ───────────────────────────
 
-    public function publicView(): View
+    public function publicView(Request $request): View
     {
-        $bookedSeats = SuntarapornSeat::where('is_booked', true)
+        $showDate  = $this->resolveShowDate($request);
+        $showDates = self::SHOW_DATES;
+
+        $bookedSeats = SuntarapornSeat::where('show_date', $showDate)
+            ->where('is_booked', true)
             ->pluck('seat_key')
             ->all();
 
@@ -100,20 +124,24 @@ class SuntarapornBandController extends Controller
             ->all();
 
         $totalSeats     = SuntarapornSeatMap::totalSeats();
-        $selectingSeats = Cache::get(self::SELECTING_CACHE, []);
+        $selectingSeats = Cache::get($this->selectingCacheKey($showDate), []);
 
-        return view('suntaraporn-public', compact('bookedSeats', 'prices', 'totalSeats', 'selectingSeats', 'zones', 'rowZones'));
+        return view('suntaraporn-public', compact('bookedSeats', 'prices', 'totalSeats', 'selectingSeats', 'zones', 'rowZones', 'showDate', 'showDates'));
     }
 
     // ── Main Page ─────────────────────────────────────────────────
 
-    public function index(): View|RedirectResponse
+    public function index(Request $request): View|RedirectResponse
     {
         if ($redirect = $this->guardRedirect()) return $redirect;
 
         $user = $this->currentUser();
 
-        $bookedSeats = SuntarapornSeat::where('is_booked', true)
+        $showDate  = $this->resolveShowDate($request);
+        $showDates = self::SHOW_DATES;
+
+        $bookedSeats = SuntarapornSeat::where('show_date', $showDate)
+            ->where('is_booked', true)
             ->pluck('seat_key')
             ->all();
 
@@ -125,9 +153,9 @@ class SuntarapornBandController extends Controller
             ->all();
 
         $totalSeats     = SuntarapornSeatMap::totalSeats();
-        $selectingSeats = Cache::get(self::SELECTING_CACHE, []);
+        $selectingSeats = Cache::get($this->selectingCacheKey($showDate), []);
 
-        return view('suntaraporn-band', compact('bookedSeats', 'prices', 'user', 'totalSeats', 'selectingSeats', 'zones', 'rowZones'));
+        return view('suntaraporn-band', compact('bookedSeats', 'prices', 'user', 'totalSeats', 'selectingSeats', 'zones', 'rowZones', 'showDate', 'showDates'));
     }
 
     // ── Book Seat(s) ──────────────────────────────────────────────
@@ -146,6 +174,8 @@ class SuntarapornBandController extends Controller
             'phone'       => 'required|string|max:20',
             'slip'        => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
         ]);
+
+        $showDate = $this->resolveShowDate($request);
 
         // booker = admin ที่ login อยู่
         $data['booker_name'] = $this->currentUser()->name;
@@ -171,6 +201,7 @@ class SuntarapornBandController extends Controller
         DB::table('suntaraporn_seats')->insertOrIgnore(array_map(
             fn (string $key) => [
                 'seat_key'   => $key,
+                'show_date'  => $showDate,
                 'is_booked'  => false,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -184,8 +215,9 @@ class SuntarapornBandController extends Controller
         $slipPath = null;
 
         try {
-            DB::transaction(function () use ($request, $data, $seatKeys, $totalPrice, &$alreadyBooked, &$slipPath) {
-                $seats = SuntarapornSeat::whereIn('seat_key', $seatKeys)
+            DB::transaction(function () use ($request, $data, $seatKeys, $showDate, $totalPrice, &$alreadyBooked, &$slipPath) {
+                $seats = SuntarapornSeat::where('show_date', $showDate)
+                    ->whereIn('seat_key', $seatKeys)
                     ->lockForUpdate()
                     ->get()
                     ->keyBy('seat_key');
@@ -204,6 +236,7 @@ class SuntarapornBandController extends Controller
                 }
 
                 $booking = SuntarapornBooking::create([
+                    'show_date'   => $showDate,
                     'first_name'  => $data['first_name'],
                     'last_name'   => $data['last_name'],
                     'phone'       => $data['phone'],
@@ -235,22 +268,26 @@ class SuntarapornBandController extends Controller
             ], 409);
         }
 
-        $existing = Cache::get(self::SELECTING_CACHE, []);
-        Cache::put(self::SELECTING_CACHE, array_values(array_diff($existing, $seatKeys)), self::SELECTING_TTL);
-        try { broadcast(new SeatStatusUpdated(bookedKeys: $seatKeys)); } catch (\Throwable) {}
+        $cacheKey = $this->selectingCacheKey($showDate);
+        $existing = Cache::get($cacheKey, []);
+        Cache::put($cacheKey, array_values(array_diff($existing, $seatKeys)), self::SELECTING_TTL);
+        try { broadcast(new SeatStatusUpdated(showDate: $showDate, bookedKeys: $seatKeys)); } catch (\Throwable) {}
 
         return response()->json(['success' => true]);
     }
 
     // ── Booking Info (for popup) ──────────────────────────────────
 
-    public function bookingInfo(string $seatKey): JsonResponse
+    public function bookingInfo(Request $request, string $seatKey): JsonResponse
     {
         if ($this->guardRedirect()) {
             return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
         }
 
+        $showDate = $this->resolveShowDate($request);
+
         $seat = SuntarapornSeat::with('booking.seats')
+            ->where('show_date', $showDate)
             ->where('seat_key', $seatKey)
             ->where('is_booked', true)
             ->first();
@@ -284,7 +321,12 @@ class SuntarapornBandController extends Controller
         $user   = $this->currentUser();
         $search = trim($request->input('search', ''));
 
-        $query = SuntarapornBooking::with('seats')->orderByDesc('created_at');
+        $showDate  = $this->resolveShowDate($request);
+        $showDates = self::SHOW_DATES;
+
+        $query = SuntarapornBooking::with('seats')
+            ->where('show_date', $showDate)
+            ->orderByDesc('created_at');
 
         if ($search !== '') {
             // Escape MySQL LIKE wildcards so '%' or '_' in input don't match unintended rows.
@@ -300,7 +342,7 @@ class SuntarapornBandController extends Controller
 
         $bookings = $query->get();
 
-        return view('suntaraporn-bookings', compact('bookings', 'user', 'search'));
+        return view('suntaraporn-bookings', compact('bookings', 'user', 'search', 'showDate', 'showDates'));
     }
 
     // ── Cancel Booking (manager only) ─────────────────────────────
@@ -318,8 +360,9 @@ class SuntarapornBandController extends Controller
 
         $booking = SuntarapornBooking::with('seats')->findOrFail($id);
 
-        // เก็บ seat keys ก่อน delete เพื่อ broadcast
+        // เก็บ seat keys + วันแสดง ก่อน delete เพื่อ broadcast
         $freedKeys = $booking->seats->pluck('seat_key')->all();
+        $showDate  = $booking->show_date->format('Y-m-d');
 
         DB::transaction(function () use ($booking) {
             SuntarapornSeat::where('booking_id', $booking->id)
@@ -332,9 +375,10 @@ class SuntarapornBandController extends Controller
             $booking->delete();
         });
 
-        $existing = Cache::get(self::SELECTING_CACHE, []);
-        Cache::put(self::SELECTING_CACHE, array_values(array_diff($existing, $freedKeys)), self::SELECTING_TTL);
-        try { broadcast(new SeatStatusUpdated(freedKeys: $freedKeys)); } catch (\Throwable) {}
+        $cacheKey = $this->selectingCacheKey($showDate);
+        $existing = Cache::get($cacheKey, []);
+        Cache::put($cacheKey, array_values(array_diff($existing, $freedKeys)), self::SELECTING_TTL);
+        try { broadcast(new SeatStatusUpdated(showDate: $showDate, freedKeys: $freedKeys)); } catch (\Throwable) {}
 
         return response()->json(['success' => true]);
     }
@@ -352,8 +396,11 @@ class SuntarapornBandController extends Controller
             'seat_keys.*' => 'required|string|max:30',
         ]);
 
+        $showDate = $this->resolveShowDate($request);
+
         // ไม่ broadcast ที่นั่งที่จองแล้ว
-        $alreadyBooked = SuntarapornSeat::whereIn('seat_key', $data['seat_keys'])
+        $alreadyBooked = SuntarapornSeat::where('show_date', $showDate)
+            ->whereIn('seat_key', $data['seat_keys'])
             ->where('is_booked', true)
             ->pluck('seat_key')
             ->all();
@@ -361,9 +408,10 @@ class SuntarapornBandController extends Controller
         $selectingKeys = array_values(array_diff($data['seat_keys'], $alreadyBooked));
 
         if (!empty($selectingKeys)) {
-            $existing = Cache::get(self::SELECTING_CACHE, []);
-            Cache::put(self::SELECTING_CACHE, array_values(array_unique(array_merge($existing, $selectingKeys))), self::SELECTING_TTL);
-            try { broadcast(new SeatStatusUpdated(selectingKeys: $selectingKeys)); } catch (\Throwable) {}
+            $cacheKey = $this->selectingCacheKey($showDate);
+            $existing = Cache::get($cacheKey, []);
+            Cache::put($cacheKey, array_values(array_unique(array_merge($existing, $selectingKeys))), self::SELECTING_TTL);
+            try { broadcast(new SeatStatusUpdated(showDate: $showDate, selectingKeys: $selectingKeys)); } catch (\Throwable) {}
         }
 
         return response()->json(['success' => true]);
@@ -380,9 +428,12 @@ class SuntarapornBandController extends Controller
             'seat_keys.*' => 'required|string|max:30',
         ]);
 
-        $existing = Cache::get(self::SELECTING_CACHE, []);
-        Cache::put(self::SELECTING_CACHE, array_values(array_diff($existing, $data['seat_keys'])), self::SELECTING_TTL);
-        try { broadcast(new SeatStatusUpdated(deselectingKeys: $data['seat_keys'])); } catch (\Throwable) {}
+        $showDate = $this->resolveShowDate($request);
+
+        $cacheKey = $this->selectingCacheKey($showDate);
+        $existing = Cache::get($cacheKey, []);
+        Cache::put($cacheKey, array_values(array_diff($existing, $data['seat_keys'])), self::SELECTING_TTL);
+        try { broadcast(new SeatStatusUpdated(showDate: $showDate, deselectingKeys: $data['seat_keys'])); } catch (\Throwable) {}
 
         return response()->json(['success' => true]);
     }
@@ -570,7 +621,10 @@ class SuntarapornBandController extends Controller
             return response()->json(['success' => false, 'error' => 'Forbidden'], 403);
         }
 
-        $freedKeys = SuntarapornSeat::where('is_booked', true)
+        $showDate = $this->resolveShowDate($request);
+
+        $freedKeys = SuntarapornSeat::where('show_date', $showDate)
+            ->where('is_booked', true)
             ->pluck('seat_key')
             ->all();
 
@@ -578,28 +632,29 @@ class SuntarapornBandController extends Controller
         // commit just before the delete are included and their slips are cleaned up.
         $slipPaths = [];
 
-        DB::transaction(function () use (&$slipPaths) {
-            $slipPaths = SuntarapornBooking::whereNotNull('slip_path')
+        DB::transaction(function () use ($showDate, &$slipPaths) {
+            $slipPaths = SuntarapornBooking::where('show_date', $showDate)
+                ->whereNotNull('slip_path')
                 ->pluck('slip_path')
                 ->all();
 
-            SuntarapornSeat::query()->update([
+            SuntarapornSeat::where('show_date', $showDate)->update([
                 'is_booked'  => false,
                 'booked_at'  => null,
                 'booking_id' => null,
             ]);
 
-            SuntarapornBooking::query()->delete();
+            SuntarapornBooking::where('show_date', $showDate)->delete();
         });
 
         foreach ($slipPaths as $path) {
             Storage::disk('public')->delete($path);
         }
 
-        Cache::forget(self::SELECTING_CACHE);
+        Cache::forget($this->selectingCacheKey($showDate));
 
         if (!empty($freedKeys)) {
-            try { broadcast(new SeatStatusUpdated(freedKeys: $freedKeys)); } catch (\Throwable) {}
+            try { broadcast(new SeatStatusUpdated(showDate: $showDate, freedKeys: $freedKeys)); } catch (\Throwable) {}
         }
 
         return response()->json(['success' => true]);
@@ -607,23 +662,29 @@ class SuntarapornBandController extends Controller
 
     // ── Live State (polling fallback) ─────────────────────────────
 
-    public function liveState(): JsonResponse
+    public function liveState(Request $request): JsonResponse
     {
+        $showDate = $this->resolveShowDate($request);
+
         return response()->json([
-            'booked'    => SuntarapornSeat::where('is_booked', true)->pluck('seat_key')->all(),
-            'selecting' => Cache::get(self::SELECTING_CACHE, []),
+            'booked'    => SuntarapornSeat::where('show_date', $showDate)
+                ->where('is_booked', true)
+                ->pluck('seat_key')
+                ->all(),
+            'selecting' => Cache::get($this->selectingCacheKey($showDate), []),
         ]);
     }
 
     // ── Export Excel ──────────────────────────────────────────────
 
-    public function exportBookings(): \Symfony\Component\HttpFoundation\BinaryFileResponse|RedirectResponse
+    public function exportBookings(Request $request): \Symfony\Component\HttpFoundation\BinaryFileResponse|RedirectResponse
     {
         if ($redirect = $this->guardRedirect()) return $redirect;
 
-        $filename = 'suntaraporn-bookings-' . now()->format('Y-m-d') . '.xlsx';
+        $showDate = $this->resolveShowDate($request);
+        $filename = 'suntaraporn-bookings-' . $showDate . '.xlsx';
 
-        return Excel::download(new SuntarapornBookingsExport(), $filename);
+        return Excel::download(new SuntarapornBookingsExport($showDate), $filename);
     }
 
     // ── Broadcast Zone Update ─────────────────────────────────────
@@ -653,7 +714,10 @@ class SuntarapornBandController extends Controller
                 ['cluster' => config('broadcasting.connections.pusher.options.cluster'), 'useTLS' => true]
             );
 
-            $pusher->trigger('suntaraporn-concert', 'zone-config-updated', compact('zones', 'rowZones'));
+            // โซนใช้ร่วมกันทุกวัน → ส่งไปทุก channel ของแต่ละรอบการแสดง
+            foreach (array_keys(self::SHOW_DATES) as $date) {
+                $pusher->trigger('suntaraporn-concert-' . $date, 'zone-config-updated', compact('zones', 'rowZones'));
+            }
         } catch (\Throwable) {}
     }
 }

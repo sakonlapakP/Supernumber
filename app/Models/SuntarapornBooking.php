@@ -9,9 +9,11 @@ class SuntarapornBooking extends Model
 {
     protected $table    = 'suntaraporn_bookings';
     protected $fillable = [
-        'first_name', 'last_name', 'phone',
+        'show_date', 'first_name', 'last_name', 'phone',
         'booker_name', 'slip_path', 'total_price',
     ];
+
+    protected $casts = ['show_date' => 'date:Y-m-d'];
 
     public function seats(): HasMany
     {

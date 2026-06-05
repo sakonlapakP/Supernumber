@@ -12,6 +12,7 @@ class SeatStatusUpdated implements ShouldBroadcastNow
     use Dispatchable, InteractsWithSockets;
 
     public function __construct(
+        public readonly string $showDate       = '',
         public readonly array $bookedKeys      = [],
         public readonly array $freedKeys       = [],
         public readonly array $selectingKeys   = [],
@@ -20,7 +21,8 @@ class SeatStatusUpdated implements ShouldBroadcastNow
 
     public function broadcastOn(): Channel
     {
-        return new Channel('suntaraporn-concert');
+        // แยก channel ตามรอบการแสดง เพื่อไม่ให้สถานะของวันหนึ่งไปอัปเดตอีกวัน
+        return new Channel('suntaraporn-concert-' . $this->showDate);
     }
 
     public function broadcastAs(): string

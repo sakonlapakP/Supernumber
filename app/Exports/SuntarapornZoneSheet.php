@@ -23,6 +23,8 @@ class SuntarapornZoneSheet implements FromArray, WithHeadings, WithTitle, WithSt
         'box'    => 'BOX',
     ];
 
+    public function __construct(private readonly string $showDate) {}
+
     public function array(): array
     {
         $prices      = SuntarapornZone::pluck('price', 'slug')->all();
@@ -35,7 +37,10 @@ class SuntarapornZoneSheet implements FromArray, WithHeadings, WithTitle, WithSt
         }
 
         // count booked seats per zone
-        $bookedKeys = SuntarapornSeat::where('is_booked', true)->pluck('seat_key')->all();
+        $bookedKeys = SuntarapornSeat::where('show_date', $this->showDate)
+            ->where('is_booked', true)
+            ->pluck('seat_key')
+            ->all();
         $bookedPerZone = [];
         foreach ($bookedKeys as $key) {
             if (isset($allSeats[$key])) {

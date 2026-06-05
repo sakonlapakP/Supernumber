@@ -398,6 +398,114 @@ class SuntarapornBandTest extends TestCase
             ->assertJson(['first_name' => 'จองใหม่']);
     }
 
+    public function test_same_seat_can_be_booked_independently_on_each_show_date(): void
+    {
+        $staff = User::factory()->create([
+            'name'      => 'Staff Member',
+            'role'      => User::ROLE_SUNTARAPORN,
+            'is_active' => true,
+        ]);
+
+        $session = $this->suntarapornSession($staff);
+
+        // จอง A_1 รอบวันที่ 31 ต.ค.
+        $this->withSession($session)
+            ->postJson(route('suntaraporn.book', ['date' => '2026-10-31']), [
+                'seat_keys'  => ['A_1'],
+                'first_name' => 'รอบหนึ่ง',
+                'last_name'  => 'ทดสอบ',
+                'phone'      => '0810000001',
+            ])
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        // จอง A_1 ตัวเดิม รอบวันที่ 1 พ.ย. → ต้องสำเร็จ (คนละวัน)
+        $this->withSession($session)
+            ->postJson(route('suntaraporn.book', ['date' => '2026-11-01']), [
+                'seat_keys'  => ['A_1'],
+                'first_name' => 'รอบสอง',
+                'last_name'  => 'ทดสอบ',
+                'phone'      => '0810000002',
+            ])
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        // มี booking แยกกัน 2 รายการ คนละวัน
+        $this->assertDatabaseHas('suntaraporn_bookings', [
+            'first_name' => 'รอบหนึ่ง', 'show_date' => '2026-10-31',
+        ]);
+        $this->assertDatabaseHas('suntaraporn_bookings', [
+            'first_name' => 'รอบสอง', 'show_date' => '2026-11-01',
+        ]);
+
+        // จอง A_1 ซ้ำในวันเดียวกัน → 409
+        $this->withSession($session)
+            ->postJson(route('suntaraporn.book', ['date' => '2026-10-31']), [
+                'seat_keys'  => ['A_1'],
+                'first_name' => 'ซ้ำ',
+                'last_name'  => 'ทดสอบ',
+                'phone'      => '0810000003',
+            ])
+            ->assertStatus(409);
+
+        // booking-info แต่ละวันคืนเจ้าของที่ถูกต้อง
+        $this->withSession($session)
+            ->getJson(route('suntaraporn.booking-info', ['seatKey' => 'A_1', 'date' => '2026-10-31']))
+            ->assertOk()
+            ->assertJson(['first_name' => 'รอบหนึ่ง']);
+
+        $this->withSession($session)
+            ->getJson(route('suntaraporn.booking-info', ['seatKey' => 'A_1', 'date' => '2026-11-01']))
+            ->assertOk()
+            ->assertJson(['first_name' => 'รอบสอง']);
+
+        // public view รอบ 1 พ.ย. เห็น A_1 ถูกจอง
+        $this->get(route('suntaraporn.public', ['date' => '2026-11-01']))
+            ->assertOk();
+
+        // live-state แยกตามวัน
+        $oct = $this->getJson(route('suntaraporn.live-state', ['date' => '2026-10-31']))->json('booked');
+        $nov = $this->getJson(route('suntaraporn.live-state', ['date' => '2026-11-01']))->json('booked');
+        $this->assertContains('A_1', $oct);
+        $this->assertContains('A_1', $nov);
+    }
+
+    public function test_reset_only_clears_the_selected_show_date(): void
+    {
+        $manager = User::factory()->create([
+            'role'      => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+        $session = $this->suntarapornSession($manager);
+
+        foreach (['2026-10-31', '2026-11-01'] as $date) {
+            $this->withSession($session)
+                ->postJson(route('suntaraporn.book', ['date' => $date]), [
+                    'seat_keys'  => ['A_1'],
+                    'first_name' => 'ลูกค้า',
+                    'last_name'  => $date,
+                    'phone'      => '0800000000',
+                ])
+                ->assertOk();
+        }
+
+        // รีเซ็ตเฉพาะรอบ 31 ต.ค.
+        $this->withSession($session)
+            ->postJson(route('suntaraporn.reset', ['date' => '2026-10-31']))
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        // รอบ 31 ต.ค. ว่าง, รอบ 1 พ.ย. ยังอยู่
+        $this->assertDatabaseHas('suntaraporn_seats', [
+            'seat_key' => 'A_1', 'show_date' => '2026-10-31', 'is_booked' => false,
+        ]);
+        $this->assertDatabaseHas('suntaraporn_seats', [
+            'seat_key' => 'A_1', 'show_date' => '2026-11-01', 'is_booked' => true,
+        ]);
+        $this->assertDatabaseMissing('suntaraporn_bookings', ['show_date' => '2026-10-31']);
+        $this->assertDatabaseHas('suntaraporn_bookings', ['show_date' => '2026-11-01']);
+    }
+
     private function suntarapornSession(User $user): array
     {
         return ['suntaraporn_user_id' => $user->id];

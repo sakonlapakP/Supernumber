@@ -309,6 +309,17 @@
   </div>
 </div>
 
+{{-- ─── Show date selector ────────────────────────────────────── --}}
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;padding:10px 14px;background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);">
+  <span style="font-size:13px;font-weight:700;color:#555;">🗓️ รอบการแสดง:</span>
+  @foreach ($showDates as $date => $label)
+  <a href="{{ route('suntaraporn.public', ['date' => $date]) }}"
+     style="padding:7px 16px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;border:1.5px solid {{ $showDate === $date ? '#1a1a2e' : '#ddd' }};background:{{ $showDate === $date ? '#1a1a2e' : '#fff' }};color:{{ $showDate === $date ? '#fff' : '#555' }};">
+    {{ $label }}
+  </a>
+  @endforeach
+</div>
+
 {{-- ─── Stats bar ─────────────────────────────────────────────── --}}
 <div class="stats-bar">
   <div class="stat-item">
@@ -549,6 +560,7 @@
 </div>
 
 <script>
+const SHOW_DATE = @json($showDate);
 const BOOKED    = new Set(@json($bookedSeats));
 const SELECTING = new Set(@json($selectingSeats));
 const TOTAL     = @json($totalSeats);
@@ -597,7 +609,7 @@ init();
 <script>
 (function () {
   const pusher  = new Pusher('{{ config("broadcasting.connections.pusher.key") }}', { cluster: '{{ config("broadcasting.connections.pusher.options.cluster") }}' });
-  const channel = pusher.subscribe('suntaraporn-concert');
+  const channel = pusher.subscribe('suntaraporn-concert-' + SHOW_DATE);
 
   pusher.connection.bind('connected', function () {
     markLastUpdated();
@@ -720,7 +732,7 @@ init();
   }
 
   function poll() {
-    fetch('/SuntarapornBand/live-state')
+    fetch('/SuntarapornBand/live-state?date=' + encodeURIComponent(SHOW_DATE))
       .then(function (r) { return r.json(); })
       .then(applyState)
       .catch(function () {});

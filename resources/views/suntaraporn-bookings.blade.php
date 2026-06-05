@@ -196,8 +196,8 @@
     <div class="page-sub">สวัสดี, {{ $user->name }}</div>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
-    <a href="{{ route('suntaraporn.export') }}" class="btn" style="background:#1b5e20;color:#fff;">📥 Export Excel</a>
-    <a href="{{ route('suntaraporn.index') }}" class="btn btn-outline">← ผังที่นั่ง</a>
+    <a href="{{ route('suntaraporn.export', ['date' => $showDate]) }}" class="btn" style="background:#1b5e20;color:#fff;">📥 Export Excel</a>
+    <a href="{{ route('suntaraporn.index', ['date' => $showDate]) }}" class="btn btn-outline">← ผังที่นั่ง</a>
     <form method="POST" action="{{ route('suntaraporn.logout') }}" style="margin:0;">
       @csrf
       <button type="submit" class="btn btn-outline">ออกจากระบบ</button>
@@ -205,8 +205,20 @@
   </div>
 </div>
 
+{{-- Show date selector --}}
+<div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:12px;padding:10px 14px;background:#fff;border-radius:10px;box-shadow:0 1px 4px rgba(0,0,0,.08);">
+  <span style="font-size:13px;font-weight:700;color:#555;">🗓️ รอบการแสดง:</span>
+  @foreach ($showDates as $date => $label)
+  <a href="{{ route('suntaraporn.bookings', ['date' => $date]) }}"
+     style="padding:7px 16px;border-radius:8px;font-size:14px;font-weight:600;text-decoration:none;border:1.5px solid {{ $showDate === $date ? '#1a1a2e' : '#ddd' }};background:{{ $showDate === $date ? '#1a1a2e' : '#fff' }};color:{{ $showDate === $date ? '#fff' : '#555' }};">
+    {{ $label }}
+  </a>
+  @endforeach
+</div>
+
 {{-- Search --}}
 <form method="GET" action="{{ route('suntaraporn.bookings') }}" class="search-bar">
+  <input type="hidden" name="date" value="{{ $showDate }}">
   <input
     type="text"
     name="search"
@@ -216,7 +228,7 @@
     autocomplete="off"
   >
   @if ($search)
-    <a href="{{ route('suntaraporn.bookings') }}" class="btn btn-outline">✕ ล้าง</a>
+    <a href="{{ route('suntaraporn.bookings', ['date' => $showDate]) }}" class="btn btn-outline">✕ ล้าง</a>
   @endif
   <button type="submit" class="btn btn-primary">ค้นหา</button>
 </form>
