@@ -142,14 +142,14 @@
     }
     @media (max-width: 640px) { .box-cell { width: 28px; padding: 0 2px; } }
     .left-row-half .box-cell {
-      margin-right: auto;
+      margin-right: 4px;
       justify-content: flex-end;
-      padding-right: 6px;
+      padding-right: 4px;
     }
     .right-row-half .box-cell {
-      margin-left: auto;
+      margin-left: 4px;
       justify-content: flex-start;
-      padding-left: 6px;
+      padding-left: 4px;
     }
 
     /* ─── Box Borders ─── */
