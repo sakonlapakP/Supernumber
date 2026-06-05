@@ -65,7 +65,7 @@
       50%       { box-shadow: 0 0 0 4px rgba(255,143,0,0); }
     }
     .seat.is-reserved { opacity: 0.75; }
-    .seat-gap  { width: 10px; flex-shrink: 0; }
+    .seat-gap  { width: 22px; flex-shrink: 0; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#555; }
     .seat-gap-center {
       width: 28px; flex-shrink: 0;
       display: flex; align-items: center; justify-content: center;
@@ -478,7 +478,7 @@
           <span class="row-label">{{ $rid }}</span>
           <div class="seats-half-left">
             @foreach ($left as $n){!! $seatEl($rid.'_'.$n, $zone, $n) !!}@endforeach
-            @if (count($left)>0)<div class="seat-gap"></div>@endif
+            @if (count($left)>0)<div class="seat-gap">{{ $rid }}</div>@endif
             @foreach ($cl as $n){!! $seatEl($rid.'_'.$n, $zone, $n) !!}@endforeach
           </div>
         </div>
@@ -489,7 +489,7 @@
         <div class="right-row-half">
           <div class="seats-half-right">
             @foreach ($cr as $n){!! $seatEl($rid.'_'.$n, $zone, $n) !!}@endforeach
-            @if (count($right)>0)<div class="seat-gap"></div>@endif
+            @if (count($right)>0)<div class="seat-gap">{{ $rid }}</div>@endif
             @foreach ($right as $n){!! $seatEl($rid.'_'.$n, $zone, $n) !!}@endforeach
           </div>
           <span class="row-label">{{ $rid }}</span>
