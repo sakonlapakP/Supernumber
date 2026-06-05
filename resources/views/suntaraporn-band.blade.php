@@ -82,14 +82,13 @@
       0%, 100% { box-shadow: 0 0 0 0 rgba(255,143,0,.6); }
       50%       { box-shadow: 0 0 0 4px rgba(255,143,0,0); }
     }
-    .seat-gap  { width: 10px; flex-shrink: 0; }
+    .seat-gap  { width: 22px; flex-shrink: 0; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#555; }
     .seats-line { display: flex; align-items: center; gap: 1.5px; }
     .seat-gap-center {
-      width: 14px;
-      flex-shrink: 0;
-      border-left: 3px solid #222;
-      height: 28px;
-      margin: 0;
+      width: 28px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800; color: #222;
+      height: 28px; margin: 0;
     }
 
     /* ─── Row ─── */
@@ -910,7 +909,7 @@
             @foreach ($left as $n)
               {!! $seatEl($rid.'_'.$n, $zone, $n) !!}
             @endforeach
-            @if (count($left) > 0)<div class="seat-gap"></div>@endif
+            @if (count($left) > 0)<div class="seat-gap">{{ $rid }}</div>@endif
             @foreach ($cl as $n)
               {!! $seatEl($rid.'_'.$n, $zone, $n) !!}
             @endforeach
@@ -918,7 +917,7 @@
         </div>
 
         {{-- Center Divider --}}
-        <div class="seat-gap-center"></div>
+        <div class="seat-gap-center">{{ $rid }}</div>
 
         {{-- ─── Right Side (50%) ─── --}}
         <div class="right-row-half">
@@ -926,7 +925,7 @@
             @foreach ($cr as $n)
               {!! $seatEl($rid.'_'.$n, $zone, $n) !!}
             @endforeach
-            @if (count($right) > 0)<div class="seat-gap"></div>@endif
+            @if (count($right) > 0)<div class="seat-gap">{{ $rid }}</div>@endif
             @foreach ($right as $n)
               {!! $seatEl($rid.'_'.$n, $zone, $n) !!}
             @endforeach
