@@ -733,8 +733,8 @@ init();
       .catch(function () {});
   }
 
-  // Poll ทุก 1 วิ
-  setInterval(poll, 1000);
+  // Poll ทุก 2 วิ
+  setInterval(poll, 2000);
 })();
 </script>
 </body>
