@@ -105,10 +105,11 @@
       color: #555; text-align: center; flex-shrink: 0;
     }
     .box-cell {
-      width: 110px; height: 28px;
+      width: 60px; height: 28px;
       display: flex; align-items: center;
       position: relative; box-sizing: border-box; flex-shrink: 0;
     }
+    @media (max-width: 640px) { .box-cell { display: none; } }
     .left-row-half .box-cell  { margin-right: auto; justify-content: flex-end; padding-right: 6px; }
     .right-row-half .box-cell { margin-left: auto; justify-content: flex-start; padding-left: 6px; }
 
@@ -477,8 +478,8 @@
           @endphp
           <div class="box-cell {{ $boxLClass }}">
             @if ($boxL)
+              @if ($boxL['k']==='BOXC_14')<div class="wc-badge" title="ที่นั่งผู้พิการ">♿</div>@endif
               @if ($showLabelL)<span class="box-label-text">{{ $showLabelL }}</span>@endif
-              @if ($boxL['k']==='BOXC_12')<div class="wc-badge" title="ที่นั่งผู้พิการ">♿</div>@endif
               {!! $seatEl($boxL['k'], $boxL['z'], $boxL['n'], $boxL['z']==='wc') !!}
             @endif
           </div>
@@ -518,8 +519,8 @@
           <div class="box-cell {{ $boxRClass }}">
             @if ($boxR)
               {!! $seatEl($boxR['k'], $boxR['z'], $boxR['n'], $boxR['z']==='wc') !!}
-              @if ($boxR['k']==='BOXF_17')<div class="wc-badge" title="ที่นั่งผู้พิการ">♿</div>@endif
               @if ($showLabelR)<span class="box-label-text">{{ $showLabelR }}</span>@endif
+              @if ($boxR['k']==='BOXF_15')<div class="wc-badge" title="ที่นั่งผู้พิการ">♿</div>@endif
             @endif
           </div>
         </div>
