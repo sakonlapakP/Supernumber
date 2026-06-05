@@ -110,8 +110,8 @@
       position: relative; box-sizing: border-box; flex-shrink: 0;
     }
     @media (max-width: 640px) { .box-cell { width: 28px; padding: 0 2px; } }
-    .left-row-half .box-cell  { margin-right: 4px; justify-content: flex-end; padding-right: 4px; }
-    .right-row-half .box-cell { margin-left: 4px; justify-content: flex-start; padding-left: 4px; }
+    .left-row-half .box-cell  { margin-right: auto; justify-content: flex-end; padding-right: 4px; }
+    .right-row-half .box-cell { margin-left: auto; justify-content: flex-start; padding-left: 4px; }
 
     /* Box Borders */
     .box-border-top    { border-top: 1.5px solid #222; border-left: 1.5px solid #222; border-right: 1.5px solid #222; border-top-left-radius:6px; border-top-right-radius:6px; height:30px; margin-bottom:-2px; background:#fff; z-index:2; }

@@ -142,12 +142,12 @@
     }
     @media (max-width: 640px) { .box-cell { width: 28px; padding: 0 2px; } }
     .left-row-half .box-cell {
-      margin-right: 4px;
+      margin-right: auto;
       justify-content: flex-end;
       padding-right: 4px;
     }
     .right-row-half .box-cell {
-      margin-left: 4px;
+      margin-left: auto;
       justify-content: flex-start;
       padding-left: 4px;
     }
