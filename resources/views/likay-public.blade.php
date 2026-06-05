@@ -72,8 +72,9 @@
     .seat.is-reserved { opacity: 0.75; }
     .seat-gap  { width: 10px; flex-shrink: 0; }
     .seat-gap-center {
-      width: 14px; flex-shrink: 0;
-      border-left: 3px solid #222;
+      width: 28px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800; color: #222;
       height: 28px; margin: 0;
     }
 
@@ -489,7 +490,7 @@
           </div>
         </div>
 
-        <div class="seat-gap-center"></div>
+        <div class="seat-gap-center">{{ $rid }}</div>
 
         {{-- Right Side --}}
         <div class="right-row-half">
