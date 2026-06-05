@@ -730,5 +730,32 @@ init();
   setInterval(poll, 2000);
 })();
 </script>
+
+{{-- ─── Poster Popup ────────────────────────────────────────── --}}
+<style>
+#poster-overlay {
+  position: fixed; inset: 0; z-index: 9999;
+  background: rgba(0,0,0,0.75);
+  display: flex; align-items: center; justify-content: center;
+  padding: 16px;
+}
+#poster-overlay img {
+  max-height: 90vh; max-width: 90vw;
+  border-radius: 12px;
+  box-shadow: 0 8px 40px rgba(0,0,0,0.6);
+  object-fit: contain;
+}
+#poster-close {
+  position: absolute; top: 16px; right: 20px;
+  background: rgba(0,0,0,0.55); color: #fff;
+  border: none; border-radius: 50%;
+  width: 40px; height: 40px; font-size: 22px;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+}
+</style>
+<div id="poster-overlay" onclick="this.style.display='none'">
+  <button id="poster-close" onclick="document.getElementById('poster-overlay').style.display='none'">✕</button>
+  <img src="/images/suntaraporn-poster.jpg" alt="โปสเตอร์งาน">
+</div>
 </body>
 </html>
