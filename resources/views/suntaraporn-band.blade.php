@@ -140,7 +140,7 @@
       box-sizing: border-box;
       flex-shrink: 0;
     }
-    @media (max-width: 640px) { .box-cell { display: none; } }
+    @media (max-width: 640px) { .box-cell { width: 28px; padding: 0 2px; } }
     .left-row-half .box-cell {
       margin-right: auto;
       justify-content: flex-end;
