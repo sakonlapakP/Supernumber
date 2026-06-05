@@ -45,7 +45,7 @@ return Application::configure(basePath: dirname(__DIR__))
                     return redirect()->route('suntaraporn.login')
                         ->withErrors(['username' => 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง']);
                 }
-                if ($request->is('LikayLiveInTheater/login')) {
+                if ($request->is('LikayLiveAtTheTheater/login')) {
                     return redirect()->route('likay.login')
                         ->withErrors(['username' => 'เซสชันหมดอายุ กรุณาเข้าสู่ระบบใหม่อีกครั้ง']);
                 }

@@ -9,7 +9,7 @@
 ระบบประกอบด้วยไฟล์หลักๆ ดังต่อไปนี้:
 
 1. **เส้นทาง (Routes):** `routes/web.php` (บรรทัดที่ 59-72) และลงทะเบียนสิทธิ์ช่องสัญญาณ real-time ใน `routes/channels.php`
-2. **คอนโทรลเลอร์ (Controller):** `app/Http/Controllers/LikayLiveInTheaterController.php`
+2. **คอนโทรลเลอร์ (Controller):** `app/Http/Controllers/LikayLiveAtTheTheaterController.php`
 3. **โมเดล (Models):**
    - `app/Models/LikaySeat.php` (ข้อมูลเก้าอี้และสถานะการจอง)
    - `app/Models/LikayBooking.php` (ข้อมูลประวัติการจองและหลักฐานโอนเงิน)
@@ -101,52 +101,52 @@
 
 ## 🔗 ระบบเส้นทางควบคุม (Route Configuration)
 
-เส้นทางประมวลผลและการเรียกข้อมูลที่นั่งทั้งหมดถูกตั้งค่าไว้ภายใต้ `LikayLiveInTheaterController` ใน `routes/web.php`:
+เส้นทางประมวลผลและการเรียกข้อมูลที่นั่งทั้งหมดถูกตั้งค่าไว้ภายใต้ `LikayLiveAtTheTheaterController` ใน `routes/web.php`:
 
 ```php
 // ─── Likay Live In The Theater Seating ───────────────────────────────────────
 // คืนค่า booked + selecting ปัจจุบัน (JSON) สำหรับ polling fallback
-Route::get('/LikayLiveInTheater/live-state', [LikayLiveInTheaterController::class, 'liveState'])->name('likay.live-state');
+Route::get('/LikayLiveAtTheTheater/live-state', [LikayLiveAtTheTheaterController::class, 'liveState'])->name('likay.live-state');
 
 // หน้าสาธารณะสำหรับผู้ชมทั่วไป (อัปเดตแบบเรียลไทม์ / Read-Only)
-Route::get('/LikayLiveInTheater/view',  [LikayLiveInTheaterController::class, 'publicView'])->name('likay.public');
+Route::get('/LikayLiveAtTheTheater/view',  [LikayLiveAtTheTheaterController::class, 'publicView'])->name('likay.public');
 
 // การยืนยันสิทธิ์เข้าใช้งานระบบจอง (Authentication)
-Route::get('/LikayLiveInTheater/login', [LikayLiveInTheaterController::class, 'showLogin'])->name('likay.login');
-Route::post('/LikayLiveInTheater/login', [LikayLiveInTheaterController::class, 'doLogin'])->name('likay.login.post');
-Route::post('/LikayLiveInTheater/logout', [LikayLiveInTheaterController::class, 'doLogout'])->name('likay.logout');
+Route::get('/LikayLiveAtTheTheater/login', [LikayLiveAtTheTheaterController::class, 'showLogin'])->name('likay.login');
+Route::post('/LikayLiveAtTheTheater/login', [LikayLiveAtTheTheaterController::class, 'doLogin'])->name('likay.login.post');
+Route::post('/LikayLiveAtTheTheater/logout', [LikayLiveAtTheTheaterController::class, 'doLogout'])->name('likay.logout');
 
 // หน้าหลักระบบผังที่นั่งแอดมิน (ต้องผ่านการสิทธิ์ล็อกอิน)
-Route::get('/LikayLiveInTheater', [LikayLiveInTheaterController::class, 'index'])->name('likay.index');
+Route::get('/LikayLiveAtTheTheater', [LikayLiveAtTheTheaterController::class, 'index'])->name('likay.index');
 
 // ส่งข้อมูลเพื่อสร้างใบจองพร้อมรายละเอียดลูกค้าและภาพสลิป
-Route::post('/LikayLiveInTheater/book',     [LikayLiveInTheaterController::class, 'bookSeat'])->name('likay.book');
+Route::post('/LikayLiveAtTheTheater/book',     [LikayLiveAtTheTheaterController::class, 'bookSeat'])->name('likay.book');
 
 // บรอดแคสต์สถานะการคลิกเก้าอี้เรียลไทม์ (เมื่อแอดมินคนใดกำลังคลิกเลือก/ปล่อยเก้าอี้)
-Route::post('/LikayLiveInTheater/select',   [LikayLiveInTheaterController::class, 'selectSeat'])->name('likay.select');
-Route::post('/LikayLiveInTheater/deselect', [LikayLiveInTheaterController::class, 'deselectSeat'])->name('likay.deselect');
+Route::post('/LikayLiveAtTheTheater/select',   [LikayLiveAtTheTheaterController::class, 'selectSeat'])->name('likay.select');
+Route::post('/LikayLiveAtTheTheater/deselect', [LikayLiveAtTheTheaterController::class, 'deselectSeat'])->name('likay.deselect');
 
 // ดึงรายละเอียดข้อมูลผู้จองเมื่อคลิกเก้าอี้ที่ถูกจองแล้ว (Popup Detail)
-Route::get('/LikayLiveInTheater/booking-info/{seatKey}', [LikayLiveInTheaterController::class, 'bookingInfo'])->name('likay.booking-info');
+Route::get('/LikayLiveAtTheTheater/booking-info/{seatKey}', [LikayLiveAtTheTheaterController::class, 'bookingInfo'])->name('likay.booking-info');
 
 // หน้าต่างแสดงตารางสรุปรายการจองทั้งหมด ค้นหาข้อมูล และพิมพ์ใบจอง
-Route::get('/LikayLiveInTheater/bookings', [LikayLiveInTheaterController::class, 'bookingList'])->name('likay.bookings');
+Route::get('/LikayLiveAtTheTheater/bookings', [LikayLiveAtTheTheaterController::class, 'bookingList'])->name('likay.bookings');
 
 // ปรับปรุงแก้ไขโครงสร้างราคาตามแต่ละโซน (สิทธิ์ Manager เท่านั้น)
-Route::post('/LikayLiveInTheater/prices', [LikayLiveInTheaterController::class, 'updatePrices'])->name('likay.prices');
+Route::post('/LikayLiveAtTheTheater/prices', [LikayLiveAtTheTheaterController::class, 'updatePrices'])->name('likay.prices');
 
 // ยกเลิกรายการจองของลูกค้า ปล่อยเก้าอี้คืน และลบภาพสลิป (สิทธิ์ Manager เท่านั้น)
-Route::delete('/LikayLiveInTheater/booking/{id}', [LikayLiveInTheaterController::class, 'cancelBooking'])->name('likay.cancel');
+Route::delete('/LikayLiveAtTheTheater/booking/{id}', [LikayLiveAtTheTheaterController::class, 'cancelBooking'])->name('likay.cancel');
 
 // รีเซ็ตล้างผังการจองทั้งหมดให้กลับเป็นที่นั่งว่าง 100% (สิทธิ์ Manager เท่านั้น)
-Route::post('/LikayLiveInTheater/reset', [LikayLiveInTheaterController::class, 'resetSeats'])->name('likay.reset');
+Route::post('/LikayLiveAtTheTheater/reset', [LikayLiveAtTheTheaterController::class, 'resetSeats'])->name('likay.reset');
 ```
 
 ---
 
 ## ⚙️ การทำงานส่วนควบคุม (Controller Logic)
 
-ระบบหลังบ้านใช้ `LikayLiveInTheaterController` ในการควบคุมความปลอดภัยและประมวลผลข้อมูล:
+ระบบหลังบ้านใช้ `LikayLiveAtTheTheaterController` ในการควบคุมความปลอดภัยและประมวลผลข้อมูล:
 
 ### 1. การควบคุมสิทธิ์การเข้าถึง (Access Control & Roles)
 - กำหนดสิทธิ์ผู้ใช้งานผ่านสองบทบาทหลัก: `ROLE_LIKAY` (แอดมินลิเกสำหรับจอง/ดูข้อมูล) และ `ROLE_MANAGER` (ผู้บริหารระบบที่สามารถเปลี่ยนราคา ยกเลิกจอง หรือรีเซ็ตข้อมูลได้)
@@ -171,7 +171,7 @@ Route::post('/LikayLiveInTheater/reset', [LikayLiveInTheaterController::class, '
   - **`selectSeat()`** — เพิ่ม keys เข้า cache
   - **`deselectSeat()`** / **`bookSeat()`** / **`cancelBooking()`** — ลบ keys ที่เกี่ยวข้องออกจาก cache
   - **`resetSeats()`** — `Cache::forget()` ล้างทั้งหมด
-- หน้า public view (`likay-public.blade.php`) มี JavaScript polling fallback ที่ `fetch('/LikayLiveInTheater/live-state')` ทุก **8 วินาที** — sync สถานะ booked + selecting ให้ตรงกับ Server เสมอ แม้ Pusher จะไม่ deliver
+- หน้า public view (`likay-public.blade.php`) มี JavaScript polling fallback ที่ `fetch('/LikayLiveAtTheTheater/live-state')` ทุก **8 วินาที** — sync สถานะ booked + selecting ให้ตรงกับ Server เสมอ แม้ Pusher จะไม่ deliver
 - Polling และ Pusher ทำงานควบคู่กัน (idempotent) — ถ้า Pusher ส่งก่อนก็ไม่มีผลเสีย
 
 ---
@@ -198,15 +198,15 @@ Route::post('/LikayLiveInTheater/reset', [LikayLiveInTheaterController::class, '
 ## 🚀 วิธีการทดสอบและใช้งานระบบ
 
 ### 1. ล็อกอินเข้าใช้งานระบบจอง
-- เปิดหน้าล็อกอินผ่าน URL: `/LikayLiveInTheater/login`
-- ใช้บัญชีผู้ใช้ระดับแอดมินลิเก (`ROLE_LIKAY`) หรือผู้จัดการระบบ (`ROLE_MANAGER`) เพื่อเข้าใช้งานหน้าผังควบคุมหลัก `/LikayLiveInTheater`
+- เปิดหน้าล็อกอินผ่าน URL: `/LikayLiveAtTheTheater/login`
+- ใช้บัญชีผู้ใช้ระดับแอดมินลิเก (`ROLE_LIKAY`) หรือผู้จัดการระบบ (`ROLE_MANAGER`) เพื่อเข้าใช้งานหน้าผังควบคุมหลัก `/LikayLiveAtTheTheater`
 
 ### 2. การจองที่นั่งแบบเรียลไทม์
 - เลือกคลิกเก้าอี้ที่ต้องการ (คลิกทีละหลายที่นั่งพร้อมกันได้จากโซนราคาที่ต่างกัน)
 - กรอกรายละเอียดข้อมูลลูกค้า ชื่อ นามสกุล และเบอร์โทรศัพท์
 - แนบหลักฐานสลิปชำระเงินโอนที่กล่องอัปโหลด
 - กดปุ่ม **"ยืนยันบันทึกการจอง"** → เก้าอี้จะเปลี่ยนเป็นสีเทาเข้ม (สถานะจองแล้ว)
-- ลองเปิดเบราว์เซอร์อื่น (แบบไม่ระบุตัวตน) เพื่อดูหน้ารายการสด `/LikayLiveInTheater/view` จะเห็นที่นั่งถูกเปลี่ยนสถานะเป็นสีจองทันทีโดยไม่ต้องรีเฟรชหน้าจอ
+- ลองเปิดเบราว์เซอร์อื่น (แบบไม่ระบุตัวตน) เพื่อดูหน้ารายการสด `/LikayLiveAtTheTheater/view` จะเห็นที่นั่งถูกเปลี่ยนสถานะเป็นสีจองทันทีโดยไม่ต้องรีเฟรชหน้าจอ
 
 ### 3. การตรวจสอบรายละเอียดการจอง
 - แอดมินสามารถนำเมาส์หรือนิ้วคลิกไปที่เก้าอี้สีเทาเข้ม (เก้าอี้ที่จองแล้ว)

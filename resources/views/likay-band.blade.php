@@ -997,7 +997,7 @@ function toggleSeat(el) {
 
 async function broadcastSelect(keys) {
   try {
-    await fetch('/LikayLiveInTheater/select', {
+    await fetch('/LikayLiveAtTheTheater/select', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
       body: JSON.stringify({ seat_keys: keys })
@@ -1007,7 +1007,7 @@ async function broadcastSelect(keys) {
 
 async function broadcastDeselect(keys) {
   try {
-    await fetch('/LikayLiveInTheater/deselect', {
+    await fetch('/LikayLiveAtTheTheater/deselect', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
       body: JSON.stringify({ seat_keys: keys })
@@ -1020,7 +1020,7 @@ window.addEventListener('beforeunload', function () {
   const fd = new FormData();
   fd.append('_token', CSRF);
   [...SELECTED.keys()].forEach(k => fd.append('seat_keys[]', k));
-  navigator.sendBeacon('/LikayLiveInTheater/deselect', fd);
+  navigator.sendBeacon('/LikayLiveAtTheTheater/deselect', fd);
 });
 
 function openBookingModal() {
@@ -1066,7 +1066,7 @@ async function confirmBooking() {
   if (slipFile) fd.append('slip', slipFile);
 
   try {
-    const res  = await fetch('/LikayLiveInTheater/book', { method: 'POST', body: fd });
+    const res  = await fetch('/LikayLiveAtTheTheater/book', { method: 'POST', body: fd });
     const data = await res.json();
 
     if (data.success) {
@@ -1104,7 +1104,7 @@ async function openDetailModal(seatKey) {
   document.getElementById('detailModal').classList.add('open');
 
   try {
-    const res  = await fetch(`/LikayLiveInTheater/booking-info/${encodeURIComponent(seatKey)}`);
+    const res  = await fetch(`/LikayLiveAtTheTheater/booking-info/${encodeURIComponent(seatKey)}`);
     const data = await res.json();
     if (!data.success) { alert(data.error || 'ไม่พบข้อมูล'); closeDetailModal(); return; }
 
@@ -1163,7 +1163,7 @@ async function cancelBooking() {
   btn.textContent = 'กำลังยกเลิก...';
 
   try {
-    const res  = await fetch(`/LikayLiveInTheater/booking/${currentBookingId}`, {
+    const res  = await fetch(`/LikayLiveAtTheTheater/booking/${currentBookingId}`, {
       method: 'DELETE',
       headers: { 'X-CSRF-TOKEN': CSRF }
     });
@@ -1193,7 +1193,7 @@ async function saveZone(zoneId) {
   const color = row.querySelector('.zone-color-input').value;
   const price = parseInt(row.querySelector('.zone-price-input').value) || 0;
   try {
-    const res = await fetch(`/LikayLiveInTheater/zones/${zoneId}`, {
+    const res = await fetch(`/LikayLiveAtTheTheater/zones/${zoneId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
       body: JSON.stringify({ label, color, price })
@@ -1210,7 +1210,7 @@ async function saveZone(zoneId) {
 async function deleteZone(zoneId, label) {
   if (!confirm(`ลบ Zone "${label}"?`)) return;
   try {
-    const res = await fetch(`/LikayLiveInTheater/zones/${zoneId}`, {
+    const res = await fetch(`/LikayLiveAtTheTheater/zones/${zoneId}`, {
       method: 'DELETE',
       headers: { 'X-CSRF-TOKEN': CSRF }
     });
@@ -1243,7 +1243,7 @@ async function createZone(row) {
   const slug  = row.querySelector('.zone-slug-input').value.trim().toLowerCase();
   if (!slug || !label) { alert('กรุณากรอกชื่อและ slug'); return; }
   try {
-    const res = await fetch('/LikayLiveInTheater/zones', {
+    const res = await fetch('/LikayLiveAtTheTheater/zones', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
       body: JSON.stringify({ slug, label, color, price })
@@ -1264,7 +1264,7 @@ async function saveRowZones() {
     assignments[sel.dataset.rowKey] = parseInt(sel.value);
   });
   try {
-    const res = await fetch('/LikayLiveInTheater/row-zones', {
+    const res = await fetch('/LikayLiveAtTheTheater/row-zones', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
       body: JSON.stringify({ assignments })
@@ -1302,7 +1302,7 @@ function applyZoneConfig(zonesArr, rowZonesMap) {
 
 async function resetAllSeats() {
   try {
-    const res  = await fetch('/LikayLiveInTheater/reset', {
+    const res  = await fetch('/LikayLiveAtTheTheater/reset', {
       method: 'POST',
       headers: { 'X-CSRF-TOKEN': CSRF }
     });
@@ -1485,7 +1485,7 @@ init();
   }
 
   function poll() {
-    fetch('/LikayLiveInTheater/live-state')
+    fetch('/LikayLiveAtTheTheater/live-state')
       .then(function (r) { return r.json(); })
       .then(applyState)
       .catch(function () {});

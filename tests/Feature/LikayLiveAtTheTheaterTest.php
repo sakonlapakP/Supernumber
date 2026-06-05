@@ -9,7 +9,7 @@ use App\Services\LikaySeatMap;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
-class LikayLiveInTheaterTest extends TestCase
+class LikayLiveAtTheTheaterTest extends TestCase
 {
     use RefreshDatabase;
 

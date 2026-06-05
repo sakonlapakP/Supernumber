@@ -20,7 +20,7 @@ use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 use RuntimeException;
 
-class LikayLiveInTheaterController extends Controller
+class LikayLiveAtTheTheaterController extends Controller
 {
     private const ALLOWED_ROLES   = [User::ROLE_LIKAY, User::ROLE_MANAGER];
     private const SESSION_KEY     = 'likay_user_id';

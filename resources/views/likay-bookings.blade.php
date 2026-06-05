@@ -330,7 +330,7 @@ async function cancelBooking(id, btn) {
   btn.textContent = 'กำลังยกเลิก...';
 
   try {
-    const res  = await fetch(`/LikayLiveInTheater/booking/${id}`, {
+    const res  = await fetch(`/LikayLiveAtTheTheater/booking/${id}`, {
       method: 'DELETE',
       headers: { 'X-CSRF-TOKEN': CSRF }
     });

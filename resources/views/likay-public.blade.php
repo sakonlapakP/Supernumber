@@ -727,7 +727,7 @@ init();
   }
 
   function poll() {
-    fetch('/LikayLiveInTheater/live-state')
+    fetch('/LikayLiveAtTheTheater/live-state')
       .then(function (r) { return r.json(); })
       .then(applyState)
       .catch(function () {});
