@@ -363,17 +363,17 @@ class SuntarapornBandController extends Controller
         // เก็บ seat keys + วันแสดง ก่อน delete เพื่อ broadcast
         $freedKeys = $booking->seats->pluck('seat_key')->all();
         $showDate  = $booking->show_date->format('Y-m-d');
+        $slipPath  = $booking->slip_path;
 
         DB::transaction(function () use ($booking) {
             SuntarapornSeat::where('booking_id', $booking->id)
                 ->update(['is_booked' => false, 'booked_at' => null, 'booking_id' => null]);
-
-            if ($booking->slip_path) {
-                Storage::disk('public')->delete($booking->slip_path);
-            }
-
             $booking->delete();
         });
+
+        if ($slipPath) {
+            Storage::disk('public')->delete($slipPath);
+        }
 
         $cacheKey = $this->selectingCacheKey($showDate);
         $existing = Cache::get($cacheKey, []);
@@ -623,16 +623,15 @@ class SuntarapornBandController extends Controller
 
         $showDate = $this->resolveShowDate($request);
 
-        $freedKeys = SuntarapornSeat::where('show_date', $showDate)
-            ->where('is_booked', true)
-            ->pluck('seat_key')
-            ->all();
-
-        // Collect slip paths INSIDE the transaction so concurrent bookings that
-        // commit just before the delete are included and their slips are cleaned up.
+        $freedKeys = [];
         $slipPaths = [];
 
-        DB::transaction(function () use ($showDate, &$slipPaths) {
+        DB::transaction(function () use ($showDate, &$freedKeys, &$slipPaths) {
+            $freedKeys = SuntarapornSeat::where('show_date', $showDate)
+                ->where('is_booked', true)
+                ->pluck('seat_key')
+                ->all();
+
             $slipPaths = SuntarapornBooking::where('show_date', $showDate)
                 ->whereNotNull('slip_path')
                 ->pluck('slip_path')

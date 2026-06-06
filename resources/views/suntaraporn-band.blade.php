@@ -613,6 +613,12 @@
   <div class="modal">
     <h2>🎟️ จองที่นั่ง</h2>
 
+    <div style="display:flex;align-items:center;gap:8px;background:#f0f4ff;border:1.5px solid #c5d3f7;border-radius:8px;padding:8px 14px;margin-bottom:14px;font-size:14px;">
+      <span style="font-size:18px;">📅</span>
+      <span style="color:#555;">รอบการแสดง:</span>
+      <strong style="color:#1a1a2e;">{{ $showDates[$showDate] }}</strong>
+    </div>
+
     <div class="selected-seats-list">
       <strong>ที่นั่งที่เลือก</strong>
       <div id="selected-chips"></div>

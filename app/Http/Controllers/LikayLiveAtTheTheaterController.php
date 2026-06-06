@@ -327,17 +327,17 @@ class LikayLiveAtTheTheaterController extends Controller
         $booking = LikayBooking::with('seats')->findOrFail($id);
 
         $freedKeys = $booking->seats->pluck('seat_key')->all();
+        $slipPath  = $booking->slip_path;
 
         DB::transaction(function () use ($booking) {
             LikaySeat::where('booking_id', $booking->id)
                 ->update(['is_booked' => false, 'booked_at' => null, 'booking_id' => null]);
-
-            if ($booking->slip_path) {
-                Storage::disk('public')->delete($booking->slip_path);
-            }
-
             $booking->delete();
         });
+
+        if ($slipPath) {
+            Storage::disk('public')->delete($slipPath);
+        }
 
         $existing = Cache::get(self::SELECTING_CACHE, []);
         Cache::put(self::SELECTING_CACHE, array_values(array_diff($existing, $freedKeys)), self::SELECTING_TTL);
@@ -576,15 +576,14 @@ class LikayLiveAtTheTheaterController extends Controller
             return response()->json(['success' => false, 'error' => 'Forbidden'], 403);
         }
 
-        $freedKeys = LikaySeat::where('is_booked', true)
-            ->pluck('seat_key')
-            ->all();
-
-        // Collect slip paths INSIDE the transaction so concurrent bookings that
-        // commit just before the delete are included and their slips are cleaned up.
+        $freedKeys = [];
         $slipPaths = [];
 
-        DB::transaction(function () use (&$slipPaths) {
+        DB::transaction(function () use (&$freedKeys, &$slipPaths) {
+            $freedKeys = LikaySeat::where('is_booked', true)
+                ->pluck('seat_key')
+                ->all();
+
             $slipPaths = LikayBooking::whereNotNull('slip_path')
                 ->pluck('slip_path')
                 ->all();
