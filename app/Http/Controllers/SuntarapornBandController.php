@@ -752,24 +752,30 @@ class SuntarapornBandController extends Controller
         $from   = (string) $request->input('from', '');
         $to     = (string) $request->input('to', '');
 
-        $query = BookingActivityLog::where('system', BookingActivityLog::SYSTEM_SUNTARAPORN)
-            ->where('show_date', $showDate)
-            ->orderByDesc('created_at');
+        // base query ผูกกับรอบการแสดง + filter วันที่ (stats เห็นครบทุกประเภท ไม่ผูกกับ action filter)
+        $base = BookingActivityLog::where('system', BookingActivityLog::SYSTEM_SUNTARAPORN)
+            ->where('show_date', $showDate);
+        if ($from !== '') {
+            $base->whereDate('created_at', '>=', $from);
+        }
+        if ($to !== '') {
+            $base->whereDate('created_at', '<=', $to);
+        }
 
+        $counts = (clone $base)
+            ->selectRaw('action, COUNT(*) as c')
+            ->groupBy('action')
+            ->pluck('c', 'action');
+
+        $query = (clone $base)->orderByDesc('created_at');
         if (in_array($action, BookingActivityLog::ACTIONS, true)) {
             $query->where('action', $action);
         }
-        if ($from !== '') {
-            $query->whereDate('created_at', '>=', $from);
-        }
-        if ($to !== '') {
-            $query->whereDate('created_at', '<=', $to);
-        }
 
-        $logs   = $query->limit(500)->get();
+        $logs   = $query->paginate(50)->withQueryString();
         $system = 'suntaraporn';
 
-        return view('booking-activity-history', compact('logs', 'user', 'system', 'action', 'from', 'to', 'showDate', 'showDates'));
+        return view('booking-activity-history', compact('logs', 'user', 'system', 'action', 'from', 'to', 'showDate', 'showDates', 'counts'));
     }
 
     // ── Broadcast Zone Update ─────────────────────────────────────

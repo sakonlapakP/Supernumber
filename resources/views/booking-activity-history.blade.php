@@ -16,7 +16,7 @@
       'search' => ['label' => 'ค้นหา',          'icon' => '🔵', 'bg' => '#e3f2fd', 'fg' => '#1565c0'],
     ];
     $sysTitle = $titleMap[$system] ?? $system;
-    $counts   = $logs->countBy('action');
+    // $counts ส่งมาจาก controller (สรุปทั้งช่วง ไม่ใช่แค่หน้าปัจจุบัน)
   @endphp
   <title>ประวัติการทำรายการ — {{ $sysTitle }}</title>
   <link rel="shortcut icon" type="image/x-icon" href="/favicon-v2.ico?v=supernumber-20260602">
@@ -228,7 +228,7 @@
 
 <div class="stats-bar">
   <div class="stat-item">
-    <span class="stat-num">{{ $logs->count() }}</span>
+    <span class="stat-num">{{ $counts->sum() }}</span>
     <span class="stat-lbl">รายการทั้งหมด</span>
   </div>
   <div class="stat-item">
@@ -308,8 +308,20 @@
         @endforeach
       </tbody>
     </table>
-    @if ($logs->count() >= 500)
-      <p class="muted" style="text-align:center;margin-top:12px;">แสดงผลล่าสุด 500 รายการ — ใช้ตัวกรองวันที่เพื่อดูช่วงที่ต้องการ</p>
+    @if ($logs->hasPages())
+      <div style="display:flex;justify-content:center;align-items:center;gap:10px;margin-top:16px;flex-wrap:wrap;">
+        @if ($logs->onFirstPage())
+          <span class="btn btn-outline btn-sm" style="opacity:.4;cursor:default;">← ก่อนหน้า</span>
+        @else
+          <a href="{{ $logs->previousPageUrl() }}" class="btn btn-outline btn-sm">← ก่อนหน้า</a>
+        @endif
+        <span class="muted">หน้า {{ $logs->currentPage() }} / {{ $logs->lastPage() }} ({{ number_format($logs->total()) }} รายการ)</span>
+        @if ($logs->hasMorePages())
+          <a href="{{ $logs->nextPageUrl() }}" class="btn btn-outline btn-sm">ถัดไป →</a>
+        @else
+          <span class="btn btn-outline btn-sm" style="opacity:.4;cursor:default;">ถัดไป →</span>
+        @endif
+      </div>
     @endif
   @endif
 </div>

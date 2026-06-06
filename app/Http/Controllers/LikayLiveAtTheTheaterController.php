@@ -690,23 +690,29 @@ class LikayLiveAtTheTheaterController extends Controller
         $from   = (string) $request->input('from', '');
         $to     = (string) $request->input('to', '');
 
-        $query = BookingActivityLog::where('system', BookingActivityLog::SYSTEM_LIKAY)
-            ->orderByDesc('created_at');
+        // base query ใช้ filter วันที่ร่วมกัน (stats เห็นครบทุกประเภท ไม่ผูกกับ action filter)
+        $base = BookingActivityLog::where('system', BookingActivityLog::SYSTEM_LIKAY);
+        if ($from !== '') {
+            $base->whereDate('created_at', '>=', $from);
+        }
+        if ($to !== '') {
+            $base->whereDate('created_at', '<=', $to);
+        }
 
+        $counts = (clone $base)
+            ->selectRaw('action, COUNT(*) as c')
+            ->groupBy('action')
+            ->pluck('c', 'action');
+
+        $query = (clone $base)->orderByDesc('created_at');
         if (in_array($action, BookingActivityLog::ACTIONS, true)) {
             $query->where('action', $action);
         }
-        if ($from !== '') {
-            $query->whereDate('created_at', '>=', $from);
-        }
-        if ($to !== '') {
-            $query->whereDate('created_at', '<=', $to);
-        }
 
-        $logs   = $query->limit(500)->get();
+        $logs   = $query->paginate(50)->withQueryString();
         $system = 'likay';
 
-        return view('booking-activity-history', compact('logs', 'user', 'system', 'action', 'from', 'to'));
+        return view('booking-activity-history', compact('logs', 'user', 'system', 'action', 'from', 'to', 'counts'));
     }
 
     // ── Broadcast Zone Update ─────────────────────────────────────

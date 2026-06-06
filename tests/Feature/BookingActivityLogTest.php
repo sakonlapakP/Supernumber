@@ -163,6 +163,39 @@ class BookingActivityLogTest extends TestCase
             ->assertSee('ประวัติการทำรายการ');
     }
 
+    public function test_history_paginates_at_50_per_page(): void
+    {
+        $manager = User::factory()->create([
+            'role'      => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        // สร้าง log 60 รายการ → 2 หน้า (50 + 10)
+        for ($i = 1; $i <= 60; $i++) {
+            BookingActivityLog::record([
+                'system'       => 'likay',
+                'action'       => 'search',
+                'actor_name'   => 'Manager',
+                'search_query' => 'q' . $i,
+            ]);
+        }
+
+        $session = ['likay_user_id' => $manager->id];
+
+        // หน้า 1 มีปุ่มถัดไป + เห็น stat รวม 60
+        $this->withSession($session)
+            ->get(route('likay.history'))
+            ->assertOk()
+            ->assertSee('ถัดไป')
+            ->assertSee('หน้า 1 / 2', false);
+
+        // หน้า 2 โหลดได้
+        $this->withSession($session)
+            ->get(route('likay.history', ['page' => 2]))
+            ->assertOk()
+            ->assertSee('หน้า 2 / 2', false);
+    }
+
     public function test_suntaraporn_history_filters_by_show_date(): void
     {
         $manager = User::factory()->create([
