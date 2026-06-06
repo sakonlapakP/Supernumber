@@ -308,7 +308,12 @@ class LikayLiveAtTheTheaterController extends Controller
 
         $bookings = $query->get();
 
-        return view('likay-bookings', compact('bookings', 'user', 'search'));
+        $zoneColors  = LikayZone::all()->mapWithKeys(fn ($z) => [
+            $z->slug => ['bg' => $z->color, 'text' => $z->text_color, 'border' => $z->border_color],
+        ])->all();
+        $seatZoneMap = LikaySeatMap::seats();
+
+        return view('likay-bookings', compact('bookings', 'user', 'search', 'zoneColors', 'seatZoneMap'));
     }
 
     // ── Cancel Booking (manager only) ─────────────────────────────

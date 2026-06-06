@@ -342,7 +342,12 @@ class SuntarapornBandController extends Controller
 
         $bookings = $query->get();
 
-        return view('suntaraporn-bookings', compact('bookings', 'user', 'search', 'showDate', 'showDates'));
+        $zoneColors  = SuntarapornZone::all()->mapWithKeys(fn ($z) => [
+            $z->slug => ['bg' => $z->color, 'text' => $z->text_color, 'border' => $z->border_color],
+        ])->all();
+        $seatZoneMap = SuntarapornSeatMap::seats();
+
+        return view('suntaraporn-bookings', compact('bookings', 'user', 'search', 'showDate', 'showDates', 'zoneColors', 'seatZoneMap'));
     }
 
     // ── Cancel Booking (manager only) ─────────────────────────────

@@ -288,7 +288,12 @@
           <td>
             <div style="display:flex;flex-wrap:wrap;gap:2px;max-width:200px;">
               @foreach ($booking->seats as $seat)
-                <span class="seat-chip">{{ $seat->seat_key }}</span>
+                @php
+                  $zone  = $seatZoneMap[$seat->seat_key] ?? null;
+                  $c     = $zone ? ($zoneColors[$zone] ?? null) : null;
+                  $style = $c ? "background:{$c['bg']};color:{$c['text']};border:1.5px solid {$c['border']};" : '';
+                @endphp
+                <span class="seat-chip" style="{{ $style }}">{{ $seat->seat_key }}</span>
               @endforeach
             </div>
           </td>
