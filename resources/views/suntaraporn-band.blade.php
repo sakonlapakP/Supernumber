@@ -1015,8 +1015,17 @@ const CSRF             = document.querySelector('meta[name="csrf-token"]').conte
 const SHOW_DATE        = @json($showDate);
 const BOOKED           = new Set(@json($bookedSeats));
 const PRICES           = @json($prices);
+const ZONE_COLORS      = @json($zones->mapWithKeys(fn($z) => [$z->slug => ['bg' => $z->color, 'text' => $z->text_color, 'border' => $z->border_color]]));
 const SELECTED         = new Map(); // key → zone (ที่นั่งที่ฉันเลือก)
 const SELECTING_OTHERS = new Set(); // key (ที่นั่งที่ผู้อื่นกำลังเลือก)
+
+// สร้าง chip ด้วยสีตาม zone (ดึง zone จาก SELECTED หรือ DOM)
+function chipHtml(key) {
+  const zone  = SELECTED.get(key) ?? document.querySelector(`[data-key="${CSS.escape(key)}"]`)?.dataset.zone ?? '';
+  const c     = ZONE_COLORS[zone];
+  const style = c ? `background:${c.bg};color:${c.text};border:1.5px solid ${c.border};` : '';
+  return `<span class="seat-chip" style="${style}">${key}</span>`;
+}
 
 // ── Initialize ──────────────────────────────────────────────────
 function init() {
@@ -1092,9 +1101,7 @@ function openBookingModal() {
 
   // Update chips and total in modal
   const chips = document.getElementById('selected-chips');
-  chips.innerHTML = [...SELECTED.keys()].map(k =>
-    `<span class="seat-chip">${k}</span>`
-  ).join('');
+  chips.innerHTML = [...SELECTED.keys()].map(k => chipHtml(k)).join('');
 
   let total = 0;
   SELECTED.forEach(zone => { total += PRICES[zone] || 0; });
@@ -1179,9 +1186,9 @@ async function openDetailModal(seatKey) {
 
     currentBookingId = data.booking_id;
 
-    // Seats chips
+    // Seats chips (ใช้ chipHtml เพื่อแสดงสีตาม zone ของเก้าอี้)
     document.getElementById('det-seats').innerHTML = data.all_seats
-      .map(k => `<span class="seat-chip">${k}</span>`).join('');
+      .map(k => chipHtml(k)).join('');
 
     document.getElementById('det-name').textContent   = `${data.first_name} ${data.last_name}`;
     document.getElementById('det-phone').textContent  = data.phone;
