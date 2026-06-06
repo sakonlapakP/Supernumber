@@ -1,0 +1,54 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+
+class BookingActivityLog extends Model
+{
+    // ตารางนี้เก็บแค่ created_at ไม่มี updated_at
+    public const UPDATED_AT = null;
+
+    protected $table = 'booking_activity_logs';
+
+    protected $fillable = [
+        'system', 'action', 'show_date', 'actor_name', 'booking_id',
+        'seat_keys', 'customer_name', 'phone', 'total_price', 'search_query',
+    ];
+
+    protected $casts = [
+        'seat_keys'   => 'array',
+        'show_date'   => 'date:Y-m-d',
+        'total_price' => 'integer',
+    ];
+
+    public const SYSTEM_LIKAY       = 'likay';
+    public const SYSTEM_SUNTARAPORN = 'suntaraporn';
+
+    public const ACTION_BOOK   = 'book';
+    public const ACTION_CANCEL = 'cancel';
+    public const ACTION_RESET  = 'reset';
+    public const ACTION_SEARCH = 'search';
+
+    /** ประเภท action ทั้งหมด (ใช้ validate filter ในหน้า history) */
+    public const ACTIONS = [
+        self::ACTION_BOOK,
+        self::ACTION_CANCEL,
+        self::ACTION_RESET,
+        self::ACTION_SEARCH,
+    ];
+
+    /**
+     * บันทึก log โดยไม่ให้ error กระทบ flow หลัก (ถ้าเขียนไม่ได้ก็ปล่อยผ่าน)
+     *
+     * @param array<string, mixed> $attributes
+     */
+    public static function record(array $attributes): void
+    {
+        try {
+            static::create($attributes);
+        } catch (\Throwable) {
+            // logging ต้องไม่ทำให้การจอง/ยกเลิกล้มเหลว
+        }
+    }
+}

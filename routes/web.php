@@ -73,6 +73,7 @@ Route::delete('/LikayLiveAtTheTheater/zones/{id}', [LikayLiveAtTheTheaterControl
 Route::put('/LikayLiveAtTheTheater/row-zones', [LikayLiveAtTheTheaterController::class, 'updateRowZones'])->name('likay.row-zones.update');
 Route::get('/LikayLiveAtTheTheater/booking-info/{seatKey}', [LikayLiveAtTheTheaterController::class, 'bookingInfo'])->name('likay.booking-info');
 Route::get('/LikayLiveAtTheTheater/bookings', [LikayLiveAtTheTheaterController::class, 'bookingList'])->name('likay.bookings');
+Route::get('/LikayLiveAtTheTheater/history',  [LikayLiveAtTheTheaterController::class, 'history'])->name('likay.history');
 Route::get('/LikayLiveAtTheTheater/export',   [LikayLiveAtTheTheaterController::class, 'exportBookings'])->name('likay.export');
 Route::delete('/LikayLiveAtTheTheater/booking/{id}', [LikayLiveAtTheTheaterController::class, 'cancelBooking'])->name('likay.cancel');
 Route::get('/LikayLiveAtTheTheater/live-state',   [LikayLiveAtTheTheaterController::class, 'liveState'])->name('likay.live-state');
@@ -95,6 +96,7 @@ Route::delete('/SuntarapornBand/zones/{id}', [SuntarapornBandController::class, 
 Route::put('/SuntarapornBand/row-zones', [SuntarapornBandController::class, 'updateRowZones'])->name('suntaraporn.row-zones.update');
 Route::get('/SuntarapornBand/booking-info/{seatKey}', [SuntarapornBandController::class, 'bookingInfo'])->name('suntaraporn.booking-info');
 Route::get('/SuntarapornBand/bookings', [SuntarapornBandController::class, 'bookingList'])->name('suntaraporn.bookings');
+Route::get('/SuntarapornBand/history',  [SuntarapornBandController::class, 'history'])->name('suntaraporn.history');
 Route::get('/SuntarapornBand/export',   [SuntarapornBandController::class, 'exportBookings'])->name('suntaraporn.export');
 Route::delete('/SuntarapornBand/booking/{id}', [SuntarapornBandController::class, 'cancelBooking'])->name('suntaraporn.cancel');
 

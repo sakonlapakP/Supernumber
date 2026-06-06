@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\LikaySeatStatusUpdated;
 use App\Exports\LikayBookingsExport;
+use App\Models\BookingActivityLog;
 use App\Models\LikayBooking;
 use App\Models\LikayZone;
 use Maatwebsite\Excel\Facades\Excel;
@@ -189,10 +190,11 @@ class LikayLiveAtTheTheaterController extends Controller
         $alreadyBooked = [];
         // Slip is stored INSIDE the transaction so any DB failure rolls back cleanly.
         // On collision the uploaded file is deleted before returning 409.
-        $slipPath = null;
+        $slipPath  = null;
+        $bookingId = null;
 
         try {
-            DB::transaction(function () use ($request, $data, $seatKeys, $totalPrice, &$alreadyBooked, &$slipPath) {
+            DB::transaction(function () use ($request, $data, $seatKeys, $totalPrice, &$alreadyBooked, &$slipPath, &$bookingId) {
                 $seats = LikaySeat::whereIn('seat_key', $seatKeys)
                     ->lockForUpdate()
                     ->get()
@@ -219,6 +221,7 @@ class LikayLiveAtTheTheaterController extends Controller
                     'slip_path'   => $slipPath,
                     'total_price' => $totalPrice,
                 ]);
+                $bookingId = $booking->id;
 
                 foreach ($seatKeys as $key) {
                     $seats[$key]->update([
@@ -246,6 +249,17 @@ class LikayLiveAtTheTheaterController extends Controller
         $existing = Cache::get(self::SELECTING_CACHE, []);
         Cache::put(self::SELECTING_CACHE, array_values(array_diff($existing, $seatKeys)), self::SELECTING_TTL);
         try { broadcast(new LikaySeatStatusUpdated(bookedKeys: $seatKeys)); } catch (\Throwable) {}
+
+        BookingActivityLog::record([
+            'system'        => BookingActivityLog::SYSTEM_LIKAY,
+            'action'        => BookingActivityLog::ACTION_BOOK,
+            'actor_name'    => $data['booker_name'],
+            'booking_id'    => $bookingId,
+            'seat_keys'     => $seatKeys,
+            'customer_name' => trim($data['first_name'] . ' ' . $data['last_name']),
+            'phone'         => $data['phone'],
+            'total_price'   => $totalPrice,
+        ]);
 
         return response()->json(['success' => true]);
     }
@@ -304,6 +318,13 @@ class LikayLiveAtTheTheaterController extends Controller
                   ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'LIKE', $like)
                   ->orWhere('phone', 'LIKE', $like);
             });
+
+            BookingActivityLog::record([
+                'system'       => BookingActivityLog::SYSTEM_LIKAY,
+                'action'       => BookingActivityLog::ACTION_SEARCH,
+                'actor_name'   => $user->name,
+                'search_query' => $search,
+            ]);
         }
 
         $bookings = $query->get();
@@ -347,6 +368,17 @@ class LikayLiveAtTheTheaterController extends Controller
         $existing = Cache::get(self::SELECTING_CACHE, []);
         Cache::put(self::SELECTING_CACHE, array_values(array_diff($existing, $freedKeys)), self::SELECTING_TTL);
         try { broadcast(new LikaySeatStatusUpdated(freedKeys: $freedKeys)); } catch (\Throwable) {}
+
+        BookingActivityLog::record([
+            'system'        => BookingActivityLog::SYSTEM_LIKAY,
+            'action'        => BookingActivityLog::ACTION_CANCEL,
+            'actor_name'    => $user->name,
+            'booking_id'    => $booking->id,
+            'seat_keys'     => $freedKeys,
+            'customer_name' => trim($booking->first_name . ' ' . $booking->last_name),
+            'phone'         => $booking->phone,
+            'total_price'   => $booking->total_price,
+        ]);
 
         return response()->json(['success' => true]);
     }
@@ -612,6 +644,13 @@ class LikayLiveAtTheTheaterController extends Controller
             try { broadcast(new LikaySeatStatusUpdated(freedKeys: $freedKeys)); } catch (\Throwable) {}
         }
 
+        BookingActivityLog::record([
+            'system'     => BookingActivityLog::SYSTEM_LIKAY,
+            'action'     => BookingActivityLog::ACTION_RESET,
+            'actor_name' => $user->name,
+            'seat_keys'  => $freedKeys,
+        ]);
+
         return response()->json(['success' => true]);
     }
 
@@ -634,6 +673,40 @@ class LikayLiveAtTheTheaterController extends Controller
         $filename = 'likay-bookings-' . now()->format('Y-m-d') . '.xlsx';
 
         return Excel::download(new LikayBookingsExport(), $filename);
+    }
+
+    // ── Activity History (manager only) ───────────────────────────
+
+    public function history(Request $request): View|RedirectResponse
+    {
+        if ($redirect = $this->guardRedirect()) return $redirect;
+
+        $user = $this->currentUser();
+        if ($user->role !== User::ROLE_MANAGER) {
+            return redirect()->route('likay.index');
+        }
+
+        $action = (string) $request->input('action', '');
+        $from   = (string) $request->input('from', '');
+        $to     = (string) $request->input('to', '');
+
+        $query = BookingActivityLog::where('system', BookingActivityLog::SYSTEM_LIKAY)
+            ->orderByDesc('created_at');
+
+        if (in_array($action, BookingActivityLog::ACTIONS, true)) {
+            $query->where('action', $action);
+        }
+        if ($from !== '') {
+            $query->whereDate('created_at', '>=', $from);
+        }
+        if ($to !== '') {
+            $query->whereDate('created_at', '<=', $to);
+        }
+
+        $logs   = $query->limit(500)->get();
+        $system = 'likay';
+
+        return view('booking-activity-history', compact('logs', 'user', 'system', 'action', 'from', 'to'));
     }
 
     // ── Broadcast Zone Update ─────────────────────────────────────

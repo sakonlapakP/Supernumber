@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Events\SeatStatusUpdated;
 use App\Exports\SuntarapornBookingsExport;
+use App\Models\BookingActivityLog;
 use App\Models\SuntarapornBooking;
 use App\Models\SuntarapornZone;
 use Maatwebsite\Excel\Facades\Excel;
@@ -212,10 +213,11 @@ class SuntarapornBandController extends Controller
         $alreadyBooked = [];
         // Slip is stored INSIDE the transaction so any DB failure rolls back cleanly.
         // On collision the uploaded file is deleted before returning 409.
-        $slipPath = null;
+        $slipPath  = null;
+        $bookingId = null;
 
         try {
-            DB::transaction(function () use ($request, $data, $seatKeys, $showDate, $totalPrice, &$alreadyBooked, &$slipPath) {
+            DB::transaction(function () use ($request, $data, $seatKeys, $showDate, $totalPrice, &$alreadyBooked, &$slipPath, &$bookingId) {
                 $seats = SuntarapornSeat::where('show_date', $showDate)
                     ->whereIn('seat_key', $seatKeys)
                     ->lockForUpdate()
@@ -244,6 +246,7 @@ class SuntarapornBandController extends Controller
                     'slip_path'   => $slipPath,
                     'total_price' => $totalPrice,
                 ]);
+                $bookingId = $booking->id;
 
                 foreach ($seatKeys as $key) {
                     $seats[$key]->update([
@@ -272,6 +275,18 @@ class SuntarapornBandController extends Controller
         $existing = Cache::get($cacheKey, []);
         Cache::put($cacheKey, array_values(array_diff($existing, $seatKeys)), self::SELECTING_TTL);
         try { broadcast(new SeatStatusUpdated(showDate: $showDate, bookedKeys: $seatKeys)); } catch (\Throwable) {}
+
+        BookingActivityLog::record([
+            'system'        => BookingActivityLog::SYSTEM_SUNTARAPORN,
+            'action'        => BookingActivityLog::ACTION_BOOK,
+            'show_date'     => $showDate,
+            'actor_name'    => $data['booker_name'],
+            'booking_id'    => $bookingId,
+            'seat_keys'     => $seatKeys,
+            'customer_name' => trim($data['first_name'] . ' ' . $data['last_name']),
+            'phone'         => $data['phone'],
+            'total_price'   => $totalPrice,
+        ]);
 
         return response()->json(['success' => true]);
     }
@@ -338,6 +353,14 @@ class SuntarapornBandController extends Controller
                   ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'LIKE', $like)
                   ->orWhere('phone', 'LIKE', $like);
             });
+
+            BookingActivityLog::record([
+                'system'       => BookingActivityLog::SYSTEM_SUNTARAPORN,
+                'action'       => BookingActivityLog::ACTION_SEARCH,
+                'show_date'    => $showDate,
+                'actor_name'   => $user->name,
+                'search_query' => $search,
+            ]);
         }
 
         $bookings = $query->get();
@@ -384,6 +407,18 @@ class SuntarapornBandController extends Controller
         $existing = Cache::get($cacheKey, []);
         Cache::put($cacheKey, array_values(array_diff($existing, $freedKeys)), self::SELECTING_TTL);
         try { broadcast(new SeatStatusUpdated(showDate: $showDate, freedKeys: $freedKeys)); } catch (\Throwable) {}
+
+        BookingActivityLog::record([
+            'system'        => BookingActivityLog::SYSTEM_SUNTARAPORN,
+            'action'        => BookingActivityLog::ACTION_CANCEL,
+            'show_date'     => $showDate,
+            'actor_name'    => $user->name,
+            'booking_id'    => $booking->id,
+            'seat_keys'     => $freedKeys,
+            'customer_name' => trim($booking->first_name . ' ' . $booking->last_name),
+            'phone'         => $booking->phone,
+            'total_price'   => $booking->total_price,
+        ]);
 
         return response()->json(['success' => true]);
     }
@@ -661,6 +696,14 @@ class SuntarapornBandController extends Controller
             try { broadcast(new SeatStatusUpdated(showDate: $showDate, freedKeys: $freedKeys)); } catch (\Throwable) {}
         }
 
+        BookingActivityLog::record([
+            'system'     => BookingActivityLog::SYSTEM_SUNTARAPORN,
+            'action'     => BookingActivityLog::ACTION_RESET,
+            'show_date'  => $showDate,
+            'actor_name' => $user->name,
+            'seat_keys'  => $freedKeys,
+        ]);
+
         return response()->json(['success' => true]);
     }
 
@@ -689,6 +732,44 @@ class SuntarapornBandController extends Controller
         $filename = 'suntaraporn-bookings-' . $showDate . '.xlsx';
 
         return Excel::download(new SuntarapornBookingsExport($showDate), $filename);
+    }
+
+    // ── Activity History (manager only) ───────────────────────────
+
+    public function history(Request $request): View|RedirectResponse
+    {
+        if ($redirect = $this->guardRedirect()) return $redirect;
+
+        $user = $this->currentUser();
+        if ($user->role !== User::ROLE_MANAGER) {
+            return redirect()->route('suntaraporn.index');
+        }
+
+        $showDate  = $this->resolveShowDate($request);
+        $showDates = self::SHOW_DATES;
+
+        $action = (string) $request->input('action', '');
+        $from   = (string) $request->input('from', '');
+        $to     = (string) $request->input('to', '');
+
+        $query = BookingActivityLog::where('system', BookingActivityLog::SYSTEM_SUNTARAPORN)
+            ->where('show_date', $showDate)
+            ->orderByDesc('created_at');
+
+        if (in_array($action, BookingActivityLog::ACTIONS, true)) {
+            $query->where('action', $action);
+        }
+        if ($from !== '') {
+            $query->whereDate('created_at', '>=', $from);
+        }
+        if ($to !== '') {
+            $query->whereDate('created_at', '<=', $to);
+        }
+
+        $logs   = $query->limit(500)->get();
+        $system = 'suntaraporn';
+
+        return view('booking-activity-history', compact('logs', 'user', 'system', 'action', 'from', 'to', 'showDate', 'showDates'));
     }
 
     // ── Broadcast Zone Update ─────────────────────────────────────

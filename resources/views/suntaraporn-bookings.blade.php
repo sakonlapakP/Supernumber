@@ -196,6 +196,9 @@
     <div class="page-sub">สวัสดี, {{ $user->name }}</div>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+    @if ($user->role === 'manager')
+    <a href="{{ route('suntaraporn.history', ['date' => $showDate]) }}" class="btn btn-outline">🕓 ประวัติ</a>
+    @endif
     <a href="{{ route('suntaraporn.export', ['date' => $showDate]) }}" class="btn" style="background:#1b5e20;color:#fff;">📥 Export Excel</a>
     <a href="{{ route('suntaraporn.index', ['date' => $showDate]) }}" class="btn btn-outline">← ผังที่นั่ง</a>
     <form method="POST" action="{{ route('suntaraporn.logout') }}" style="margin:0;">

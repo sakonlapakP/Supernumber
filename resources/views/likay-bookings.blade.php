@@ -193,6 +193,9 @@
     <div class="page-sub">สวัสดี, {{ $user->name }}</div>
   </div>
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
+    @if ($user->role === 'manager')
+    <a href="{{ route('likay.history') }}" class="btn btn-outline">🕓 ประวัติ</a>
+    @endif
     <a href="{{ route('likay.export') }}" class="btn" style="background:#1b5e20;color:#fff;">📥 Export Excel</a>
     <a href="{{ route('likay.index') }}" class="btn btn-outline">← ผังที่นั่ง</a>
     <form method="POST" action="{{ route('likay.logout') }}" style="margin:0;">
