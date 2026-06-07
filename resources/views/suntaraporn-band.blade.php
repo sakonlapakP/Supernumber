@@ -1520,6 +1520,8 @@ init();
     updateFloatBtn();
   });
 })();
+
+window.addEventListener('pageshow', e => { if (e.persisted) location.reload(); });
 </script>
 </body>
 </html>
