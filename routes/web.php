@@ -223,6 +223,42 @@ $ensurePublicStorageLink = function (): void {
     Artisan::call('storage:link');
 };
 
+// [TEMP] ย้ายไฟล์ suntaraporn-slips จาก path เก่า (storage/) ไปยัง path ที่ถูกต้อง (storage/app/public/)
+Route::get('/admin/maintenance/migrate-suntaraporn-slips', function () use ($ensureAdmin) {
+    if ($redirect = $ensureAdmin()) { return $redirect; }
+
+    $oldDir = storage_path('suntaraporn-slips');
+    $newDir = Storage::disk('public')->path('suntaraporn-slips');
+
+    if (!is_dir($oldDir)) {
+        return response('ไม่พบ folder เก่า หรือย้ายไปแล้ว: ' . $oldDir);
+    }
+
+    if (!is_dir($newDir)) {
+        mkdir($newDir, 0755, true);
+    }
+
+    $files = array_filter(glob($oldDir . '/*'), 'is_file');
+    $moved = 0;
+    $errors = [];
+
+    foreach ($files as $file) {
+        $dest = $newDir . '/' . basename($file);
+        if (copy($file, $dest)) {
+            unlink($file);
+            $moved++;
+        } else {
+            $errors[] = basename($file);
+        }
+    }
+
+    $msg = "สำเร็จ: ย้าย {$moved} ไฟล์";
+    if ($errors) {
+        $msg .= ' | ล้มเหลว: ' . implode(', ', $errors);
+    }
+    return response($msg);
+});
+
 /**
  * Decode a Base64 data-URI string into a temporary UploadedFile.
  * Returns null when the input is empty or invalid.
