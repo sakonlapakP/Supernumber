@@ -639,7 +639,8 @@
       </div>
       <div class="form-group">
         <label>เบอร์ติดต่อ <span style="color:#e53935">*</span></label>
-        <input type="tel" name="phone" id="inp-phone" placeholder="0812345678" required>
+        <input type="tel" name="phone" id="inp-phone" placeholder="0812345678" required
+               inputmode="numeric" pattern="[0-9]{10}" maxlength="10" minlength="10">
       </div>
       <div class="form-group">
         <label>อัพโหลด Slip โอนเงิน</label>
@@ -1115,11 +1116,22 @@ function closeBookingModal() {
   document.getElementById('bookingModal').classList.remove('open');
 }
 
+document.getElementById('inp-phone').addEventListener('input', function () {
+  this.value = this.value.replace(/\D/g, '').slice(0, 10);
+});
+
 async function confirmBooking() {
   const form    = document.getElementById('bookingForm');
   const inputs  = form.querySelectorAll('[required]');
   for (const inp of inputs) {
     if (!inp.value.trim()) { inp.focus(); alert('กรุณากรอกข้อมูลให้ครบถ้วน'); return; }
+  }
+
+  const phone = document.getElementById('inp-phone').value.trim();
+  if (!/^[0-9]{10}$/.test(phone)) {
+    document.getElementById('inp-phone').focus();
+    alert('กรุณากรอกเบอร์โทรศัพท์ให้ครบ 10 หลัก (ตัวเลขเท่านั้น)');
+    return;
   }
 
   const btn = document.getElementById('confirmBookBtn');
