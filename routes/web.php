@@ -228,10 +228,10 @@ Route::get('/admin/maintenance/migrate-suntaraporn-slips', function () use ($ens
     if ($redirect = $ensureAdmin()) { return $redirect; }
 
     $oldDir = storage_path('suntaraporn-slips');
-    $newDir = Storage::disk('public')->path('suntaraporn-slips');
+    $newDir = storage_path('app/public/suntaraporn-slips');
 
-    if (!is_dir($oldDir)) {
-        return response('ไม่พบ folder เก่า หรือย้ายไปแล้ว: ' . $oldDir);
+    if (!is_dir($oldDir) || count(array_filter(glob($oldDir . '/*'), 'is_file')) === 0) {
+        return response('ไม่พบไฟล์ใน folder เก่า หรือย้ายไปแล้ว: ' . $oldDir);
     }
 
     if (!is_dir($newDir)) {
