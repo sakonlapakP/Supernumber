@@ -11,6 +11,7 @@ use Maatwebsite\Excel\Facades\Excel;
 use App\Models\LikaySeat;
 use App\Models\User;
 use App\Services\LikaySeatMap;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -642,14 +643,14 @@ class LikayLiveAtTheTheaterController extends Controller
 
         if (!empty($freedKeys)) {
             try { broadcast(new LikaySeatStatusUpdated(freedKeys: $freedKeys)); } catch (\Throwable) {}
-        }
 
-        BookingActivityLog::record([
-            'system'     => BookingActivityLog::SYSTEM_LIKAY,
-            'action'     => BookingActivityLog::ACTION_RESET,
-            'actor_name' => $user->name,
-            'seat_keys'  => $freedKeys,
-        ]);
+            BookingActivityLog::record([
+                'system'     => BookingActivityLog::SYSTEM_LIKAY,
+                'action'     => BookingActivityLog::ACTION_RESET,
+                'actor_name' => $user->name,
+                'seat_keys'  => $freedKeys,
+            ]);
+        }
 
         return response()->json(['success' => true]);
     }
@@ -691,12 +692,13 @@ class LikayLiveAtTheTheaterController extends Controller
         $to     = (string) $request->input('to', '');
 
         // base query ใช้ filter วันที่ร่วมกัน (stats เห็นครบทุกประเภท ไม่ผูกกับ action filter)
+        // ใช้ range เทียบ created_at ตรงๆ (ไม่ใช้ whereDate) เพื่อให้ index ทำงาน
         $base = BookingActivityLog::where('system', BookingActivityLog::SYSTEM_LIKAY);
         if ($from !== '') {
-            $base->whereDate('created_at', '>=', $from);
+            try { $base->where('created_at', '>=', Carbon::parse($from)->startOfDay()); } catch (\Throwable) {}
         }
         if ($to !== '') {
-            $base->whereDate('created_at', '<=', $to);
+            try { $base->where('created_at', '<', Carbon::parse($to)->addDay()->startOfDay()); } catch (\Throwable) {}
         }
 
         $counts = (clone $base)

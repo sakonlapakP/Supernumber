@@ -196,6 +196,93 @@ class BookingActivityLogTest extends TestCase
             ->assertSee('หน้า 2 / 2', false);
     }
 
+    public function test_long_customer_name_is_logged_without_overflow(): void
+    {
+        $staff = User::factory()->create([
+            'name'      => 'Staff',
+            'role'      => User::ROLE_SUNTARAPORN,
+            'is_active' => true,
+        ]);
+
+        // ชื่อ+สกุลยาวเต็มพิกัด (100 + 100 ตัว) → customer_name = 201 ตัว
+        $first = str_repeat('ก', 100);
+        $last  = str_repeat('ข', 100);
+
+        $this->withSession(['suntaraporn_user_id' => $staff->id])
+            ->postJson(route('suntaraporn.book'), [
+                'seat_keys'  => ['A_1'],
+                'first_name' => $first,
+                'last_name'  => $last,
+                'phone'      => '0812345678',
+            ])
+            ->assertOk();
+
+        // log ต้องถูกบันทึก (ไม่ถูก drop เพราะ overflow)
+        $log = BookingActivityLog::where('action', 'book')->firstOrFail();
+        $this->assertSame(201, mb_strlen($log->customer_name));
+    }
+
+    public function test_long_search_query_is_truncated_not_dropped(): void
+    {
+        $manager = User::factory()->create([
+            'role'      => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        $longQuery = str_repeat('x', 300);
+
+        $this->withSession(['likay_user_id' => $manager->id])
+            ->get(route('likay.bookings', ['search' => $longQuery]))
+            ->assertOk();
+
+        $log = BookingActivityLog::where('action', 'search')->firstOrFail();
+        $this->assertSame(255, mb_strlen($log->search_query));
+    }
+
+    public function test_empty_reset_does_not_create_log(): void
+    {
+        $manager = User::factory()->create([
+            'role'      => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        // reset ทั้งที่ไม่มีที่นั่งจอง → ไม่ควรสร้าง log
+        $this->withSession(['suntaraporn_user_id' => $manager->id])
+            ->postJson(route('suntaraporn.reset'))
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        $this->assertSame(0, BookingActivityLog::where('action', 'reset')->count());
+    }
+
+    public function test_history_date_range_filter_excludes_old_entries(): void
+    {
+        $manager = User::factory()->create([
+            'role'      => User::ROLE_MANAGER,
+            'is_active' => true,
+        ]);
+
+        // log เก่า (ปี 2020) + log ใหม่ (วันนี้)
+        $old = BookingActivityLog::create([
+            'system' => 'likay', 'action' => 'search',
+            'actor_name' => 'M', 'search_query' => 'OLD_ENTRY',
+        ]);
+        $old->created_at = '2020-01-01 10:00:00';
+        $old->save();
+
+        BookingActivityLog::record([
+            'system' => 'likay', 'action' => 'search',
+            'actor_name' => 'M', 'search_query' => 'NEW_ENTRY',
+        ]);
+
+        // กรองตั้งแต่วันนี้ → เห็นเฉพาะรายการใหม่
+        $this->withSession(['likay_user_id' => $manager->id])
+            ->get(route('likay.history', ['from' => now()->format('Y-m-d')]))
+            ->assertOk()
+            ->assertSee('NEW_ENTRY')
+            ->assertDontSee('OLD_ENTRY');
+    }
+
     public function test_suntaraporn_history_filters_by_show_date(): void
     {
         $manager = User::factory()->create([

@@ -38,6 +38,14 @@ class BookingActivityLog extends Model
         self::ACTION_SEARCH,
     ];
 
+    /** ความยาวสูงสุดของแต่ละคอลัมน์ string (กัน overflow ก่อน insert) */
+    private const MAX_LENGTHS = [
+        'actor_name'    => 100,
+        'customer_name' => 255,
+        'phone'         => 30,
+        'search_query'  => 255,
+    ];
+
     /**
      * บันทึก log โดยไม่ให้ error กระทบ flow หลัก (ถ้าเขียนไม่ได้ก็ปล่อยผ่าน)
      *
@@ -45,6 +53,13 @@ class BookingActivityLog extends Model
      */
     public static function record(array $attributes): void
     {
+        // ตัดความยาวกันค่าเกิน column (เช่น ชื่อ+สกุลยาวเต็ม หรือคำค้นยาวมาก)
+        foreach (self::MAX_LENGTHS as $field => $max) {
+            if (isset($attributes[$field]) && is_string($attributes[$field])) {
+                $attributes[$field] = mb_substr($attributes[$field], 0, $max);
+            }
+        }
+
         try {
             static::create($attributes);
         } catch (\Throwable) {
