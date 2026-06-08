@@ -332,7 +332,7 @@
   </div>
   <div class="stat-item">
     <span class="stat-num" id="stat-selecting" style="color:#FF8F00">0</span>
-    <span class="stat-lbl">🔒 กำลังถูกถือ</span>
+    <span class="stat-lbl">🔒 กำลังถูกจองโดยผู้อื่น</span>
   </div>
   <div class="stat-item">
     <span class="stat-num" id="stat-avail" style="color:#2e7d32">{{ $totalSeats }}</span>
@@ -365,7 +365,7 @@
   </div>
   <div class="legend-item">
     <div class="legend-swatch" style="background:#FF8F00;border-color:#E65100;display:flex;align-items:center;justify-content:center;font-size:10px;">🔒</div>
-    <span>กำลังถูกถือ</span>
+    <span>กำลังถูกจองโดยผู้อื่น</span>
   </div>
 </div>
 
