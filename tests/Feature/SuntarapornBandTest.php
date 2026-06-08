@@ -115,6 +115,30 @@ class SuntarapornBandTest extends TestCase
         ]);
     }
 
+    public function test_green_box_seats_price_at_green_zone(): void
+    {
+        // Box B/C/F แสดงสีเขียว → ต้องคิดราคาตามโซนเขียว (฿2,000) ไม่ใช่ ฿0
+        $staff = User::factory()->create([
+            'role'      => User::ROLE_SUNTARAPORN,
+            'is_active' => true,
+        ]);
+
+        $this->withSession($this->suntarapornSession($staff))
+            ->postJson(route('suntaraporn.book'), [
+                'seat_keys'  => ['BOXB_6', 'BOXC_10', 'BOXF_15'],
+                'first_name' => 'สมหญิง',
+                'last_name'  => 'ทดสอบ',
+                'phone'      => '0812345678',
+            ])
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        $this->assertDatabaseHas('suntaraporn_bookings', [
+            'first_name'  => 'สมหญิง',
+            'total_price' => 6000, // 3 × green(2000)
+        ]);
+    }
+
     public function test_booking_rejects_invalid_seat_keys(): void
     {
         $staff = User::factory()->create([
@@ -504,6 +528,136 @@ class SuntarapornBandTest extends TestCase
         ]);
         $this->assertDatabaseMissing('suntaraporn_bookings', ['show_date' => '2026-10-31']);
         $this->assertDatabaseHas('suntaraporn_bookings', ['show_date' => '2026-11-01']);
+    }
+
+    // ── Sponsor Seats ─────────────────────────────────────────────
+
+    public function test_mark_sponsor_creates_zero_price_booking_and_blocks_rebooking(): void
+    {
+        $staff = User::factory()->create(['role' => User::ROLE_SUNTARAPORN, 'is_active' => true]);
+        $session = $this->suntarapornSession($staff);
+
+        $this->withSession($session)
+            ->postJson(route('suntaraporn.sponsor.mark'), [
+                'seat_keys'    => ['A_1', 'A_2'],
+                'sponsor_name' => 'King Power',
+            ])
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        $this->assertDatabaseHas('suntaraporn_bookings', [
+            'first_name'  => 'King Power',
+            'total_price' => 0,
+            'is_sponsor'  => true,
+        ]);
+        foreach (['A_1', 'A_2'] as $key) {
+            $this->assertDatabaseHas('suntaraporn_seats', ['seat_key' => $key, 'is_booked' => true]);
+        }
+
+        // ลูกค้าจองทับไม่ได้ → 409
+        $this->withSession($session)
+            ->postJson(route('suntaraporn.book'), [
+                'seat_keys'  => ['A_1'],
+                'first_name' => 'ลูกค้า',
+                'last_name'  => 'ทดสอบ',
+                'phone'      => '0812345678',
+            ])
+            ->assertStatus(409);
+    }
+
+    public function test_sponsor_seat_is_sold_to_public_but_flagged_for_admin(): void
+    {
+        $staff = User::factory()->create(['role' => User::ROLE_SUNTARAPORN, 'is_active' => true]);
+        $session = $this->suntarapornSession($staff);
+
+        $this->withSession($session)
+            ->postJson(route('suntaraporn.sponsor.mark'), ['seat_keys' => ['A_1'], 'sponsor_name' => 'Sponsor X'])
+            ->assertOk();
+
+        // public เห็นเป็น "ขายแล้ว"
+        $booked = $this->getJson(route('suntaraporn.live-state'))->json('booked');
+        $this->assertContains('A_1', $booked);
+
+        // ฝั่งแอดมิน booking-info บอกว่าเป็น sponsor + ฿0
+        $this->withSession($session)
+            ->getJson(route('suntaraporn.booking-info', 'A_1'))
+            ->assertOk()
+            ->assertJson(['success' => true, 'is_sponsor' => true, 'total_price' => 0, 'first_name' => 'Sponsor X']);
+
+        // หน้าแอดมิน render SPONSOR map + ตัวนับ stat-sponsor (ใช้ทาสีทอง)
+        $this->withSession($session)
+            ->get(route('suntaraporn.index'))
+            ->assertOk()
+            ->assertSee('"A_1":"Sponsor X"', false)
+            ->assertSee('id="stat-sponsor"', false);
+    }
+
+    public function test_sponsor_name_is_optional(): void
+    {
+        $staff = User::factory()->create(['role' => User::ROLE_SUNTARAPORN, 'is_active' => true]);
+
+        $this->withSession($this->suntarapornSession($staff))
+            ->postJson(route('suntaraporn.sponsor.mark'), ['seat_keys' => ['A_1']])
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        $this->assertDatabaseHas('suntaraporn_bookings', [
+            'first_name' => 'Sponsor',
+            'is_sponsor' => true,
+        ]);
+    }
+
+    public function test_unmark_sponsor_frees_whole_group_and_allows_rebooking(): void
+    {
+        $staff = User::factory()->create(['role' => User::ROLE_SUNTARAPORN, 'is_active' => true]);
+        $session = $this->suntarapornSession($staff);
+
+        $this->withSession($session)
+            ->postJson(route('suntaraporn.sponsor.mark'), ['seat_keys' => ['A_1', 'A_2'], 'sponsor_name' => 'Sp'])
+            ->assertOk();
+
+        // ปลดด้วยที่นั่งใดที่นั่งหนึ่ง → ปล่อยทั้งกลุ่ม
+        $this->withSession($session)
+            ->postJson(route('suntaraporn.sponsor.unmark'), ['seat_keys' => ['A_1']])
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        foreach (['A_1', 'A_2'] as $key) {
+            $this->assertDatabaseHas('suntaraporn_seats', ['seat_key' => $key, 'is_booked' => false, 'booking_id' => null]);
+        }
+        $this->assertDatabaseMissing('suntaraporn_bookings', ['is_sponsor' => true]);
+
+        // จองที่นั่งเดิมได้ใหม่
+        $this->withSession($session)
+            ->postJson(route('suntaraporn.book'), [
+                'seat_keys'  => ['A_1'],
+                'first_name' => 'ใหม่',
+                'last_name'  => 'ทดสอบ',
+                'phone'      => '0812345678',
+            ])
+            ->assertOk()
+            ->assertJson(['success' => true]);
+    }
+
+    public function test_mark_sponsor_rejects_already_booked_seat(): void
+    {
+        $staff = User::factory()->create(['role' => User::ROLE_SUNTARAPORN, 'is_active' => true]);
+        $session = $this->suntarapornSession($staff);
+
+        $this->withSession($session)->postJson(route('suntaraporn.book'), [
+            'seat_keys' => ['A_1'], 'first_name' => 'ลูกค้า', 'last_name' => 'ทดสอบ', 'phone' => '0812345678',
+        ])->assertOk();
+
+        $this->withSession($session)
+            ->postJson(route('suntaraporn.sponsor.mark'), ['seat_keys' => ['A_1']])
+            ->assertStatus(409)
+            ->assertJson(['success' => false]);
+    }
+
+    public function test_sponsor_endpoints_require_auth(): void
+    {
+        $this->postJson(route('suntaraporn.sponsor.mark'), ['seat_keys' => ['A_1']])->assertStatus(401);
+        $this->postJson(route('suntaraporn.sponsor.unmark'), ['seat_keys' => ['A_1']])->assertStatus(401);
     }
 
     private function suntarapornSession(User $user): array

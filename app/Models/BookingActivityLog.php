@@ -25,10 +25,12 @@ class BookingActivityLog extends Model
     public const SYSTEM_LIKAY       = 'likay';
     public const SYSTEM_SUNTARAPORN = 'suntaraporn';
 
-    public const ACTION_BOOK   = 'book';
-    public const ACTION_CANCEL = 'cancel';
-    public const ACTION_RESET  = 'reset';
-    public const ACTION_SEARCH = 'search';
+    public const ACTION_BOOK      = 'book';
+    public const ACTION_CANCEL    = 'cancel';
+    public const ACTION_RESET     = 'reset';
+    public const ACTION_SEARCH    = 'search';
+    public const ACTION_SPONSOR   = 'sponsor';   // กันที่นั่งให้ Sponsor (฿0)
+    public const ACTION_UNSPONSOR = 'unsponsor'; // ยกเลิกที่นั่ง Sponsor
 
     /** ประเภท action ทั้งหมด (ใช้ validate filter ในหน้า history) */
     public const ACTIONS = [
@@ -36,6 +38,8 @@ class BookingActivityLog extends Model
         self::ACTION_CANCEL,
         self::ACTION_RESET,
         self::ACTION_SEARCH,
+        self::ACTION_SPONSOR,
+        self::ACTION_UNSPONSOR,
     ];
 
     /** ความยาวสูงสุดของแต่ละคอลัมน์ string (กัน overflow ก่อน insert) */

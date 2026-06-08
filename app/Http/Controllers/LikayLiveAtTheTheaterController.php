@@ -119,6 +119,15 @@ class LikayLiveAtTheTheaterController extends Controller
             ->pluck('seat_key')
             ->all();
 
+        // ที่นั่ง Sponsor (booking ฿0) — แอดมินเห็นแยกเป็นสีทอง + โน้ต
+        // (ยังคงอยู่ใน $bookedSeats ด้วย เพื่อกันการจองทับ)
+        $sponsorSeats = LikaySeat::where('is_booked', true)
+            ->whereHas('booking', fn ($q) => $q->where('is_sponsor', true))
+            ->with('booking:id,first_name')
+            ->get()
+            ->mapWithKeys(fn (LikaySeat $s) => [$s->seat_key => $s->booking?->first_name ?? 'Sponsor'])
+            ->all();
+
         $zones = LikayZone::orderBy('sort_order')->get();
         $prices = $zones->pluck('price', 'slug')->all();
         $rowZones = DB::table('likay_row_zones')
@@ -131,15 +140,16 @@ class LikayLiveAtTheTheaterController extends Controller
         $allSeats = LikaySeatMap::seats();
         $potentialRevenue = array_sum(array_map(fn ($zone) => $prices[$zone] ?? 0, $allSeats));
         $bookedSet = array_flip($bookedSeats);
+        // รายได้นับเฉพาะที่นั่งจองจริง — ที่นั่ง Sponsor (฿0) ไม่นับเป็นรายได้
         $bookedRevenue = array_sum(array_map(
-            fn ($key, $zone) => isset($bookedSet[$key]) ? ($prices[$zone] ?? 0) : 0,
+            fn ($key, $zone) => (isset($bookedSet[$key]) && !isset($sponsorSeats[$key])) ? ($prices[$zone] ?? 0) : 0,
             array_keys($allSeats),
             $allSeats
         ));
 
         $selectingSeats = Cache::get(self::SELECTING_CACHE, []);
 
-        return view('likay-band', compact('bookedSeats', 'prices', 'user', 'totalSeats', 'potentialRevenue', 'bookedRevenue', 'zones', 'rowZones', 'selectingSeats'));
+        return view('likay-band', compact('bookedSeats', 'sponsorSeats', 'prices', 'user', 'totalSeats', 'potentialRevenue', 'bookedRevenue', 'zones', 'rowZones', 'selectingSeats'));
     }
 
     // ── Book Seat(s) ──────────────────────────────────────────────
@@ -292,6 +302,7 @@ class LikayLiveAtTheTheaterController extends Controller
             'phone'       => $booking->phone,
             'booker_name' => $booking->booker_name,
             'total_price' => $booking->total_price,
+            'is_sponsor'  => (bool) $booking->is_sponsor,
             'booked_at'   => $seat->booked_at?->format('d/m/Y H:i'),
             'slip_url'    => $booking->slip_path ? asset('storage/' . $booking->slip_path) : null,
             'all_seats'   => $booking->seats->pluck('seat_key')->all(),
@@ -379,6 +390,166 @@ class LikayLiveAtTheTheaterController extends Controller
             'customer_name' => trim($booking->first_name . ' ' . $booking->last_name),
             'phone'         => $booking->phone,
             'total_price'   => $booking->total_price,
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    // ── Sponsor Seats (กันที่นั่งให้ผู้สนับสนุน — ฿0) ────────────────
+    // สร้าง booking ราคา 0 + flag is_sponsor → ลูกค้าเห็นเป็น "ขายแล้ว" (สีแดง)
+    // แต่ฝั่งแอดมินเห็นเป็นสีทองพร้อมโน้ตชื่อ Sponsor
+
+    public function markSponsor(Request $request): JsonResponse
+    {
+        if ($this->guardRedirect()) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
+        }
+
+        $data = $request->validate([
+            'seat_keys'    => 'required|array|min:1',
+            'seat_keys.*'  => 'required|string|max:30|distinct',
+            'sponsor_name' => 'nullable|string|max:100',
+        ]);
+
+        $actor       = $this->currentUser()->name;
+        $seatKeys    = array_values($data['seat_keys']);
+        $sponsorName = trim((string) ($data['sponsor_name'] ?? '')) ?: 'Sponsor';
+
+        // ตรวจรหัสที่นั่งกับผังจริง
+        $seatZones    = LikaySeatMap::zonesFor($seatKeys);
+        $invalidSeats = array_values(array_diff($seatKeys, array_keys($seatZones)));
+        if (!empty($invalidSeats)) {
+            return response()->json([
+                'success' => false,
+                'error'   => 'รหัสที่นั่งไม่ถูกต้อง: ' . implode(', ', $invalidSeats),
+            ], 422);
+        }
+
+        $now = now();
+        DB::table('likay_seats')->insertOrIgnore(array_map(
+            fn (string $key) => [
+                'seat_key'   => $key,
+                'is_booked'  => false,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            $seatKeys
+        ));
+
+        $alreadyBooked = [];
+        $bookingId     = null;
+
+        try {
+            DB::transaction(function () use ($seatKeys, $sponsorName, $actor, &$alreadyBooked, &$bookingId) {
+                $seats = LikaySeat::whereIn('seat_key', $seatKeys)
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('seat_key');
+
+                $alreadyBooked = $seats
+                    ->filter(fn (LikaySeat $seat) => $seat->is_booked)
+                    ->keys()
+                    ->all();
+
+                if (!empty($alreadyBooked)) {
+                    throw new RuntimeException('likay-seats-already-booked');
+                }
+
+                $booking = LikayBooking::create([
+                    'first_name'  => $sponsorName,
+                    'last_name'   => '',
+                    'phone'       => '',
+                    'booker_name' => $actor,
+                    'slip_path'   => null,
+                    'total_price' => 0,
+                    'is_sponsor'  => true,
+                ]);
+                $bookingId = $booking->id;
+
+                foreach ($seatKeys as $key) {
+                    $seats[$key]->update([
+                        'is_booked'  => true,
+                        'booked_at'  => now(),
+                        'booking_id' => $booking->id,
+                    ]);
+                }
+            });
+        } catch (RuntimeException $e) {
+            if ($e->getMessage() !== 'likay-seats-already-booked') {
+                throw $e;
+            }
+
+            return response()->json([
+                'success' => false,
+                'error'   => 'ที่นั่ง ' . implode(', ', $alreadyBooked) . ' ถูกจองไปแล้ว',
+            ], 409);
+        }
+
+        $existing = Cache::get(self::SELECTING_CACHE, []);
+        Cache::put(self::SELECTING_CACHE, array_values(array_diff($existing, $seatKeys)), self::SELECTING_TTL);
+        // public เห็นเป็น "ขายแล้ว" (สีแดง) → bookedKeys; แอดมินอื่นเห็นสีทอง → sponsorKeys
+        try { broadcast(new LikaySeatStatusUpdated(bookedKeys: $seatKeys, sponsorKeys: $seatKeys)); } catch (\Throwable) {}
+
+        BookingActivityLog::record([
+            'system'        => BookingActivityLog::SYSTEM_LIKAY,
+            'action'        => BookingActivityLog::ACTION_SPONSOR,
+            'actor_name'    => $actor,
+            'booking_id'    => $bookingId,
+            'seat_keys'     => $seatKeys,
+            'customer_name' => $sponsorName,
+            'total_price'   => 0,
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function unmarkSponsor(Request $request): JsonResponse
+    {
+        if ($this->guardRedirect()) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
+        }
+
+        $data = $request->validate([
+            'seat_keys'   => 'required|array|min:1',
+            'seat_keys.*' => 'required|string|max:30',
+        ]);
+
+        $actor = $this->currentUser()->name;
+
+        // หา booking sponsor ที่ครอบคลุมที่นั่งที่เลือก แล้วปลดทั้งกลุ่ม
+        $bookingIds = LikaySeat::whereIn('seat_key', $data['seat_keys'])
+            ->whereNotNull('booking_id')
+            ->whereHas('booking', fn ($q) => $q->where('is_sponsor', true))
+            ->pluck('booking_id')
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($bookingIds)) {
+            return response()->json(['success' => false, 'error' => 'ไม่พบที่นั่ง Sponsor'], 404);
+        }
+
+        $freedKeys = [];
+        DB::transaction(function () use ($bookingIds, &$freedKeys) {
+            $freedKeys = LikaySeat::whereIn('booking_id', $bookingIds)
+                ->pluck('seat_key')
+                ->all();
+
+            LikaySeat::whereIn('booking_id', $bookingIds)
+                ->update(['is_booked' => false, 'booked_at' => null, 'booking_id' => null]);
+
+            LikayBooking::whereIn('id', $bookingIds)->where('is_sponsor', true)->delete();
+        });
+
+        $existing = Cache::get(self::SELECTING_CACHE, []);
+        Cache::put(self::SELECTING_CACHE, array_values(array_diff($existing, $freedKeys)), self::SELECTING_TTL);
+        try { broadcast(new LikaySeatStatusUpdated(freedKeys: $freedKeys)); } catch (\Throwable) {}
+
+        BookingActivityLog::record([
+            'system'     => BookingActivityLog::SYSTEM_LIKAY,
+            'action'     => BookingActivityLog::ACTION_UNSPONSOR,
+            'actor_name' => $actor,
+            'seat_keys'  => $freedKeys,
         ]);
 
         return response()->json(['success' => true]);

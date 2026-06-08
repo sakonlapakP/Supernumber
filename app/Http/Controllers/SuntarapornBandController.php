@@ -147,6 +147,16 @@ class SuntarapornBandController extends Controller
             ->pluck('seat_key')
             ->all();
 
+        // ที่นั่ง Sponsor (booking ฿0) — แอดมินเห็นแยกเป็นสีทอง + โน้ต
+        // (ยังคงอยู่ใน $bookedSeats ด้วย เพื่อกันการจองทับ)
+        $sponsorSeats = SuntarapornSeat::where('show_date', $showDate)
+            ->where('is_booked', true)
+            ->whereHas('booking', fn ($q) => $q->where('is_sponsor', true))
+            ->with('booking:id,first_name')
+            ->get()
+            ->mapWithKeys(fn (SuntarapornSeat $s) => [$s->seat_key => $s->booking?->first_name ?? 'Sponsor'])
+            ->all();
+
         $zones = SuntarapornZone::orderBy('sort_order')->get();
         $prices = $zones->pluck('price', 'slug')->all();
         $rowZones = DB::table('suntaraporn_row_zones')
@@ -157,7 +167,7 @@ class SuntarapornBandController extends Controller
         $totalSeats     = SuntarapornSeatMap::totalSeats();
         $selectingSeats = Cache::get($this->selectingCacheKey($showDate), []);
 
-        return view('suntaraporn-band', compact('bookedSeats', 'prices', 'user', 'totalSeats', 'selectingSeats', 'zones', 'rowZones', 'showDate', 'showDates'));
+        return view('suntaraporn-band', compact('bookedSeats', 'sponsorSeats', 'prices', 'user', 'totalSeats', 'selectingSeats', 'zones', 'rowZones', 'showDate', 'showDates'));
     }
 
     // ── Book Seat(s) ──────────────────────────────────────────────
@@ -322,6 +332,7 @@ class SuntarapornBandController extends Controller
             'phone'       => $booking->phone,
             'booker_name' => $booking->booker_name,
             'total_price' => $booking->total_price,
+            'is_sponsor'  => (bool) $booking->is_sponsor,
             'booked_at'   => $seat->booked_at?->format('d/m/Y H:i'),
             'slip_url'    => $booking->slip_path ? asset('storage/' . $booking->slip_path) : null,
             'all_seats'   => $booking->seats->pluck('seat_key')->all(),
@@ -419,6 +430,176 @@ class SuntarapornBandController extends Controller
             'customer_name' => trim($booking->first_name . ' ' . $booking->last_name),
             'phone'         => $booking->phone,
             'total_price'   => $booking->total_price,
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    // ── Sponsor Seats (กันที่นั่งให้ผู้สนับสนุน — ฿0) ────────────────
+    // สร้าง booking ราคา 0 + flag is_sponsor → ลูกค้าเห็นเป็น "ขายแล้ว" (สีแดง)
+    // แต่ฝั่งแอดมินเห็นเป็นสีทองพร้อมโน้ตชื่อ Sponsor
+
+    public function markSponsor(Request $request): JsonResponse
+    {
+        if ($this->guardRedirect()) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
+        }
+
+        $data = $request->validate([
+            'seat_keys'    => 'required|array|min:1',
+            'seat_keys.*'  => 'required|string|max:30|distinct',
+            'sponsor_name' => 'nullable|string|max:100',
+        ]);
+
+        $showDate    = $this->resolveShowDate($request);
+        $actor       = $this->currentUser()->name;
+        $seatKeys    = array_values($data['seat_keys']);
+        $sponsorName = trim((string) ($data['sponsor_name'] ?? '')) ?: 'Sponsor';
+
+        // ตรวจรหัสที่นั่งกับผังจริง
+        $seatZones    = SuntarapornSeatMap::zonesFor($seatKeys);
+        $invalidSeats = array_values(array_diff($seatKeys, array_keys($seatZones)));
+        if (!empty($invalidSeats)) {
+            return response()->json([
+                'success' => false,
+                'error'   => 'รหัสที่นั่งไม่ถูกต้อง: ' . implode(', ', $invalidSeats),
+            ], 422);
+        }
+
+        $now = now();
+        DB::table('suntaraporn_seats')->insertOrIgnore(array_map(
+            fn (string $key) => [
+                'seat_key'   => $key,
+                'show_date'  => $showDate,
+                'is_booked'  => false,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            $seatKeys
+        ));
+
+        $alreadyBooked = [];
+        $bookingId     = null;
+
+        try {
+            DB::transaction(function () use ($showDate, $seatKeys, $sponsorName, $actor, &$alreadyBooked, &$bookingId) {
+                $seats = SuntarapornSeat::where('show_date', $showDate)
+                    ->whereIn('seat_key', $seatKeys)
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('seat_key');
+
+                $alreadyBooked = $seats
+                    ->filter(fn (SuntarapornSeat $seat) => $seat->is_booked)
+                    ->keys()
+                    ->all();
+
+                if (!empty($alreadyBooked)) {
+                    throw new RuntimeException('suntaraporn-seats-already-booked');
+                }
+
+                $booking = SuntarapornBooking::create([
+                    'show_date'   => $showDate,
+                    'first_name'  => $sponsorName,
+                    'last_name'   => '',
+                    'phone'       => '',
+                    'booker_name' => $actor,
+                    'slip_path'   => null,
+                    'total_price' => 0,
+                    'is_sponsor'  => true,
+                ]);
+                $bookingId = $booking->id;
+
+                foreach ($seatKeys as $key) {
+                    $seats[$key]->update([
+                        'is_booked'  => true,
+                        'booked_at'  => now(),
+                        'booking_id' => $booking->id,
+                    ]);
+                }
+            });
+        } catch (RuntimeException $e) {
+            if ($e->getMessage() !== 'suntaraporn-seats-already-booked') {
+                throw $e;
+            }
+
+            return response()->json([
+                'success' => false,
+                'error'   => 'ที่นั่ง ' . implode(', ', $alreadyBooked) . ' ถูกจองไปแล้ว',
+            ], 409);
+        }
+
+        $cacheKey = $this->selectingCacheKey($showDate);
+        $existing = Cache::get($cacheKey, []);
+        Cache::put($cacheKey, array_values(array_diff($existing, $seatKeys)), self::SELECTING_TTL);
+        // public เห็นเป็น "ขายแล้ว" (สีแดง) → bookedKeys; แอดมินอื่นเห็นสีทอง → sponsorKeys
+        try { broadcast(new SeatStatusUpdated(showDate: $showDate, bookedKeys: $seatKeys, sponsorKeys: $seatKeys)); } catch (\Throwable) {}
+
+        BookingActivityLog::record([
+            'system'        => BookingActivityLog::SYSTEM_SUNTARAPORN,
+            'action'        => BookingActivityLog::ACTION_SPONSOR,
+            'show_date'     => $showDate,
+            'actor_name'    => $actor,
+            'booking_id'    => $bookingId,
+            'seat_keys'     => $seatKeys,
+            'customer_name' => $sponsorName,
+            'total_price'   => 0,
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    public function unmarkSponsor(Request $request): JsonResponse
+    {
+        if ($this->guardRedirect()) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
+        }
+
+        $data = $request->validate([
+            'seat_keys'   => 'required|array|min:1',
+            'seat_keys.*' => 'required|string|max:30',
+        ]);
+
+        $showDate = $this->resolveShowDate($request);
+        $actor    = $this->currentUser()->name;
+
+        // หา booking sponsor ที่ครอบคลุมที่นั่งที่เลือก แล้วปลดทั้งกลุ่ม
+        $bookingIds = SuntarapornSeat::where('show_date', $showDate)
+            ->whereIn('seat_key', $data['seat_keys'])
+            ->whereNotNull('booking_id')
+            ->whereHas('booking', fn ($q) => $q->where('is_sponsor', true))
+            ->pluck('booking_id')
+            ->unique()
+            ->values()
+            ->all();
+
+        if (empty($bookingIds)) {
+            return response()->json(['success' => false, 'error' => 'ไม่พบที่นั่ง Sponsor'], 404);
+        }
+
+        $freedKeys = [];
+        DB::transaction(function () use ($bookingIds, &$freedKeys) {
+            $freedKeys = SuntarapornSeat::whereIn('booking_id', $bookingIds)
+                ->pluck('seat_key')
+                ->all();
+
+            SuntarapornSeat::whereIn('booking_id', $bookingIds)
+                ->update(['is_booked' => false, 'booked_at' => null, 'booking_id' => null]);
+
+            SuntarapornBooking::whereIn('id', $bookingIds)->where('is_sponsor', true)->delete();
+        });
+
+        $cacheKey = $this->selectingCacheKey($showDate);
+        $existing = Cache::get($cacheKey, []);
+        Cache::put($cacheKey, array_values(array_diff($existing, $freedKeys)), self::SELECTING_TTL);
+        try { broadcast(new SeatStatusUpdated(showDate: $showDate, freedKeys: $freedKeys)); } catch (\Throwable) {}
+
+        BookingActivityLog::record([
+            'system'     => BookingActivityLog::SYSTEM_SUNTARAPORN,
+            'action'     => BookingActivityLog::ACTION_UNSPONSOR,
+            'show_date'  => $showDate,
+            'actor_name' => $actor,
+            'seat_keys'  => $freedKeys,
         ]);
 
         return response()->json(['success' => true]);

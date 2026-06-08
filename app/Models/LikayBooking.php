@@ -10,8 +10,10 @@ class LikayBooking extends Model
     protected $table    = 'likay_bookings';
     protected $fillable = [
         'first_name', 'last_name', 'phone',
-        'booker_name', 'slip_path', 'total_price',
+        'booker_name', 'slip_path', 'total_price', 'is_sponsor',
     ];
+
+    protected $casts = ['is_sponsor' => 'boolean'];
 
     public function seats(): HasMany
     {

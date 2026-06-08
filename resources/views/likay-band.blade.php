@@ -56,6 +56,13 @@
       color: #888 !important;
       cursor: not-allowed;
     }
+    /* ─── ที่นั่ง Sponsor (กันไว้ ฿0) — แอดมินเห็นเป็นสีทอง, ลูกค้าเห็นเป็น "ขายแล้ว" ─── */
+    .seat.is-sponsor {
+      background: #C9A227 !important;
+      border-color: #8a6d1a !important;
+      color: #fff !important;
+      cursor: pointer;
+    }
     .seat.is-selected {
       background: #1a1a2e !important;
       border-color: #000 !important;
@@ -576,35 +583,55 @@
 {{-- ─── Booking Modal ──────────────────────────────────────── --}}
 <div class="modal-backdrop" id="bookingModal">
   <div class="modal">
-    <h2>🎟️ จองที่นั่ง</h2>
+    <h2 id="booking-modal-title">🎟️ จองที่นั่ง</h2>
+
+    {{-- ประเภทการจอง: ขายปกติ / Sponsor --}}
+    <div class="form-group">
+      <label>ประเภทการจอง</label>
+      <select id="booking-type" onchange="onBookingTypeChange()" style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;background:#fff;">
+        <option value="normal">🎟️ ขายปกติ</option>
+        <option value="sponsor">🎁 Sponsor (฿0 — ไม่คิดเงิน)</option>
+      </select>
+    </div>
+
+    <div id="sponsor-note-box" style="display:none;align-items:flex-start;gap:8px;background:#fdf6e3;border:1.5px solid #e6cf7a;border-radius:8px;padding:8px 14px;margin-bottom:14px;font-size:13px;color:#7a5d00;">
+      <span style="font-size:18px;">ℹ️</span>
+      <span>ที่นั่งนี้จะถูกกันไว้ให้ Sponsor (<strong>ไม่คิดเงิน ฿0</strong>) — ฝั่งลูกค้าจะเห็นเป็น <strong>"ขายแล้ว"</strong></span>
+    </div>
 
     <div class="selected-seats-list">
       <strong>ที่นั่งที่เลือก</strong>
       <div id="selected-chips"></div>
-      <div class="booking-total">ยอดรวม: ฿<span id="booking-total-price">0</span></div>
+      <div class="booking-total" id="booking-total-wrap">ยอดรวม: ฿<span id="booking-total-price">0</span></div>
     </div>
 
     <form id="bookingForm" enctype="multipart/form-data">
       @csrf
-      <div style="display:flex;gap:10px;">
-        <div class="form-group" style="flex:1;">
-          <label>ชื่อ <span style="color:#e53935">*</span></label>
-          <input type="text" name="first_name" id="inp-first-name" placeholder="ชื่อ" required>
+      <div id="customer-fields">
+        <div style="display:flex;gap:10px;">
+          <div class="form-group" style="flex:1;">
+            <label>ชื่อ <span style="color:#e53935">*</span></label>
+            <input type="text" name="first_name" id="inp-first-name" placeholder="ชื่อ" required>
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label>นามสกุล <span style="color:#e53935">*</span></label>
+            <input type="text" name="last_name" id="inp-last-name" placeholder="นามสกุล" required>
+          </div>
         </div>
-        <div class="form-group" style="flex:1;">
-          <label>นามสกุล <span style="color:#e53935">*</span></label>
-          <input type="text" name="last_name" id="inp-last-name" placeholder="นามสกุล" required>
+        <div class="form-group">
+          <label>เบอร์ติดต่อ <span style="color:#e53935">*</span></label>
+          <input type="tel" name="phone" id="inp-phone" placeholder="0812345678" required
+                 inputmode="numeric" pattern="[0-9]{10}" maxlength="10" minlength="10">
+        </div>
+        <div class="form-group">
+          <label>อัพโหลด Slip โอนเงิน</label>
+          <input type="file" name="slip" id="inp-slip" accept="image/jpeg,image/png,application/pdf">
+          <div style="font-size:12px;color:#999;margin-top:4px;">JPG / PNG / PDF ขนาดไม่เกิน 5 MB</div>
         </div>
       </div>
-      <div class="form-group">
-        <label>เบอร์ติดต่อ <span style="color:#e53935">*</span></label>
-        <input type="tel" name="phone" id="inp-phone" placeholder="0812345678" required
-               inputmode="numeric" pattern="[0-9]{10}" maxlength="10" minlength="10">
-      </div>
-      <div class="form-group">
-        <label>อัพโหลด Slip โอนเงิน</label>
-        <input type="file" name="slip" id="inp-slip" accept="image/jpeg,image/png,application/pdf">
-        <div style="font-size:12px;color:#999;margin-top:4px;">JPG / PNG / PDF ขนาดไม่เกิน 5 MB</div>
+      <div class="form-group" id="sponsor-field" style="display:none;">
+        <label>ชื่อ / โน้ต Sponsor <span style="color:#999;font-weight:400;">(ไม่บังคับ — กรอกภายหลังได้)</span></label>
+        <input type="text" id="inp-sponsor-name" maxlength="100" placeholder="เช่น King Power (เว้นว่างได้)">
       </div>
     </form>
 
@@ -621,6 +648,7 @@
     <h2>📋 ข้อมูลการจอง</h2>
     <div id="detail-loading" style="text-align:center;padding:20px;color:#999;">กำลังโหลด...</div>
     <div id="detail-body" style="display:none;">
+      <div id="det-sponsor-badge" style="display:none;background:#fdf6e3;border:1.5px solid #e6cf7a;color:#7a5d00;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-weight:600;font-size:14px;">🎁 ที่นั่ง Sponsor (กันไว้ — ฿0)</div>
       <div class="detail-row">
         <span class="detail-label">ที่นั่งทั้งหมด</span>
         <span class="detail-val"><div class="seats-group" id="det-seats"></div></span>
@@ -656,6 +684,9 @@
     <div class="modal-footer" style="justify-content:space-between;align-items:center;">
       <div id="det-cancel-wrap" style="display:none;">
         <button class="btn-cancel-booking" id="det-cancel-btn" onclick="cancelBooking()">🗑 ยกเลิกการจอง</button>
+      </div>
+      <div id="det-sponsor-wrap" style="display:none;">
+        <button class="btn-cancel-booking" id="det-sponsor-btn" onclick="removeSponsor()" style="background:#C9A227;border-color:#8a6d1a;">🎁 ยกเลิกที่นั่ง Sponsor</button>
       </div>
       <div style="margin-left:auto;">
         <button class="btn btn-outline" onclick="closeDetailModal()">ปิด</button>
@@ -693,6 +724,10 @@
     <span class="stat-lbl">จองแล้ว</span>
   </div>
   <div class="stat-item">
+    <span class="stat-num" id="stat-sponsor" style="color:#C9A227">0</span>
+    <span class="stat-lbl">🎁 Sponsor</span>
+  </div>
+  <div class="stat-item">
     <span class="stat-num" id="stat-avail" style="color:#2e7d32">{{ $totalSeats }}</span>
     <span class="stat-lbl">ว่าง</span>
   </div>
@@ -705,12 +740,16 @@
     <span class="stat-lbl">🔒 ถูกถือ</span>
   </div>
   <div class="stat-item" style="border-left:2px solid #eee;padding-left:16px;margin-left:4px;">
-    <span class="stat-num" id="stat-booked-revenue" style="color:#e53935;font-size:16px;">฿{{ number_format($bookedRevenue) }}</span>
-    <span class="stat-lbl">รายได้จองแล้ว</span>
+    <span class="stat-num" id="stat-sold-revenue" style="color:#2e7d32;font-size:16px;">฿{{ number_format($bookedRevenue) }}</span>
+    <span class="stat-lbl">💰 ขายแล้ว</span>
   </div>
   <div class="stat-item">
-    <span class="stat-num" style="color:#aaa;font-size:16px;">฿{{ number_format($potentialRevenue) }}</span>
-    <span class="stat-lbl">ถ้าขายหมด</span>
+    <span class="stat-num" id="stat-sellable-revenue" style="color:#1565c0;font-size:16px;">฿{{ number_format($potentialRevenue) }}</span>
+    <span class="stat-lbl">🎯 ขายได้สูงสุด (หลังหัก Sponsor)</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num" id="stat-full-revenue" style="color:#aaa;font-size:16px;">฿{{ number_format($potentialRevenue) }}</span>
+    <span class="stat-lbl">🏷️ ถ้าขายหมด</span>
   </div>
 </div>
 
@@ -740,6 +779,10 @@
   <div class="legend-item">
     <div class="legend-swatch" style="background:#555;border-color:#333;"></div>
     <span>จองแล้ว</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:#C9A227;border-color:#8a6d1a;"></div>
+    <span>🎁 Sponsor (฿0)</span>
   </div>
   <div class="legend-item">
     <div class="legend-swatch" style="background:#1a1a2e;border-color:#000;"></div>
@@ -957,6 +1000,7 @@
 <script>
 const CSRF             = document.querySelector('meta[name="csrf-token"]').content;
 const BOOKED           = new Set(@json($bookedSeats));
+const SPONSOR          = new Map(Object.entries(@json((object) $sponsorSeats))); // key → ชื่อ/โน้ต (ที่นั่งกันให้ Sponsor)
 const PRICES           = @json($prices);
 const ZONE_COLORS      = @json($zones->mapWithKeys(fn($z) => [$z->slug => ['bg' => $z->color, 'text' => $z->text_color, 'border' => $z->border_color]]));
 const SELECTED         = new Map();
@@ -973,6 +1017,13 @@ function chipHtml(key) {
 function init() {
   document.querySelectorAll('[data-key]').forEach(el => {
     if (BOOKED.has(el.dataset.key)) el.classList.add('is-booked');
+  });
+  // ที่นั่ง Sponsor — แอดมินเห็นเป็นสีทอง + โน้ตชื่อ (อยู่ใน BOOKED ด้วยจึงกันการจองทับ)
+  SPONSOR.forEach((note, key) => {
+    document.querySelectorAll(`[data-key="${CSS.escape(key)}"]`).forEach(el => {
+      el.classList.add('is-sponsor');
+      el.setAttribute('title', '🎁 Sponsor: ' + note);
+    });
   });
   updateStats();
   updateSummary();
@@ -1044,6 +1095,8 @@ function openBookingModal() {
   document.getElementById('booking-total-price').textContent = total.toLocaleString('th-TH');
 
   document.getElementById('bookingForm').reset();
+  document.getElementById('booking-type').value = 'normal'; // เริ่มที่ "ขายปกติ" เสมอ
+  onBookingTypeChange();
   document.getElementById('bookingModal').classList.add('open');
 }
 
@@ -1056,6 +1109,11 @@ document.getElementById('inp-phone').addEventListener('input', function () {
 });
 
 async function confirmBooking() {
+  // ถ้าเลือกประเภท Sponsor → ไปเส้นทางกันที่นั่ง (฿0)
+  if (document.getElementById('booking-type').value === 'sponsor') {
+    return confirmSponsorBooking();
+  }
+
   const form    = document.getElementById('bookingForm');
   const inputs  = form.querySelectorAll('[required]');
   for (const inp of inputs) {
@@ -1113,8 +1171,97 @@ async function confirmBooking() {
   }
 }
 
+// ── ประเภทการจอง: ขายปกติ / Sponsor (รวมใน modal จองที่นั่ง) ──────
+function onBookingTypeChange() {
+  const isSponsor = document.getElementById('booking-type').value === 'sponsor';
+  document.getElementById('customer-fields').style.display    = isSponsor ? 'none' : 'block';
+  document.getElementById('sponsor-field').style.display      = isSponsor ? 'block' : 'none';
+  document.getElementById('sponsor-note-box').style.display   = isSponsor ? 'flex' : 'none';
+  document.getElementById('booking-total-wrap').style.display = isSponsor ? 'none' : 'block';
+  document.getElementById('booking-modal-title').textContent  = isSponsor ? '🎁 กันที่นั่งให้ Sponsor' : '🎟️ จองที่นั่ง';
+  document.getElementById('confirmBookBtn').textContent       = isSponsor ? 'ยืนยันกัน Sponsor' : 'ยืนยันการจอง';
+  // ปิด required ของช่องลูกค้าตอนเป็น Sponsor (ช่องถูกซ่อน)
+  ['inp-first-name', 'inp-last-name', 'inp-phone'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.required = !isSponsor;
+  });
+}
+
+async function confirmSponsorBooking() {
+  if (SELECTED.size === 0) return;
+  const name = document.getElementById('inp-sponsor-name').value.trim();
+  const btn  = document.getElementById('confirmBookBtn');
+  btn.disabled = true;
+  btn.textContent = 'กำลังบันทึก...';
+
+  try {
+    const res  = await fetch('/LikayLiveAtTheTheater/mark-sponsor', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+      body: JSON.stringify({ seat_keys: [...SELECTED.keys()], sponsor_name: name })
+    });
+    const data = await res.json();
+    if (data.success) {
+      const label = name || 'Sponsor';
+      SELECTED.forEach((zone, key) => {
+        BOOKED.add(key);
+        SPONSOR.set(key, label);
+        document.querySelectorAll(`[data-key="${CSS.escape(key)}"]`).forEach(el => {
+          el.classList.remove('is-selected');
+          el.classList.add('is-booked', 'is-sponsor');
+          el.setAttribute('title', '🎁 Sponsor: ' + label);
+        });
+      });
+      SELECTED.clear();
+      updateStats();
+      updateSummary();
+      updateFloatBtn();
+      closeBookingModal();
+      alert('กันที่นั่งให้ Sponsor เรียบร้อย');
+    } else {
+      alert(data.error || 'เกิดข้อผิดพลาด');
+    }
+  } catch {
+    alert('เกิดข้อผิดพลาด');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'ยืนยันกัน Sponsor';
+  }
+}
+
+async function removeSponsor() {
+  if (!currentSponsorSeats || !currentSponsorSeats.length) return;
+  if (!confirm('ยกเลิกการกัน Sponsor นี้? ที่นั่งทั้งหมดจะกลับมาว่าง')) return;
+
+  const btn = document.getElementById('det-sponsor-btn');
+  btn.disabled = true;
+  btn.textContent = 'กำลังยกเลิก...';
+
+  try {
+    const res  = await fetch('/LikayLiveAtTheTheater/unmark-sponsor', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': CSRF },
+      body: JSON.stringify({ seat_keys: currentSponsorSeats })
+    });
+    const data = await res.json();
+    if (data.success) {
+      closeDetailModal();
+      alert('ยกเลิกที่นั่ง Sponsor เรียบร้อย');
+      location.reload();
+    } else {
+      alert(data.error || 'เกิดข้อผิดพลาด');
+    }
+  } catch {
+    alert('เกิดข้อผิดพลาด');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🎁 ยกเลิกที่นั่ง Sponsor';
+  }
+}
+
 const IS_MANAGER = {{ $user->role === 'manager' ? 'true' : 'false' }};
 let currentBookingId = null;
+let currentSponsorSeats = null;
 
 async function openDetailModal(seatKey) {
   currentBookingId = null;
@@ -1159,7 +1306,22 @@ async function openDetailModal(seatKey) {
       slipWrap.style.display = 'none';
     }
 
-    document.getElementById('det-cancel-wrap').style.display = IS_MANAGER ? 'block' : 'none';
+    // Sponsor vs การจองปกติ — สลับ badge + ปุ่มท้าย modal
+    currentSponsorSeats = null;
+    const sponsorBadge = document.getElementById('det-sponsor-badge');
+    const sponsorWrap  = document.getElementById('det-sponsor-wrap');
+    const cancelWrap   = document.getElementById('det-cancel-wrap');
+    if (data.is_sponsor) {
+      currentSponsorSeats = data.all_seats;
+      document.getElementById('det-name').textContent = '🎁 ' + (data.first_name || 'Sponsor');
+      sponsorBadge.style.display = 'block';
+      sponsorWrap.style.display  = 'block';   // ยกเลิก Sponsor ได้ทุก admin
+      cancelWrap.style.display   = 'none';
+    } else {
+      sponsorBadge.style.display = 'none';
+      sponsorWrap.style.display  = 'none';
+      cancelWrap.style.display   = IS_MANAGER ? 'block' : 'none'; // ยกเลิกจอง = manager เท่านั้น
+    }
 
     document.getElementById('detail-loading').style.display = 'none';
     document.getElementById('detail-body').style.display    = 'block';
@@ -1330,8 +1492,10 @@ async function resetAllSeats() {
     if (!data.success) { alert(data.error || 'เกิดข้อผิดพลาด'); return; }
     BOOKED.clear();
     SELECTED.clear();
+    SPONSOR.clear();
     document.querySelectorAll('.seat.is-booked').forEach(el => el.classList.remove('is-booked'));
     document.querySelectorAll('.seat.is-selected').forEach(el => el.classList.remove('is-selected'));
+    document.querySelectorAll('.seat.is-sponsor').forEach(el => { el.classList.remove('is-sponsor'); el.removeAttribute('title'); });
     updateStats();
     updateSummary();
     updateFloatBtn();
@@ -1342,20 +1506,37 @@ async function resetAllSeats() {
 
 function updateStats() {
   const total     = @json($totalSeats);
-  const booked    = BOOKED.size;
+  const booked    = BOOKED.size;        // รวมที่นั่ง Sponsor ด้วย (กันการจองทับ)
+  const sponsor   = SPONSOR.size;
   const selected  = SELECTED.size;
   const selecting = SELECTING_OTHERS.size;
-  document.getElementById('stat-booked').textContent    = booked;
+  document.getElementById('stat-booked').textContent    = Math.max(0, booked - sponsor); // จองจริง (ไม่รวม Sponsor)
+  document.getElementById('stat-sponsor').textContent   = sponsor;
   document.getElementById('stat-avail').textContent     = Math.max(0, total - booked - selected - selecting);
   document.getElementById('stat-selected').textContent  = selected;
   document.getElementById('stat-selecting').textContent = selecting;
 
-  let bookedRevenue = 0;
-  BOOKED.forEach(key => {
-    const el = document.querySelector('[data-key="' + key + '"]');
-    if (el) bookedRevenue += PRICES[el.dataset.zone] || 0;
+  updateRevenue();
+}
+
+// รายได้ (คำนวณสดจากผังจริง):
+//  • ขายแล้ว        = ที่นั่งจองจริง (ไม่รวม Sponsor)
+//  • หลังหัก Sponsor = ราคาเต็มทั้งผัง − ที่นั่งที่กันให้ Sponsor (เพดานที่ยังขายได้)
+//  • ถ้าขายหมด       = ราคาเต็มทั้งผัง
+function updateRevenue() {
+  let full = 0, sponsorRev = 0, sold = 0;
+  document.querySelectorAll('.seat[data-zone]').forEach(el => {
+    const price = PRICES[el.dataset.zone] || 0;
+    if (price <= 0) return;
+    const key = el.dataset.key;
+    full += price;
+    if (SPONSOR.has(key))      sponsorRev += price;
+    else if (BOOKED.has(key))  sold       += price;
   });
-  document.getElementById('stat-booked-revenue').textContent = '฿' + bookedRevenue.toLocaleString('th-TH');
+  const fmt = n => '฿' + n.toLocaleString('th-TH');
+  document.getElementById('stat-sold-revenue').textContent     = fmt(sold);
+  document.getElementById('stat-sellable-revenue').textContent = fmt(full - sponsorRev);
+  document.getElementById('stat-full-revenue').textContent     = fmt(full);
 }
 
 function updateSummary() {
@@ -1419,10 +1600,21 @@ init();
       });
     });
 
+    // ที่นั่ง Sponsor (กันให้ผู้สนับสนุน) — แอดมินเห็นเป็นสีทองทับ booked
+    (data.sponsor_keys || []).forEach(function (key) {
+      if (!SPONSOR.has(key)) SPONSOR.set(key, 'Sponsor');
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        el.classList.add('is-sponsor');
+        el.setAttribute('title', '🎁 Sponsor');
+      });
+    });
+
     (data.freed_keys || []).forEach(function (key) {
       BOOKED.delete(key);
+      SPONSOR.delete(key);
       document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
-        el.classList.remove('is-booked');
+        el.classList.remove('is-booked', 'is-sponsor');
+        el.removeAttribute('title');
       });
     });
 

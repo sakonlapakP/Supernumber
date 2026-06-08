@@ -76,6 +76,8 @@ Route::get('/LikayLiveAtTheTheater/bookings', [LikayLiveAtTheTheaterController::
 Route::get('/LikayLiveAtTheTheater/history',  [LikayLiveAtTheTheaterController::class, 'history'])->name('likay.history');
 Route::get('/LikayLiveAtTheTheater/export',   [LikayLiveAtTheTheaterController::class, 'exportBookings'])->name('likay.export');
 Route::delete('/LikayLiveAtTheTheater/booking/{id}', [LikayLiveAtTheTheaterController::class, 'cancelBooking'])->name('likay.cancel');
+Route::post('/LikayLiveAtTheTheater/mark-sponsor',   [LikayLiveAtTheTheaterController::class, 'markSponsor'])->name('likay.sponsor.mark');
+Route::post('/LikayLiveAtTheTheater/unmark-sponsor', [LikayLiveAtTheTheaterController::class, 'unmarkSponsor'])->name('likay.sponsor.unmark');
 Route::get('/LikayLiveAtTheTheater/live-state',   [LikayLiveAtTheTheaterController::class, 'liveState'])->name('likay.live-state');
 
 // ─── Suntaraporn Band Concert Seating ────────────────────────────────────────
@@ -99,6 +101,8 @@ Route::get('/SuntarapornBand/bookings', [SuntarapornBandController::class, 'book
 Route::get('/SuntarapornBand/history',  [SuntarapornBandController::class, 'history'])->name('suntaraporn.history');
 Route::get('/SuntarapornBand/export',   [SuntarapornBandController::class, 'exportBookings'])->name('suntaraporn.export');
 Route::delete('/SuntarapornBand/booking/{id}', [SuntarapornBandController::class, 'cancelBooking'])->name('suntaraporn.cancel');
+Route::post('/SuntarapornBand/mark-sponsor',   [SuntarapornBandController::class, 'markSponsor'])->name('suntaraporn.sponsor.mark');
+Route::post('/SuntarapornBand/unmark-sponsor', [SuntarapornBandController::class, 'unmarkSponsor'])->name('suntaraporn.sponsor.unmark');
 
 // Image pre-upload endpoint — neutral URL path to avoid WAF pattern matching.
 // This is called via AJAX before the article form is submitted.
