@@ -49,6 +49,24 @@ class SuntarapornBandController extends Controller
         return self::SELECTING_CACHE . '_' . $showDate;
     }
 
+    /**
+     * เพิ่ม keys เข้า selecting cache แบบ atomic (กัน lost-update เมื่อหลาย admin เลือกพร้อมกัน)
+     * ถ้าล็อกไม่ได้ (driver ไม่รองรับ/timeout) จะ fallback เขียนตรงๆ — ยอมเสี่ยง race เล็กน้อยดีกว่า request พัง
+     */
+    private function mergeSelectingCache(string $cacheKey, array $addKeys): void
+    {
+        $merge = function () use ($cacheKey, $addKeys) {
+            $existing = Cache::get($cacheKey, []);
+            Cache::put($cacheKey, array_values(array_unique(array_merge($existing, $addKeys))), self::SELECTING_TTL);
+        };
+
+        try {
+            Cache::lock($cacheKey . '_lock', 5)->block(3, $merge);
+        } catch (\Throwable) {
+            $merge();
+        }
+    }
+
     // ── Auth helpers ─────────────────────────────────────────────
 
     private function currentUser(): ?User
@@ -267,19 +285,20 @@ class SuntarapornBandController extends Controller
                     ]);
                 }
             });
-        } catch (RuntimeException $e) {
-            if ($e->getMessage() !== 'suntaraporn-seats-already-booked') {
-                throw $e;
-            }
-
+        } catch (\Throwable $e) {
+            // ลบไฟล์สลิปที่อัปโหลดไปแล้วทุกกรณีที่ transaction ล้มเหลว (กันไฟล์ค้างบน disk)
             if ($slipPath) {
                 Storage::disk('public')->delete($slipPath);
             }
 
-            return response()->json([
-                'success' => false,
-                'error'   => 'ที่นั่ง ' . implode(', ', $alreadyBooked) . ' ถูกจองไปแล้ว',
-            ], 409);
+            if ($e instanceof RuntimeException && $e->getMessage() === 'suntaraporn-seats-already-booked') {
+                return response()->json([
+                    'success' => false,
+                    'error'   => 'ที่นั่ง ' . implode(', ', $alreadyBooked) . ' ถูกจองไปแล้ว',
+                ], 409);
+            }
+
+            throw $e;
         }
 
         $cacheKey = $this->selectingCacheKey($showDate);
@@ -359,11 +378,13 @@ class SuntarapornBandController extends Controller
             // Escape MySQL LIKE wildcards so '%' or '_' in input don't match unintended rows.
             $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
             $like    = '%' . $escaped . '%';
+            // ระบุ ESCAPE '\' ชัดเจน เพื่อให้ escaped wildcard ('\%', '\_') ทำงานเหมือนกันทั้ง MySQL และ SQLite
             $query->where(function ($q) use ($like) {
-                $q->where('first_name', 'LIKE', $like)
-                  ->orWhere('last_name', 'LIKE', $like)
-                  ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'LIKE', $like)
-                  ->orWhere('phone', 'LIKE', $like);
+                $q->whereRaw("first_name LIKE ? ESCAPE '\\'", [$like])
+                  ->orWhereRaw("last_name LIKE ? ESCAPE '\\'", [$like])
+                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ? ESCAPE '\\'", [$like])
+                  ->orWhereRaw("phone LIKE ? ESCAPE '\\'", [$like])
+                  ->orWhereHas('seats', fn ($s) => $s->whereRaw("seat_key LIKE ? ESCAPE '\\'", [$like]));
             });
 
             BookingActivityLog::record([
@@ -630,9 +651,7 @@ class SuntarapornBandController extends Controller
         $selectingKeys = array_values(array_diff($data['seat_keys'], $alreadyBooked));
 
         if (!empty($selectingKeys)) {
-            $cacheKey = $this->selectingCacheKey($showDate);
-            $existing = Cache::get($cacheKey, []);
-            Cache::put($cacheKey, array_values(array_unique(array_merge($existing, $selectingKeys))), self::SELECTING_TTL);
+            $this->mergeSelectingCache($this->selectingCacheKey($showDate), $selectingKeys);
             try { broadcast(new SeatStatusUpdated(showDate: $showDate, selectingKeys: $selectingKeys)); } catch (\Throwable) {}
         }
 
@@ -901,6 +920,11 @@ class SuntarapornBandController extends Controller
                 ->pluck('seat_key')
                 ->all(),
             'selecting' => Cache::get($this->selectingCacheKey($showDate), []),
+            'sponsor'   => SuntarapornSeat::where('show_date', $showDate)
+                ->where('is_booked', true)
+                ->whereHas('booking', fn ($q) => $q->where('is_sponsor', true))
+                ->pluck('seat_key')
+                ->all(),
         ]);
     }
 

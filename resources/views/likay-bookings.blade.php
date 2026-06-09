@@ -210,7 +210,7 @@
     type="text"
     name="search"
     class="search-input"
-    placeholder="🔍 ค้นหาชื่อหรือเบอร์โทร..."
+    placeholder="🔍 ค้นหาชื่อ เบอร์โทร หรือรหัสที่นั่ง..."
     value="{{ $search }}"
     autocomplete="off"
   >

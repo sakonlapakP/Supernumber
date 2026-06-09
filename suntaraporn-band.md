@@ -136,11 +136,11 @@
    - เมื่อจองสำเร็จจะทำการส่งกระจายข้อมูลสถานะที่นั่งใหม่ (Broadcasting) ผ่าน Pusher ไปยังผู้ใช้ทุกคนทันที
 5. **`selectSeat()` / `deselectSeat()`**
    - จัดการส่งสัญญาณเรียลไทม์เพื่อแจ้งผู้ใช้อื่นว่าเก้าอี้นี้กำลังมีเจ้าหน้าที่อีกคนกำลังกดเลือกอยู่ (ช่วยลดโอกาสจองชนกันก่อนกรอกฟอร์ม)
-   - **`selectSeat()`** บันทึก `selectingKeys` ลงใน Laravel Cache (`suntaraporn_selecting_keys`, TTL 600 วิ) เพิ่มเติมจาก Pusher Broadcast
+   - **`selectSeat()`** บันทึก `selectingKeys` ลงใน Laravel Cache (`suntaraporn_selecting_keys_[showDate]`, TTL 180 วิ) เพิ่มเติมจาก Pusher Broadcast
    - **`deselectSeat()`** / **`bookSeat()`** / **`resetSeats()`** ลบ keys ที่เกี่ยวข้องออกจาก Cache ทันทีเพื่อให้ข้อมูล polling สอดคล้องกับสถานะจริง
 6. **`liveState()`**
-   - endpoint JSON สาธารณะ (`GET /SuntarapornBand/live-state`) คืนค่า `booked` (จาก DB) และ `selecting` (จาก Cache) ในรูปแบบ key array
-   - ใช้โดย polling fallback script ในหน้า public view
+   - endpoint JSON สาธารณะ (`GET /SuntarapornBand/live-state`) คืนค่า `booked` (จาก DB), `selecting` (จาก Cache) และ `sponsor` (จาก DB) ในรูปแบบ key array เพื่อนำมาอัปเดตสีเก้าอี้
+   - ใช้โดย polling fallback script ในหน้าแอดมินและผู้ชมทั่วไป
 7. **`updatePrices(Request $request)`**
    - เปิดให้เฉพาะผู้จัดการเป็นผู้อัปเดตราคาโซน ทั้งหมดถูก Validate ให้เป็นตัวเลขที่มีค่าตั้งแต่ 0 ขึ้นไป
 7. **`resetSeats()`**
@@ -161,7 +161,8 @@
 - **ช่องทางส่งสัญญาณ (Channel):** `suntaraporn-concert` (ช่องสัญญาณแบบสาธารณะเพื่อลด overhead ในการโหลด)
 - **ประเภทของสัญญาณที่ส่ง (Broadcasting Event):** `SeatStatusUpdated` (บรรจุโครงสร้างข้อมูลคีย์เก้าอี้และสถานะ เช่น จองแล้ว ว่าง หรือกำลังเลือกอยู่)
 - **Polling Fallback (สำรองกรณี Pusher ไม่ deliver):**
-  - หน้า public view มี JavaScript script ที่ `fetch('/SuntarapornBand/live-state')` ทุก **8 วินาที** เพื่อ sync สถานะ booked + selecting ให้ตรงกับ Server เสมอ
+  - ทั้งหน้าสำหรับเจ้าหน้าที่ (`suntaraporn-band.blade.php`) และหน้าสำหรับผู้ชมทั่วไป (`suntaraporn-public.blade.php`) มีระบบ **Polling Fallback** คอยสำรองดึงข้อมูลจาก `/SuntarapornBand/live-state` ทุกๆ 5 วินาที เพื่อซิงก์สถานะที่นั่ง (Booked, Sponsor, Selecting) ในกรณีที่ Pusher ไม่เชื่อมต่อ
+  - เพิ่มระบบเตือนความปลอดภัย **Expiry Warning**: หากเจ้าหน้าที่คลิกเลือกที่นั่งค้างไว้นานเกิน 3 นาที ระบบจะแสดงแถบแจ้งเตือนสีส้มที่ด้านบนแนะนำให้รีเฟรชหน้าเว็บ เพื่อป้องกันการถือสิทธิ์ที่นั่งค้างหลังจาก Cache หมดอายุบน Server
   - logic ของ polling จะ diff สถานะเก่ากับใหม่ก่อน apply เพื่อไม่ให้ re-render ที่นั่งที่ไม่มีการเปลี่ยนแปลง
   - ทำงานควบคู่กับ Pusher — ถ้า Pusher ส่งมาก่อนก็ไม่มีผล (idempotent)
 - **สถานะที่นั่งบน UI:**
@@ -184,7 +185,7 @@
 
 ## 🧪 การทดสอบระบบและการตรวจสอบคุณภาพ (Testing)
 
-ระบบ Suntaraporn Band มีการเขียน Unit และ Feature Test เพื่อความปลอดภัยและความเสถียรของฟังก์ชันการจอง โดยมีเคสทดสอบที่ผ่านกระบวนการตรวจสอบทั้งหมด **10 เคส (133 Assertions)**:
+ระบบ Suntaraporn Band มีการเขียน Unit และ Feature Test เพื่อความปลอดภัยและความเสถียรของฟังก์ชันการจอง โดยมีเคสทดสอบที่ผ่านกระบวนการตรวจสอบทั้งหมด **19 เคส (187 Assertions)**:
 
 ### วิธีการรันการทดสอบ
 เปิดโปรแกรม Terminal ในระบบแล้วรันคำสั่งดังต่อไปนี้:
@@ -198,3 +199,6 @@ php artisan test --filter=SuntarapornBand
 3. **การป้องกันราคาฝั่งไคลเอนต์:** ทดสอบการตรวจสอบราคาสินค้าระดับเซิร์ฟเวอร์เพื่อให้ยอดเงินถูกต้องตามฐานข้อมูลจริงเสมอ
 4. **การรีเซ็ตที่นั่ง:** ทดสอบความถูกต้องของสิทธิ์ผู้จัดการในการล้างสถานะเก้าอี้และลบไฟล์สลิปขยะออกจากระบบ
 5. **การยกเลิกจอง:** ทดสอบระบบการถอนการจอง คืนสถานะที่นั่ง และทำความสะอาดพื้นที่จัดเก็บไฟล์สลิปอย่างปลอดภัย
+6. **การจองแยกตามรอบการแสดง:** ทดสอบว่าเก้าอี้เดียวกันสามารถจองแยกกันได้อย่างอิสระตามรอบวันที่แสดง
+7. **ระบบสปอนเซอร์ (Sponsor Seats):** ตรวจสอบการจองสปอนเซอร์ การจำกัดการจองทับ และการแสดงผลแยกในหน้าแอดมิน
+

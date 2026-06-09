@@ -166,13 +166,14 @@ Route::post('/LikayLiveAtTheTheater/reset', [LikayLiveAtTheTheaterController::cl
 - ทุกๆ การดำเนินการที่สำเร็จ ไม่ว่าจะเป็นการบันทึกการจองสำเร็จ (`bookSeat`), การยกเลิกการจอง (`cancelBooking`), การกำลังเลือกเก้าอี้ (`selectSeat`) หรือการปล่อยมือ (`deselectSeat`) จะมีการยิง Event ชื่อ `LikaySeatStatusUpdated` ไปทางช่องสัญญาณ `likay-concert`
 - ทำให้แอดมินคนอื่นๆ และหน้าสาธารณะ (Public Monitor) ได้รับทราบความเปลี่ยนแปลงทันทีโดยไม่ต้องรีเฟรชหน้าเว็บ
 
-### 5. Selecting Cache และ Polling Fallback
-- Controller เก็บ selecting keys ไว้ใน Laravel Cache (`likay_selecting_keys`, TTL 600 วิ) เพื่อให้ endpoint `liveState()` คืนค่าที่ถูกต้องได้
+### 5. Selecting Cache, Polling Fallback และ Expiry Warning
+- Controller เก็บ selecting keys ไว้ใน Laravel Cache (`likay_selecting_keys`, TTL 180 วิ) และส่ง `sponsor` keys กลับมาใน endpoint `liveState()` เพื่อใช้ซิงก์สีที่นั่งสปอนเซอร์
   - **`selectSeat()`** — เพิ่ม keys เข้า cache
   - **`deselectSeat()`** / **`bookSeat()`** / **`cancelBooking()`** — ลบ keys ที่เกี่ยวข้องออกจาก cache
   - **`resetSeats()`** — `Cache::forget()` ล้างทั้งหมด
-- หน้า public view (`likay-public.blade.php`) มี JavaScript polling fallback ที่ `fetch('/LikayLiveAtTheTheater/live-state')` ทุก **8 วินาที** — sync สถานะ booked + selecting ให้ตรงกับ Server เสมอ แม้ Pusher จะไม่ deliver
-- Polling และ Pusher ทำงานควบคู่กัน (idempotent) — ถ้า Pusher ส่งก่อนก็ไม่มีผลเสีย
+- ทั้งหน้าสำหรับเจ้าหน้าที่ (`likay-band.blade.php`) และหน้าสำหรับผู้ชมทั่วไป (`likay-public.blade.php`) มีระบบ **Polling Fallback** คอยสำรองดึงข้อมูลจาก `/LikayLiveAtTheTheater/live-state` ทุกๆ 5 วินาที เพื่อซิงก์สถานะที่นั่ง (Booked, Sponsor, Selecting) ในกรณีที่ Pusher ไม่เชื่อมต่อ
+- เพิ่มระบบเตือนความปลอดภัย **Expiry Warning**: หากเจ้าหน้าที่คลิกเลือกที่นั่งค้างไว้นานเกิน 3 นาที ระบบจะแสดงแถบแจ้งเตือนสีส้มที่ด้านบนแนะนำให้รีเฟรชหน้าเว็บ เพื่อป้องกันการถือสิทธิ์ที่นั่งค้างหลังจาก Cache หมดอายุบน Server
+- Polling และ Pusher ทำงานควบคู่กัน (idempotent) — ถ้า Pusher ส่งข้อมูลมาก่อนก็ไม่มีผลเสียใดๆ
 
 ---
 
@@ -216,3 +217,24 @@ Route::post('/LikayLiveAtTheTheater/reset', [LikayLiveAtTheTheaterController::cl
 ### 4. การจัดการโครงสร้างราคาและการเคลียร์ข้อมูล
 - สิทธิ์ระดับผู้จัดงาน (`ROLE_MANAGER`) สามารถกดปุ่ม **"✏️ แก้ไขราคา"** ที่มุมบนขวา เพื่อกรอกปรับราคาค่าตั๋วของแต่ละโซนสีได้สดๆ จากนั้นแถบอธิบายราคาและยอดเงินในตะกร้าสรุปจะเปลี่ยนตามฐานราคาใหม่ทันที
 - ปุ่ม **"🔄 รีเซ็ตข้อมูลทั้งหมด"** สีส้มด้านบนขวา ใช้สำหรับทำการล้างระบบเพื่อเริ่มจำหน่ายบัตรรอบถัดไป โดยระบบจะเคลียร์สถานะเก้าอี้ให้ว่างทั้งหมด และทำการลบรูปภาพสลิปในดิสก์จริงออกอย่างหมดจดเมื่อกดยืนยันคำขอ
+
+---
+
+## 🧪 การทดสอบระบบและการตรวจสอบคุณภาพ (Testing)
+
+ระบบ Likay Live At The Theater มีการเขียน Unit และ Feature Test เพื่อความปลอดภัยและความเสถียรของฟังก์ชันการจอง โดยมีเคสทดสอบที่ผ่านกระบวนการตรวจสอบทั้งหมด **13 เคส (134 Assertions)**:
+
+### วิธีการรันการทดสอบ
+เปิดโปรแกรม Terminal ในระบบแล้วรันคำสั่งดังต่อไปนี้:
+```bash
+php artisan test --filter=LikayLiveAtTheTheater
+```
+
+*เคสทดสอบหลักที่ครอบคลุม:*
+1. **การเข้าใช้งานตามสิทธิ์:** ทดสอบว่าเฉพาะผู้ใช้ที่เป็นเจ้าหน้าที่/ผู้จัดการที่มีสิทธิ์เท่านั้นที่สามารถเปิดหน้าจัดการระบบได้
+2. **ระบบการเข้าสู่ระบบ (Login/Logout Flow):** ทดสอบการล็อกอิน ล็อกเอาต์ และความปลอดภัยเซสชัน
+3. **การจองที่นั่งที่สมบูรณ์ (Booking Journey):** ทดสอบการเลือก จองสำเร็จ ตรวจสอบประวัติจอง และการจองซ้ำ
+4. **ระบบสปอนเซอร์ (Sponsor Seats):** ตรวจสอบการกันที่นั่ง การยกเว้นยอดรายได้ของสปอนเซอร์ และการคืนที่นั่ง
+5. **การรีเซ็ตและลบจอง (Cancel & Reset):** ทดสอบสิทธิ์ของ Manager ในการยกเลิกจอง ล้างผังที่นั่ง และลบหลักฐานการโอนเงิน (Slip) ใน Disk จริงออกหมดจด
+6. **กรณีที่นั่งเต็ม (Full House):** ทดสอบระบบควบคุมความจุและป้องกันจองเกินโควตา
+

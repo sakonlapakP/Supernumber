@@ -1728,5 +1728,128 @@ init();
 
 window.addEventListener('pageshow', e => { if (e.persisted) location.reload(); });
 </script>
+
+{{-- ─── Polling Fallback (ถ้า Pusher ไม่ deliver) ──────────────── --}}
+<script>
+(function () {
+  var selectingTimestamp = SELECTED.size > 0 ? Date.now() : null;
+  var expireNotified     = false;
+  var SELECTING_TTL_MS   = 180000; // 3 minutes in ms
+
+  // ── ติดตาม timestamp เมื่อเลือกที่นั่ง ──
+  var origToggle = window.toggleSeat;
+  window.toggleSeat = function (el) {
+    origToggle(el);
+    if (SELECTED.size > 0 && !selectingTimestamp) {
+      selectingTimestamp = Date.now();
+      expireNotified = false;
+    } else if (SELECTED.size === 0) {
+      selectingTimestamp = null;
+      expireNotified = false;
+      hideExpireNotice();
+    }
+  };
+
+  function showExpireNotice() {
+    if (document.getElementById('expire-notice')) return;
+    var div = document.createElement('div');
+    div.id = 'expire-notice';
+    div.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:200;background:#FF8F00;color:#fff;padding:12px 20px;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.3);font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;font-family:inherit;';
+    div.innerHTML = '⚠️ ที่นั่งที่เลือกไว้อาจหลุดแล้ว — <button onclick="location.reload()" style="background:#fff;color:#FF8F00;border:none;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">🔄 รีเฟรชหน้าเว็บ</button>';
+    document.body.appendChild(div);
+  }
+
+  function hideExpireNotice() {
+    var el = document.getElementById('expire-notice');
+    if (el) el.remove();
+  }
+
+  function applyState(data) {
+    var newBooked     = new Set(data.booked    || []);
+    var newSelecting  = new Set(data.selecting || []);
+    var newSponsor    = new Set(data.sponsor   || []);
+
+    // sync BOOKED
+    newBooked.forEach(function (key) {
+      if (BOOKED.has(key)) return;
+      SELECTED.delete(key);
+      SELECTING_OTHERS.delete(key);
+      BOOKED.add(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        el.classList.remove('is-selected', 'is-selecting');
+        el.classList.add('is-booked');
+        el.removeAttribute('title');
+      });
+    });
+    BOOKED.forEach(function (key) {
+      if (newBooked.has(key)) return;
+      BOOKED.delete(key);
+      SPONSOR.delete(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        el.classList.remove('is-booked', 'is-sponsor');
+        el.removeAttribute('title');
+      });
+    });
+
+    // sync SPONSOR (ทับสีทองบน booked)
+    newSponsor.forEach(function (key) {
+      if (!SPONSOR.has(key)) SPONSOR.set(key, 'Sponsor');
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        el.classList.add('is-sponsor');
+        el.setAttribute('title', '🎁 Sponsor');
+      });
+    });
+    SPONSOR.forEach(function (note, key) {
+      if (newSponsor.has(key)) return;
+      SPONSOR.delete(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        el.classList.remove('is-sponsor');
+        if (!BOOKED.has(key)) el.removeAttribute('title');
+      });
+    });
+
+    // sync SELECTING_OTHERS (ไม่แตะ SELECTED ของตัวเอง)
+    newSelecting.forEach(function (key) {
+      if (SELECTED.has(key) || BOOKED.has(key) || SELECTING_OTHERS.has(key)) return;
+      SELECTING_OTHERS.add(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        el.classList.add('is-selecting');
+        el.setAttribute('title', 'กำลังถูกเลือกอยู่');
+      });
+    });
+    SELECTING_OTHERS.forEach(function (key) {
+      if (newSelecting.has(key)) return;
+      SELECTING_OTHERS.delete(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        if (!BOOKED.has(key) && !SELECTED.has(key)) {
+          el.classList.remove('is-selecting');
+          el.removeAttribute('title');
+        }
+      });
+    });
+
+    // ── ตรวจว่า selecting อาจ expire (3 นาที) → แจ้งให้ refresh ──
+    if (SELECTED.size > 0 && selectingTimestamp && !expireNotified) {
+      if (Date.now() - selectingTimestamp > 180000) {
+        expireNotified = true;
+        showExpireNotice();
+      }
+    }
+
+    updateStats();
+    updateSummary();
+    updateFloatBtn();
+  }
+
+  function poll() {
+    fetch('/SuntarapornBand/live-state?date=' + encodeURIComponent(SHOW_DATE))
+      .then(function (r) { return r.json(); })
+      .then(applyState)
+      .catch(function () {});
+  }
+
+  setInterval(poll, 5000);
+})();
+</script>
 </body>
 </html>

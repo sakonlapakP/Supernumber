@@ -1647,9 +1647,42 @@ init();
 {{-- ─── Polling Fallback (ถ้า Pusher ไม่ deliver) ──────────────── --}}
 <script>
 (function () {
+  var selectingTimestamp = SELECTED.size > 0 ? Date.now() : null;
+  var expireNotified     = false;
+  var SELECTING_TTL_MS   = 180000; // 3 minutes in ms
+
+  // ── ติดตาม timestamp เมื่อเลือกที่นั่ง ──
+  var origToggle = window.toggleSeat;
+  window.toggleSeat = function (el) {
+    origToggle(el);
+    if (SELECTED.size > 0 && !selectingTimestamp) {
+      selectingTimestamp = Date.now();
+      expireNotified = false;
+    } else if (SELECTED.size === 0) {
+      selectingTimestamp = null;
+      expireNotified = false;
+      hideExpireNotice();
+    }
+  };
+
+  function showExpireNotice() {
+    if (document.getElementById('expire-notice')) return;
+    var div = document.createElement('div');
+    div.id = 'expire-notice';
+    div.style.cssText = 'position:fixed;top:16px;left:50%;transform:translateX(-50%);z-index:200;background:#FF8F00;color:#fff;padding:12px 20px;border-radius:10px;box-shadow:0 4px 16px rgba(0,0,0,.3);font-size:14px;font-weight:600;display:flex;align-items:center;gap:10px;font-family:inherit;';
+    div.innerHTML = '⚠️ ที่นั่งที่เลือกไว้อาจหลุดแล้ว — <button onclick="location.reload()" style="background:#fff;color:#FF8F00;border:none;border-radius:6px;padding:6px 14px;font-size:13px;font-weight:700;cursor:pointer;font-family:inherit;">🔄 รีเฟรชหน้าเว็บ</button>';
+    document.body.appendChild(div);
+  }
+
+  function hideExpireNotice() {
+    var el = document.getElementById('expire-notice');
+    if (el) el.remove();
+  }
+
   function applyState(data) {
     var newBooked     = new Set(data.booked    || []);
     var newSelecting  = new Set(data.selecting || []);
+    var newSponsor    = new Set(data.sponsor   || []);
 
     // sync BOOKED
     newBooked.forEach(function (key) {
@@ -1666,8 +1699,27 @@ init();
     BOOKED.forEach(function (key) {
       if (newBooked.has(key)) return;
       BOOKED.delete(key);
+      SPONSOR.delete(key);
       document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
-        el.classList.remove('is-booked');
+        el.classList.remove('is-booked', 'is-sponsor');
+        el.removeAttribute('title');
+      });
+    });
+
+    // sync SPONSOR (ทับสีทองบน booked)
+    newSponsor.forEach(function (key) {
+      if (!SPONSOR.has(key)) SPONSOR.set(key, 'Sponsor');
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        el.classList.add('is-sponsor');
+        el.setAttribute('title', '🎁 Sponsor');
+      });
+    });
+    SPONSOR.forEach(function (note, key) {
+      if (newSponsor.has(key)) return;
+      SPONSOR.delete(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        el.classList.remove('is-sponsor');
+        if (!BOOKED.has(key)) el.removeAttribute('title');
       });
     });
 
@@ -1690,6 +1742,14 @@ init();
         }
       });
     });
+
+    // ── ตรวจว่า selecting อาจ expire (3 นาที) → แจ้งให้ refresh ──
+    if (SELECTED.size > 0 && selectingTimestamp && !expireNotified) {
+      if (Date.now() - selectingTimestamp > 180000) {
+        expireNotified = true;
+        showExpireNotice();
+      }
+    }
 
     updateStats();
     updateSummary();

@@ -660,6 +660,27 @@ class SuntarapornBandTest extends TestCase
         $this->postJson(route('suntaraporn.sponsor.unmark'), ['seat_keys' => ['A_1']])->assertStatus(401);
     }
 
+    public function test_booking_list_search_matches_seat_key(): void
+    {
+        $staff   = User::factory()->create(['role' => User::ROLE_SUNTARAPORN, 'is_active' => true]);
+        $session = $this->suntarapornSession($staff);
+
+        $this->withSession($session)->postJson(route('suntaraporn.book'), [
+            'seat_keys' => ['A_1'], 'first_name' => 'มานี', 'last_name' => 'ใจดี', 'phone' => '0811111111',
+        ])->assertOk();
+
+        $this->withSession($session)->postJson(route('suntaraporn.book'), [
+            'seat_keys' => ['B_5'], 'first_name' => 'ปิติ', 'last_name' => 'รักเรียน', 'phone' => '0822222222',
+        ])->assertOk();
+
+        // ค้นด้วยรหัสที่นั่ง → เจอเฉพาะลูกค้าที่ถือที่นั่งนั้น
+        $this->withSession($session)
+            ->get(route('suntaraporn.bookings', ['search' => 'A_1']))
+            ->assertOk()
+            ->assertSee('มานี')
+            ->assertDontSee('ปิติ');
+    }
+
     private function suntarapornSession(User $user): array
     {
         return ['suntaraporn_user_id' => $user->id];

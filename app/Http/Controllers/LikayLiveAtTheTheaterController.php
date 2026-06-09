@@ -29,6 +29,24 @@ class LikayLiveAtTheTheaterController extends Controller
     private const SELECTING_CACHE = 'likay_selecting_keys';
     private const SELECTING_TTL   = 180; // seconds
 
+    /**
+     * เพิ่ม keys เข้า selecting cache แบบ atomic (กัน lost-update เมื่อหลาย admin เลือกพร้อมกัน)
+     * ถ้าล็อกไม่ได้ (driver ไม่รองรับ/timeout) จะ fallback เขียนตรงๆ — ยอมเสี่ยง race เล็กน้อยดีกว่า request พัง
+     */
+    private function mergeSelectingCache(array $addKeys): void
+    {
+        $merge = function () use ($addKeys) {
+            $existing = Cache::get(self::SELECTING_CACHE, []);
+            Cache::put(self::SELECTING_CACHE, array_values(array_unique(array_merge($existing, $addKeys))), self::SELECTING_TTL);
+        };
+
+        try {
+            Cache::lock(self::SELECTING_CACHE . '_lock', 5)->block(3, $merge);
+        } catch (\Throwable) {
+            $merge();
+        }
+    }
+
     // ── Auth helpers ─────────────────────────────────────────────
 
     private function currentUser(): ?User
@@ -242,19 +260,20 @@ class LikayLiveAtTheTheaterController extends Controller
                     ]);
                 }
             });
-        } catch (RuntimeException $e) {
-            if ($e->getMessage() !== 'likay-seats-already-booked') {
-                throw $e;
-            }
-
+        } catch (\Throwable $e) {
+            // ลบไฟล์สลิปที่อัปโหลดไปแล้วทุกกรณีที่ transaction ล้มเหลว (กันไฟล์ค้างบน disk)
             if ($slipPath) {
                 Storage::disk('public')->delete($slipPath);
             }
 
-            return response()->json([
-                'success' => false,
-                'error'   => 'ที่นั่ง ' . implode(', ', $alreadyBooked) . ' ถูกจองไปแล้ว',
-            ], 409);
+            if ($e instanceof RuntimeException && $e->getMessage() === 'likay-seats-already-booked') {
+                return response()->json([
+                    'success' => false,
+                    'error'   => 'ที่นั่ง ' . implode(', ', $alreadyBooked) . ' ถูกจองไปแล้ว',
+                ], 409);
+            }
+
+            throw $e;
         }
 
         $existing = Cache::get(self::SELECTING_CACHE, []);
@@ -324,11 +343,13 @@ class LikayLiveAtTheTheaterController extends Controller
             // Escape MySQL LIKE wildcards so '%' or '_' in input don't match unintended rows.
             $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
             $like    = '%' . $escaped . '%';
+            // ระบุ ESCAPE '\' ชัดเจน เพื่อให้ escaped wildcard ('\%', '\_') ทำงานเหมือนกันทั้ง MySQL และ SQLite
             $query->where(function ($q) use ($like) {
-                $q->where('first_name', 'LIKE', $like)
-                  ->orWhere('last_name', 'LIKE', $like)
-                  ->orWhere(DB::raw("CONCAT(first_name, ' ', last_name)"), 'LIKE', $like)
-                  ->orWhere('phone', 'LIKE', $like);
+                $q->whereRaw("first_name LIKE ? ESCAPE '\\'", [$like])
+                  ->orWhereRaw("last_name LIKE ? ESCAPE '\\'", [$like])
+                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ? ESCAPE '\\'", [$like])
+                  ->orWhereRaw("phone LIKE ? ESCAPE '\\'", [$like])
+                  ->orWhereHas('seats', fn ($s) => $s->whereRaw("seat_key LIKE ? ESCAPE '\\'", [$like]));
             });
 
             BookingActivityLog::record([
@@ -576,8 +597,7 @@ class LikayLiveAtTheTheaterController extends Controller
         $selectingKeys = array_values(array_diff($data['seat_keys'], $alreadyBooked));
 
         if (!empty($selectingKeys)) {
-            $existing = Cache::get(self::SELECTING_CACHE, []);
-            Cache::put(self::SELECTING_CACHE, array_values(array_unique(array_merge($existing, $selectingKeys))), self::SELECTING_TTL);
+            $this->mergeSelectingCache($selectingKeys);
             try { broadcast(new LikaySeatStatusUpdated(selectingKeys: $selectingKeys)); } catch (\Throwable) {}
         }
 
@@ -833,6 +853,10 @@ class LikayLiveAtTheTheaterController extends Controller
         return response()->json([
             'booked'     => LikaySeat::where('is_booked', true)->pluck('seat_key')->all(),
             'selecting'  => Cache::get(self::SELECTING_CACHE, []),
+            'sponsor'    => LikaySeat::where('is_booked', true)
+                ->whereHas('booking', fn ($q) => $q->where('is_sponsor', true))
+                ->pluck('seat_key')
+                ->all(),
         ]);
     }
 

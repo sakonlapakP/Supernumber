@@ -157,135 +157,102 @@
     /* Last updated */
     .last-updated { font-size:11px; color:#999; margin-top:4px; text-align:right; }
 
-    /* Stats bar */
-    .stats-bar {
-      display:flex; gap:16px; flex-wrap:wrap;
-      background:#fff; border-radius:10px;
-      padding:10px 16px; margin-bottom:12px;
-      box-shadow:0 1px 4px rgba(0,0,0,.1); font-size:13px;
+    /* Summary card (stats + progress) */
+    .summary-card {
+      background:#fff; border-radius:14px;
+      padding:14px 18px; margin-bottom:12px;
+      box-shadow:0 2px 10px rgba(0,0,0,.06);
     }
-    .stat-item { display:flex; flex-direction:column; align-items:center; gap:2px; }
-    .stat-num  { font-size:20px; font-weight:800; }
-    .stat-lbl  { color:#777; font-size:11px; }
+    .stats-row { display:grid; grid-template-columns:repeat(4,1fr); gap:10px; }
+    .stat-item {
+      display:flex; flex-direction:column; align-items:center; gap:3px;
+      padding:8px 4px; border-radius:12px; background:#f6f7f9;
+    }
+    .stat-num  { font-size:23px; font-weight:800; line-height:1; }
+    .stat-lbl  { color:#888; font-size:11px; line-height:1.25; text-align:center; }
+    .stat-dot  { display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:4px; vertical-align:middle; }
+
+    /* Progress bar */
+    .progress-wrap  { margin-top:14px; }
+    .progress-label { display:flex; justify-content:space-between; align-items:center; font-size:12px; color:#888; margin-bottom:6px; }
+    .progress-label strong { color:#e53935; font-weight:800; font-size:13px; }
+    .progress-bar   { height:10px; border-radius:6px; background:#eef0f3; overflow:hidden; }
+    .progress-fill  { height:100%; border-radius:6px; background:linear-gradient(90deg,#ff7a7a,#e53935); transition:width .5s ease; }
 
     /* Legend */
     .legend {
-      display:flex; flex-wrap:wrap; gap:10px 20px;
-      background:#fff; border-radius:10px;
-      padding:12px 16px; margin-bottom:14px;
-      box-shadow:0 1px 4px rgba(0,0,0,.1);
+      display:flex; flex-wrap:wrap; gap:8px;
+      background:#fff; border-radius:14px;
+      padding:12px 16px; margin-bottom:12px;
+      box-shadow:0 2px 10px rgba(0,0,0,.06);
     }
-    .legend-item  { display:flex; align-items:center; gap:6px; font-size:13px; }
-    .legend-swatch { width:20px; height:20px; border-radius:3px; border:1.5px solid rgba(0,0,0,.15); flex-shrink:0; }
+    .legend-item   {
+      display:flex; align-items:center; gap:7px; font-size:12.5px; font-weight:600; color:#555;
+      background:#f6f7f9; border-radius:999px; padding:5px 13px 5px 9px;
+    }
+    .legend-item strong { color:#1a1a1a; font-weight:800; margin-left:2px; }
+    .legend-swatch { width:16px; height:16px; border-radius:50%; border:1.5px solid rgba(0,0,0,.12); flex-shrink:0; }
 
     /* Chart wrapper */
     .chart-card { background:#fff; border-radius:12px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,.1); }
 
-    /* Progress bar */
-    .progress-wrap { margin-bottom:12px; }
-    .progress-label { display:flex; justify-content:space-between; font-size:12px; color:#777; margin-bottom:4px; }
-    .progress-bar   { height:8px; border-radius:4px; background:#eee; overflow:hidden; }
-    .progress-fill  { height:100%; border-radius:4px; background:#e53935; transition:width .5s ease; }
+    /* Bank transfer card */
+    .bank-card {
+      background:#fff; border-radius:14px;
+      padding:14px 18px; margin-bottom:14px;
+      box-shadow:0 2px 10px rgba(0,0,0,.06);
+    }
+    .bank-head { font-size:12px; font-weight:700; color:#999; margin-bottom:12px; text-transform:uppercase; letter-spacing:.5px; }
+    .bank-row  { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
+    .bank-badge { background:#1a9a3c; color:#fff; border-radius:10px; padding:8px 16px; font-size:14px; font-weight:800; white-space:nowrap; flex-shrink:0; }
+    .bank-name-wrap { flex:1; min-width:180px; }
+    .bank-cap  { font-size:11px; color:#aaa; margin-bottom:2px; }
+    .bank-name { font-size:13px; font-weight:700; color:#1a1a1a; }
+    .bank-acc-wrap { display:flex; align-items:center; gap:12px; flex-shrink:0; }
+    .bank-acc-num  { font-size:22px; font-weight:800; color:#1a1a1a; letter-spacing:1.5px; }
+    .bank-copy-btn {
+      background:#1a9a3c; color:#fff; border:none; border-radius:10px;
+      padding:9px 20px; font-size:13px; font-weight:700; cursor:pointer;
+      font-family:'Sarabun',sans-serif; white-space:nowrap; transition:background .2s;
+    }
+    .bank-copy-btn:hover { background:#158233; }
 
-    .supernumber-ad-container {
+    @media (max-width:480px) {
+      .stats-row { gap:6px; }
+      .stat-item { padding:7px 2px; border-radius:10px; }
+      .stat-num  { font-size:18px; }
+      .stat-lbl  { font-size:10px; }
+      .bank-acc-num { font-size:19px; }
+    }
+
+    .kp-banner-container {
       max-width: 1140px;
       margin: 24px auto 12px auto;
     }
-    .supernumber-ad-link {
-      text-decoration: none;
-      display: block;
-    }
-    .supernumber-ad-card {
-      background-image: url('{{ asset('images/supernumber_ads.jpg') }}');
-      background-size: cover;
-      background-position: right 30% center;
-      border: 1px solid rgba(212, 175, 55, 0.35);
+    .kp-banner-card {
+      background: #fff;
+      border: 1.5px solid #dce6f5;
       border-radius: 12px;
-      overflow: hidden;
       display: flex;
-      min-height: 180px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.3);
-      transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-      position: relative;
-    }
-    .supernumber-ad-card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(212, 175, 55, 0.85);
-      box-shadow: 0 15px 30px rgba(212, 175, 55, 0.25);
-    }
-    .supernumber-ad-overlay {
-      width: 60%;
-      padding: 16px 20px;
-      background: linear-gradient(90deg, rgba(13, 12, 10, 0.96) 0%, rgba(13, 12, 10, 0.75) 65%, rgba(13, 12, 10, 0) 100%);
-      display: flex;
-      flex-direction: column;
+      align-items: center;
       justify-content: center;
-      align-items: flex-start;
-      text-align: left;
-      z-index: 2;
+      min-height: 120px;
+      box-shadow: 0 2px 12px rgba(28,79,161,0.08);
+      transition: box-shadow 0.25s ease, border-color 0.25s ease;
+      padding: 24px 32px;
     }
-    .supernumber-ad-title {
-      font-size: 15px;
-      font-weight: 800;
-      color: #fff;
-      margin-bottom: 4px;
-      line-height: 1.25;
-      letter-spacing: 0.5px;
+    .kp-banner-card:hover {
+      box-shadow: 0 6px 24px rgba(28,79,161,0.15);
+      border-color: #1C4FA1;
     }
-    .supernumber-ad-subtitle {
-      font-size: 12.5px;
-      font-weight: 700;
-      color: #d4af37;
-      margin-bottom: 8px;
-      line-height: 1.25;
+    .kp-banner-card img {
+      max-height: 80px;
+      width: auto;
+      object-fit: contain;
     }
-    .supernumber-ad-desc {
-      display: none;
-    }
-    .supernumber-ad-btn {
-      background: linear-gradient(90deg, #d4af37 0%, #aa7c11 100%);
-      color: #000;
-      font-weight: 700;
-      font-size: 11px;
-      padding: 6px 16px;
-      border-radius: 20px;
-      transition: all 0.3s ease;
-      box-shadow: 0 4px 10px rgba(212, 175, 55, 0.2);
-    }
-    .supernumber-ad-card:hover .supernumber-ad-btn {
-      background: linear-gradient(90deg, #f3e5ab 0%, #d4af37 100%);
-      box-shadow: 0 6px 15px rgba(212, 175, 55, 0.4);
-      transform: scale(1.03);
-    }
-
     @media (min-width: 768px) {
-      .supernumber-ad-card {
-        min-height: 240px;
-        background-position: right center;
-      }
-      .supernumber-ad-overlay {
-        padding: 32px 40px;
-      }
-      .supernumber-ad-title {
-        font-size: 24px;
-        margin-bottom: 4px;
-      }
-      .supernumber-ad-subtitle {
-        font-size: 16px;
-        margin-bottom: 12px;
-      }
-      .supernumber-ad-desc {
-        display: block;
-        font-size: 13px;
-        color: #e0e0e0;
-        margin-bottom: 18px;
-        line-height: 1.5;
-        max-width: 500px;
-      }
-      .supernumber-ad-btn {
-        font-size: 13px;
-        padding: 8px 24px;
-      }
+      .kp-banner-card { min-height: 140px; }
+      .kp-banner-card img { max-height: 100px; }
     }
 
     @media (max-width: 640px) {
@@ -320,33 +287,34 @@
   @endforeach
 </div>
 
-{{-- ─── Stats bar ─────────────────────────────────────────────── --}}
-<div class="stats-bar">
-  <div class="stat-item">
-    <span class="stat-num" id="stat-total">{{ $totalSeats }}</span>
-    <span class="stat-lbl">ที่นั่งทั้งหมด</span>
+{{-- ─── Summary: สถิติ + progress ──────────────────────────────── --}}
+<div class="summary-card">
+  <div class="stats-row">
+    <div class="stat-item">
+      <span class="stat-num" id="stat-total">{{ $totalSeats }}</span>
+      <span class="stat-lbl"><span class="stat-dot" style="background:#1a1a2e"></span>ทั้งหมด</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num" id="stat-booked" style="color:#e53935">0</span>
+      <span class="stat-lbl"><span class="stat-dot" style="background:#e53935"></span>จองแล้ว</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num" id="stat-selecting" style="color:#FF8F00">0</span>
+      <span class="stat-lbl"><span class="stat-dot" style="background:#FF8F00"></span>🔒 กำลังถูกจอง</span>
+    </div>
+    <div class="stat-item">
+      <span class="stat-num" id="stat-avail" style="color:#2e7d32">{{ $totalSeats }}</span>
+      <span class="stat-lbl"><span class="stat-dot" style="background:#2e7d32"></span>ว่าง</span>
+    </div>
   </div>
-  <div class="stat-item">
-    <span class="stat-num" id="stat-booked" style="color:#e53935">0</span>
-    <span class="stat-lbl">จองแล้ว</span>
-  </div>
-  <div class="stat-item">
-    <span class="stat-num" id="stat-selecting" style="color:#FF8F00">0</span>
-    <span class="stat-lbl">🔒 กำลังถูกจองโดยผู้อื่น</span>
-  </div>
-  <div class="stat-item">
-    <span class="stat-num" id="stat-avail" style="color:#2e7d32">{{ $totalSeats }}</span>
-    <span class="stat-lbl">ว่าง</span>
-  </div>
-</div>
 
-{{-- Progress bar --}}
-<div class="progress-wrap">
-  <div class="progress-label">
-    <span>ที่นั่งที่ถูกจองแล้ว</span>
-    <span id="progress-pct">0%</span>
+  <div class="progress-wrap">
+    <div class="progress-label">
+      <span>ที่นั่งที่ถูกจองแล้ว</span>
+      <strong id="progress-pct">0%</strong>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
   </div>
-  <div class="progress-bar"><div class="progress-fill" id="progress-fill" style="width:0%"></div></div>
 </div>
 
 {{-- ─── Legend ─────────────────────────────────────────────────── --}}
@@ -355,7 +323,7 @@
   @if ($z->slug !== 'box')
   <div class="legend-item" id="legend-item-{{ $z->slug }}">
     <div class="legend-swatch" style="background:{{ $z->color }};border-color:{{ $z->border_color }}"></div>
-    <span>{{ $z->label }} — <strong id="legend_{{ $z->slug }}">฿{{ number_format($prices[$z->slug] ?? 0) }}</strong></span>
+    <span>{{ $z->label }} <strong id="legend_{{ $z->slug }}">฿{{ number_format($prices[$z->slug] ?? 0) }}</strong></span>
   </div>
   @endif
   @endforeach
@@ -366,6 +334,25 @@
   <div class="legend-item">
     <div class="legend-swatch" style="background:#FF8F00;border-color:#E65100;display:flex;align-items:center;justify-content:center;font-size:10px;">🔒</div>
     <span>กำลังถูกจองโดยผู้อื่น</span>
+  </div>
+</div>
+
+{{-- ─── Bank Account ───────────────────────────────────────────── --}}
+<div class="bank-card">
+  <div class="bank-head">💳 ช่องทางการโอนเงิน</div>
+  <div class="bank-row">
+    <div class="bank-badge">ธนาคารกสิกรไทย</div>
+    <div class="bank-name-wrap">
+      <div class="bank-cap">ชื่อบัญชี</div>
+      <div class="bank-name">บริษัท คิง เพาเวอร์ อินเตอร์เนชั่นแนล จำกัด</div>
+    </div>
+    <div class="bank-acc-wrap">
+      <div>
+        <div class="bank-cap">เลขที่บัญชี</div>
+        <div class="bank-acc-num">052-2-70250-1</div>
+      </div>
+      <button onclick="copyAccountNumber()" id="copy-btn" class="bank-copy-btn">คัดลอก</button>
+    </div>
   </div>
 </div>
 
@@ -541,18 +528,11 @@
   </div>{{-- .chart-scroll --}}
 </div>{{-- .chart-card --}}
 
-{{-- ─── Supernumber Ad Banner ─── --}}
-<div class="supernumber-ad-container">
-  <a href="/" class="supernumber-ad-link">
-    <div class="supernumber-ad-card">
-      <div class="supernumber-ad-overlay">
-        <div class="supernumber-ad-title">Supernumber ศูนย์รวมเบอร์มงคลอันดับ 1</div>
-        <div class="supernumber-ad-subtitle">แค่นี้เปลี่ยนเบอร์ชีวิตคุณก็เปลี่ยน</div>
-        <div class="supernumber-ad-desc">วิเคราะห์เบอร์มือถือฟรี ช่วยเสริมพลังให้ทุกก้าวสำคัญเพิ่มโอกาสและปลดล็อกเส้นทางสำเร็จ</div>
-        <div class="supernumber-ad-btn">ค้นหาเบอร์มงคลของคุณ ➔</div>
-      </div>
-    </div>
-  </a>
+{{-- ─── King Power Banner ─── --}}
+<div class="kp-banner-container">
+  <div class="kp-banner-card">
+    <img src="{{ asset('images/king-power-logo.png') }}" alt="King Power">
+  </div>
 </div>
 
 <div style="text-align:center;color:#bbb;font-size:11px;margin-top:12px;padding-bottom:20px;">
@@ -602,6 +582,25 @@ function markLastUpdated() {
 }
 
 init();
+
+function copyAccountNumber() {
+  var num = '0522702501';
+  var btn = document.getElementById('copy-btn');
+  function done() {
+    btn.textContent = 'คัดลอกแล้ว!';
+    btn.style.background = '#388e3c';
+    setTimeout(function() { btn.textContent = 'คัดลอก'; btn.style.background = '#1a9a3c'; }, 2000);
+  }
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(num).then(done).catch(function() {
+      var el = document.createElement('textarea');
+      el.value = num; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); done();
+    });
+  } else {
+    var el = document.createElement('textarea');
+    el.value = num; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); done();
+  }
+}
 </script>
 
 {{-- ─── Pusher Real-time ───────────────────────────────────────── --}}
