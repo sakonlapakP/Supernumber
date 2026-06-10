@@ -1076,13 +1076,34 @@ async function broadcastDeselect(keys) {
   } catch {}
 }
 
-window.addEventListener('beforeunload', function () {
+function sendDeselect() {
   if (SELECTED.size === 0) return;
   const fd = new FormData();
   fd.append('_token', CSRF);
   [...SELECTED.keys()].forEach(k => fd.append('seat_keys[]', k));
   navigator.sendBeacon('/LikayLiveAtTheTheater/deselect', fd);
+}
+function sendSelectHeartbeat() {
+  if (SELECTED.size === 0) return;
+  const fd = new FormData();
+  fd.append('_token', CSRF);
+  [...SELECTED.keys()].forEach(k => fd.append('seat_keys[]', k));
+  navigator.sendBeacon('/LikayLiveAtTheTheater/select', fd);
+}
+
+// ปิด tab / navigate away / ปิด browser
+window.addEventListener('beforeunload', sendDeselect);
+// ซ่อน tab / สลับ app (iOS reliable)
+window.addEventListener('pagehide', sendDeselect);
+// สลับ tab — deselect เมื่อซ่อน, heartbeat เมื่อกลับมา
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'hidden') {
+    sendDeselect();
+  }
 });
+
+// Heartbeat ทุก 40s — refresh TTL ขณะที่ยังมีที่นั่งค้างอยู่
+setInterval(sendSelectHeartbeat, 40000);
 
 function openBookingModal() {
   if (SELECTED.size === 0) return;

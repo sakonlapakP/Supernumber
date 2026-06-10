@@ -1145,14 +1145,36 @@ async function broadcastDeselect(keys) {
 }
 
 // ── ปิด tab → deselect ที่นั่งทั้งหมดที่ถือไว้ ───────────────────
-window.addEventListener('beforeunload', function () {
+function sendDeselect() {
   if (SELECTED.size === 0) return;
   const fd = new FormData();
   fd.append('_token', CSRF);
   fd.append('date', SHOW_DATE);
   [...SELECTED.keys()].forEach(k => fd.append('seat_keys[]', k));
   navigator.sendBeacon('/SuntarapornBand/deselect', fd);
+}
+function sendSelectHeartbeat() {
+  if (SELECTED.size === 0) return;
+  const fd = new FormData();
+  fd.append('_token', CSRF);
+  fd.append('date', SHOW_DATE);
+  [...SELECTED.keys()].forEach(k => fd.append('seat_keys[]', k));
+  navigator.sendBeacon('/SuntarapornBand/select', fd);
+}
+
+// ปิด tab / navigate away / ปิด browser
+window.addEventListener('beforeunload', sendDeselect);
+// ซ่อน tab / สลับ app (iOS reliable)
+window.addEventListener('pagehide', sendDeselect);
+// สลับ tab — deselect เมื่อซ่อน, heartbeat เมื่อกลับมา
+document.addEventListener('visibilitychange', function () {
+  if (document.visibilityState === 'hidden') {
+    sendDeselect();
+  }
 });
+
+// Heartbeat ทุก 40s — refresh TTL ขณะที่ยังมีที่นั่งค้างอยู่
+setInterval(sendSelectHeartbeat, 40000);
 
 // ── Booking Modal ────────────────────────────────────────────────
 function openBookingModal() {
@@ -1734,7 +1756,7 @@ window.addEventListener('pageshow', e => { if (e.persisted) location.reload(); }
 (function () {
   var selectingTimestamp = SELECTED.size > 0 ? Date.now() : null;
   var expireNotified     = false;
-  var SELECTING_TTL_MS   = 180000; // 3 minutes in ms
+  var SELECTING_TTL_MS   = 90000; // 90 seconds in ms
 
   // ── ติดตาม timestamp เมื่อเลือกที่นั่ง ──
   var origToggle = window.toggleSeat;

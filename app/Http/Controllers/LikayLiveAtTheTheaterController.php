@@ -27,7 +27,7 @@ class LikayLiveAtTheTheaterController extends Controller
     private const ALLOWED_ROLES   = [User::ROLE_LIKAY, User::ROLE_MANAGER];
     private const SESSION_KEY     = 'likay_user_id';
     private const SELECTING_CACHE = 'likay_selecting_keys';
-    private const SELECTING_TTL   = 180; // seconds
+    private const SELECTING_TTL   = 90; // seconds
 
     /**
      * เพิ่ม keys เข้า selecting cache แบบ atomic (กัน lost-update เมื่อหลาย admin เลือกพร้อมกัน)
