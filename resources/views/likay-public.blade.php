@@ -198,11 +198,26 @@
     /* Chart wrapper */
     .chart-card { background:#fff; border-radius:12px; padding:16px; box-shadow:0 1px 4px rgba(0,0,0,.1); }
 
+    /* 2-col info grid */
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 340px;
+      gap: 12px;
+      align-items: start;
+      margin-bottom: 14px;
+    }
+    .info-left  { display:flex; flex-direction:column; gap:12px; }
+    .info-right { display:flex; flex-direction:column; }
+    @media (max-width: 860px) {
+      .info-grid { grid-template-columns: 1fr; }
+    }
+
     /* Bank transfer card */
     .bank-card {
       background:#fff; border-radius:14px;
-      padding:14px 18px; margin-bottom:14px;
+      padding:16px 18px;
       box-shadow:0 2px 10px rgba(0,0,0,.06);
+      height:100%;
     }
     .bank-head { font-size:12px; font-weight:700; color:#999; margin-bottom:12px; text-transform:uppercase; letter-spacing:.5px; }
     .bank-row  { display:flex; align-items:center; gap:16px; flex-wrap:wrap; }
@@ -278,7 +293,11 @@
   </div>
 </div>
 
-{{-- ─── Summary: สถิติ + progress ──────────────────────────────── --}}
+{{-- ─── Info Grid: ซ้าย = สถิติ+legend | ขวา = โอนเงิน ────────── --}}
+<div class="info-grid">
+<div class="info-left">
+
+{{-- Summary: สถิติ + progress --}}
 <div class="summary-card">
   <div class="stats-row">
     <div class="stat-item">
@@ -308,7 +327,7 @@
   </div>
 </div>
 
-{{-- ─── Legend ─────────────────────────────────────────────────── --}}
+{{-- Legend --}}
 <div class="legend" id="legend-bar">
   @foreach ($zones as $z)
   @if ($z->slug !== 'box')
@@ -328,6 +347,10 @@
   </div>
 </div>
 
+
+</div>{{-- .info-left --}}
+
+<div class="info-right">
 {{-- ─── Bank Account ───────────────────────────────────────────── --}}
 <div class="bank-card">
   <div class="bank-head">💳 ช่องทางการโอนเงิน</div>
@@ -346,6 +369,8 @@
     </div>
   </div>
 </div>
+</div>{{-- .info-right --}}
+</div>{{-- .info-grid --}}
 
 {{-- ─── Seating Chart ──────────────────────────────────────────── --}}
 <div class="chart-card">
