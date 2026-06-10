@@ -745,7 +745,7 @@
   <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;">
     <a href="{{ route('suntaraporn.bookings', ['date' => $showDate]) }}" class="btn btn-outline">📋 รายการจอง</a>
     @if ($user->role === 'manager')
-    <button class="btn btn-outline" onclick="if(confirm('รีเซ็ตที่นั่งทั้งหมดของรอบนี้?')) resetAllSeats()">🔄 รีเซ็ต</button>
+    <button class="btn btn-outline" onclick="openResetModal()">🔄 รีเซ็ต</button>
     <button class="btn btn-primary" onclick="openPriceModal()">✏️ แก้ไขราคา</button>
     @endif
     <form method="POST" action="{{ route('suntaraporn.logout') }}" style="margin:0;">
@@ -1850,6 +1850,59 @@ window.addEventListener('pageshow', e => { if (e.persisted) location.reload(); }
 
   setInterval(poll, 5000);
 })();
+</script>
+
+{{-- ─── Reset Confirm Modal ────────────────────────────────────── --}}
+<style>
+#resetModal { display:none; position:fixed; inset:0; z-index:9000; background:rgba(0,0,0,.55); align-items:center; justify-content:center; padding:16px; }
+#resetModal.open { display:flex; }
+#resetModal .modal-box { background:#fff; border-radius:14px; padding:28px 24px; max-width:380px; width:100%; box-shadow:0 8px 32px rgba(0,0,0,.25); }
+#resetModal .modal-title { font-size:17px; font-weight:800; color:#c62828; margin-bottom:6px; }
+#resetModal .modal-sub { font-size:13px; color:#555; margin-bottom:18px; line-height:1.5; }
+#resetModal .modal-label { font-size:13px; font-weight:700; color:#333; margin-bottom:6px; }
+#resetModal input { width:100%; border:1.5px solid #ddd; border-radius:8px; padding:10px 12px; font-size:14px; font-family:'Sarabun',sans-serif; outline:none; margin-bottom:16px; transition:border-color .15s; }
+#resetModal input:focus { border-color:#e53935; }
+#resetModal .modal-actions { display:flex; gap:10px; justify-content:flex-end; }
+#resetModal .btn-cancel { background:#f5f5f5; color:#555; border:none; border-radius:8px; padding:9px 20px; font-size:13px; font-weight:700; cursor:pointer; font-family:'Sarabun',sans-serif; }
+#resetModal .btn-confirm { background:#c62828; color:#fff; border:none; border-radius:8px; padding:9px 20px; font-size:13px; font-weight:700; cursor:pointer; font-family:'Sarabun',sans-serif; opacity:.4; transition:opacity .15s; }
+#resetModal .btn-confirm.ready { opacity:1; cursor:pointer; }
+</style>
+<div id="resetModal">
+  <div class="modal-box">
+    <div class="modal-title">⚠️ รีเซ็ตที่นั่งทั้งหมด</div>
+    <div class="modal-sub">การรีเซ็ตจะลบข้อมูลการจองและสลิปทั้งหมดของรอบนี้ถาวร ไม่สามารถย้อนกลับได้</div>
+    <div class="modal-label">พิมพ์ <strong>confirm</strong> เพื่อยืนยัน</div>
+    <input type="text" id="resetConfirmInput" placeholder="พิมพ์ confirm ที่นี่" autocomplete="off" oninput="onResetInput()">
+    <div class="modal-actions">
+      <button class="btn-cancel" onclick="closeResetModal()">ยกเลิก</button>
+      <button class="btn-confirm" id="resetConfirmBtn" disabled onclick="doReset()">รีเซ็ต</button>
+    </div>
+  </div>
+</div>
+<script>
+function openResetModal() {
+  document.getElementById('resetConfirmInput').value = '';
+  document.getElementById('resetConfirmBtn').disabled = true;
+  document.getElementById('resetConfirmBtn').classList.remove('ready');
+  document.getElementById('resetModal').classList.add('open');
+  setTimeout(() => document.getElementById('resetConfirmInput').focus(), 50);
+}
+function closeResetModal() {
+  document.getElementById('resetModal').classList.remove('open');
+}
+function onResetInput() {
+  var val = document.getElementById('resetConfirmInput').value.trim().toLowerCase();
+  var btn = document.getElementById('resetConfirmBtn');
+  btn.disabled = val !== 'confirm';
+  btn.classList.toggle('ready', val === 'confirm');
+}
+function doReset() {
+  closeResetModal();
+  resetAllSeats();
+}
+document.getElementById('resetModal').addEventListener('click', function(e) {
+  if (e.target === this) closeResetModal();
+});
 </script>
 </body>
 </html>

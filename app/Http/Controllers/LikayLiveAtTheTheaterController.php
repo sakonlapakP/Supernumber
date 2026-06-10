@@ -827,7 +827,7 @@ class LikayLiveAtTheTheaterController extends Controller
         });
 
         foreach ($slipPaths as $path) {
-            Storage::disk('public')->delete($path);
+            try { Storage::disk('public')->delete($path); } catch (\Throwable) {}
         }
 
         Cache::forget(self::SELECTING_CACHE);
