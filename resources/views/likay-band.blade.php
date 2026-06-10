@@ -264,6 +264,23 @@
       color: #555;
     }
 
+    /* 2-col info grid */
+    .info-grid { display:grid; grid-template-columns:1fr 340px; gap:12px; align-items:start; margin-bottom:14px; }
+    .info-left  { display:flex; flex-direction:column; gap:12px; }
+    .info-right { display:flex; flex-direction:column; }
+    @media (max-width:860px) { .info-grid { grid-template-columns:1fr; } }
+
+    /* Bank card */
+    .bank-card { background:#fff; border-radius:14px; padding:16px 18px; box-shadow:0 2px 10px rgba(0,0,0,.06); height:100%; }
+    .bank-head { font-size:12px; font-weight:700; color:#999; margin-bottom:12px; text-transform:uppercase; letter-spacing:.5px; }
+    .bank-row  { display:flex; flex-direction:column; gap:12px; }
+    .bank-badge { display:inline-block; background:#1a9a3c; color:#fff; border-radius:10px; padding:7px 14px; font-size:13px; font-weight:800; white-space:nowrap; }
+    .bank-cap  { font-size:11px; color:#aaa; margin-bottom:2px; }
+    .bank-name { font-size:13px; font-weight:700; color:#1a1a1a; }
+    .bank-acc-num { font-size:20px; font-weight:800; color:#1a1a1a; letter-spacing:1.5px; }
+    .bank-copy-btn { background:#1a9a3c; color:#fff; border:none; border-radius:10px; padding:9px 16px; font-size:13px; font-weight:700; cursor:pointer; font-family:'Sarabun',sans-serif; white-space:nowrap; transition:background .2s; margin-top:4px; width:100%; }
+    .bank-copy-btn:hover { background:#158233; }
+
     .legend {
       display: flex;
       flex-wrap: wrap;
@@ -271,7 +288,7 @@
       background: #fff;
       border-radius: 10px;
       padding: 12px 16px;
-      margin-bottom: 14px;
+      margin-bottom: 0;
       box-shadow: 0 1px 4px rgba(0,0,0,.1);
     }
     .legend-item {
@@ -435,7 +452,7 @@
       background: #fff;
       border-radius: 10px;
       padding: 10px 16px;
-      margin-bottom: 12px;
+      margin-bottom: 0;
       box-shadow: 0 1px 4px rgba(0,0,0,.1);
       font-size: 13px;
     }
@@ -714,6 +731,10 @@
   </div>
 </div>
 
+{{-- ─── Info Grid: ซ้าย = สถิติ+legend | ขวา = โอนเงิน ────────── --}}
+<div class="info-grid">
+<div class="info-left">
+
 <div class="stats-bar">
   <div class="stat-item">
     <span class="stat-num" id="stat-total">{{ $totalSeats }}</span>
@@ -793,6 +814,27 @@
     <span>กำลังถูกเลือกอยู่ (ผู้อื่น)</span>
   </div>
 </div>
+
+</div>{{-- .info-left --}}
+
+<div class="info-right">
+<div class="bank-card">
+  <div class="bank-head">💳 ช่องทางการโอนเงิน</div>
+  <div class="bank-row">
+    <div><div class="bank-badge">ธนาคารกสิกรไทย</div></div>
+    <div>
+      <div class="bank-cap">ชื่อบัญชี</div>
+      <div class="bank-name">บริษัท คิง เพาเวอร์ อินเตอร์เนชั่นแนล จำกัด</div>
+    </div>
+    <div>
+      <div class="bank-cap">เลขที่บัญชี</div>
+      <div class="bank-acc-num">052-2-70250-1</div>
+    </div>
+    <button onclick="copyAccountNumber()" id="copy-btn" class="bank-copy-btn">คัดลอกเลขบัญชี</button>
+  </div>
+</div>
+</div>{{-- .info-right --}}
+</div>{{-- .info-grid --}}
 
 <div style="background:#fff;border-radius:12px;padding:16px;box-shadow:0 1px 4px rgba(0,0,0,.1);">
   <div class="chart-scroll">
@@ -1000,6 +1042,23 @@
 <script>
 const CSRF             = document.querySelector('meta[name="csrf-token"]').content;
 const BOOKED           = new Set(@json($bookedSeats));
+
+function copyAccountNumber() {
+  var num = '0522702501';
+  var btn = document.getElementById('copy-btn');
+  function done() {
+    btn.textContent = 'คัดลอกแล้ว!';
+    btn.style.background = '#388e3c';
+    setTimeout(function() { btn.textContent = 'คัดลอกเลขบัญชี'; btn.style.background = '#1a9a3c'; }, 2000);
+  }
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(num).then(done).catch(function() {
+      var el = document.createElement('textarea'); el.value = num; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); done();
+    });
+  } else {
+    var el = document.createElement('textarea'); el.value = num; document.body.appendChild(el); el.select(); document.execCommand('copy'); document.body.removeChild(el); done();
+  }
+}
 const SPONSOR          = new Map(Object.entries(@json((object) $sponsorSeats))); // key → ชื่อ/โน้ต (ที่นั่งกันให้ Sponsor)
 const PRICES           = @json($prices);
 const ZONE_COLORS      = @json($zones->mapWithKeys(fn($z) => [$z->slug => ['bg' => $z->color, 'text' => $z->text_color, 'border' => $z->border_color]]));
