@@ -364,15 +364,15 @@
 <div class="bank-card">
   <div class="bank-head">💳 ช่องทางการโอนเงิน</div>
   <div class="bank-row">
-    <div class="bank-badge">ธนาคารกสิกรไทย</div>
+    <div class="bank-badge">ธนาคารกรุงศรีอยุธยา สำนักเพลินจิต</div>
     <div class="bank-name-wrap">
       <div class="bank-cap">ชื่อบัญชี</div>
-      <div class="bank-name">บริษัท คิง เพาเวอร์ อินเตอร์เนชั่นแนล จำกัด</div>
+      <div class="bank-name">มูลนิธิสุนทราภรณ์ในพระราชูปถัมภ์ สมเด็จพระเทพรัตนราชสุดา ฯ สยามบรมราชกุมารี</div>
     </div>
     <div class="bank-acc-wrap">
       <div>
         <div class="bank-cap">เลขที่บัญชี</div>
-        <div class="bank-acc-num">052-2-70250-1</div>
+        <div class="bank-acc-num">001-9-12222-4</div>
       </div>
       <button onclick="copyAccountNumber()" id="copy-btn" class="bank-copy-btn">คัดลอก</button>
     </div>
@@ -610,7 +610,7 @@ function markLastUpdated() {
 init();
 
 function copyAccountNumber() {
-  var num = '0522702501';
+  var num = '0019122224';
   var btn = document.getElementById('copy-btn');
   function done() {
     btn.textContent = 'คัดลอกแล้ว!';
