@@ -72,8 +72,8 @@
     .seat.is-reserved { opacity: 0.75; }
     .seat-gap  { width: 22px; flex-shrink: 0; display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:800; color:#555; }
     .seat-gap-center {
-      width: 28px; flex-shrink: 0;
-      display: flex; align-items: center; justify-content: center;
+      width: 0; flex-shrink: 0;
+      display: none; align-items: center; justify-content: center;
       font-size: 11px; font-weight: 800; color: #222;
       height: 28px; margin: 0;
     }
