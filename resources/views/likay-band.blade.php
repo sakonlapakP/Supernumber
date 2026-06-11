@@ -699,6 +699,9 @@
       </div>
     </div>
     <div class="modal-footer" style="justify-content:space-between;align-items:center;">
+      <div id="det-edit-wrap" style="display:none;">
+        <button class="btn btn-primary" id="det-edit-btn" onclick="startEditBooking()">✏️ แก้ไขการจอง</button>
+      </div>
       <div id="det-cancel-wrap" style="display:none;">
         <button class="btn-cancel-booking" id="det-cancel-btn" onclick="cancelBooking()">🗑 ยกเลิกการจอง</button>
       </div>
@@ -1039,6 +1042,13 @@
   🎟️ จองที่นั่งที่เลือก (<span id="float-count">0</span>)
 </button>
 
+{{-- ─── แถบโหมดแก้ไขการจอง ──────────────────────────────────── --}}
+<div id="editModeBar" style="display:none;position:fixed;left:50%;bottom:24px;transform:translateX(-50%);z-index:1500;background:#fff;border:2px solid #6a1b9a;border-radius:14px;box-shadow:0 6px 24px rgba(0,0,0,.18);padding:10px 16px;align-items:center;gap:12px;flex-wrap:wrap;justify-content:center;max-width:94vw;">
+  <span style="font-weight:700;color:#6a1b9a;font-size:14px;">✏️ โหมดแก้ไข — คลิกที่นั่งเพื่อเพิ่ม/เอาออก</span>
+  <button class="btn btn-success" onclick="openBookingModal()">💾 บันทึก (<span id="edit-count">0</span>)</button>
+  <button class="btn btn-outline" onclick="cancelEditMode()">ยกเลิกการแก้ไข</button>
+</div>
+
 <script>
 const CSRF             = document.querySelector('meta[name="csrf-token"]').content;
 const BOOKED           = new Set(@json($bookedSeats));
@@ -1064,6 +1074,13 @@ const PRICES           = @json($prices);
 const ZONE_COLORS      = @json($zones->mapWithKeys(fn($z) => [$z->slug => ['bg' => $z->color, 'text' => $z->text_color, 'border' => $z->border_color]]));
 const SELECTED         = new Map();
 const SELECTING_OTHERS = new Set();
+
+// ── โหมดแก้ไขการจอง ───────────────────────────────────────────
+let currentDetail = null;   // ข้อมูล booking ล่าสุดที่เปิดในป็อปอัพ
+let EDIT_MODE     = false;
+let EDITING_ID    = null;
+let EDIT_ORIG     = [];      // ที่นั่งเดิมของ booking (ไว้คืนค่าเมื่อยกเลิกแก้ไข)
+let editPrefill   = {};
 
 // สร้าง chip ด้วยสีตาม zone (ดึง zone จาก SELECTED หรือ DOM)
 function chipHtml(key) {
@@ -1093,6 +1110,7 @@ function toggleSeat(el) {
   if (el.classList.contains('is-selecting')) return;
 
   if (el.classList.contains('is-booked')) {
+    if (EDIT_MODE) return; // โหมดแก้ไข: ห้ามแตะที่นั่งของ booking อื่น
     openDetailModal(el.dataset.key);
     return;
   }
@@ -1165,7 +1183,7 @@ document.addEventListener('visibilitychange', function () {
 setInterval(sendSelectHeartbeat, 40000);
 
 function openBookingModal() {
-  if (SELECTED.size === 0) return;
+  if (SELECTED.size === 0) { if (EDIT_MODE) alert('ต้องเลือกอย่างน้อย 1 ที่นั่ง'); return; }
 
   const chips = document.getElementById('selected-chips');
   chips.innerHTML = [...SELECTED.keys()].map(k => chipHtml(k)).join('');
@@ -1177,6 +1195,20 @@ function openBookingModal() {
   document.getElementById('bookingForm').reset();
   document.getElementById('booking-type').value = 'normal'; // เริ่มที่ "ขายปกติ" เสมอ
   onBookingTypeChange();
+
+  const typeRow = document.getElementById('booking-type').closest('.form-group');
+  if (EDIT_MODE) {
+    // โหมดแก้ไข: ซ่อนตัวเลือกประเภท (ไม่ให้สลับเป็น Sponsor), เติมข้อมูลเดิม
+    if (typeRow) typeRow.style.display = 'none';
+    document.getElementById('booking-modal-title').textContent = '✏️ แก้ไขการจอง';
+    document.getElementById('inp-first-name').value = editPrefill.first_name || '';
+    document.getElementById('inp-last-name').value  = editPrefill.last_name  || '';
+    document.getElementById('inp-phone').value      = editPrefill.phone      || '';
+    document.getElementById('confirmBookBtn').textContent = '💾 บันทึกการแก้ไข';
+  } else {
+    if (typeRow) typeRow.style.display = '';
+  }
+
   document.getElementById('bookingModal').classList.add('open');
 }
 
@@ -1189,6 +1221,8 @@ document.getElementById('inp-phone').addEventListener('input', function () {
 });
 
 async function confirmBooking() {
+  if (EDIT_MODE) return saveEditBooking();
+
   // ถ้าเลือกประเภท Sponsor → ไปเส้นทางกันที่นั่ง (฿0)
   if (document.getElementById('booking-type').value === 'sponsor') {
     return confirmSponsorBooking();
@@ -1355,6 +1389,7 @@ async function openDetailModal(seatKey) {
     if (!data.success) { alert(data.error || 'ไม่พบข้อมูล'); closeDetailModal(); return; }
 
     currentBookingId = data.booking_id;
+    currentDetail    = data;
 
     // Seats chips (ใช้ chipHtml เพื่อแสดงสีตาม zone ของเก้าอี้)
     document.getElementById('det-seats').innerHTML = data.all_seats
@@ -1391,16 +1426,19 @@ async function openDetailModal(seatKey) {
     const sponsorBadge = document.getElementById('det-sponsor-badge');
     const sponsorWrap  = document.getElementById('det-sponsor-wrap');
     const cancelWrap   = document.getElementById('det-cancel-wrap');
+    const editWrap     = document.getElementById('det-edit-wrap');
     if (data.is_sponsor) {
       currentSponsorSeats = data.all_seats;
       document.getElementById('det-name').textContent = '🎁 ' + (data.first_name || 'Sponsor');
       sponsorBadge.style.display = 'block';
       sponsorWrap.style.display  = 'block';   // ยกเลิก Sponsor ได้ทุก admin
       cancelWrap.style.display   = 'none';
+      editWrap.style.display     = 'none';    // Sponsor แก้ไขผ่านช่องทางนี้ไม่ได้
     } else {
       sponsorBadge.style.display = 'none';
       sponsorWrap.style.display  = 'none';
       cancelWrap.style.display   = 'block'; // ยกเลิกจองได้ทุก role ที่เข้าระบบ
+      editWrap.style.display     = 'block'; // แก้ไขได้ทุก role ที่เข้าระบบ
     }
 
     document.getElementById('detail-loading').style.display = 'none';
@@ -1447,6 +1485,105 @@ async function cancelBooking() {
   } finally {
     btn.disabled = false;
     btn.textContent = '🗑 ยกเลิกการจอง';
+  }
+}
+
+// ── โหมดแก้ไขการจอง ───────────────────────────────────────────
+function startEditBooking() {
+  if (!currentDetail || currentDetail.is_sponsor) return;
+
+  // เคลียร์ที่นั่งที่กำลังเลือกค้างอยู่ (ถ้ามี) ก่อนเข้าโหมดแก้ไข
+  if (SELECTED.size > 0) {
+    const keys = [...SELECTED.keys()];
+    broadcastDeselect(keys);
+    keys.forEach(k => document.querySelectorAll(`[data-key="${CSS.escape(k)}"]`).forEach(el => el.classList.remove('is-selected')));
+    SELECTED.clear();
+  }
+
+  EDIT_MODE   = true;
+  EDITING_ID  = currentDetail.booking_id;
+  EDIT_ORIG   = currentDetail.all_seats.slice();
+  editPrefill = { first_name: currentDetail.first_name, last_name: currentDetail.last_name, phone: currentDetail.phone };
+
+  // ปลด booked ของที่นั่งใน booking นี้ → กลายเป็น "เลือกไว้" แก้ได้
+  EDIT_ORIG.forEach(key => {
+    BOOKED.delete(key);
+    const el0 = document.querySelector(`[data-key="${CSS.escape(key)}"]`);
+    if (el0) SELECTED.set(key, el0.dataset.zone);
+    document.querySelectorAll(`[data-key="${CSS.escape(key)}"]`).forEach(el => {
+      el.classList.remove('is-booked');
+      el.classList.add('is-selected');
+    });
+  });
+
+  closeDetailModal();
+  updateStats(); updateSummary(); updateFloatBtn();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function cancelEditMode() {
+  if (!EDIT_MODE) return;
+
+  // ที่นั่งที่เพิ่งเลือกเพิ่ม (ไม่ใช่ของเดิม) → ปล่อย selecting
+  const added = [...SELECTED.keys()].filter(k => !EDIT_ORIG.includes(k));
+  if (added.length) broadcastDeselect(added);
+
+  // ล้าง selection ทั้งหมดออกจากผัง
+  [...SELECTED.keys()].forEach(k => document.querySelectorAll(`[data-key="${CSS.escape(k)}"]`).forEach(el => el.classList.remove('is-selected')));
+  SELECTED.clear();
+
+  // คืนสถานะ booked ให้ที่นั่งเดิม
+  EDIT_ORIG.forEach(key => {
+    BOOKED.add(key);
+    document.querySelectorAll(`[data-key="${CSS.escape(key)}"]`).forEach(el => el.classList.add('is-booked'));
+  });
+
+  EDIT_MODE = false; EDITING_ID = null; EDIT_ORIG = [];
+  updateStats(); updateSummary(); updateFloatBtn();
+}
+
+async function saveEditBooking() {
+  if (SELECTED.size === 0) { alert('ต้องเลือกอย่างน้อย 1 ที่นั่ง'); return; }
+
+  const first = document.getElementById('inp-first-name').value.trim();
+  const last  = document.getElementById('inp-last-name').value.trim();
+  const phone = document.getElementById('inp-phone').value.trim();
+  if (!first || !last || !phone) { alert('กรุณากรอกข้อมูลให้ครบถ้วน'); return; }
+  if (!/^[0-9]{10}$/.test(phone)) {
+    document.getElementById('inp-phone').focus();
+    alert('กรุณากรอกเบอร์โทรศัพท์ให้ครบ 10 หลัก (ตัวเลขเท่านั้น)');
+    return;
+  }
+
+  const btn = document.getElementById('confirmBookBtn');
+  btn.disabled = true;
+  btn.textContent = 'กำลังบันทึก...';
+
+  const fd = new FormData();
+  fd.append('_token', CSRF);
+  fd.append('_method', 'PUT');
+  [...SELECTED.keys()].forEach(k => fd.append('seat_keys[]', k));
+  fd.append('first_name', first);
+  fd.append('last_name',  last);
+  fd.append('phone',      phone);
+  const slipFile = document.getElementById('inp-slip').files[0];
+  if (slipFile) fd.append('slip', slipFile);
+
+  try {
+    const res  = await fetch(`/LikayLiveAtTheTheater/booking/${EDITING_ID}`, { method: 'POST', body: fd });
+    const data = await res.json();
+    if (data.success) {
+      alert('บันทึกการแก้ไขเรียบร้อย');
+      location.reload();
+    } else {
+      alert(data.error || 'เกิดข้อผิดพลาด');
+      btn.disabled = false;
+      btn.textContent = '💾 บันทึกการแก้ไข';
+    }
+  } catch {
+    alert('เกิดข้อผิดพลาด');
+    btn.disabled = false;
+    btn.textContent = '💾 บันทึกการแก้ไข';
   }
 }
 
@@ -1645,7 +1782,13 @@ function updateSummary() {
 function updateFloatBtn() {
   const btn = document.getElementById('floatBookBtn');
   document.getElementById('float-count').textContent = SELECTED.size;
-  btn.classList.toggle('visible', SELECTED.size > 0);
+  btn.classList.toggle('visible', !EDIT_MODE && SELECTED.size > 0);
+
+  const bar = document.getElementById('editModeBar');
+  if (bar) {
+    bar.style.display = EDIT_MODE ? 'flex' : 'none';
+    document.getElementById('edit-count').textContent = SELECTED.size;
+  }
 }
 
 document.getElementById('priceModal').addEventListener('click', function(e) {
@@ -1765,6 +1908,9 @@ init();
   }
 
   function applyState(data) {
+    // โหมดแก้ไข: หยุด sync จาก server ชั่วคราว (ที่นั่งเดิมยัง booked ใน DB จะถูกดึงกลับ)
+    if (EDIT_MODE) return;
+
     var newBooked     = new Set(data.booked    || []);
     var newSelecting  = new Set(data.selecting || []);
     var newSponsor    = new Set(data.sponsor   || []);

@@ -294,6 +294,151 @@ class LikayLiveAtTheTheaterController extends Controller
         return response()->json(['success' => true]);
     }
 
+    // ── Update Booking (edit seats + customer info) ───────────────
+
+    public function updateBooking(Request $request, int $id): JsonResponse
+    {
+        if ($this->guardRedirect()) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
+        }
+
+        $data = $request->validate([
+            'seat_keys'   => 'required|array|min:1',
+            'seat_keys.*' => 'required|string|max:30|distinct',
+            'first_name'  => 'required|string|max:100',
+            'last_name'   => 'required|string|max:100',
+            'phone'       => 'required|string|max:20',
+            'slip'        => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+        ]);
+
+        $booking = LikayBooking::with('seats')->findOrFail($id);
+
+        if ($booking->is_sponsor) {
+            return response()->json(['success' => false, 'error' => 'ไม่สามารถแก้ไขที่นั่ง Sponsor ผ่านช่องทางนี้ได้'], 422);
+        }
+
+        $seatKeys  = array_values($data['seat_keys']);
+        $seatZones = LikaySeatMap::zonesFor($seatKeys);
+
+        $invalidSeats = array_values(array_diff($seatKeys, array_keys($seatZones)));
+        if (!empty($invalidSeats)) {
+            return response()->json([
+                'success' => false,
+                'error'   => 'รหัสที่นั่งไม่ถูกต้อง: ' . implode(', ', $invalidSeats),
+            ], 422);
+        }
+
+        $prices     = LikayZone::pluck('price', 'slug')->all();
+        $totalPrice = 0;
+        foreach ($seatZones as $zone) {
+            $totalPrice += $prices[$zone] ?? 0;
+        }
+
+        $oldKeys = $booking->seats->pluck('seat_key')->all();
+
+        $now = now();
+        DB::table('likay_seats')->insertOrIgnore(array_map(
+            fn (string $key) => [
+                'seat_key'   => $key,
+                'is_booked'  => false,
+                'created_at' => $now,
+                'updated_at' => $now,
+            ],
+            $seatKeys
+        ));
+
+        $conflicts   = [];
+        $newSlipPath = null;
+        $oldSlipPath = $booking->slip_path;
+
+        try {
+            DB::transaction(function () use ($request, $data, $booking, $seatKeys, $oldKeys, $totalPrice, &$conflicts, &$newSlipPath) {
+                $lockKeys = array_values(array_unique(array_merge($oldKeys, $seatKeys)));
+                $seats = LikaySeat::whereIn('seat_key', $lockKeys)
+                    ->lockForUpdate()
+                    ->get()
+                    ->keyBy('seat_key');
+
+                // ที่นั่งใหม่ที่ถูกจองโดย booking อื่นอยู่แล้ว → ชน
+                $conflicts = collect($seatKeys)
+                    ->filter(fn (string $k) => isset($seats[$k]) && $seats[$k]->is_booked && (int) $seats[$k]->booking_id !== $booking->id)
+                    ->values()
+                    ->all();
+
+                if (!empty($conflicts)) {
+                    throw new RuntimeException('likay-seats-already-booked');
+                }
+
+                if ($request->hasFile('slip')) {
+                    $newSlipPath = $request->file('slip')->store('likay-slips', 'public');
+                }
+
+                // ปล่อยที่นั่งเดิมที่ถูกเอาออก
+                $removed = array_values(array_diff($oldKeys, $seatKeys));
+                if (!empty($removed)) {
+                    LikaySeat::whereIn('seat_key', $removed)
+                        ->where('booking_id', $booking->id)
+                        ->update(['is_booked' => false, 'booked_at' => null, 'booking_id' => null]);
+                }
+
+                // จองที่นั่งใหม่ + คงที่นั่งเดิมไว้ผูกกับ booking นี้
+                foreach ($seatKeys as $key) {
+                    $seats[$key]->update([
+                        'is_booked'  => true,
+                        'booked_at'  => $seats[$key]->booked_at ?? now(),
+                        'booking_id' => $booking->id,
+                    ]);
+                }
+
+                $booking->update([
+                    'first_name'  => $data['first_name'],
+                    'last_name'   => $data['last_name'],
+                    'phone'       => $data['phone'],
+                    'total_price' => $totalPrice,
+                    'slip_path'   => $newSlipPath ?? $booking->slip_path,
+                ]);
+            });
+        } catch (\Throwable $e) {
+            if ($newSlipPath) {
+                Storage::disk('public')->delete($newSlipPath);
+            }
+
+            if ($e instanceof RuntimeException && $e->getMessage() === 'likay-seats-already-booked') {
+                return response()->json([
+                    'success' => false,
+                    'error'   => 'ที่นั่ง ' . implode(', ', $conflicts) . ' ถูกจองไปแล้ว',
+                ], 409);
+            }
+
+            throw $e;
+        }
+
+        // ลบสลิปเก่าหลัง commit สำเร็จ (เฉพาะเมื่ออัปโหลดใหม่)
+        if ($newSlipPath && $oldSlipPath) {
+            Storage::disk('public')->delete($oldSlipPath);
+        }
+
+        $freedKeys  = array_values(array_diff($oldKeys, $seatKeys));
+        $bookedKeys = array_values(array_diff($seatKeys, $oldKeys));
+
+        $existing = Cache::get(self::SELECTING_CACHE, []);
+        Cache::put(self::SELECTING_CACHE, array_values(array_diff($existing, $seatKeys)), self::SELECTING_TTL);
+        try { broadcast(new LikaySeatStatusUpdated(bookedKeys: $bookedKeys, freedKeys: $freedKeys)); } catch (\Throwable) {}
+
+        BookingActivityLog::record([
+            'system'        => BookingActivityLog::SYSTEM_LIKAY,
+            'action'        => BookingActivityLog::ACTION_EDIT,
+            'actor_name'    => $this->currentUser()->name,
+            'booking_id'    => $booking->id,
+            'seat_keys'     => $seatKeys,
+            'customer_name' => trim($data['first_name'] . ' ' . $data['last_name']),
+            'phone'         => $data['phone'],
+            'total_price'   => $totalPrice,
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
     // ── Booking Info (for popup) ──────────────────────────────────
 
     public function bookingInfo(string $seatKey): JsonResponse

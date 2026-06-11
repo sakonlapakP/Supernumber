@@ -11,6 +11,7 @@
     ];
     $badgeMap = [
       'book'   => ['label' => 'จอง/ขาย',       'icon' => '🟢', 'bg' => '#e8f5e9', 'fg' => '#2e7d32'],
+      'edit'   => ['label' => 'แก้ไขการจอง',    'icon' => '🟣', 'bg' => '#f3e5f5', 'fg' => '#6a1b9a'],
       'cancel' => ['label' => 'ยกเลิก',         'icon' => '🔴', 'bg' => '#ffebee', 'fg' => '#c62828'],
       'reset'  => ['label' => 'รีเซ็ตทั้งหมด',   'icon' => '🟠', 'bg' => '#fff3e0', 'fg' => '#e65100'],
       'search' => ['label' => 'ค้นหา',          'icon' => '🔵', 'bg' => '#e3f2fd', 'fg' => '#1565c0'],
@@ -234,6 +235,10 @@
   <div class="stat-item">
     <span class="stat-num" style="color:#2e7d32">{{ $counts['book'] ?? 0 }}</span>
     <span class="stat-lbl">จอง/ขาย</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num" style="color:#6a1b9a">{{ $counts['edit'] ?? 0 }}</span>
+    <span class="stat-lbl">แก้ไข</span>
   </div>
   <div class="stat-item">
     <span class="stat-num" style="color:#c62828">{{ $counts['cancel'] ?? 0 }}</span>

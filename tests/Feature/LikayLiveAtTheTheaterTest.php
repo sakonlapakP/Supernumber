@@ -449,6 +449,81 @@ class LikayLiveAtTheTheaterTest extends TestCase
             ->assertDontSee('ปิติ');
     }
 
+    public function test_update_booking_changes_seats_recomputes_price_and_frees_old(): void
+    {
+        $staff = User::factory()->create(['role' => User::ROLE_LIKAY, 'is_active' => true]);
+        $session = $this->likaySession($staff);
+        [$s1, $s2, $s3] = $this->freeSeats(3);
+
+        $this->withSession($session)
+            ->postJson(route('likay.book'), [
+                'seat_keys'  => [$s1, $s2],
+                'first_name' => 'เดิม',
+                'last_name'  => 'ทดสอบ',
+                'phone'      => '0800000001',
+            ])
+            ->assertOk();
+
+        $booking = LikayBooking::where('first_name', 'เดิม')->firstOrFail();
+
+        // คงไว้ $s1, เอา $s2 ออก, เพิ่ม $s3 + แก้ชื่อ/เบอร์
+        $this->withSession($session)
+            ->putJson(route('likay.update', $booking->id), [
+                'seat_keys'  => [$s1, $s3],
+                'first_name' => 'ใหม่',
+                'last_name'  => 'นามใหม่',
+                'phone'      => '0899999999',
+            ])
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        $booking->refresh();
+        $this->assertSame('ใหม่', $booking->first_name);
+        $this->assertSame('0899999999', $booking->phone);
+
+        // $s2 ถูกปล่อยว่าง, $s1 + $s3 ผูกกับ booking นี้
+        $this->assertDatabaseHas('likay_seats', ['seat_key' => $s2, 'is_booked' => false, 'booking_id' => null]);
+        $this->assertDatabaseHas('likay_seats', ['seat_key' => $s1, 'is_booked' => true, 'booking_id' => $booking->id]);
+        $this->assertDatabaseHas('likay_seats', ['seat_key' => $s3, 'is_booked' => true, 'booking_id' => $booking->id]);
+
+        // ราคาคำนวณใหม่ = ผลรวม zone ของ $s1 + $s3
+        $prices   = LikayZone::pluck('price', 'slug')->all();
+        $zones    = LikaySeatMap::zonesFor([$s1, $s3]);
+        $expected = array_sum(array_map(fn ($z) => $prices[$z] ?? 0, $zones));
+        $this->assertEquals($expected, (int) $booking->total_price);
+    }
+
+    public function test_update_booking_rejects_seat_owned_by_another_booking(): void
+    {
+        $staff = User::factory()->create(['role' => User::ROLE_LIKAY, 'is_active' => true]);
+        $session = $this->likaySession($staff);
+        [$s1, $s2] = $this->freeSeats(2);
+
+        $this->withSession($session)
+            ->postJson(route('likay.book'), ['seat_keys' => [$s1], 'first_name' => 'A', 'last_name' => 'a', 'phone' => '0800000001'])
+            ->assertOk();
+        $this->withSession($session)
+            ->postJson(route('likay.book'), ['seat_keys' => [$s2], 'first_name' => 'B', 'last_name' => 'b', 'phone' => '0800000002'])
+            ->assertOk();
+
+        $bookingB = LikayBooking::where('first_name', 'B')->firstOrFail();
+
+        // พยายามแก้ B ให้รวม $s1 (เป็นของ A) → ชน 409
+        $this->withSession($session)
+            ->putJson(route('likay.update', $bookingB->id), [
+                'seat_keys'  => [$s2, $s1],
+                'first_name' => 'B',
+                'last_name'  => 'b',
+                'phone'      => '0800000002',
+            ])
+            ->assertStatus(409);
+
+        // B ไม่เปลี่ยน (ยังถือแค่ $s1 ของตัวเอง คือ $s2), A ยังถือ $s1
+        $bookingB->refresh();
+        $this->assertEquals(1, $bookingB->seats()->count());
+        $this->assertDatabaseHas('likay_seats', ['seat_key' => $s1, 'is_booked' => true]);
+    }
+
     /** ที่นั่งว่าง (ไม่ใช่ purple ที่ migration king power จองไว้) */
     private function freeSeats(int $n): array
     {

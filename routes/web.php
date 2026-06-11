@@ -75,6 +75,7 @@ Route::get('/LikayLiveAtTheTheater/booking-info/{seatKey}', [LikayLiveAtTheTheat
 Route::get('/LikayLiveAtTheTheater/bookings', [LikayLiveAtTheTheaterController::class, 'bookingList'])->name('likay.bookings');
 Route::get('/LikayLiveAtTheTheater/history',  [LikayLiveAtTheTheaterController::class, 'history'])->name('likay.history');
 Route::get('/LikayLiveAtTheTheater/export',   [LikayLiveAtTheTheaterController::class, 'exportBookings'])->name('likay.export');
+Route::put('/LikayLiveAtTheTheater/booking/{id}',    [LikayLiveAtTheTheaterController::class, 'updateBooking'])->name('likay.update');
 Route::delete('/LikayLiveAtTheTheater/booking/{id}', [LikayLiveAtTheTheaterController::class, 'cancelBooking'])->name('likay.cancel');
 Route::post('/LikayLiveAtTheTheater/mark-sponsor',   [LikayLiveAtTheTheaterController::class, 'markSponsor'])->name('likay.sponsor.mark');
 Route::post('/LikayLiveAtTheTheater/unmark-sponsor', [LikayLiveAtTheTheaterController::class, 'unmarkSponsor'])->name('likay.sponsor.unmark');
@@ -100,6 +101,7 @@ Route::get('/SuntarapornBand/booking-info/{seatKey}', [SuntarapornBandController
 Route::get('/SuntarapornBand/bookings', [SuntarapornBandController::class, 'bookingList'])->name('suntaraporn.bookings');
 Route::get('/SuntarapornBand/history',  [SuntarapornBandController::class, 'history'])->name('suntaraporn.history');
 Route::get('/SuntarapornBand/export',   [SuntarapornBandController::class, 'exportBookings'])->name('suntaraporn.export');
+Route::put('/SuntarapornBand/booking/{id}',    [SuntarapornBandController::class, 'updateBooking'])->name('suntaraporn.update');
 Route::delete('/SuntarapornBand/booking/{id}', [SuntarapornBandController::class, 'cancelBooking'])->name('suntaraporn.cancel');
 Route::post('/SuntarapornBand/mark-sponsor',   [SuntarapornBandController::class, 'markSponsor'])->name('suntaraporn.sponsor.mark');
 Route::post('/SuntarapornBand/unmark-sponsor', [SuntarapornBandController::class, 'unmarkSponsor'])->name('suntaraporn.sponsor.unmark');

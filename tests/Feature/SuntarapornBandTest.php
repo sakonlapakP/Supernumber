@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\SuntarapornBooking;
 use App\Models\SuntarapornSeat;
+use App\Models\SuntarapornZone;
 use App\Models\User;
 use App\Services\SuntarapornSeatMap;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -673,6 +674,76 @@ class SuntarapornBandTest extends TestCase
             ->assertOk()
             ->assertSee('มานี')
             ->assertDontSee('ปิติ');
+    }
+
+    public function test_update_booking_changes_seats_recomputes_price_and_frees_old(): void
+    {
+        $staff = User::factory()->create(['role' => User::ROLE_SUNTARAPORN, 'is_active' => true]);
+        $session = $this->suntarapornSession($staff);
+
+        $this->withSession($session)
+            ->postJson(route('suntaraporn.book'), [
+                'seat_keys'  => ['B_1', 'B_2'],
+                'first_name' => 'เดิม',
+                'last_name'  => 'ทดสอบ',
+                'phone'      => '0800000001',
+            ])
+            ->assertOk();
+
+        $booking = SuntarapornBooking::where('first_name', 'เดิม')->firstOrFail();
+
+        // คงไว้ B_1, เอา B_2 ออก, เพิ่ม B_3 + แก้ชื่อ/เบอร์
+        $this->withSession($session)
+            ->putJson(route('suntaraporn.update', $booking->id), [
+                'seat_keys'  => ['B_1', 'B_3'],
+                'first_name' => 'ใหม่',
+                'last_name'  => 'นามใหม่',
+                'phone'      => '0899999999',
+            ])
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        $booking->refresh();
+        $this->assertSame('ใหม่', $booking->first_name);
+        $this->assertSame('0899999999', $booking->phone);
+
+        $this->assertDatabaseHas('suntaraporn_seats', ['seat_key' => 'B_2', 'is_booked' => false, 'booking_id' => null]);
+        $this->assertDatabaseHas('suntaraporn_seats', ['seat_key' => 'B_1', 'is_booked' => true, 'booking_id' => $booking->id]);
+        $this->assertDatabaseHas('suntaraporn_seats', ['seat_key' => 'B_3', 'is_booked' => true, 'booking_id' => $booking->id]);
+
+        $prices   = SuntarapornZone::pluck('price', 'slug')->all();
+        $zones    = SuntarapornSeatMap::zonesFor(['B_1', 'B_3']);
+        $expected = array_sum(array_map(fn ($z) => $prices[$z] ?? 0, $zones));
+        $this->assertEquals($expected, (int) $booking->total_price);
+    }
+
+    public function test_update_booking_rejects_seat_owned_by_another_booking(): void
+    {
+        $staff = User::factory()->create(['role' => User::ROLE_SUNTARAPORN, 'is_active' => true]);
+        $session = $this->suntarapornSession($staff);
+
+        $this->withSession($session)
+            ->postJson(route('suntaraporn.book'), ['seat_keys' => ['B_1'], 'first_name' => 'A', 'last_name' => 'a', 'phone' => '0800000001'])
+            ->assertOk();
+        $this->withSession($session)
+            ->postJson(route('suntaraporn.book'), ['seat_keys' => ['B_2'], 'first_name' => 'B', 'last_name' => 'b', 'phone' => '0800000002'])
+            ->assertOk();
+
+        $bookingB = SuntarapornBooking::where('first_name', 'B')->firstOrFail();
+
+        // พยายามแก้ B ให้รวม B_1 (เป็นของ A) → ชน 409
+        $this->withSession($session)
+            ->putJson(route('suntaraporn.update', $bookingB->id), [
+                'seat_keys'  => ['B_2', 'B_1'],
+                'first_name' => 'B',
+                'last_name'  => 'b',
+                'phone'      => '0800000002',
+            ])
+            ->assertStatus(409);
+
+        $bookingB->refresh();
+        $this->assertEquals(1, $bookingB->seats()->count());
+        $this->assertDatabaseHas('suntaraporn_seats', ['seat_key' => 'B_1', 'is_booked' => true]);
     }
 
     private function suntarapornSession(User $user): array
