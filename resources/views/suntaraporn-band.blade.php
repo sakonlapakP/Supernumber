@@ -1419,7 +1419,7 @@ async function openDetailModal(seatKey) {
     } else {
       sponsorBadge.style.display = 'none';
       sponsorWrap.style.display  = 'none';
-      cancelWrap.style.display   = IS_MANAGER ? 'block' : 'none'; // ยกเลิกจอง = manager เท่านั้น
+      cancelWrap.style.display   = 'block'; // ยกเลิกจองได้ทุก role ที่เข้าระบบ
     }
 
     document.getElementById('detail-loading').style.display = 'none';
@@ -1437,7 +1437,12 @@ function closeDetailModal() {
 
 async function cancelBooking() {
   if (!currentBookingId) return;
-  if (!confirm('ยืนยันยกเลิกการจองนี้? ที่นั่งทั้งหมดใน booking จะถูกปล่อยว่าง')) return;
+  const typed = prompt('ยืนยันยกเลิกการจองนี้? ที่นั่งทั้งหมดใน booking จะถูกปล่อยว่าง\n\nพิมพ์ confirm เพื่อยืนยัน');
+  if (typed === null) return;
+  if (typed.trim().toLowerCase() !== 'confirm') {
+    alert('ยกเลิกไม่สำเร็จ: ต้องพิมพ์ confirm ให้ถูกต้อง');
+    return;
+  }
 
   const btn = document.getElementById('det-cancel-btn');
   btn.disabled = true;
