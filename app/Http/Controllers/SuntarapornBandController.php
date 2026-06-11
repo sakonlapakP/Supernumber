@@ -415,9 +415,6 @@ class SuntarapornBandController extends Controller
         }
 
         $user = $this->currentUser();
-        if ($user->role !== User::ROLE_MANAGER) {
-            return response()->json(['success' => false, 'error' => 'เฉพาะ Manager เท่านั้น'], 403);
-        }
 
         $booking = SuntarapornBooking::with('seats')->findOrFail($id);
 

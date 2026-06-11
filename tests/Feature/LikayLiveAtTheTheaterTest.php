@@ -333,13 +333,8 @@ class LikayLiveAtTheTheaterTest extends TestCase
 
         $booking = LikayBooking::where('first_name', 'กานต์')->firstOrFail();
 
-        // Staff พยายามยกเลิก → 403
+        // ผู้ใช้ role likay ยกเลิกได้ → สำเร็จ
         $this->withSession($staffSession)
-            ->deleteJson(route('likay.cancel', $booking->id))
-            ->assertStatus(403);
-
-        // Manager ยกเลิก → สำเร็จ
-        $this->withSession($mgrSession)
             ->deleteJson(route('likay.cancel', $booking->id))
             ->assertOk()
             ->assertJson(['success' => true]);

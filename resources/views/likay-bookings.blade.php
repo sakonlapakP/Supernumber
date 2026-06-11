@@ -261,9 +261,7 @@
           <th>ยอด</th>
           <th>Slip</th>
           <th>วันที่จอง</th>
-          @if ($user->role === 'manager')
           <th></th>
-          @endif
         </tr>
       </thead>
       <tbody>
@@ -308,11 +306,9 @@
           <td style="white-space:nowrap;color:#777;font-size:13px;">
             {{ $booking->created_at->format('d/m/Y H:i') }}
           </td>
-          @if ($user->role === 'manager')
           <td>
             <button class="btn btn-danger btn-sm" onclick="cancelBooking({{ $booking->id }}, this)">ยกเลิก</button>
           </td>
-          @endif
         </tr>
         @endforeach
       </tbody>
@@ -332,7 +328,12 @@ function closeLightbox() {
 }
 
 async function cancelBooking(id, btn) {
-  if (!confirm('ยืนยันยกเลิกการจองนี้? ที่นั่งทั้งหมดใน booking จะถูกปล่อยว่าง')) return;
+  const typed = prompt('ยืนยันยกเลิกการจองนี้? ที่นั่งทั้งหมดใน booking จะถูกปล่อยว่าง\n\nพิมพ์ confirm เพื่อยืนยัน');
+  if (typed === null) return;
+  if (typed.trim().toLowerCase() !== 'confirm') {
+    alert('ยกเลิกไม่สำเร็จ: ต้องพิมพ์ confirm ให้ถูกต้อง');
+    return;
+  }
 
   btn.disabled = true;
   btn.textContent = 'กำลังยกเลิก...';

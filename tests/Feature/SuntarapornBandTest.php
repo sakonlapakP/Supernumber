@@ -385,14 +385,8 @@ class SuntarapornBandTest extends TestCase
         $this->assertDatabaseHas('suntaraporn_seats', ['seat_key' => 'B_1', 'is_booked' => true]);
         $this->assertDatabaseHas('suntaraporn_seats', ['seat_key' => 'B_2', 'is_booked' => true]);
 
-        // Staff พยายามยกเลิก → 403 (manager only)
+        // ผู้ใช้ role suntaraporn ยกเลิกได้ → สำเร็จ
         $this->withSession($staffSession)
-            ->deleteJson(route('suntaraporn.cancel', $booking->id))
-            ->assertStatus(403)
-            ->assertJson(['success' => false]);
-
-        // Manager ยกเลิก → สำเร็จ
-        $this->withSession($mgrSession)
             ->deleteJson(route('suntaraporn.cancel', $booking->id))
             ->assertOk()
             ->assertJson(['success' => true]);
