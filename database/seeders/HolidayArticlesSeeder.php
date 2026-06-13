@@ -252,6 +252,23 @@ class HolidayArticlesSeeder extends Seeder
             $this->logInfo("WARNING: Square template source not found at: {$squareSource}");
         }
 
+        // Copy holiday specific images
+        $holidayImages = [
+            'songkran_square.png',
+            'songkran_landscape.png',
+            'mothers_day_square.png',
+            'mothers_day_landscape.png'
+        ];
+        foreach ($holidayImages as $img) {
+            $imgSrc = public_path('images/holidays/' . $img);
+            if (file_exists($imgSrc)) {
+                copy($imgSrc, $targetDir . '/' . $img);
+                $this->logInfo("Copied holiday image {$img} to storage/images");
+            } else {
+                $this->logInfo("WARNING: Holiday image source not found at: {$imgSrc}");
+            }
+        }
+
         // 2. Process articles
         $planMeta = [
             '2026-01-01' => ['plan_type' => 'หวย/สำคัญ', 'plan_topic' => 'วันขึ้นปีใหม่: เปิดดวงตัวเลขปี 69 + หวย'],
@@ -295,9 +312,20 @@ class HolidayArticlesSeeder extends Seeder
                 $this->logInfo("Created missing plan for date {$data['date']}");
             }
 
-            // Placeholders for templates
-            $landscapePath = 'images/landscape article template.PNG';
-            $squarePath = 'images/squae article template.PNG';
+            // Custom image paths for specific holidays
+            $customImages = [
+                '2026-04-13' => [
+                    'square' => 'images/songkran_square.png',
+                    'landscape' => 'images/songkran_landscape.png'
+                ],
+                '2026-08-12' => [
+                    'square' => 'images/mothers_day_square.png',
+                    'landscape' => 'images/mothers_day_landscape.png'
+                ]
+            ];
+
+            $landscapePath = $customImages[$data['date']]['landscape'] ?? 'images/landscape article template.PNG';
+            $squarePath = $customImages[$data['date']]['square'] ?? 'images/squae article template.PNG';
 
             $articleData = [
                 'title' => $data['title'],
