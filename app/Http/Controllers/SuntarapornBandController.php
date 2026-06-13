@@ -175,6 +175,13 @@ class SuntarapornBandController extends Controller
             ->mapWithKeys(fn (SuntarapornSeat $s) => [$s->seat_key => $s->booking?->first_name ?? 'Sponsor'])
             ->all();
 
+        // ที่นั่ง "ยังไม่จ่ายตัง" — แอดมินเห็นเป็นสีเทาอ่อน, ลูกค้าเห็นเป็น "ขายแล้ว" ปกติ
+        $unpaidSeats = SuntarapornSeat::where('show_date', $showDate)
+            ->where('is_booked', true)
+            ->whereHas('booking', fn ($q) => $q->where('is_unpaid', true))
+            ->pluck('seat_key')
+            ->all();
+
         $zones = SuntarapornZone::orderBy('sort_order')->get();
         $prices = $zones->pluck('price', 'slug')->all();
         $rowZones = DB::table('suntaraporn_row_zones')
@@ -185,7 +192,7 @@ class SuntarapornBandController extends Controller
         $totalSeats     = SuntarapornSeatMap::totalSeats();
         $selectingSeats = Cache::get($this->selectingCacheKey($showDate), []);
 
-        return view('suntaraporn-band', compact('bookedSeats', 'sponsorSeats', 'prices', 'user', 'totalSeats', 'selectingSeats', 'zones', 'rowZones', 'showDate', 'showDates'));
+        return view('suntaraporn-band', compact('bookedSeats', 'sponsorSeats', 'unpaidSeats', 'prices', 'user', 'totalSeats', 'selectingSeats', 'zones', 'rowZones', 'showDate', 'showDates'));
     }
 
     // ── Book Seat(s) ──────────────────────────────────────────────
@@ -203,9 +210,11 @@ class SuntarapornBandController extends Controller
             'last_name'   => 'required|string|max:100',
             'phone'       => 'required|string|max:20',
             'slip'        => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'is_unpaid'   => 'nullable|boolean',
         ]);
 
         $showDate = $this->resolveShowDate($request);
+        $isUnpaid = $request->boolean('is_unpaid');
 
         // booker = admin ที่ login อยู่
         $data['booker_name'] = $this->currentUser()->name;
@@ -246,7 +255,7 @@ class SuntarapornBandController extends Controller
         $bookingId = null;
 
         try {
-            DB::transaction(function () use ($request, $data, $seatKeys, $showDate, $totalPrice, &$alreadyBooked, &$slipPath, &$bookingId) {
+            DB::transaction(function () use ($request, $data, $seatKeys, $showDate, $totalPrice, $isUnpaid, &$alreadyBooked, &$slipPath, &$bookingId) {
                 $seats = SuntarapornSeat::where('show_date', $showDate)
                     ->whereIn('seat_key', $seatKeys)
                     ->lockForUpdate()
@@ -274,6 +283,7 @@ class SuntarapornBandController extends Controller
                     'booker_name' => $data['booker_name'],
                     'slip_path'   => $slipPath,
                     'total_price' => $totalPrice,
+                    'is_unpaid'   => $isUnpaid,
                 ]);
                 $bookingId = $booking->id;
 
@@ -304,7 +314,8 @@ class SuntarapornBandController extends Controller
         $cacheKey = $this->selectingCacheKey($showDate);
         $existing = Cache::get($cacheKey, []);
         Cache::put($cacheKey, array_values(array_diff($existing, $seatKeys)), self::SELECTING_TTL);
-        try { broadcast(new SeatStatusUpdated(showDate: $showDate, bookedKeys: $seatKeys)); } catch (\Throwable) {}
+        // public เห็นเป็น "ขายแล้ว" (แดง) → bookedKeys; แอดมินอื่นเห็นสีเทาอ่อนถ้ายังไม่จ่าย → unpaidKeys
+        try { broadcast(new SeatStatusUpdated(showDate: $showDate, bookedKeys: $seatKeys, unpaidKeys: $isUnpaid ? $seatKeys : [])); } catch (\Throwable) {}
 
         BookingActivityLog::record([
             'system'        => BookingActivityLog::SYSTEM_SUNTARAPORN,
@@ -499,6 +510,7 @@ class SuntarapornBandController extends Controller
             'booker_name' => $booking->booker_name,
             'total_price' => $booking->total_price,
             'is_sponsor'  => (bool) $booking->is_sponsor,
+            'is_unpaid'   => (bool) $booking->is_unpaid,
             'booked_at'   => $seat->booked_at?->format('d/m/Y H:i'),
             'slip_url'    => $booking->slip_path ? asset('storage/' . $booking->slip_path) : null,
             'all_seats'   => $booking->seats->pluck('seat_key')->all(),
@@ -592,6 +604,42 @@ class SuntarapornBandController extends Controller
             'actor_name'    => $user->name,
             'booking_id'    => $booking->id,
             'seat_keys'     => $freedKeys,
+            'customer_name' => trim($booking->first_name . ' ' . $booking->last_name),
+            'phone'         => $booking->phone,
+            'total_price'   => $booking->total_price,
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    // ── Mark Paid (ยืนยันรับเงินจากที่นั่งที่ค้างจ่าย) ─────────────────
+    // เคลียร์ flag is_unpaid → ที่นั่งกลายเป็นจองจ่ายแล้วปกติ (แอดมินเห็นเทาเข้ม)
+
+    public function markPaid(int $id): JsonResponse
+    {
+        if ($this->guardRedirect()) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
+        }
+
+        $booking = SuntarapornBooking::with('seats')->findOrFail($id);
+
+        if (!$booking->is_unpaid) {
+            return response()->json(['success' => false, 'error' => 'การจองนี้ไม่ได้อยู่ในสถานะค้างจ่าย'], 422);
+        }
+
+        $showDate = $booking->show_date->format('Y-m-d');
+        $booking->update(['is_unpaid' => false]);
+
+        $paidKeys = $booking->seats->pluck('seat_key')->all();
+        try { broadcast(new SeatStatusUpdated(showDate: $showDate, paidKeys: $paidKeys)); } catch (\Throwable) {}
+
+        BookingActivityLog::record([
+            'system'        => BookingActivityLog::SYSTEM_SUNTARAPORN,
+            'action'        => BookingActivityLog::ACTION_PAID,
+            'show_date'     => $showDate,
+            'actor_name'    => $this->currentUser()->name,
+            'booking_id'    => $booking->id,
+            'seat_keys'     => $paidKeys,
             'customer_name' => trim($booking->first_name . ' ' . $booking->last_name),
             'phone'         => $booking->phone,
             'total_price'   => $booking->total_price,
@@ -1067,6 +1115,11 @@ class SuntarapornBandController extends Controller
             'sponsor'   => SuntarapornSeat::where('show_date', $showDate)
                 ->where('is_booked', true)
                 ->whereHas('booking', fn ($q) => $q->where('is_sponsor', true))
+                ->pluck('seat_key')
+                ->all(),
+            'unpaid'    => SuntarapornSeat::where('show_date', $showDate)
+                ->where('is_booked', true)
+                ->whereHas('booking', fn ($q) => $q->where('is_unpaid', true))
                 ->pluck('seat_key')
                 ->all(),
         ]);

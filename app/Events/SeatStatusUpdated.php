@@ -18,6 +18,8 @@ class SeatStatusUpdated implements ShouldBroadcastNow
         public readonly array $selectingKeys   = [],
         public readonly array $deselectingKeys = [],
         public readonly array $sponsorKeys     = [],
+        public readonly array $unpaidKeys      = [],
+        public readonly array $paidKeys        = [],
     ) {}
 
     public function broadcastOn(): Channel
@@ -39,6 +41,8 @@ class SeatStatusUpdated implements ShouldBroadcastNow
             'selecting_keys'   => $this->selectingKeys,
             'deselecting_keys' => $this->deselectingKeys,
             'sponsor_keys'     => $this->sponsorKeys,
+            'unpaid_keys'      => $this->unpaidKeys,
+            'paid_keys'        => $this->paidKeys,
         ];
     }
 }

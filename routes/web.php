@@ -77,6 +77,7 @@ Route::get('/LikayLiveAtTheTheater/history',  [LikayLiveAtTheTheaterController::
 Route::get('/LikayLiveAtTheTheater/export',   [LikayLiveAtTheTheaterController::class, 'exportBookings'])->name('likay.export');
 Route::put('/LikayLiveAtTheTheater/booking/{id}',    [LikayLiveAtTheTheaterController::class, 'updateBooking'])->name('likay.update');
 Route::delete('/LikayLiveAtTheTheater/booking/{id}', [LikayLiveAtTheTheaterController::class, 'cancelBooking'])->name('likay.cancel');
+Route::post('/LikayLiveAtTheTheater/booking/{id}/mark-paid', [LikayLiveAtTheTheaterController::class, 'markPaid'])->name('likay.mark-paid');
 Route::post('/LikayLiveAtTheTheater/mark-sponsor',   [LikayLiveAtTheTheaterController::class, 'markSponsor'])->name('likay.sponsor.mark');
 Route::post('/LikayLiveAtTheTheater/unmark-sponsor', [LikayLiveAtTheTheaterController::class, 'unmarkSponsor'])->name('likay.sponsor.unmark');
 Route::get('/LikayLiveAtTheTheater/live-state',   [LikayLiveAtTheTheaterController::class, 'liveState'])->name('likay.live-state');
@@ -103,6 +104,7 @@ Route::get('/SuntarapornBand/history',  [SuntarapornBandController::class, 'hist
 Route::get('/SuntarapornBand/export',   [SuntarapornBandController::class, 'exportBookings'])->name('suntaraporn.export');
 Route::put('/SuntarapornBand/booking/{id}',    [SuntarapornBandController::class, 'updateBooking'])->name('suntaraporn.update');
 Route::delete('/SuntarapornBand/booking/{id}', [SuntarapornBandController::class, 'cancelBooking'])->name('suntaraporn.cancel');
+Route::post('/SuntarapornBand/booking/{id}/mark-paid', [SuntarapornBandController::class, 'markPaid'])->name('suntaraporn.mark-paid');
 Route::post('/SuntarapornBand/mark-sponsor',   [SuntarapornBandController::class, 'markSponsor'])->name('suntaraporn.sponsor.mark');
 Route::post('/SuntarapornBand/unmark-sponsor', [SuntarapornBandController::class, 'unmarkSponsor'])->name('suntaraporn.sponsor.unmark');
 
@@ -3855,6 +3857,137 @@ Route::prefix('admin')->name('admin.')->group(function () use (
             
         return response()->json(['exists' => $exists, 'slug' => $slug]);
     })->name('articles.check-slug');
+
+    Route::post('/articles/api/generate-ai', function (Request $request) use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin()) {
+            return $redirect;
+        }
+
+        $request->validate([
+            'topic' => ['required', 'string', 'max:255'],
+            'keywords' => ['nullable', 'string', 'max:255'],
+            'model' => ['nullable', 'string', 'in:claude-3-5-sonnet,gpt-4o,gpt-4o-mini'],
+        ]);
+
+        $apiKey = env('INFERSTACK_API_KEY');
+        if (empty($apiKey)) {
+            return response()->json([
+                'success' => false,
+                'error' => 'กรุณาตั้งค่า INFERSTACK_API_KEY ในไฟล์ .env ก่อนใช้งานครับ'
+            ], 400);
+        }
+
+        $topic = $request->input('topic');
+        $keywords = $request->input('keywords', '');
+        $selectedModel = $request->input('model', env('INFERSTACK_MODEL', 'claude-3-5-sonnet'));
+
+        $prompt = "เขียนบทความภาษาไทยเกี่ยวกับหัวข้อ: \"$topic\" " . ($keywords ? "และเน้นคำสำคัญ (Keywords): \"$keywords\"" : "") . "\n"
+            . "โดยบทความจะต้องมีความยาวพอสมควร มีสไตล์การเขียนที่เป็นธรรมชาติ น่าเชื่อถือ ถูกหลักโหราศาสตร์/ตัวเลข (หากเกี่ยวข้อง) และเหมาะสมกับการทำ SEO\n"
+            . "ผลลัพธ์ที่คุณตอบกลับต้องเป็น JSON Object ตาม Schema ที่กำหนดไว้เท่านั้น ห้ามมีคำเกริ่นนำหรือคำพูดอื่นนอกเหนือจาก JSON";
+
+        try {
+            $response = \Illuminate\Support\Facades\Http::withHeaders([
+                'Content-Type' => 'application/json',
+                'Authorization' => 'Bearer ' . $apiKey,
+            ])
+            ->timeout(120)
+            ->post('https://api.inferstack.net/v1/chat/completions', [
+                'model' => $selectedModel,
+                'messages' => [
+                    [
+                        'role' => 'system',
+                        'content' => 'คุณคือผู้เชี่ยวชาญด้านการเขียนบทความ SEO และโหราศาสตร์/พลังตัวเลขในประเทศไทย ที่เขียนบทความภาษาไทยได้ลื่นไหล น่าอ่าน และใช้ภาษาอย่างเป็นมืออาชีพ คุณจะตอบคำขอของลูกค้าเป็น JSON ตาม schema ที่กำหนดไว้เสมอ'
+                    ],
+                    [
+                        'role' => 'user',
+                        'content' => $prompt
+                    ]
+                ],
+                'schema' => [
+                    'type' => 'object',
+                    'properties' => [
+                        'title' => [
+                            'type' => 'string',
+                            'description' => 'หัวข้อบทความที่น่าสนใจ ดึงดูด และสอดคล้องกับหลัก SEO ความยาว 60-80 ตัวอักษร'
+                        ],
+                        'excerpt' => [
+                            'type' => 'string',
+                            'description' => 'คำเกริ่นย่อ หรือคำโปรยสั้นๆ 2-3 ประโยคเพื่อดึงดูดความสนใจบนการ์ดหน้ารวม'
+                        ],
+                        'content' => [
+                            'type' => 'string',
+                            'description' => 'เนื้อหาบทความแบบยาว ละเอียด โดยต้องจัดรูปแบบด้วย HTML tags เท่านั้น (เช่น <h2>, <p>, <ul>, <li>, <strong>, <em>, <ol>) เพื่อให้แสดงผลได้อย่างสวยงามบนเว็บ'
+                        ],
+                        'meta_description' => [
+                            'type' => 'string',
+                            'description' => 'คำอธิบายบทความสั้นๆ สำหรับแสดงบนหน้าค้นหาของ Google ความยาวไม่เกิน 150 ตัวอักษร'
+                        ],
+                        'keywords' => [
+                            'type' => 'string',
+                            'description' => 'คีย์เวิร์ดหลักของบทความ 3-5 คำ คั่นด้วยเครื่องหมายจุลภาค (,)'
+                        ],
+                        'lsi_keywords' => [
+                            'type' => 'string',
+                            'description' => 'คีย์เวิร์ดที่เกี่ยวข้อง (LSI) 3-5 คำ คั่นด้วยเครื่องหมายจุลภาค (,)'
+                        ],
+                        'landscape_prompt' => [
+                            'type' => 'string',
+                            'description' => 'Prompt ภาษาอังกฤษที่ละเอียดสำหรับส่งให้ Midjourney/DALL-E เจนรูปหน้าปกบทความขนาด 16:9'
+                        ],
+                        'square_prompt' => [
+                            'type' => 'string',
+                            'description' => 'Prompt ภาษาอังกฤษที่ละเอียดสำหรับส่งให้ Midjourney/DALL-E เจนรูปเนื้อหาบทความขนาด 1:1'
+                        ]
+                    ],
+                    'required' => [
+                        'title', 'excerpt', 'content', 'meta_description', 'keywords', 'lsi_keywords', 'landscape_prompt', 'square_prompt'
+                    ]
+                ]
+            ]);
+
+            if ($response->failed()) {
+                $errMessage = $response->json('error.message') ?? $response->body();
+                return response()->json([
+                    'success' => false,
+                    'error' => 'การเรียกใช้งาน API ล้มเหลว: ' . $errMessage
+                ], 500);
+            }
+
+            $result = $response->json();
+            $contentStr = $result['choices'][0]['message']['content'] ?? null;
+            if (!$contentStr) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'ไม่พบเนื้อหาที่ตอบกลับจาก API'
+                ], 500);
+            }
+
+            $data = json_decode($contentStr, true);
+            if (json_last_error() !== JSON_ERROR_NONE) {
+                if (preg_match('/\{.*\}/s', $contentStr, $matches)) {
+                    $data = json_decode($matches[0], true);
+                }
+            }
+
+            if (!$data || json_last_error() !== JSON_ERROR_NONE) {
+                return response()->json([
+                    'success' => false,
+                    'error' => 'ผลลัพธ์จาก AI ไม่ได้อยู่ในรูปแบบ JSON ที่ถูกต้อง: ' . substr($contentStr, 0, 200)
+                ], 500);
+            }
+
+            return response()->json([
+                'success' => true,
+                'data' => $data
+            ]);
+
+        } catch (\Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'error' => 'เกิดข้อผิดพลาดในการเชื่อมต่อ: ' . $e->getMessage()
+            ], 500);
+        }
+    })->name('articles.generate-ai');
 
     Route::post('/articles/auto-gen-lottery', function () use ($ensureAdmin, $resolveArticleImageMeta) {
         if ($redirect = $ensureAdmin()) {

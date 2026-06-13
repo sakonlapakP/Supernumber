@@ -32,6 +32,7 @@ class BookingActivityLog extends Model
     public const ACTION_SEARCH    = 'search';
     public const ACTION_SPONSOR   = 'sponsor';   // กันที่นั่งให้ Sponsor (฿0)
     public const ACTION_UNSPONSOR = 'unsponsor'; // ยกเลิกที่นั่ง Sponsor
+    public const ACTION_PAID      = 'paid';      // ยืนยันรับเงินจากที่นั่งที่ค้างจ่าย
 
     /** ประเภท action ทั้งหมด (ใช้ validate filter ในหน้า history) */
     public const ACTIONS = [
@@ -42,6 +43,7 @@ class BookingActivityLog extends Model
         self::ACTION_SEARCH,
         self::ACTION_SPONSOR,
         self::ACTION_UNSPONSOR,
+        self::ACTION_PAID,
     ];
 
     /** ความยาวสูงสุดของแต่ละคอลัมน์ string (กัน overflow ก่อน insert) */

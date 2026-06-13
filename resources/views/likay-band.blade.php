@@ -63,6 +63,13 @@
       color: #fff !important;
       cursor: pointer;
     }
+    /* ─── ที่นั่ง "ยังไม่จ่ายตัง" — แอดมินเห็นเป็นสีเทาอ่อน, ลูกค้าเห็นเป็น "ขายแล้ว" ปกติ ─── */
+    .seat.is-unpaid {
+      background: #d4d4d4 !important;
+      border-color: #a8a8a8 !important;
+      color: #555 !important;
+      cursor: pointer;
+    }
     .seat.is-selected {
       background: #1a1a2e !important;
       border-color: #000 !important;
@@ -606,7 +613,8 @@
     <div class="form-group">
       <label>ประเภทการจอง</label>
       <select id="booking-type" onchange="onBookingTypeChange()" style="width:100%;padding:9px 12px;border:1px solid #ddd;border-radius:8px;font-size:14px;font-family:inherit;background:#fff;">
-        <option value="normal">🎟️ ขายปกติ</option>
+        <option value="normal">🎟️ ขายปกติ (จ่ายเงินแล้ว)</option>
+        <option value="unpaid">💸 ยังไม่จ่ายตัง (จองก่อน จ่ายทีหลัง)</option>
         <option value="sponsor">🎁 Sponsor (฿0 — ไม่คิดเงิน)</option>
       </select>
     </div>
@@ -614,6 +622,11 @@
     <div id="sponsor-note-box" style="display:none;align-items:flex-start;gap:8px;background:#fdf6e3;border:1.5px solid #e6cf7a;border-radius:8px;padding:8px 14px;margin-bottom:14px;font-size:13px;color:#7a5d00;">
       <span style="font-size:18px;">ℹ️</span>
       <span>ที่นั่งนี้จะถูกกันไว้ให้ Sponsor (<strong>ไม่คิดเงิน ฿0</strong>) — ฝั่งลูกค้าจะเห็นเป็น <strong>"ขายแล้ว"</strong></span>
+    </div>
+
+    <div id="unpaid-note-box" style="display:none;align-items:flex-start;gap:8px;background:#f3f3f3;border:1.5px solid #c8c8c8;border-radius:8px;padding:8px 14px;margin-bottom:14px;font-size:13px;color:#555;">
+      <span style="font-size:18px;">💸</span>
+      <span>จองแบบ <strong>"ยังไม่จ่ายตัง"</strong> — ฝั่งแอดมินเห็นเป็น <strong>สีเทาอ่อน</strong> (นับเป็นยอดค้างจ่าย), ฝั่งลูกค้าเห็นเป็น <strong>"ขายแล้ว"</strong> ปกติ</span>
     </div>
 
     <div class="selected-seats-list">
@@ -666,6 +679,7 @@
     <div id="detail-loading" style="text-align:center;padding:20px;color:#999;">กำลังโหลด...</div>
     <div id="detail-body" style="display:none;">
       <div id="det-sponsor-badge" style="display:none;background:#fdf6e3;border:1.5px solid #e6cf7a;color:#7a5d00;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-weight:600;font-size:14px;">🎁 ที่นั่ง Sponsor (กันไว้ — ฿0)</div>
+      <div id="det-unpaid-badge" style="display:none;background:#f3f3f3;border:1.5px solid #c8c8c8;color:#555;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-weight:600;font-size:14px;">💸 ยังไม่จ่ายตัง (ค้างจ่าย) — ลูกค้าเห็นเป็น "ขายแล้ว"</div>
       <div class="detail-row">
         <span class="detail-label">ที่นั่งทั้งหมด</span>
         <span class="detail-val"><div class="seats-group" id="det-seats"></div></span>
@@ -704,6 +718,9 @@
       </div>
       <div id="det-cancel-wrap" style="display:none;">
         <button class="btn-cancel-booking" id="det-cancel-btn" onclick="cancelBooking()">🗑 ยกเลิกการจอง</button>
+      </div>
+      <div id="det-paid-wrap" style="display:none;">
+        <button class="btn btn-success" id="det-paid-btn" onclick="markPaidBooking()">💰 ยืนยันรับเงินแล้ว</button>
       </div>
       <div id="det-sponsor-wrap" style="display:none;">
         <button class="btn-cancel-booking" id="det-sponsor-btn" onclick="removeSponsor()" style="background:#C9A227;border-color:#8a6d1a;">🎁 ยกเลิกที่นั่ง Sponsor</button>
@@ -748,6 +765,10 @@
     <span class="stat-lbl">จองแล้ว</span>
   </div>
   <div class="stat-item">
+    <span class="stat-num" id="stat-unpaid" style="color:#888">0</span>
+    <span class="stat-lbl">💸 ค้างจ่าย</span>
+  </div>
+  <div class="stat-item">
     <span class="stat-num" id="stat-sponsor" style="color:#C9A227">0</span>
     <span class="stat-lbl">🎁 Sponsor</span>
   </div>
@@ -765,7 +786,11 @@
   </div>
   <div class="stat-item" style="border-left:2px solid #eee;padding-left:16px;margin-left:4px;">
     <span class="stat-num" id="stat-sold-revenue" style="color:#2e7d32;font-size:16px;">฿{{ number_format($bookedRevenue) }}</span>
-    <span class="stat-lbl">💰 ขายแล้ว</span>
+    <span class="stat-lbl">💰 รับเงินแล้ว</span>
+  </div>
+  <div class="stat-item">
+    <span class="stat-num" id="stat-unpaid-revenue" style="color:#888;font-size:16px;">฿0</span>
+    <span class="stat-lbl">💸 ค้างรับ</span>
   </div>
   <div class="stat-item">
     <span class="stat-num" id="stat-sellable-revenue" style="color:#1565c0;font-size:16px;">฿{{ number_format($potentialRevenue) }}</span>
@@ -803,6 +828,10 @@
   <div class="legend-item">
     <div class="legend-swatch" style="background:#555;border-color:#333;"></div>
     <span>จองแล้ว</span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-swatch" style="background:#d4d4d4;border-color:#a8a8a8;"></div>
+    <span>💸 ยังไม่จ่าย (ค้างจ่าย)</span>
   </div>
   <div class="legend-item">
     <div class="legend-swatch" style="background:#C9A227;border-color:#8a6d1a;"></div>
@@ -1070,6 +1099,7 @@ function copyAccountNumber() {
   }
 }
 const SPONSOR          = new Map(Object.entries(@json((object) $sponsorSeats))); // key → ชื่อ/โน้ต (ที่นั่งกันให้ Sponsor)
+const UNPAID           = new Set(@json($unpaidSeats)); // ที่นั่งที่จองแล้วแต่ยังไม่จ่ายเงิน (ค้างจ่าย)
 const PRICES           = @json($prices);
 const ZONE_COLORS      = @json($zones->mapWithKeys(fn($z) => [$z->slug => ['bg' => $z->color, 'text' => $z->text_color, 'border' => $z->border_color]]));
 const SELECTED         = new Map();
@@ -1099,6 +1129,13 @@ function init() {
     document.querySelectorAll(`[data-key="${CSS.escape(key)}"]`).forEach(el => {
       el.classList.add('is-sponsor');
       el.setAttribute('title', '🎁 Sponsor: ' + note);
+    });
+  });
+  // ที่นั่ง "ยังไม่จ่าย" — แอดมินเห็นเป็นสีเทาอ่อน (อยู่ใน BOOKED ด้วยจึงกันการจองทับ)
+  UNPAID.forEach(key => {
+    document.querySelectorAll(`[data-key="${CSS.escape(key)}"]`).forEach(el => {
+      el.classList.add('is-unpaid');
+      el.setAttribute('title', '💸 ยังไม่จ่ายตัง (ค้างจ่าย)');
     });
   });
   updateStats();
@@ -1256,6 +1293,9 @@ async function confirmBooking() {
   const slipFile = document.getElementById('inp-slip').files[0];
   if (slipFile) fd.append('slip', slipFile);
 
+  const isUnpaid = document.getElementById('booking-type').value === 'unpaid';
+  if (isUnpaid) fd.append('is_unpaid', '1');
+
   try {
     const res  = await fetch('/LikayLiveAtTheTheater/book', { method: 'POST', body: fd });
     const data = await res.json();
@@ -1266,7 +1306,12 @@ async function confirmBooking() {
         document.querySelectorAll(`[data-key="${key}"]`).forEach(el => {
           el.classList.remove('is-selected');
           el.classList.add('is-booked');
+          if (isUnpaid) {
+            el.classList.add('is-unpaid');
+            el.setAttribute('title', '💸 ยังไม่จ่ายตัง (ค้างจ่าย)');
+          }
         });
+        if (isUnpaid) UNPAID.add(key);
       });
       SELECTED.clear();
       updateStats();
@@ -1287,13 +1332,19 @@ async function confirmBooking() {
 
 // ── ประเภทการจอง: ขายปกติ / Sponsor (รวมใน modal จองที่นั่ง) ──────
 function onBookingTypeChange() {
-  const isSponsor = document.getElementById('booking-type').value === 'sponsor';
+  const type      = document.getElementById('booking-type').value;
+  const isSponsor = type === 'sponsor';
+  const isUnpaid  = type === 'unpaid';
+  // ขายปกติ + ยังไม่จ่าย ใช้ฟอร์มลูกค้าเหมือนกัน (ต่างที่ flag ค้างจ่าย); Sponsor ใช้ช่องโน้ตแทน
   document.getElementById('customer-fields').style.display    = isSponsor ? 'none' : 'block';
   document.getElementById('sponsor-field').style.display      = isSponsor ? 'block' : 'none';
   document.getElementById('sponsor-note-box').style.display   = isSponsor ? 'flex' : 'none';
+  document.getElementById('unpaid-note-box').style.display    = isUnpaid  ? 'flex' : 'none';
   document.getElementById('booking-total-wrap').style.display = isSponsor ? 'none' : 'block';
-  document.getElementById('booking-modal-title').textContent  = isSponsor ? '🎁 กันที่นั่งให้ Sponsor' : '🎟️ จองที่นั่ง';
-  document.getElementById('confirmBookBtn').textContent       = isSponsor ? 'ยืนยันกัน Sponsor' : 'ยืนยันการจอง';
+  document.getElementById('booking-modal-title').textContent  =
+    isSponsor ? '🎁 กันที่นั่งให้ Sponsor' : (isUnpaid ? '💸 จองที่นั่ง (ยังไม่จ่าย)' : '🎟️ จองที่นั่ง');
+  document.getElementById('confirmBookBtn').textContent       =
+    isSponsor ? 'ยืนยันกัน Sponsor' : (isUnpaid ? 'ยืนยันจอง (ค้างจ่าย)' : 'ยืนยันการจอง');
   // ปิด required ของช่องลูกค้าตอนเป็น Sponsor (ช่องถูกซ่อน)
   ['inp-first-name', 'inp-last-name', 'inp-phone'].forEach(id => {
     const el = document.getElementById(id);
@@ -1421,12 +1472,14 @@ async function openDetailModal(seatKey) {
       slipWrap.style.display = 'none';
     }
 
-    // Sponsor vs การจองปกติ — สลับ badge + ปุ่มท้าย modal
+    // Sponsor / ค้างจ่าย / การจองปกติ — สลับ badge + ปุ่มท้าย modal
     currentSponsorSeats = null;
     const sponsorBadge = document.getElementById('det-sponsor-badge');
     const sponsorWrap  = document.getElementById('det-sponsor-wrap');
     const cancelWrap   = document.getElementById('det-cancel-wrap');
     const editWrap     = document.getElementById('det-edit-wrap');
+    const unpaidBadge  = document.getElementById('det-unpaid-badge');
+    const paidWrap     = document.getElementById('det-paid-wrap');
     if (data.is_sponsor) {
       currentSponsorSeats = data.all_seats;
       document.getElementById('det-name').textContent = '🎁 ' + (data.first_name || 'Sponsor');
@@ -1434,11 +1487,16 @@ async function openDetailModal(seatKey) {
       sponsorWrap.style.display  = 'block';   // ยกเลิก Sponsor ได้ทุก admin
       cancelWrap.style.display   = 'none';
       editWrap.style.display     = 'none';    // Sponsor แก้ไขผ่านช่องทางนี้ไม่ได้
+      unpaidBadge.style.display  = 'none';
+      paidWrap.style.display     = 'none';
     } else {
       sponsorBadge.style.display = 'none';
       sponsorWrap.style.display  = 'none';
       cancelWrap.style.display   = 'block'; // ยกเลิกจองได้ทุก role ที่เข้าระบบ
       editWrap.style.display     = 'block'; // แก้ไขได้ทุก role ที่เข้าระบบ
+      // ค้างจ่าย → โชว์ badge + ปุ่มยืนยันรับเงิน (จองปกติยังแก้ไข/ยกเลิกได้)
+      unpaidBadge.style.display  = data.is_unpaid ? 'block' : 'none';
+      paidWrap.style.display     = data.is_unpaid ? 'block' : 'none';
     }
 
     document.getElementById('detail-loading').style.display = 'none';
@@ -1485,6 +1543,43 @@ async function cancelBooking() {
   } finally {
     btn.disabled = false;
     btn.textContent = '🗑 ยกเลิกการจอง';
+  }
+}
+
+// ── ยืนยันรับเงินจากที่นั่งที่ค้างจ่าย → กลายเป็นจองจ่ายแล้วปกติ ──────
+async function markPaidBooking() {
+  if (!currentBookingId) return;
+  if (!confirm('ยืนยันว่าได้รับเงินจากการจองนี้แล้ว? ที่นั่งจะเปลี่ยนเป็น "จองจ่ายแล้ว" (เทาเข้ม)')) return;
+
+  const btn = document.getElementById('det-paid-btn');
+  btn.disabled = true;
+  btn.textContent = 'กำลังบันทึก...';
+
+  try {
+    const res  = await fetch(`/LikayLiveAtTheTheater/booking/${currentBookingId}/mark-paid`, {
+      method: 'POST',
+      headers: { 'X-CSRF-TOKEN': CSRF }
+    });
+    const data = await res.json();
+    if (data.success) {
+      (currentDetail?.all_seats || []).forEach(key => {
+        UNPAID.delete(key);
+        document.querySelectorAll(`[data-key="${CSS.escape(key)}"]`).forEach(el => {
+          el.classList.remove('is-unpaid');
+          el.removeAttribute('title');
+        });
+      });
+      updateStats();
+      closeDetailModal();
+      alert('บันทึกการรับเงินเรียบร้อย');
+    } else {
+      alert(data.error || 'เกิดข้อผิดพลาด');
+    }
+  } catch {
+    alert('เกิดข้อผิดพลาด');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '💰 ยืนยันรับเงินแล้ว';
   }
 }
 
@@ -1715,9 +1810,11 @@ async function resetAllSeats() {
     BOOKED.clear();
     SELECTED.clear();
     SPONSOR.clear();
+    UNPAID.clear();
     document.querySelectorAll('.seat.is-booked').forEach(el => el.classList.remove('is-booked'));
     document.querySelectorAll('.seat.is-selected').forEach(el => el.classList.remove('is-selected'));
     document.querySelectorAll('.seat.is-sponsor').forEach(el => { el.classList.remove('is-sponsor'); el.removeAttribute('title'); });
+    document.querySelectorAll('.seat.is-unpaid').forEach(el => { el.classList.remove('is-unpaid'); el.removeAttribute('title'); });
     updateStats();
     updateSummary();
     updateFloatBtn();
@@ -1728,11 +1825,13 @@ async function resetAllSeats() {
 
 function updateStats() {
   const total     = @json($totalSeats);
-  const booked    = BOOKED.size;        // รวมที่นั่ง Sponsor ด้วย (กันการจองทับ)
+  const booked    = BOOKED.size;        // รวมที่นั่ง Sponsor + ค้างจ่าย (กันการจองทับ)
   const sponsor   = SPONSOR.size;
+  const unpaid    = UNPAID.size;
   const selected  = SELECTED.size;
   const selecting = SELECTING_OTHERS.size;
-  document.getElementById('stat-booked').textContent    = Math.max(0, booked - sponsor); // จองจริง (ไม่รวม Sponsor)
+  document.getElementById('stat-booked').textContent    = Math.max(0, booked - sponsor - unpaid); // จองจ่ายแล้ว (ไม่รวม Sponsor/ค้างจ่าย)
+  document.getElementById('stat-unpaid').textContent    = unpaid;
   document.getElementById('stat-sponsor').textContent   = sponsor;
   document.getElementById('stat-avail').textContent     = Math.max(0, total - booked - selected - selecting);
   document.getElementById('stat-selected').textContent  = selected;
@@ -1746,17 +1845,19 @@ function updateStats() {
 //  • หลังหัก Sponsor = ราคาเต็มทั้งผัง − ที่นั่งที่กันให้ Sponsor (เพดานที่ยังขายได้)
 //  • ถ้าขายหมด       = ราคาเต็มทั้งผัง
 function updateRevenue() {
-  let full = 0, sponsorRev = 0, sold = 0;
+  let full = 0, sponsorRev = 0, sold = 0, unpaidRev = 0;
   document.querySelectorAll('.seat[data-zone]').forEach(el => {
     const price = PRICES[el.dataset.zone] || 0;
     if (price <= 0) return;
     const key = el.dataset.key;
     full += price;
     if (SPONSOR.has(key))      sponsorRev += price;
+    else if (UNPAID.has(key))  unpaidRev  += price;  // ค้างจ่าย — ยังไม่นับเป็นรับเงินแล้ว
     else if (BOOKED.has(key))  sold       += price;
   });
   const fmt = n => '฿' + n.toLocaleString('th-TH');
   document.getElementById('stat-sold-revenue').textContent     = fmt(sold);
+  document.getElementById('stat-unpaid-revenue').textContent   = fmt(unpaidRev);
   document.getElementById('stat-sellable-revenue').textContent = fmt(full - sponsorRev);
   document.getElementById('stat-full-revenue').textContent     = fmt(full);
 }
@@ -1837,11 +1938,30 @@ init();
       });
     });
 
+    // ที่นั่งค้างจ่าย — แอดมินเห็นเป็นสีเทาอ่อนทับ booked
+    (data.unpaid_keys || []).forEach(function (key) {
+      UNPAID.add(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        el.classList.add('is-unpaid');
+        el.setAttribute('title', '💸 ยังไม่จ่ายตัง (ค้างจ่าย)');
+      });
+    });
+
+    // ที่นั่งที่เพิ่งยืนยันรับเงิน → เลิกเป็นค้างจ่าย กลายเป็นจองจ่ายแล้วปกติ
+    (data.paid_keys || []).forEach(function (key) {
+      UNPAID.delete(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        el.classList.remove('is-unpaid');
+        el.removeAttribute('title');
+      });
+    });
+
     (data.freed_keys || []).forEach(function (key) {
       BOOKED.delete(key);
       SPONSOR.delete(key);
+      UNPAID.delete(key);
       document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
-        el.classList.remove('is-booked', 'is-sponsor');
+        el.classList.remove('is-booked', 'is-sponsor', 'is-unpaid');
         el.removeAttribute('title');
       });
     });
@@ -1914,6 +2034,7 @@ init();
     var newBooked     = new Set(data.booked    || []);
     var newSelecting  = new Set(data.selecting || []);
     var newSponsor    = new Set(data.sponsor   || []);
+    var newUnpaid     = new Set(data.unpaid    || []);
 
     // sync BOOKED
     newBooked.forEach(function (key) {
@@ -1931,8 +2052,9 @@ init();
       if (newBooked.has(key)) return;
       BOOKED.delete(key);
       SPONSOR.delete(key);
+      UNPAID.delete(key);
       document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
-        el.classList.remove('is-booked', 'is-sponsor');
+        el.classList.remove('is-booked', 'is-sponsor', 'is-unpaid');
         el.removeAttribute('title');
       });
     });
@@ -1950,6 +2072,23 @@ init();
       SPONSOR.delete(key);
       document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
         el.classList.remove('is-sponsor');
+        if (!BOOKED.has(key)) el.removeAttribute('title');
+      });
+    });
+
+    // sync UNPAID (ทับสีเทาอ่อนบน booked)
+    newUnpaid.forEach(function (key) {
+      UNPAID.add(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        el.classList.add('is-unpaid');
+        el.setAttribute('title', '💸 ยังไม่จ่ายตัง (ค้างจ่าย)');
+      });
+    });
+    UNPAID.forEach(function (key) {
+      if (newUnpaid.has(key)) return;
+      UNPAID.delete(key);
+      document.querySelectorAll('[data-key="' + key + '"]').forEach(function (el) {
+        el.classList.remove('is-unpaid');
         if (!BOOKED.has(key)) el.removeAttribute('title');
       });
     });

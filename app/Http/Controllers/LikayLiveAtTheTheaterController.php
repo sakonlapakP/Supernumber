@@ -146,6 +146,12 @@ class LikayLiveAtTheTheaterController extends Controller
             ->mapWithKeys(fn (LikaySeat $s) => [$s->seat_key => $s->booking?->first_name ?? 'Sponsor'])
             ->all();
 
+        // ที่นั่ง "ยังไม่จ่ายตัง" — แอดมินเห็นเป็นสีเทาอ่อน, ลูกค้าเห็นเป็น "ขายแล้ว" ปกติ
+        $unpaidSeats = LikaySeat::where('is_booked', true)
+            ->whereHas('booking', fn ($q) => $q->where('is_unpaid', true))
+            ->pluck('seat_key')
+            ->all();
+
         $zones = LikayZone::orderBy('sort_order')->get();
         $prices = $zones->pluck('price', 'slug')->all();
         $rowZones = DB::table('likay_row_zones')
@@ -167,7 +173,7 @@ class LikayLiveAtTheTheaterController extends Controller
 
         $selectingSeats = Cache::get(self::SELECTING_CACHE, []);
 
-        return view('likay-band', compact('bookedSeats', 'sponsorSeats', 'prices', 'user', 'totalSeats', 'potentialRevenue', 'bookedRevenue', 'zones', 'rowZones', 'selectingSeats'));
+        return view('likay-band', compact('bookedSeats', 'sponsorSeats', 'unpaidSeats', 'prices', 'user', 'totalSeats', 'potentialRevenue', 'bookedRevenue', 'zones', 'rowZones', 'selectingSeats'));
     }
 
     // ── Book Seat(s) ──────────────────────────────────────────────
@@ -185,8 +191,10 @@ class LikayLiveAtTheTheaterController extends Controller
             'last_name'   => 'required|string|max:100',
             'phone'       => 'required|string|max:20',
             'slip'        => 'nullable|file|mimes:jpg,jpeg,png,pdf|max:5120',
+            'is_unpaid'   => 'nullable|boolean',
         ]);
 
+        $isUnpaid = $request->boolean('is_unpaid');
         $data['booker_name'] = $this->currentUser()->name;
         $seatKeys = array_values($data['seat_keys']);
         $seatZones = LikaySeatMap::zonesFor($seatKeys);
@@ -223,7 +231,7 @@ class LikayLiveAtTheTheaterController extends Controller
         $bookingId = null;
 
         try {
-            DB::transaction(function () use ($request, $data, $seatKeys, $totalPrice, &$alreadyBooked, &$slipPath, &$bookingId) {
+            DB::transaction(function () use ($request, $data, $seatKeys, $totalPrice, $isUnpaid, &$alreadyBooked, &$slipPath, &$bookingId) {
                 $seats = LikaySeat::whereIn('seat_key', $seatKeys)
                     ->lockForUpdate()
                     ->get()
@@ -249,6 +257,7 @@ class LikayLiveAtTheTheaterController extends Controller
                     'booker_name' => $data['booker_name'],
                     'slip_path'   => $slipPath,
                     'total_price' => $totalPrice,
+                    'is_unpaid'   => $isUnpaid,
                 ]);
                 $bookingId = $booking->id;
 
@@ -278,7 +287,8 @@ class LikayLiveAtTheTheaterController extends Controller
 
         $existing = Cache::get(self::SELECTING_CACHE, []);
         Cache::put(self::SELECTING_CACHE, array_values(array_diff($existing, $seatKeys)), self::SELECTING_TTL);
-        try { broadcast(new LikaySeatStatusUpdated(bookedKeys: $seatKeys)); } catch (\Throwable) {}
+        // public เห็นเป็น "ขายแล้ว" (แดง) → bookedKeys; แอดมินอื่นเห็นสีเทาอ่อนถ้ายังไม่จ่าย → unpaidKeys
+        try { broadcast(new LikaySeatStatusUpdated(bookedKeys: $seatKeys, unpaidKeys: $isUnpaid ? $seatKeys : [])); } catch (\Throwable) {}
 
         BookingActivityLog::record([
             'system'        => BookingActivityLog::SYSTEM_LIKAY,
@@ -467,6 +477,7 @@ class LikayLiveAtTheTheaterController extends Controller
             'booker_name' => $booking->booker_name,
             'total_price' => $booking->total_price,
             'is_sponsor'  => (bool) $booking->is_sponsor,
+            'is_unpaid'   => (bool) $booking->is_unpaid,
             'booked_at'   => $seat->booked_at?->format('d/m/Y H:i'),
             'slip_url'    => $booking->slip_path ? asset('storage/' . $booking->slip_path) : null,
             'all_seats'   => $booking->seats->pluck('seat_key')->all(),
@@ -550,6 +561,40 @@ class LikayLiveAtTheTheaterController extends Controller
             'actor_name'    => $user->name,
             'booking_id'    => $booking->id,
             'seat_keys'     => $freedKeys,
+            'customer_name' => trim($booking->first_name . ' ' . $booking->last_name),
+            'phone'         => $booking->phone,
+            'total_price'   => $booking->total_price,
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    // ── Mark Paid (ยืนยันรับเงินจากที่นั่งที่ค้างจ่าย) ─────────────────
+    // เคลียร์ flag is_unpaid → ที่นั่งกลายเป็นจองจ่ายแล้วปกติ (แอดมินเห็นเทาเข้ม)
+
+    public function markPaid(int $id): JsonResponse
+    {
+        if ($this->guardRedirect()) {
+            return response()->json(['success' => false, 'error' => 'Unauthorized'], 401);
+        }
+
+        $booking = LikayBooking::with('seats')->findOrFail($id);
+
+        if (!$booking->is_unpaid) {
+            return response()->json(['success' => false, 'error' => 'การจองนี้ไม่ได้อยู่ในสถานะค้างจ่าย'], 422);
+        }
+
+        $booking->update(['is_unpaid' => false]);
+
+        $paidKeys = $booking->seats->pluck('seat_key')->all();
+        try { broadcast(new LikaySeatStatusUpdated(paidKeys: $paidKeys)); } catch (\Throwable) {}
+
+        BookingActivityLog::record([
+            'system'        => BookingActivityLog::SYSTEM_LIKAY,
+            'action'        => BookingActivityLog::ACTION_PAID,
+            'actor_name'    => $this->currentUser()->name,
+            'booking_id'    => $booking->id,
+            'seat_keys'     => $paidKeys,
             'customer_name' => trim($booking->first_name . ' ' . $booking->last_name),
             'phone'         => $booking->phone,
             'total_price'   => $booking->total_price,
@@ -997,6 +1042,10 @@ class LikayLiveAtTheTheaterController extends Controller
             'selecting'  => Cache::get(self::SELECTING_CACHE, []),
             'sponsor'    => LikaySeat::where('is_booked', true)
                 ->whereHas('booking', fn ($q) => $q->where('is_sponsor', true))
+                ->pluck('seat_key')
+                ->all(),
+            'unpaid'     => LikaySeat::where('is_booked', true)
+                ->whereHas('booking', fn ($q) => $q->where('is_unpaid', true))
                 ->pluck('seat_key')
                 ->all(),
         ]);

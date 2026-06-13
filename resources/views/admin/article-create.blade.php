@@ -277,6 +277,19 @@
         .article-edit-actions { display: grid !important; grid-template-columns: repeat(2, minmax(0, 1fr)) !important; }
         .article-edit-action { width: 100% !important; min-width: 0 !important; padding: 11px 10px !important; font-size: 13px !important; }
     }
+    @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+    }
+    .spinner {
+        display: inline-block;
+        animation: spin 1.5s linear infinite;
+    }
+    @media (max-width: 991px) {
+        .ai-grid-responsive {
+            grid-template-columns: 1fr !important;
+        }
+    }
   </style>
 
   <div class="admin-page-head">
@@ -293,6 +306,50 @@
       </ul>
     </div>
   @endif
+
+  <!-- AI Article Generator (InferStack) Premium Card -->
+  <div class="ai-generator-container" style="background: linear-gradient(135deg, #1d1816 0%, #35281e 100%); border: 1.5px solid #d8a34a; border-radius: 16px; padding: 24px; margin-bottom: 28px; box-shadow: 0 10px 25px rgba(216, 163, 74, 0.08); color: #fff;">
+    <div style="display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; margin-bottom: 20px; border-bottom: 1px solid rgba(216, 163, 74, 0.2); padding-bottom: 16px;">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <span style="font-size: 28px; filter: drop-shadow(0 0 8px rgba(216, 163, 74, 0.6));">✨</span>
+        <div>
+          <h3 style="margin: 0; color: #e1b155; font-size: 18px; font-weight: 800; letter-spacing: 0.03em;">เขียนบทความด้วยระบบ AI อัจฉริยะ (InferStack)</h3>
+          <p style="margin: 4px 0 0; color: #d4c5b9; font-size: 13px; font-weight: 500;">กรอกหัวข้อบทความที่ต้องการ ระบบจะร่างเนื้อหาและจัดฟอร์แมต SEO ให้อัตโนมัติในคลิกเดียว</p>
+        </div>
+      </div>
+      <span style="font-size: 10px; font-weight: 900; letter-spacing: 0.1em; text-transform: uppercase; background: rgba(216, 163, 74, 0.15); border: 1.5px solid rgba(216, 163, 74, 0.4); padding: 5px 12px; border-radius: 99px; color: #e1b155; box-shadow: inset 0 1px 3px rgba(0,0,0,0.2);">powered by inferstack</span>
+    </div>
+
+    <div class="ai-grid-responsive" style="display: grid; grid-template-columns: 2fr 1.2fr 1fr; gap: 16px; align-items: end;">
+      <div>
+        <label for="ai-topic" style="display: block; color: #e1b155; font-weight: 700; font-size: 13px; margin-bottom: 8px;">หัวข้อหรือแนวคิดของบทความที่ต้องการ</label>
+        <input type="text" id="ai-topic" class="admin-input" style="width: 100%; border-color: rgba(216, 163, 74, 0.35) !important; background: rgba(0, 0, 0, 0.25) !important; color: #fff !important; min-height: 44px; padding: 10px 14px;" placeholder="เช่น แนะนำเลขมงคลหนุนการเงิน โชคลาภ หรือการงาน..." />
+      </div>
+      <div>
+        <label for="ai-keywords" style="display: block; color: #e1b155; font-weight: 700; font-size: 13px; margin-bottom: 8px;">คีย์เวิร์ดเน้นย้ำ (ตัวเลือก - คั่นด้วย ,)</label>
+        <input type="text" id="ai-keywords" class="admin-input" style="width: 100%; border-color: rgba(216, 163, 74, 0.35) !important; background: rgba(0, 0, 0, 0.25) !important; color: #fff !important; min-height: 44px; padding: 10px 14px;" placeholder="เช่น เลขมงคล, เสริมดวงการเงิน" />
+      </div>
+      <div>
+        <label for="ai-model" style="display: block; color: #e1b155; font-weight: 700; font-size: 13px; margin-bottom: 8px;">โมเดล AI ที่ใช้เขียน</label>
+        <div style="display: flex; gap: 10px;">
+          <select id="ai-model" class="admin-select" style="flex: 1; border-color: rgba(216, 163, 74, 0.35) !important; background: #251c17 !important; color: #fff !important; min-height: 44px; padding: 0 10px;">
+            <option value="claude-3-5-sonnet">Claude 3.5 Sonnet (แนะนำ)</option>
+            <option value="gpt-4o">GPT-4o</option>
+            <option value="gpt-4o-mini">GPT-4o Mini</option>
+          </select>
+          <button type="button" id="btn-generate-ai" class="article-edit-action article-edit-action--primary" style="margin: 0; min-height: 44px; border-radius: 10px; padding: 0 18px; border-color: #d8a34a !important; display: flex; align-items: center; gap: 6px;">
+            <span>🪄</span> เขียนเลย
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Loading / Status -->
+    <div id="ai-status" style="display: none; margin-top: 20px; padding: 16px; background: rgba(216, 163, 74, 0.08); border: 1.5px solid rgba(216, 163, 74, 0.25); border-left: 5px solid #d8a34a; border-radius: 10px; color: #f3e8df; font-size: 14px;">
+      <span class="spinner" style="font-size: 16px; margin-right: 8px;">⏳</span>
+      <span id="ai-status-text" style="font-weight: 700;">AI กำลังเรียบเรียงบทความให้คุณ กรุณารอสักครู่ (อาจใช้เวลาประมาณ 1 นาที)...</span>
+    </div>
+  </div>
 
   <section class="admin-card admin-feature-card">
     <form id="main-create-form" action="{{ route('admin.articles.store') }}" method="post" class="admin-form">
@@ -589,6 +646,89 @@
     editor.addEventListener('input', window.syncContent);
     editor.addEventListener('blur',  window.syncContent);
     window.syncContent();
+
+    // AI Generation Frontend Handler
+    const btnGenerateAi = document.getElementById('btn-generate-ai');
+    const aiStatus = document.getElementById('ai-status');
+    const aiStatusText = document.getElementById('ai-status-text');
+    
+    if (btnGenerateAi) {
+      btnGenerateAi.addEventListener('click', async (e) => {
+        e.preventDefault();
+        
+        const topic = document.getElementById('ai-topic').value.trim();
+        const keywords = document.getElementById('ai-keywords').value.trim();
+        const model = document.getElementById('ai-model').value;
+        
+        if (!topic) {
+          alert('🚨 กรุณาระบุหัวข้อที่ต้องการให้ AI เขียนด้วยครับ');
+          document.getElementById('ai-topic').focus();
+          return;
+        }
+        
+        // Update UI state
+        btnGenerateAi.disabled = true;
+        btnGenerateAi.innerHTML = '⏳ กำลังเขียน...';
+        aiStatus.style.display = 'block';
+        aiStatus.style.borderColor = '#d8a34a';
+        aiStatus.style.background = 'rgba(216, 163, 74, 0.08)';
+        aiStatusText.innerHTML = 'AI กำลังวิเคราะห์และเรียบเรียงบทความให้คุณ กรุณารอสักครู่ (อาจใช้เวลาประมาณ 1 นาที)...';
+        
+        try {
+          const response = await fetch('{{ route('admin.articles.generate-ai') }}', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content || document.querySelector('input[name="_token"]')?.value || ''
+            },
+            body: JSON.stringify({ topic, keywords, model })
+          });
+          
+          const result = await response.json();
+          
+          if (result.success && result.data) {
+            const data = result.data;
+            
+            // Populate fields
+            document.getElementById('title').value = data.title || '';
+            document.querySelector('textarea[name="excerpt"]').value = data.excerpt || '';
+            
+            // Populate rich editor
+            const richEditor = document.getElementById('rich-editor');
+            if (richEditor) {
+              richEditor.innerHTML = data.content || '';
+              window.syncContent();
+            }
+            
+            // Populate SEO meta & keywords
+            document.querySelector('input[name="meta_description"]').value = data.meta_description || '';
+            document.querySelector('input[name="keywords"]').value = data.keywords || '';
+            document.querySelector('input[name="lsi_keywords"]').value = data.lsi_keywords || '';
+            
+            // Populate image prompts
+            document.getElementById('landscape_prompt').value = data.landscape_prompt || '';
+            document.getElementById('square_prompt').value = data.square_prompt || '';
+            
+            aiStatusText.innerHTML = '✅ <strong>แต่งบทความสำเร็จแล้ว!</strong> ข้อมูลถูกเติมลงในฟอร์มด้านล่างเรียบร้อยแล้ว กรุณาตรวจสอบความถูกต้องและแต่งเติมเนื้อหาเพิ่มเติมได้ตามต้องการก่อนกดบันทึก';
+            aiStatus.style.borderColor = '#059669';
+            aiStatus.style.background = 'rgba(5, 150, 105, 0.08)';
+            
+            // Smooth scroll to the main form
+            document.getElementById('title').scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+          } else {
+            alert('❌ เกิดข้อผิดพลาด: ' + (result.error || 'ไม่สามารถดึงข้อมูลได้'));
+            aiStatus.style.display = 'none';
+          }
+        } catch (err) {
+          alert('❌ เชื่อมต่อเซิร์ฟเวอร์ล้มเหลว: ' + err.message);
+          aiStatus.style.display = 'none';
+        } finally {
+          btnGenerateAi.disabled = false;
+          btnGenerateAi.innerHTML = '<span>🪄</span> เขียนเลย';
+        }
+      });
+    }
 
     const slugInput = document.getElementById('slug');
     const slugFeedback = document.getElementById('slug-feedback');

@@ -186,6 +186,102 @@ class LikayLiveAtTheTheaterTest extends TestCase
         $this->postJson(route('likay.sponsor.unmark'), ['seat_keys' => [$s1]])->assertStatus(401);
     }
 
+    // ── Unpaid (ยังไม่จ่ายตัง) ─────────────────────────────────────
+
+    public function test_unpaid_booking_keeps_price_and_flags_unpaid(): void
+    {
+        $staff   = User::factory()->create(['role' => User::ROLE_LIKAY, 'is_active' => true]);
+        $session = $this->likaySession($staff);
+        [$s1, $s2] = $this->freeSeats(2);
+
+        $this->withSession($session)
+            ->postJson(route('likay.book'), [
+                'seat_keys' => [$s1, $s2], 'first_name' => 'ลูกค้า', 'last_name' => 'ค้างจ่าย',
+                'phone' => '0812345678', 'is_unpaid' => true,
+            ])
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        // booking ปกติ (มีราคาจริง) แต่ติด flag is_unpaid
+        $booking = LikayBooking::where('first_name', 'ลูกค้า')->where('last_name', 'ค้างจ่าย')->firstOrFail();
+        $this->assertTrue($booking->is_unpaid);
+        $this->assertFalse($booking->is_sponsor);
+        $this->assertGreaterThan(0, $booking->total_price);
+
+        // ลูกค้าเห็นเป็น "ขายแล้ว" ปกติ + แอดมินเห็นแยกใน live-state.unpaid
+        $live = $this->getJson(route('likay.live-state'))->json();
+        $this->assertContains($s1, $live['booked']);
+        $this->assertContains($s1, $live['unpaid']);
+    }
+
+    public function test_booking_info_reports_unpaid_flag(): void
+    {
+        $staff   = User::factory()->create(['role' => User::ROLE_LIKAY, 'is_active' => true]);
+        $session = $this->likaySession($staff);
+        [$s1] = $this->freeSeats(1);
+
+        $this->withSession($session)
+            ->postJson(route('likay.book'), [
+                'seat_keys' => [$s1], 'first_name' => 'A', 'last_name' => 'B',
+                'phone' => '0812345678', 'is_unpaid' => true,
+            ])->assertOk();
+
+        $this->withSession($session)
+            ->getJson(route('likay.booking-info', $s1))
+            ->assertOk()
+            ->assertJson(['success' => true, 'is_unpaid' => true, 'is_sponsor' => false]);
+    }
+
+    public function test_mark_paid_clears_unpaid_flag(): void
+    {
+        $staff   = User::factory()->create(['role' => User::ROLE_LIKAY, 'is_active' => true]);
+        $session = $this->likaySession($staff);
+        [$s1] = $this->freeSeats(1);
+
+        $this->withSession($session)
+            ->postJson(route('likay.book'), [
+                'seat_keys' => [$s1], 'first_name' => 'A', 'last_name' => 'B',
+                'phone' => '0812345678', 'is_unpaid' => true,
+            ])->assertOk();
+
+        $booking = LikayBooking::where('is_unpaid', true)->firstOrFail();
+
+        $this->withSession($session)
+            ->postJson(route('likay.mark-paid', $booking->id))
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        $this->assertFalse($booking->fresh()->is_unpaid);
+        // ที่นั่งยังจองอยู่ (ไม่ถูกปล่อย) แต่หลุดจาก list ค้างจ่าย
+        $live = $this->getJson(route('likay.live-state'))->json();
+        $this->assertContains($s1, $live['booked']);
+        $this->assertNotContains($s1, $live['unpaid']);
+    }
+
+    public function test_mark_paid_rejects_non_unpaid_booking(): void
+    {
+        $staff   = User::factory()->create(['role' => User::ROLE_LIKAY, 'is_active' => true]);
+        $session = $this->likaySession($staff);
+        [$s1] = $this->freeSeats(1);
+
+        $this->withSession($session)
+            ->postJson(route('likay.book'), [
+                'seat_keys' => [$s1], 'first_name' => 'A', 'last_name' => 'B', 'phone' => '0812345678',
+            ])->assertOk();
+
+        $booking = LikayBooking::where('first_name', 'A')->firstOrFail();
+        $this->assertFalse($booking->is_unpaid);
+
+        $this->withSession($session)
+            ->postJson(route('likay.mark-paid', $booking->id))
+            ->assertStatus(422);
+    }
+
+    public function test_mark_paid_requires_auth(): void
+    {
+        $this->postJson(route('likay.mark-paid', 1))->assertStatus(401);
+    }
+
     public function test_login_flow(): void
     {
         $user = User::factory()->create([

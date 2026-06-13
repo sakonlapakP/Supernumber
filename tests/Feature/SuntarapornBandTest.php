@@ -655,6 +655,78 @@ class SuntarapornBandTest extends TestCase
         $this->postJson(route('suntaraporn.sponsor.unmark'), ['seat_keys' => ['A_1']])->assertStatus(401);
     }
 
+    // ── Unpaid (ยังไม่จ่ายตัง) ─────────────────────────────────────
+
+    public function test_unpaid_booking_keeps_price_and_flags_unpaid(): void
+    {
+        $staff   = User::factory()->create(['role' => User::ROLE_SUNTARAPORN, 'is_active' => true]);
+        $session = $this->suntarapornSession($staff);
+
+        $this->withSession($session)
+            ->postJson(route('suntaraporn.book', ['date' => '2026-10-31']), [
+                'seat_keys' => ['A_1', 'A_2'], 'first_name' => 'ลูกค้า', 'last_name' => 'ค้างจ่าย',
+                'phone' => '0812345678', 'is_unpaid' => true,
+            ])
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        $booking = SuntarapornBooking::where('first_name', 'ลูกค้า')->where('last_name', 'ค้างจ่าย')->firstOrFail();
+        $this->assertTrue($booking->is_unpaid);
+        $this->assertFalse($booking->is_sponsor);
+        $this->assertGreaterThan(0, $booking->total_price);
+
+        // ลูกค้าเห็นเป็น "ขายแล้ว" ปกติ + แอดมินเห็นแยกใน live-state.unpaid
+        $live = $this->getJson(route('suntaraporn.live-state', ['date' => '2026-10-31']))->json();
+        $this->assertContains('A_1', $live['booked']);
+        $this->assertContains('A_1', $live['unpaid']);
+    }
+
+    public function test_booking_info_reports_unpaid_flag(): void
+    {
+        $staff   = User::factory()->create(['role' => User::ROLE_SUNTARAPORN, 'is_active' => true]);
+        $session = $this->suntarapornSession($staff);
+
+        $this->withSession($session)
+            ->postJson(route('suntaraporn.book', ['date' => '2026-10-31']), [
+                'seat_keys' => ['A_1'], 'first_name' => 'A', 'last_name' => 'B',
+                'phone' => '0812345678', 'is_unpaid' => true,
+            ])->assertOk();
+
+        $this->withSession($session)
+            ->getJson(route('suntaraporn.booking-info', ['seatKey' => 'A_1', 'date' => '2026-10-31']))
+            ->assertOk()
+            ->assertJson(['success' => true, 'is_unpaid' => true, 'is_sponsor' => false]);
+    }
+
+    public function test_mark_paid_clears_unpaid_flag(): void
+    {
+        $staff   = User::factory()->create(['role' => User::ROLE_SUNTARAPORN, 'is_active' => true]);
+        $session = $this->suntarapornSession($staff);
+
+        $this->withSession($session)
+            ->postJson(route('suntaraporn.book', ['date' => '2026-10-31']), [
+                'seat_keys' => ['A_1'], 'first_name' => 'A', 'last_name' => 'B',
+                'phone' => '0812345678', 'is_unpaid' => true,
+            ])->assertOk();
+
+        $booking = SuntarapornBooking::where('is_unpaid', true)->firstOrFail();
+
+        $this->withSession($session)
+            ->postJson(route('suntaraporn.mark-paid', $booking->id))
+            ->assertOk()
+            ->assertJson(['success' => true]);
+
+        $this->assertFalse($booking->fresh()->is_unpaid);
+        $live = $this->getJson(route('suntaraporn.live-state', ['date' => '2026-10-31']))->json();
+        $this->assertContains('A_1', $live['booked']);
+        $this->assertNotContains('A_1', $live['unpaid']);
+    }
+
+    public function test_mark_paid_requires_auth(): void
+    {
+        $this->postJson(route('suntaraporn.mark-paid', 1))->assertStatus(401);
+    }
+
     public function test_booking_list_search_matches_seat_key(): void
     {
         $staff   = User::factory()->create(['role' => User::ROLE_SUNTARAPORN, 'is_active' => true]);

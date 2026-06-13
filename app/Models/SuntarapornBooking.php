@@ -10,10 +10,10 @@ class SuntarapornBooking extends Model
     protected $table    = 'suntaraporn_bookings';
     protected $fillable = [
         'show_date', 'first_name', 'last_name', 'phone',
-        'booker_name', 'slip_path', 'total_price', 'is_sponsor',
+        'booker_name', 'slip_path', 'total_price', 'is_sponsor', 'is_unpaid',
     ];
 
-    protected $casts = ['show_date' => 'date:Y-m-d', 'is_sponsor' => 'boolean'];
+    protected $casts = ['show_date' => 'date:Y-m-d', 'is_sponsor' => 'boolean', 'is_unpaid' => 'boolean'];
 
     public function seats(): HasMany
     {
