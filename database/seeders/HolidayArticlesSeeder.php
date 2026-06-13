@@ -257,7 +257,11 @@ class HolidayArticlesSeeder extends Seeder
             'songkran_square.png',
             'songkran_landscape.png',
             'mothers_day_square.png',
-            'mothers_day_landscape.png'
+            'mothers_day_landscape.png',
+            'chakri_square.png',
+            'chakri_landscape.png',
+            'chinese_new_year_square.png',
+            'chinese_new_year_landscape.png'
         ];
         foreach ($holidayImages as $img) {
             $imgSrc = public_path('images/holidays/' . $img);
@@ -314,6 +318,14 @@ class HolidayArticlesSeeder extends Seeder
 
             // Custom image paths for specific holidays
             $customImages = [
+                '2026-02-06' => [
+                    'square' => 'images/chinese_new_year_square.png',
+                    'landscape' => 'images/chinese_new_year_landscape.png'
+                ],
+                '2026-04-06' => [
+                    'square' => 'images/chakri_square.png',
+                    'landscape' => 'images/chakri_landscape.png'
+                ],
                 '2026-04-13' => [
                     'square' => 'images/songkran_square.png',
                     'landscape' => 'images/songkran_landscape.png'
