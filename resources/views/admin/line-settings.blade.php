@@ -293,7 +293,15 @@
 	        @csrf
 	        <button type="submit" class="admin-button admin-button--secondary">🧹 ล้าง Cache (optimize:clear)</button>
 	      </form>
+	      <form action="{{ route('admin.utils.seed-holidays') }}" method="post" style="margin: 0; display: inline-block;" onsubmit="return confirm('ยืนยันสร้างบทความวันสำคัญปี 2569 ใหม่ทั้งหมด?')">
+	        @csrf
+	        <button type="submit" class="admin-button" style="background: #7c3aed;">📅 สร้างบทความวันสำคัญ (Seed Holidays)</button>
+	      </form>
 	    </div>
+
+	    @if (session('seed_holidays_output'))
+	      <pre style="margin-top: 16px; padding: 14px 16px; border-radius: 14px; background: #0f172a; color: #e2e8f0; font-size: 0.9rem; white-space: pre-wrap; overflow-x: auto;">{{ session('seed_holidays_output') }}</pre>
+	    @endif
 	  </section>
 
   <script>

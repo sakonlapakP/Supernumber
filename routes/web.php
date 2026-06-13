@@ -3731,6 +3731,38 @@ Route::prefix('admin')->name('admin.')->group(function () use (
         }
     })->name('utils.optimize-clear');
 
+    Route::post('/utils/seed-holidays', function () use ($ensureAdmin) {
+        if ($redirect = $ensureAdmin(User::ROLE_MANAGER)) {
+            return $redirect;
+        }
+
+        try {
+            $exitCode = Artisan::call('db:seed', [
+                '--class' => 'HolidayArticlesSeeder',
+                '--force' => true,
+            ]);
+            $output = trim((string) Artisan::output());
+
+            if ($exitCode !== 0) {
+                return back()->withErrors([
+                    'seed_holidays' => $output !== '' ? $output : 'เรียก db:seed --class=HolidayArticlesSeeder ไม่สำเร็จ',
+                ]);
+            }
+
+            return back()
+                ->with('status_message', 'สร้างบทความวันสำคัญเรียบร้อยแล้ว')
+                ->with('seed_holidays_output', $output);
+        } catch (\Throwable $e) {
+            Log::warning('Manual seed holidays failed.', [
+                'error' => $e->getMessage(),
+            ]);
+
+            return back()->withErrors([
+                'seed_holidays' => $e->getMessage(),
+            ]);
+        }
+    })->name('utils.seed-holidays');
+
     Route::get('/articles', function (Request $request) use ($ensureAdmin) {
         if ($redirect = $ensureAdmin()) {
             return $redirect;
