@@ -1413,6 +1413,108 @@
     }
   </style>
 
+  @if (now()->lt(\Illuminate\Support\Carbon::parse('2026-09-13 00:00:00')))
+    <!-- Respectful Condolence Splash Screen -->
+    <div id="condolence-splash" style="
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.88);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        z-index: 999999;
+        justify-content: center;
+        align-items: center;
+        color: #fff;
+        overflow-y: auto;
+        padding: 24px;
+        box-sizing: border-box;
+        font-family: 'Kanit', sans-serif;
+    ">
+        <div style="
+            max-width: 520px;
+            width: 100%;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            animation: fadeInSplash 0.8s ease-out;
+        ">
+            <div style="
+                position: relative;
+                margin-bottom: 30px;
+                border-radius: 8px;
+                overflow: hidden;
+                box-shadow: 0 20px 50px rgba(0,0,0,0.8), 0 0 40px rgba(216, 163, 74, 0.15);
+                border: 1px solid rgba(216, 163, 74, 0.3);
+                max-width: 100%;
+            ">
+                <img src="{{ asset('images/condolences.jpg') }}" alt="สถิตในดวงใจตราบนิรันดร์" style="
+                    display: block;
+                    max-height: 70vh;
+                    max-width: 100%;
+                    width: auto;
+                    height: auto;
+                    object-fit: contain;
+                ">
+            </div>
+            
+            <button id="close-splash-btn" style="
+                background: linear-gradient(135deg, #2a221b 0%, #15110d 100%);
+                color: #e6bd73;
+                border: 1px solid rgba(230, 189, 115, 0.4);
+                padding: 14px 48px;
+                font-size: 16px;
+                font-weight: 600;
+                cursor: pointer;
+                transition: all 0.3s ease;
+                border-radius: 30px;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+                outline: none;
+                letter-spacing: 0.03em;
+            " onmouseover="this.style.background='linear-gradient(135deg, #e6bd73 0%, #b88f4c 100%)'; this.style.color='#000'; this.style.boxShadow='0 12px 30px rgba(230, 189, 115, 0.35)';" onmouseout="this.style.background='linear-gradient(135deg, #2a221b 0%, #15110d 100%)'; this.style.color='#e6bd73'; this.style.boxShadow='0 10px 25px rgba(0,0,0,0.4)';">
+                เข้าสู่เว็บไซต์ (Enter Website)
+            </button>
+        </div>
+    </div>
+    <style>
+        @keyframes fadeInSplash {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (!sessionStorage.getItem('condolence_closed')) {
+                var splash = document.getElementById('condolence-splash');
+                if (splash) {
+                    splash.style.display = 'flex';
+                    document.body.style.overflow = 'hidden';
+                }
+            }
+            
+            var closeBtn = document.getElementById('close-splash-btn');
+            if (closeBtn) {
+                closeBtn.addEventListener('click', function() {
+                    var splash = document.getElementById('condolence-splash');
+                    if (splash) {
+                        splash.style.transition = 'opacity 0.6s cubic-bezier(0.25, 0.8, 0.25, 1)';
+                        splash.style.opacity = '0';
+                        setTimeout(function() {
+                            splash.style.display = 'none';
+                            document.body.style.overflow = '';
+                        }, 600);
+                    }
+                    sessionStorage.setItem('condolence_closed', 'true');
+                });
+            }
+        });
+    </script>
+  @endif
+
   <!-- Hero Section -->
   <section class="hero" aria-labelledby="hero-title">
     <div class="hero-media" aria-hidden="true">
