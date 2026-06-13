@@ -253,14 +253,46 @@ class HolidayArticlesSeeder extends Seeder
         }
 
         // 2. Process articles
+        $planMeta = [
+            '2026-01-01' => ['plan_type' => 'หวย/สำคัญ', 'plan_topic' => 'วันขึ้นปีใหม่: เปิดดวงตัวเลขปี 69 + หวย'],
+            '2026-01-09' => ['plan_type' => 'วันสำคัญ', 'plan_topic' => 'วันเด็ก: เลขมงคลเสริม IQ'],
+            '2026-02-06' => ['plan_type' => 'วันมู', 'plan_topic' => 'วันตรุษจีน: เลขรับทรัพย์'],
+            '2026-02-14' => ['plan_type' => 'วันสำคัญ', 'plan_topic' => 'วันวาเลนไทน์: คู่เลขความรัก'],
+            '2026-02-21' => ['plan_type' => 'วันสำคัญ', 'plan_topic' => 'วันมาฆบูชา: เลขสายบุญ'],
+            '2026-04-06' => ['plan_type' => 'วันสำคัญ', 'plan_topic' => 'วันจักรี: เลขเสริมอำนาจ'],
+            '2026-04-13' => ['plan_type' => 'วันสำคัญ', 'plan_topic' => 'วันสงกรานต์: เลขปลอดภัยในการเดินทาง'],
+            '2026-05-11' => ['plan_type' => 'วันสำคัญ', 'plan_topic' => 'วันพืชมงคล: เลขมงคลการเงินและความมั่งคั่ง'],
+            '2026-05-31' => ['plan_type' => 'วันสำคัญ', 'plan_topic' => 'วันวิสาขบูชา: เลขสติปัญญาและการเริ่มต้นใหม่'],
+            '2026-06-26' => ['plan_type' => 'วันมู', 'plan_topic' => 'วันสุนทรภู่: เลขมงคลสายวาทศิลป์และการเจรจา'],
+            '2026-07-28' => ['plan_type' => 'วันสำคัญ', 'plan_topic' => 'คอนเทนต์มงคลรวมใจ (ร.10)'],
+            '2026-07-29' => ['plan_type' => 'วันสำคัญ', 'plan_topic' => 'วันอาสาฬหบูชา: ปรับพลังงานตัวเลข'],
+            '2026-08-12' => ['plan_type' => 'วันสำคัญ', 'plan_topic' => 'วันแม่: เลขมงคลสุขภาพ'],
+            '2026-08-15' => ['plan_type' => 'วันมู', 'plan_topic' => 'วันคเณศจตุรถี: เลขมงคลประทานพร'],
+            '2026-09-25' => ['plan_type' => 'วันมู', 'plan_topic' => 'วันไหว้พระจันทร์: เลขเมตตามหานิยม'],
+            '2026-10-20' => ['plan_type' => 'วันมู', 'plan_topic' => 'เทศกาลกินเจ: เลขสายขาว'],
+            '2026-10-23' => ['plan_type' => 'วันสำคัญ', 'plan_topic' => 'วันปิยมหาราช: เลขมงคลการงาน'],
+            '2026-11-24' => ['plan_type' => 'วันสำคัญ', 'plan_topic' => 'วันลอยกระทง: เลขขอพรโชคลาภ'],
+            '2026-12-05' => ['plan_type' => 'วันสำคัญ', 'plan_topic' => 'วันพ่อ: เลขมงคลความมั่นคง'],
+            '2026-12-10' => ['plan_type' => 'วันสำคัญ', 'plan_topic' => 'วันรัฐธรรมนูญ: เลขมงคลระเบียบวินัย'],
+            '2026-12-31' => ['plan_type' => 'วันสำคัญ', 'plan_topic' => 'วันสิ้นปี: สรุปเลขปี 69'],
+        ];
+
         foreach ($articles as $data) {
             $slug = $data['slug'];
 
-            // Find plan for this date
+            // Find or create plan for this date
             $plan = ArticlePlan::where('publish_date', $data['date'])->first();
             if (!$plan) {
-                $this->logInfo("Skipped date {$data['date']} (no plan row found in DB)");
-                continue;
+                $meta = $planMeta[$data['date']] ?? ['plan_type' => 'วันสำคัญ', 'plan_topic' => 'วันสำคัญ'];
+                $plan = ArticlePlan::create([
+                    'publish_date' => $data['date'],
+                    'publish_time' => '09:00',
+                    'type' => $meta['plan_type'],
+                    'topic' => $meta['plan_topic'],
+                    'is_lottery' => ($meta['plan_type'] === 'หวย' || $meta['plan_type'] === 'หวย/สำคัญ'),
+                    'status' => ArticlePlan::STATUS_TODO,
+                ]);
+                $this->logInfo("Created missing plan for date {$data['date']}");
             }
 
             // Placeholders for templates
