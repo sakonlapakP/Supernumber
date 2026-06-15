@@ -221,8 +221,12 @@
     <label>ถึงวันที่</label>
     <input type="date" name="to" value="{{ $to }}">
   </div>
+  <div class="filter-field">
+    <label>ค้นหา</label>
+    <input type="text" name="search" value="{{ $search }}" placeholder="ชื่อ / เบอร์ / คำค้นหา" style="min-width:180px;">
+  </div>
   <button type="submit" class="btn btn-primary">กรอง</button>
-  @if ($action || $from || $to)
+  @if ($action || $from || $to || $search)
     <a href="{{ route($system . '.history', $system === 'suntaraporn' ? ['date' => $showDate] : []) }}" class="btn btn-outline">✕ ล้าง</a>
   @endif
 </form>

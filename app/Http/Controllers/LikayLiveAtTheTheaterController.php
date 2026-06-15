@@ -1135,6 +1135,7 @@ class LikayLiveAtTheTheaterController extends Controller
         $action = (string) $request->input('action', '');
         $from   = (string) $request->input('from', '');
         $to     = (string) $request->input('to', '');
+        $search = trim((string) $request->input('search', ''));
 
         // base query ใช้ filter วันที่ร่วมกัน (stats เห็นครบทุกประเภท ไม่ผูกกับ action filter)
         // ใช้ range เทียบ created_at ตรงๆ (ไม่ใช้ whereDate) เพื่อให้ index ทำงาน
@@ -1155,11 +1156,20 @@ class LikayLiveAtTheTheaterController extends Controller
         if (in_array($action, BookingActivityLog::ACTIONS, true)) {
             $query->where('action', $action);
         }
+        if ($search !== '') {
+            $like = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search) . '%';
+            $query->where(function ($q) use ($like) {
+                $q->whereRaw("actor_name LIKE ? ESCAPE '\\\\'", [$like])
+                  ->orWhereRaw("customer_name LIKE ? ESCAPE '\\\\'", [$like])
+                  ->orWhereRaw("phone LIKE ? ESCAPE '\\\\'", [$like])
+                  ->orWhereRaw("search_query LIKE ? ESCAPE '\\\\'", [$like]);
+            });
+        }
 
         $logs   = $query->paginate(50)->withQueryString();
         $system = 'likay';
 
-        return view('booking-activity-history', compact('logs', 'user', 'system', 'action', 'from', 'to', 'counts'));
+        return view('booking-activity-history', compact('logs', 'user', 'system', 'action', 'from', 'to', 'search', 'counts'));
     }
 
     // ── Broadcast Zone Update ─────────────────────────────────────
