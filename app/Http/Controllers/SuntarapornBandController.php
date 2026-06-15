@@ -1249,7 +1249,12 @@ class SuntarapornBandController extends Controller
         $logs   = $query->paginate(50)->withQueryString();
         $system = 'suntaraporn';
 
-        return view('booking-activity-history', compact('logs', 'user', 'system', 'action', 'from', 'to', 'search', 'showDate', 'showDates', 'counts'));
+        $bookingIds = $logs->pluck('booking_id')->filter()->unique()->values()->all();
+        $slips = $bookingIds
+            ? SuntarapornBooking::whereIn('id', $bookingIds)->whereNotNull('slip_path')->pluck('slip_path', 'id')->all()
+            : [];
+
+        return view('booking-activity-history', compact('logs', 'user', 'system', 'action', 'from', 'to', 'search', 'showDate', 'showDates', 'counts', 'slips'));
     }
 
     // ── Broadcast Zone Update ─────────────────────────────────────

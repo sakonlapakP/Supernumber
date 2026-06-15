@@ -304,6 +304,13 @@
                   @endforeach
                 </div>
               @endif
+              @if ($log->booking_id && isset($slips[$log->booking_id]))
+                @php $ext = strtolower(pathinfo($slips[$log->booking_id], PATHINFO_EXTENSION)); @endphp
+                <a href="{{ asset('storage/' . $slips[$log->booking_id]) }}" target="_blank"
+                   style="display:inline-block;margin-top:5px;font-size:12px;color:#1565c0;text-decoration:none;font-weight:600;">
+                  {{ $ext === 'pdf' ? '📄' : '🧾' }} ดูสลิป
+                </a>
+              @endif
             @endif
           </td>
           <td>

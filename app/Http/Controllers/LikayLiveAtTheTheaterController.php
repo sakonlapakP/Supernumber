@@ -1169,7 +1169,12 @@ class LikayLiveAtTheTheaterController extends Controller
         $logs   = $query->paginate(50)->withQueryString();
         $system = 'likay';
 
-        return view('booking-activity-history', compact('logs', 'user', 'system', 'action', 'from', 'to', 'search', 'counts'));
+        $bookingIds = $logs->pluck('booking_id')->filter()->unique()->values()->all();
+        $slips = $bookingIds
+            ? LikayBooking::whereIn('id', $bookingIds)->whereNotNull('slip_path')->pluck('slip_path', 'id')->all()
+            : [];
+
+        return view('booking-activity-history', compact('logs', 'user', 'system', 'action', 'from', 'to', 'search', 'counts', 'slips'));
     }
 
     // ── Broadcast Zone Update ─────────────────────────────────────
