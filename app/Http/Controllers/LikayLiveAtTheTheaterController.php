@@ -490,8 +490,13 @@ class LikayLiveAtTheTheaterController extends Controller
 
         $user   = $this->currentUser();
         $search = trim($request->input('search', ''));
+        $sort   = $request->input('sort', '');
 
-        $query = LikayBooking::with('seats')->orderByDesc('created_at');
+        $query = LikayBooking::with('seats');
+        if ($sort === 'no_slip') {
+            $query->orderByRaw('slip_path IS NULL DESC');
+        }
+        $query->orderByDesc('created_at');
 
         if ($search !== '') {
             // Escape MySQL LIKE wildcards so '%' or '_' in input don't match unintended rows.
@@ -521,7 +526,7 @@ class LikayLiveAtTheTheaterController extends Controller
         ])->all();
         $seatZoneMap = LikaySeatMap::seats();
 
-        return view('likay-bookings', compact('bookings', 'user', 'search', 'zoneColors', 'seatZoneMap'));
+        return view('likay-bookings', compact('bookings', 'user', 'search', 'sort', 'zoneColors', 'seatZoneMap'));
     }
 
     // ── Cancel Booking (manager only) ─────────────────────────────

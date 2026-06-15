@@ -206,6 +206,7 @@
 </div>
 
 <form method="GET" action="{{ route('likay.bookings') }}" class="search-bar">
+  <input type="hidden" name="sort" value="{{ $sort }}">
   <input
     type="text"
     name="search"
@@ -214,11 +215,18 @@
     value="{{ $search }}"
     autocomplete="off"
   >
-  @if ($search)
+  @if ($search || $sort)
     <a href="{{ route('likay.bookings') }}" class="btn btn-outline">✕ ล้าง</a>
   @endif
   <button type="submit" class="btn btn-primary">ค้นหา</button>
 </form>
+@if ($sort === 'no_slip')
+  <a href="{{ route('likay.bookings', array_filter(['search' => $search])) }}"
+     class="btn btn-sm" style="background:#e65100;color:#fff;margin-bottom:8px;">🧾 ไม่มีสลิปก่อน ✕</a>
+@else
+  <a href="{{ route('likay.bookings', array_filter(['search' => $search, 'sort' => 'no_slip'])) }}"
+     class="btn btn-outline btn-sm" style="margin-bottom:8px;">🧾 เรียงไม่มีสลิปก่อน</a>
+@endif
 
 @php
   $totalSeats    = $bookings->sum(fn($b) => $b->seats->count());

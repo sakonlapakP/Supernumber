@@ -523,13 +523,16 @@ class SuntarapornBandController extends Controller
 
         $user   = $this->currentUser();
         $search = trim($request->input('search', ''));
+        $sort   = $request->input('sort', '');
 
         $showDate  = $this->resolveShowDate($request);
         $showDates = self::SHOW_DATES;
 
-        $query = SuntarapornBooking::with('seats')
-            ->where('show_date', $showDate)
-            ->orderByDesc('created_at');
+        $query = SuntarapornBooking::with('seats')->where('show_date', $showDate);
+        if ($sort === 'no_slip') {
+            $query->orderByRaw('slip_path IS NULL DESC');
+        }
+        $query->orderByDesc('created_at');
 
         if ($search !== '') {
             // Escape MySQL LIKE wildcards so '%' or '_' in input don't match unintended rows.
@@ -560,7 +563,7 @@ class SuntarapornBandController extends Controller
         ])->all();
         $seatZoneMap = SuntarapornSeatMap::seats();
 
-        return view('suntaraporn-bookings', compact('bookings', 'user', 'search', 'showDate', 'showDates', 'zoneColors', 'seatZoneMap'));
+        return view('suntaraporn-bookings', compact('bookings', 'user', 'search', 'sort', 'showDate', 'showDates', 'zoneColors', 'seatZoneMap'));
     }
 
     // ── Cancel Booking (manager only) ─────────────────────────────
