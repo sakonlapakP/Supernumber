@@ -3,11 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Events\SeatStatusUpdated;
-use App\Exports\SuntarapornBookingsExport;
 use App\Models\BookingActivityLog;
 use App\Models\SuntarapornBooking;
 use App\Models\SuntarapornZone;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Models\SuntarapornSeat;
 use App\Models\User;
 use App\Services\SuntarapornSeatMap;
@@ -537,13 +535,13 @@ class SuntarapornBandController extends Controller
             // Escape MySQL LIKE wildcards so '%' or '_' in input don't match unintended rows.
             $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
             $like    = '%' . $escaped . '%';
-            // ระบุ ESCAPE '\' ชัดเจน เพื่อให้ escaped wildcard ('\%', '\_') ทำงานเหมือนกันทั้ง MySQL และ SQLite
+            // ESCAPE '\\' = escape char คือ backslash หนึ่งตัว (PHP '\\\\'→SQL '\\' ซึ่ง MariaDB อ่านว่า '\')
             $query->where(function ($q) use ($like) {
-                $q->whereRaw("first_name LIKE ? ESCAPE '\\'", [$like])
-                  ->orWhereRaw("last_name LIKE ? ESCAPE '\\'", [$like])
-                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ? ESCAPE '\\'", [$like])
-                  ->orWhereRaw("phone LIKE ? ESCAPE '\\'", [$like])
-                  ->orWhereHas('seats', fn ($s) => $s->whereRaw("seat_key LIKE ? ESCAPE '\\'", [$like]));
+                $q->whereRaw("first_name LIKE ? ESCAPE '\\\\'", [$like])
+                  ->orWhereRaw("last_name LIKE ? ESCAPE '\\\\'", [$like])
+                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ? ESCAPE '\\\\'", [$like])
+                  ->orWhereRaw("phone LIKE ? ESCAPE '\\\\'", [$like])
+                  ->orWhereHas('seats', fn ($s) => $s->whereRaw("seat_key LIKE ? ESCAPE '\\\\'", [$like]));
             });
 
             BookingActivityLog::record([
@@ -1125,16 +1123,78 @@ class SuntarapornBandController extends Controller
         ]);
     }
 
-    // ── Export Excel ──────────────────────────────────────────────
+    // ── Export CSV ──────────────────────────────────────────────
 
-    public function exportBookings(Request $request): \Symfony\Component\HttpFoundation\BinaryFileResponse|RedirectResponse
+    public function exportBookings(Request $request): \Symfony\Component\HttpFoundation\StreamedResponse|RedirectResponse
     {
         if ($redirect = $this->guardRedirect()) return $redirect;
 
         $showDate = $this->resolveShowDate($request);
-        $filename = 'suntaraporn-bookings-' . $showDate . '.xlsx';
+        $filename = 'suntaraporn-bookings-' . $showDate . '.csv';
+        $bookings = SuntarapornBooking::with('seats')->where('show_date', $showDate)->orderBy('id')->get();
+        $prices   = SuntarapornZone::pluck('price', 'slug')->all();
+        $allSeats = SuntarapornSeatMap::seats();
 
-        return Excel::download(new SuntarapornBookingsExport($showDate), $filename);
+        return response()->streamDownload(function () use ($bookings, $showDate, $prices, $allSeats) {
+            $out = fopen('php://output', 'w');
+
+            // UTF-8 BOM — ให้ Excel แสดงภาษาไทยได้ถูกต้อง
+            fwrite($out, "\xEF\xBB\xBF");
+
+            // รายการจอง
+            fputcsv($out, ['ลำดับ', 'รหัสการจอง', 'รอบการแสดง', 'ชื่อ', 'นามสกุล', 'เบอร์โทร',
+                           'ที่นั่ง', 'จำนวนที่นั่ง', 'ราคารวม (฿)', 'ผู้บันทึก', 'มีสลิป', 'วันที่จอง']);
+
+            foreach ($bookings as $i => $booking) {
+                fputcsv($out, [
+                    $i + 1,
+                    $booking->id,
+                    $booking->show_date->format('d/m/Y'),
+                    $booking->first_name,
+                    $booking->last_name,
+                    $booking->phone,
+                    $booking->seats->pluck('seat_key')->sort()->join(', '),
+                    $booking->seats->count(),
+                    $booking->total_price,
+                    $booking->booker_name,
+                    $booking->slip_path ? 'มี' : 'ไม่มี',
+                    $booking->created_at->format('d/m/Y H:i'),
+                ]);
+            }
+
+            // สรุปโซน (ส่วนที่ 2 ของไฟล์เดียวกัน)
+            fputcsv($out, []);
+            fputcsv($out, ['สรุปโซน — รอบ ' . $showDate]);
+            fputcsv($out, ['โซน', 'ที่นั่งทั้งหมด', 'จองแล้ว', 'ว่าง', 'ราคา/ที่นั่ง (฿)', 'รายได้รวม (฿)']);
+
+            $zoneLabels    = ['vip' => 'VIP', 'yellow' => 'เหลือง', 'blue' => 'ฟ้า',
+                              'pink' => 'ชมพู', 'green' => 'เขียว', 'purple' => 'ม่วง', 'box' => 'BOX'];
+            $totalPerZone  = array_count_values(array_values($allSeats));
+            $bookedKeys    = SuntarapornSeat::where('show_date', $showDate)->where('is_booked', true)->pluck('seat_key')->all();
+            $bookedPerZone = [];
+            foreach ($bookedKeys as $key) {
+                if (isset($allSeats[$key])) {
+                    $z = $allSeats[$key];
+                    $bookedPerZone[$z] = ($bookedPerZone[$z] ?? 0) + 1;
+                }
+            }
+
+            $grandTotal = $grandBooked = $grandRevenue = 0;
+            foreach ($zoneLabels as $zone => $label) {
+                $total   = $totalPerZone[$zone]  ?? 0;
+                $booked  = $bookedPerZone[$zone] ?? 0;
+                $price   = $prices[$zone] ?? 0;
+                $revenue = $booked * $price;
+                fputcsv($out, [$label, $total, $booked, $total - $booked, $price, $revenue]);
+                $grandTotal   += $total;
+                $grandBooked  += $booked;
+                $grandRevenue += $revenue;
+            }
+
+            fputcsv($out, ['รวมทั้งหมด', $grandTotal, $grandBooked, $grandTotal - $grandBooked, '', $grandRevenue]);
+            fclose($out);
+
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
     // ── Activity History (manager only) ───────────────────────────
