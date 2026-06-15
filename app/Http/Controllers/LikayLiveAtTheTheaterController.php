@@ -3,11 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Events\LikaySeatStatusUpdated;
-use App\Exports\LikayBookingsExport;
 use App\Models\BookingActivityLog;
 use App\Models\LikayBooking;
 use App\Models\LikayZone;
-use Maatwebsite\Excel\Facades\Excel;
 use App\Models\LikaySeat;
 use App\Models\User;
 use App\Services\LikaySeatMap;
@@ -499,13 +497,13 @@ class LikayLiveAtTheTheaterController extends Controller
             // Escape MySQL LIKE wildcards so '%' or '_' in input don't match unintended rows.
             $escaped = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $search);
             $like    = '%' . $escaped . '%';
-            // ระบุ ESCAPE '\' ชัดเจน เพื่อให้ escaped wildcard ('\%', '\_') ทำงานเหมือนกันทั้ง MySQL และ SQLite
+            // ESCAPE '\\' = escape char คือ backslash หนึ่งตัว (PHP '\\\\'→SQL '\\' ซึ่ง MariaDB อ่านว่า '\')
             $query->where(function ($q) use ($like) {
-                $q->whereRaw("first_name LIKE ? ESCAPE '\\'", [$like])
-                  ->orWhereRaw("last_name LIKE ? ESCAPE '\\'", [$like])
-                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ? ESCAPE '\\'", [$like])
-                  ->orWhereRaw("phone LIKE ? ESCAPE '\\'", [$like])
-                  ->orWhereHas('seats', fn ($s) => $s->whereRaw("seat_key LIKE ? ESCAPE '\\'", [$like]));
+                $q->whereRaw("first_name LIKE ? ESCAPE '\\\\'", [$like])
+                  ->orWhereRaw("last_name LIKE ? ESCAPE '\\\\'", [$like])
+                  ->orWhereRaw("CONCAT(first_name, ' ', last_name) LIKE ? ESCAPE '\\\\'", [$like])
+                  ->orWhereRaw("phone LIKE ? ESCAPE '\\\\'", [$like])
+                  ->orWhereHas('seats', fn ($s) => $s->whereRaw("seat_key LIKE ? ESCAPE '\\\\'", [$like]));
             });
 
             BookingActivityLog::record([
@@ -1051,15 +1049,76 @@ class LikayLiveAtTheTheaterController extends Controller
         ]);
     }
 
-    // ── Export Excel ──────────────────────────────────────────────
+    // ── Export CSV ──────────────────────────────────────────────
 
-    public function exportBookings(): \Symfony\Component\HttpFoundation\BinaryFileResponse|RedirectResponse
+    public function exportBookings(): \Symfony\Component\HttpFoundation\StreamedResponse|RedirectResponse
     {
         if ($redirect = $this->guardRedirect()) return $redirect;
 
-        $filename = 'likay-bookings-' . now()->format('Y-m-d') . '.xlsx';
+        $filename  = 'likay-bookings-' . now()->format('Y-m-d') . '.csv';
+        $bookings  = LikayBooking::with('seats')->orderBy('id')->get();
+        $prices    = LikayZone::pluck('price', 'slug')->all();
+        $allSeats  = LikaySeatMap::seats();
 
-        return Excel::download(new LikayBookingsExport(), $filename);
+        return response()->streamDownload(function () use ($bookings, $prices, $allSeats) {
+            $out = fopen('php://output', 'w');
+
+            // UTF-8 BOM — ให้ Excel แสดงภาษาไทยได้ถูกต้อง
+            fwrite($out, "\xEF\xBB\xBF");
+
+            // รายการจอง
+            fputcsv($out, ['ลำดับ', 'รหัสการจอง', 'ชื่อ', 'นามสกุล', 'เบอร์โทร',
+                           'ที่นั่ง', 'จำนวนที่นั่ง', 'ราคารวม (฿)', 'ผู้บันทึก', 'มีสลิป', 'วันที่จอง']);
+
+            foreach ($bookings as $i => $booking) {
+                fputcsv($out, [
+                    $i + 1,
+                    $booking->id,
+                    $booking->first_name,
+                    $booking->last_name,
+                    $booking->phone,
+                    $booking->seats->pluck('seat_key')->sort()->join(', '),
+                    $booking->seats->count(),
+                    $booking->total_price,
+                    $booking->booker_name,
+                    $booking->slip_path ? 'มี' : 'ไม่มี',
+                    $booking->created_at->format('d/m/Y H:i'),
+                ]);
+            }
+
+            // สรุปโซน (ส่วนที่ 2 ของไฟล์เดียวกัน)
+            fputcsv($out, []);
+            fputcsv($out, ['สรุปโซน']);
+            fputcsv($out, ['โซน', 'ที่นั่งทั้งหมด', 'จองแล้ว', 'ว่าง', 'ราคา/ที่นั่ง (฿)', 'รายได้รวม (฿)']);
+
+            $zoneLabels    = ['yellow' => 'เหลือง', 'blue' => 'เขียว', 'pink' => 'ฟ้า',
+                              'green' => 'แดง', 'purple' => 'ม่วง', 'box' => 'BOX'];
+            $totalPerZone  = array_count_values(array_values($allSeats));
+            $bookedKeys    = LikaySeat::where('is_booked', true)->pluck('seat_key')->all();
+            $bookedPerZone = [];
+            foreach ($bookedKeys as $key) {
+                if (isset($allSeats[$key])) {
+                    $z = $allSeats[$key];
+                    $bookedPerZone[$z] = ($bookedPerZone[$z] ?? 0) + 1;
+                }
+            }
+
+            $grandTotal = $grandBooked = $grandRevenue = 0;
+            foreach ($zoneLabels as $zone => $label) {
+                $total   = $totalPerZone[$zone]  ?? 0;
+                $booked  = $bookedPerZone[$zone] ?? 0;
+                $price   = $prices[$zone] ?? 0;
+                $revenue = $booked * $price;
+                fputcsv($out, [$label, $total, $booked, $total - $booked, $price, $revenue]);
+                $grandTotal   += $total;
+                $grandBooked  += $booked;
+                $grandRevenue += $revenue;
+            }
+
+            fputcsv($out, ['รวมทั้งหมด', $grandTotal, $grandBooked, $grandTotal - $grandBooked, '', $grandRevenue]);
+            fclose($out);
+
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
     }
 
     // ── Activity History (manager only) ───────────────────────────
